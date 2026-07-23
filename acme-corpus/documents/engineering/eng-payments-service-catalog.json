@@ -1,0 +1,10 @@
+{
+  "id": "eng-payments-service-catalog",
+  "title": "payments-service — Service Catalog Entry",
+  "department": "Engineering",
+  "view_url": "https://portal.acme.internal/services/payments-service",
+  "created_at": "2026-03-02T00:00:00Z",
+  "updated_at": "2026-07-10T00:00:00Z",
+  "permission": { "groups": ["Acme-All-Employees"] },
+  "body": "payments-service is Acme Corp's core payments processing service, handling checkout authorization, capture, and refunds for all customer-facing storefronts. Tech lead: Priya Natarajan. On-call this week: Marcus Webb. Tier: Tier-0 (customer-impacting outage triggers immediate paging). Language/runtime: Go, deployed on GKE. Dependencies: checkout-service (upstream), ledger-service (downstream), Stripe (external processor). Related docs: the deploy and rollback runbook, and the PAY-2114 incident review. On-call escalation path: page the Engineering on-call rotation, then Priya Natarajan if unresolved after 30 minutes."
+}

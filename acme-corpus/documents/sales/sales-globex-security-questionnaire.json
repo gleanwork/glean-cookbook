@@ -1,0 +1,10 @@
+{
+  "id": "sales-globex-security-questionnaire",
+  "title": "Globex — Security Questionnaire Response Summary",
+  "department": "Sales",
+  "view_url": "https://portal.acme.internal/sales/accounts/globex/security-questionnaire-2026-06",
+  "created_at": "2026-06-10T00:00:00Z",
+  "updated_at": "2026-06-15T00:00:00Z",
+  "permission": { "groups": ["Acme-Sales"] },
+  "body": "Summary of Acme's response to Globex's June 2026 security questionnaire: SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only per Globex's requirement, SSO/SAML supported, and a documented incident-response process with a 24-hour customer notification SLA for confirmed breaches. Globex's security team accepted all responses with no follow-up questions. Full questionnaire and evidence packet available in the legal/security shared drive."
+}

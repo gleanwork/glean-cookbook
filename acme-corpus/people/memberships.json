@@ -1,0 +1,46 @@
+[
+  {
+    "member_user_id": "priya.natarajan@acme.example.com",
+    "member_group_name": "Acme-All-Employees"
+  },
+  {
+    "member_user_id": "priya.natarajan@acme.example.com",
+    "member_group_name": "Acme-Engineering"
+  },
+
+  {
+    "member_user_id": "marcus.webb@acme.example.com",
+    "member_group_name": "Acme-All-Employees"
+  },
+  {
+    "member_user_id": "marcus.webb@acme.example.com",
+    "member_group_name": "Acme-Engineering"
+  },
+
+  {
+    "member_user_id": "dana.okafor@acme.example.com",
+    "member_group_name": "Acme-All-Employees"
+  },
+  {
+    "member_user_id": "dana.okafor@acme.example.com",
+    "member_group_name": "Acme-HR"
+  },
+
+  {
+    "member_user_id": "sam.reyes@acme.example.com",
+    "member_group_name": "Acme-All-Employees"
+  },
+  {
+    "member_user_id": "sam.reyes@acme.example.com",
+    "member_group_name": "Acme-Sales"
+  },
+
+  {
+    "member_user_id": "alex.kim@acme.example.com",
+    "member_group_name": "Acme-All-Employees"
+  },
+  {
+    "member_user_id": "alex.kim@acme.example.com",
+    "member_group_name": "Acme-Engineering"
+  }
+]

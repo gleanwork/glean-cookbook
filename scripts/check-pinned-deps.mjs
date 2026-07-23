@@ -15,7 +15,7 @@ const RANGE_PREFIX = /^[\^~>=<]/;
 
 let failed = false;
 
-function checkPackageJson(recipeId, filePath) {
+function checkPackageJson(label, filePath) {
   const pkg = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   const deps = { ...pkg.dependencies, ...pkg.devDependencies };
   for (const [name, version] of Object.entries(deps)) {
@@ -23,15 +23,15 @@ function checkPackageJson(recipeId, filePath) {
     if (RANGE_PREFIX.test(version) || version === '*' || version === 'latest') {
       failed = true;
       console.error(
-        `✗ recipes/${recipeId}: ${name}@${version} is not pinned to an exact released version`,
+        `✗ ${label}: ${name}@${version} is not pinned to an exact released version`,
       );
     } else {
-      console.log(`✓ recipes/${recipeId}: ${name}@${version} pinned`);
+      console.log(`✓ ${label}: ${name}@${version} pinned`);
     }
   }
 }
 
-function checkRequirementsTxt(recipeId, filePath) {
+function checkRequirementsTxt(label, filePath) {
   const lines = fs.readFileSync(filePath, 'utf8').split('\n');
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -41,38 +41,49 @@ function checkRequirementsTxt(recipeId, filePath) {
     if (!line.includes('==')) {
       failed = true;
       console.error(
-        `✗ recipes/${recipeId}: "${line}" is not pinned with == to an exact version`,
+        `✗ ${label}: "${line}" is not pinned with == to an exact version`,
       );
     } else {
-      console.log(`✓ recipes/${recipeId}: ${line} pinned`);
+      console.log(`✓ ${label}: ${line} pinned`);
     }
   }
 }
 
-if (!fs.existsSync(recipesDir)) {
-  console.log('No recipes/ directory yet — nothing to check.');
-  process.exit(0);
-}
-
-const recipeIds = fs
-  .readdirSync(recipesDir, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
-  .map((entry) => entry.name);
-
-if (recipeIds.length === 0) {
-  console.log('No recipes yet — nothing to check.');
-  process.exit(0);
-}
-
-for (const recipeId of recipeIds) {
-  const recipeDir = path.join(recipesDir, recipeId);
-  for (const sub of walkDirs(recipeDir)) {
+const acmeCorpusDir = path.join(repoRoot, 'acme-corpus');
+if (fs.existsSync(acmeCorpusDir)) {
+  for (const sub of walkDirs(acmeCorpusDir)) {
     const pkgJson = path.join(sub, 'package.json');
-    if (fs.existsSync(pkgJson)) checkPackageJson(recipeId, pkgJson);
+    if (fs.existsSync(pkgJson)) checkPackageJson('acme-corpus', pkgJson);
 
     const requirementsTxt = path.join(sub, 'requirements.txt');
     if (fs.existsSync(requirementsTxt))
-      checkRequirementsTxt(recipeId, requirementsTxt);
+      checkRequirementsTxt('acme-corpus', requirementsTxt);
+  }
+}
+
+if (!fs.existsSync(recipesDir)) {
+  console.log('No recipes/ directory yet — nothing more to check.');
+} else {
+  const recipeIds = fs
+    .readdirSync(recipesDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+
+  if (recipeIds.length === 0) {
+    console.log('No recipes yet — nothing more to check.');
+  }
+
+  for (const recipeId of recipeIds) {
+    const recipeDir = path.join(recipesDir, recipeId);
+    for (const sub of walkDirs(recipeDir)) {
+      const pkgJson = path.join(sub, 'package.json');
+      if (fs.existsSync(pkgJson))
+        checkPackageJson(`recipes/${recipeId}`, pkgJson);
+
+      const requirementsTxt = path.join(sub, 'requirements.txt');
+      if (fs.existsSync(requirementsTxt))
+        checkRequirementsTxt(`recipes/${recipeId}`, requirementsTxt);
+    }
   }
 }
 

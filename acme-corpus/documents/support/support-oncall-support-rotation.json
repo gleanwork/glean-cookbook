@@ -1,0 +1,10 @@
+{
+  "id": "support-oncall-support-rotation",
+  "title": "Support On-Call Rotation",
+  "department": "Support",
+  "view_url": "https://portal.acme.internal/oncall/support",
+  "created_at": "2025-07-01T00:00:00Z",
+  "updated_at": "2026-07-15T00:00:00Z",
+  "permission": { "groups": ["Acme-All-Employees"] },
+  "body": "The Support on-call rotation covers after-hours ticket triage for urgent, business-impacting issues only (an outage a customer is actively blocked by) — it is separate from the Engineering on-call rotation. Support on-call decides whether an issue needs an Engineering page using the escalation guide's criteria; most after-hours tickets wait until the next business day."
+}

@@ -1,0 +1,10 @@
+{
+  "id": "eng-payments-deploy-rollback-runbook",
+  "title": "payments-service — Deploy & Rollback Runbook",
+  "department": "Engineering",
+  "view_url": "https://portal.acme.internal/runbooks/payments-service-deploy",
+  "created_at": "2026-02-14T00:00:00Z",
+  "updated_at": "2026-07-15T00:00:00Z",
+  "permission": { "groups": ["Acme-All-Employees"] },
+  "body": "Deploying payments-service: 1) merge to main triggers the CI pipeline (lint, unit tests, integration tests against a staging ledger). 2) A canary rollout ships to 5% of pods for 15 minutes, watched against the canary-alarm dashboard (error rate, p99 latency, authorization failure rate). 3) If canary alarms stay green, promote to 100%; otherwise auto-rollback fires. Manual rollback: run `deploy rollback payments-service --to <previous-version>` from the deploy CLI, which reverts pods and drains in-flight requests gracefully. Marcus Webb is on call this week for any deploy that pages after hours; page via the Engineering on-call rotation for anyone else. See the PAY-2114 incident review for a real example of a canary-triggered rollback."
+}

@@ -1,0 +1,10 @@
+{
+  "id": "hr-pto-policy",
+  "title": "Acme Corp PTO Policy",
+  "department": "HR",
+  "view_url": "https://portal.acme.internal/hr/pto-policy",
+  "created_at": "2025-11-01T00:00:00Z",
+  "updated_at": "2026-04-12T00:00:00Z",
+  "permission": { "groups": ["Acme-All-Employees"] },
+  "body": "Acme Corp provides flexible PTO for all full-time employees: no fixed accrual cap, but we ask that you take at least 15 days per year and coordinate time off of a week or longer with your manager at least two weeks in advance. Request PTO through the HR portal; your manager approves within 2 business days. Unused PTO does not carry over or pay out, since it's not accrual-based. Sick leave is separate and unlimited for genuine illness — no approval needed, just notify your manager. Contact Dana Okafor (HR lead) with policy questions."
+}

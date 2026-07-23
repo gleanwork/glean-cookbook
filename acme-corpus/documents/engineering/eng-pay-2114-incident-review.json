@@ -1,0 +1,10 @@
+{
+  "id": "eng-pay-2114-incident-review",
+  "title": "PAY-2114: Canary Alarms During Deploy — Incident Review",
+  "department": "Engineering",
+  "view_url": "https://portal.acme.internal/incidents/PAY-2114",
+  "created_at": "2026-06-28T00:00:00Z",
+  "updated_at": "2026-06-30T00:00:00Z",
+  "permission": { "groups": ["Acme-All-Employees"] },
+  "body": "PAY-2114 summary: a payments-service deploy on 2026-06-28 tripped canary alarms 6 minutes into the 5% rollout — authorization failure rate rose from 0.2% to 4.1%. Auto-rollback triggered and fully reverted within 90 seconds; no customer-facing outage, but roughly 340 authorization attempts failed during the canary window and were not automatically retried. Root cause: a new connection-pool setting for the Stripe client was too aggressive for the canary pod's lower traffic share, causing premature connection eviction. Fix: the connection-pool floor now scales with traffic percentage rather than using a fixed value. Marcus Webb was on call and handled the response; Priya Natarajan led the follow-up fix. Action item: add a synthetic-traffic floor to canary pods so connection pools warm up correctly regardless of real traffic share — tracked as a follow-up ticket."
+}
