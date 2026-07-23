@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate-registry:
+    name: Validate registry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run validate:registry
+
+  format-check:
+    name: Format check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+
+  pinned-deps:
+    name: Pinned SDK versions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/check-pinned-deps.mjs
+
+  recipe-checks:
+    name: Recipe typecheck / lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Typecheck and lint every recipe
+        run: |
+          set -e
+          shopt -s nullglob
+          recipe_dirs=(recipes/*/)
+          if [ ${#recipe_dirs[@]} -eq 0 ]; then
+            echo "No recipes yet — nothing to check."
+            exit 0
+          fi
+          pip install ruff
+          for recipe in "${recipe_dirs[@]}"; do
+            echo "::group::${recipe}"
+            find "$recipe" -name package.json -not -path '*/node_modules/*' | while read -r pkg; do
+              dir=$(dirname "$pkg")
+              (cd "$dir" && npm ci)
+              if [ -f "$dir/tsconfig.json" ]; then
+                (cd "$dir" && npx tsc --noEmit)
+              fi
+            done
+            find "$recipe" -name requirements.txt | while read -r req; do
+              dir=$(dirname "$req")
+              pip install -r "$req"
+              ruff check "$dir"
+            done
+            echo "::endgroup::"
+          done
