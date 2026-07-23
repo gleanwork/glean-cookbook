@@ -7,6 +7,14 @@
 
   <g transform="translate(80, 80)">
     <rect x="0" y="0" width="56" height="56" rx="16" fill="#343CED" />
+    <path
+      d="M28 14 L15.75 42 M28 14 L40.25 42 M19.578 33.25 L36.422 33.25"
+      fill="none"
+      stroke="#ffffff"
+      stroke-width="5.7"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
     <text
       x="76"
       y="39"
