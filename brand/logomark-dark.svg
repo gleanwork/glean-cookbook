@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Acme Corp">
+  <title>Acme Corp</title>
+  <desc>Dark-surface variant of the Acme mark: same --gdt-primary (#343CED) fill, with a subtle light inset stroke for legibility against near-black backgrounds.</desc>
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="17.5" fill="#343CED" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" />
+</svg>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Acme Corp">
+  <title>Acme Corp</title>
+  <desc>Rounded-square mark, formalized from the indigo logomark used in the Glean developer site's Web SDK mocks (PortalPage). Fill is --gdt-primary (#343CED).</desc>
+  <rect x="0" y="0" width="64" height="64" rx="18" fill="#343CED" />
+</svg>
