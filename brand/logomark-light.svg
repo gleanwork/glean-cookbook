@@ -1,13 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Acme Corp">
   <title>Acme Corp</title>
-  <desc>Indigo rounded-square mark (--gdt-primary, #343CED) with a white "A" monogram, for light backgrounds.</desc>
-  <rect x="0" y="0" width="64" height="64" rx="18" fill="#343CED" />
-  <path
-    d="M32 16 L18 48 M32 16 L46 48 M22.375 38 L41.625 38"
-    fill="none"
-    stroke="#ffffff"
-    stroke-width="6.5"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
+  <desc>Teal rounded-square mark (Acme accent #0E8C84) with a solid negative-space &#34;A&#34; keystone, for light backgrounds.</desc>
+  <rect x="0" y="0" width="64" height="64" rx="18" fill="#0E8C84"></rect>
+  <path fill-rule="evenodd" fill="#ffffff" d="M32 13 L55 52 L9 52 Z M32 29 L43 46 L21 46 Z"></path>
 </svg>
