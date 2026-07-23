@@ -1,0 +1,6 @@
+recipes/**/node_modules
+recipes/**/dist
+recipes/**/.venv
+recipes/**/*.lock
+pnpm-lock.yaml
+package-lock.json

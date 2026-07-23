@@ -1,0 +1,20 @@
+{
+  "name": "glean-cookbook",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Runnable recipes for building on the Glean platform.",
+  "type": "module",
+  "scripts": {
+    "validate:registry": "node scripts/validate-registry.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "prettier": "^3.4.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
