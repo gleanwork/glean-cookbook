@@ -21,7 +21,7 @@ Each `recipes/{id}/` directory is a **self-contained, runnable example** — it 
 - **Language subdirectories** where a recipe ships more than one client (e.g. `recipes/permissions-aware-rag/python/`, `recipes/permissions-aware-rag/typescript/`).
 - **A `README.md` per recipe** that stays in sync with its `docs/cookbook/{id}.mdx` page on the dev site — the dev site page is the canonical prose; this README is the quickstart for someone browsing GitHub directly.
 - **No hardcoded credentials, ever.** All recipes read `GLEAN_INSTANCE` and `GLEAN_API_TOKEN` (or the recipe-specific scoped token) from the environment. Include a `.env.example` if the recipe needs more than those two.
-- **Pinned dependencies.** Glean SDKs (`glean-api-client`, `@gleanwork/api-client`, `@gleanwork/web-sdk`, `glean-indexing-sdk`) are pinned to an exact released version — no `^`, `~`, or `latest`. Renovate is configured to open PRs on new releases so drift surfaces as a reviewable diff, not a silent break. CI fails a recipe that isn't pinned.
+- **Pinned dependencies.** Glean SDKs (`glean-api-client`, `@gleanwork/api-client`, `@gleanwork/web-sdk`, `glean-indexing-sdk`) are pinned to an exact released version — no `^`, `~`, or `latest`. CI (`pinned-deps`) fails a recipe that isn't.
 
 ### The registry
 
