@@ -49,18 +49,6 @@ function checkRequirementsTxt(label, filePath) {
   }
 }
 
-const acmeCorpusDir = path.join(repoRoot, 'acme-corpus');
-if (fs.existsSync(acmeCorpusDir)) {
-  for (const sub of walkDirs(acmeCorpusDir)) {
-    const pkgJson = path.join(sub, 'package.json');
-    if (fs.existsSync(pkgJson)) checkPackageJson('acme-corpus', pkgJson);
-
-    const requirementsTxt = path.join(sub, 'requirements.txt');
-    if (fs.existsSync(requirementsTxt))
-      checkRequirementsTxt('acme-corpus', requirementsTxt);
-  }
-}
-
 if (!fs.existsSync(recipesDir)) {
   console.log('No recipes/ directory yet — nothing more to check.');
 } else {

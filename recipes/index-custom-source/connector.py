@@ -1,7 +1,10 @@
-"""Acme Corpus connectors — glean-indexing-sdk==1.0.0b2.
+"""index-custom-source recipe connector — glean-indexing-sdk==1.0.0b2.
 
-Two connectors, both reading straight off the JSON fixtures in this directory
-(no external system involved — the fixtures ARE the source of truth):
+Two connectors, both reading straight off the JSON fixtures in
+../../acme-corpus/ (no external system involved — the fixtures ARE the
+source of truth). This is the runnable code for the index-custom-source
+recipe (PACT-444); the corpus it indexes is owned by PACT-438 and lives
+in acme-corpus/ so every other recipe can demo against the same data.
 
 - AcmeCorpusConnector: a BaseDatasourceConnector that indexes documents/**/*.json
   into a custom "acme_corpus" datasource, and pushes the permission identities
@@ -11,10 +14,6 @@ Two connectors, both reading straight off the JSON fixtures in this directory
   as searchable employee profiles (a separate Glean capability from document
   permissions — this is what makes "who is Priya Natarajan" resolve to a person
   card, independent of any document ACL).
-
-This code doubles as the working example for the index-custom-source recipe
-(PACT-444) — the pattern here (JSON fixtures -> transform -> permissions) is
-exactly what that recipe walks through.
 """
 
 from __future__ import annotations
@@ -44,7 +43,7 @@ from glean.indexing.models import (
     DocumentDefinition,
 )
 
-CORPUS_ROOT = Path(__file__).parent
+CORPUS_ROOT = Path(__file__).parent.parent.parent / "acme-corpus"
 DOCUMENTS_DIR = CORPUS_ROOT / "documents"
 PEOPLE_DIR = CORPUS_ROOT / "people"
 
