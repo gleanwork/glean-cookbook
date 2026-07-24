@@ -1,0 +1,14 @@
+# Secrets checklist
+
+Before you send the prompt, have these two values ready. Add them wherever Lovable's Agent directs you once it sets up a backend/secrets integration — never paste them into the chat with the Agent, and never let the Agent write them into a frontend file.
+
+| Secret            | Where it comes from                                                                    | Notes                                                                                                                                                 |
+| ----------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GLEAN_API_TOKEN` | Glean Admin Console → **Platform → API Tokens** → create a token scoped to `CHAT` only | Scope it as narrowly as possible — this token answers questions for anyone who uses the app, so `CHAT`-only limits the blast radius if it ever leaks. |
+| `GLEAN_INSTANCE`  | Your Glean URL, `https://<instance>-be.glean.com` → the `<instance>` part              | Not a secret in the security sense, but keeping it alongside the token means the whole app config lives in one place.                                 |
+
+**After Lovable finishes:**
+
+- [ ] Open the generated source and confirm neither value appears in any file that ships to the browser (React components, `.env` files bundled client-side) — only references to a server-side secret read.
+- [ ] Confirm the Glean API call happens in a backend/server function, not in client-side React code — open your browser's Network tab while using the app and check that requests to `*.glean.com` never originate from the browser itself.
+- [ ] Rotate the token from the Admin Console if you ever suspect it leaked (e.g. pasted into a screenshot, committed by accident).

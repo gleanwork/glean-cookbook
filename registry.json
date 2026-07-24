@@ -289,5 +289,62 @@
     "go_dependency": false,
     "featured": false,
     "tags": ["a2a", "interop"]
+  },
+  {
+    "id": "no-code-pto-lookup-replit",
+    "surfaces": ["platform-api"],
+    "status": "showcase",
+    "category": "workflow",
+    "level": "Beginner",
+    "levels": { "minimal": true, "wow": false },
+    "time_estimate": "~45 min",
+    "required_scopes": ["CHAT"],
+    "prerequisites": [
+      "A Replit account with Agent access",
+      "A Glean API token with the CHAT scope (kept in Replit Secrets)"
+    ],
+    "demo_queries": ["What is our PTO policy?", "When is open enrollment?"],
+    "code_assets": [
+      {
+        "repo_path": "recipes/no-code-pto-lookup-replit",
+        "language": "markdown",
+        "description": "The exact Replit Agent prompt + secrets checklist"
+      }
+    ],
+    "scaffold_actions": [],
+    "ai_prompt": "I'm using Replit Agent, not you, to build this — your job is to prepare my inputs per https://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Generate the Replit prompt from the recipe's template, filling in my Glean server URL.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never in the prompt.\n3. After Replit builds it, give me the two demo queries to verify citations and permissions.",
+    "go_dependency": false,
+    "featured": false,
+    "tags": ["no-code", "hr"]
+  },
+  {
+    "id": "no-code-it-helpdesk-lovable",
+    "surfaces": ["platform-api"],
+    "status": "showcase",
+    "category": "workflow",
+    "level": "Beginner",
+    "levels": { "minimal": true, "wow": false },
+    "time_estimate": "~45 min",
+    "required_scopes": ["CHAT"],
+    "prerequisites": [
+      "A Lovable account",
+      "A Glean API token with the CHAT scope (kept as a Lovable backend secret)"
+    ],
+    "demo_queries": [
+      "Where do I reset my SSO password?",
+      "How do I request a new laptop?"
+    ],
+    "code_assets": [
+      {
+        "repo_path": "recipes/no-code-it-helpdesk-lovable",
+        "language": "markdown",
+        "description": "The exact Lovable prompt + secrets checklist"
+      }
+    ],
+    "scaffold_actions": [],
+    "ai_prompt": "I'm using Lovable, not you, to build this — your job is to prepare my inputs per https://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the prompt.\n3. After Lovable builds it, give me the two demo queries to verify citations and permissions.",
+    "go_dependency": false,
+    "featured": false,
+    "tags": ["no-code", "it"]
   }
 ]
