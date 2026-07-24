@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Acme Answers</title>
+    <style>
+      body {
+        margin: 0;
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        background: #f7f8fa;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 24px;
+        background: #ffffff;
+        border-bottom: 1px solid #e7e8ed;
+      }
+      .mark {
+        width: 22px;
+        height: 22px;
+        border-radius: 7px;
+        background: #0e8c84;
+      }
+      h1 {
+        font-size: 16px;
+        margin: 0;
+        color: #1f2024;
+      }
+      main {
+        max-width: 720px;
+        margin: 32px auto;
+        padding: 0 24px;
+      }
+      #chat {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: 560px;
+        background: #ffffff;
+        border: 1px solid #e7e8ed;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="mark"></span>
+      <h1>Acme Answers</h1>
+    </header>
+    <main>
+      <div id="chat"></div>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
