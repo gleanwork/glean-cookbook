@@ -6,3 +6,4 @@ One directory per recipe, `recipes/{id}/`. See the root [README](../README.md#re
 - [`index-custom-source/`](index-custom-source/) — index the Acme corpus with per-document permissions
 - [`permissions-aware-rag/`](permissions-aware-rag/) — Glean Search as the retrieval layer for your own LLM app (Python + TypeScript)
 - [`connect-mcp-hosts/`](connect-mcp-hosts/) — Glean MCP configs for Claude Code, Cursor, and Claude Desktop
+- [`multi-step-agent/`](multi-step-agent/) — a Glean agent with a governed custom Tool, plus the graceful-denial branch

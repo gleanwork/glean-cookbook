@@ -1,0 +1,63 @@
+openapi: 3.0.0
+info:
+  title: Acme Incident Ticket Tool
+  version: 1.0.0
+servers:
+  - url: https://your-tool-server.example.com/tools/incidents
+paths:
+  /file_incident_ticket:
+    post:
+      summary: Files a payments-service incident tracking ticket
+      description: |
+        Creates an incident ticket for the payments-service. Only Acme
+        Engineering can file tickets; the server returns 403 for anyone
+        else.
+      parameters:
+        - name: Glean-User-Email
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Email of the authenticated Glean user.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                summary:
+                  x-glean-typehint: 'Content'
+                  type: string
+                  description: Title of the incident.
+                description:
+                  x-glean-typehint: 'Content'
+                  type: string
+                  description: Body describing the incident and its impact.
+                priority:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  description: Numeric priority. 1 (highest) to 5 (lowest).
+              required:
+                - summary
+                - description
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileIncidentTicketResponse'
+        '401':
+          description: Missing user identity
+        '403':
+          description: Not authorized (not in Acme-Engineering)
+components:
+  schemas:
+    FileIncidentTicketResponse:
+      type: object
+      properties:
+        resultURL:
+          type: string
+          description: URL of the created incident ticket.
