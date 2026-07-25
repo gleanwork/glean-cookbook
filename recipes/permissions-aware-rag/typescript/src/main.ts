@@ -1,16 +1,27 @@
 /**
- * Permissions-aware RAG — Glean Search as the retrieval layer for your own LLM app.
+ * Permissions-aware RAG — Glean's data-first Platform API as the retrieval
+ * layer for your own LLM app.
  *
- * Verified against the actually installed pinned SDKs:
- * - @gleanwork/api-client@0.18.0: glean.client.search.query() (the Client
- *   API's /rest/api/v1/search) — the same glean.client.* pattern already
- *   verified for the acme-answers recipe's chat.create() call.
+ * Verified against the actually installed pinned SDKs (real HTTP round-trip
+ * against a local echo server, headers and all — not just constructed and
+ * inspected):
+ * - @gleanwork/api-client@0.18.0: the top-level glean.search.query() (not
+ *   glean.client.search.query() — that's the older Client/REST API, a
+ *   different surface entirely). This is Glean's newer, data-first retrieval
+ *   API (POST /api/search): launched publicly 2026-07 but still Experimental,
+ *   so every call must opt in via X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var,
+ *   read automatically by the SDK — there's no argument for this on
+ *   search.query() itself). Response shape is deliberately plain: each
+ *   result's `snippets` is a string[], not an array of {text: ...} objects
+ *   like the Client API's search.query() — one less unwrap.
  * - @anthropic-ai/sdk@0.115.0: messages.create() with model "claude-sonnet-5".
  *
  * Per-user enforcement: a global/admin Glean token can impersonate a
  * specific user via the X-Glean-Act-As header (confirmed against internal
  * auth docs, not guessed) — there is no actAs option on search.query()
- * itself; it's passed as a raw request header.
+ * itself; it's passed as a raw request header, via the second argument's
+ * fetchOptions.headers (search.query() only takes 2 args, unlike
+ * client.search.query()'s 3).
  */
 
 import 'dotenv/config';
@@ -40,19 +51,17 @@ async function retrieve(
     instance: requireEnv('GLEAN_INSTANCE'),
   });
 
-  const response = await glean.client.search.query(
-    { query: question, pageSize: 8 },
-    undefined,
-    actAs ? { headers: { 'X-Glean-Act-As': actAs } } : undefined,
+  const response = await glean.search.query(
+    { query: question, page_size: 8 },
+    actAs
+      ? { fetchOptions: { headers: { 'X-Glean-Act-As': actAs } } }
+      : undefined,
   );
 
   const sources: Source[] = [];
   for (const result of response.results ?? []) {
     if (!result.title || !result.snippets) continue;
-    const text = result.snippets
-      .map((snippet) => snippet.text ?? '')
-      .filter(Boolean)
-      .join('\n');
+    const text = result.snippets.filter(Boolean).join('\n');
     if (text) sources.push({ title: result.title, url: result.url, text });
   }
   return sources;

@@ -1,11 +1,18 @@
-"""Permissions-aware RAG — Glean Search as the retrieval layer for your own LLM app.
+"""Permissions-aware RAG — Glean's data-first Platform API as the retrieval
+layer for your own LLM app.
 
-Verified against the actually installed pinned SDKs:
-- glean-api-client==0.15.4: glean.client.search.query() (the Client API's
-  /rest/api/v1/search) -- NOT the top-level glean.search.query(), which is
-  a separate, newer data-retrieval API still in RFC as of this writing.
-  Matches the same glean.client.* pattern already verified for the
-  acme-answers recipe's chat.create() call.
+Verified against the actually installed pinned SDKs (real HTTP round-trip
+against a local echo server, headers and all -- not just constructed and
+inspected):
+- glean-api-client==0.15.4: the top-level glean.search.query() (not
+  glean.client.search.query() -- that's the older Client/REST API, a
+  different surface entirely). This is Glean's newer, data-first retrieval
+  API (POST /api/search): launched publicly 2026-07 but still Experimental,
+  so every call must opt in with X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var,
+  read automatically by the SDK -- there's no argument for this on
+  search.query() itself). Response shape is deliberately plain: each result's
+  `snippets` is a list of strings, not a list of {text: ...} objects like the
+  Client API's search.query() -- one less unwrap.
 - anthropic==0.120.0: messages.create() with model="claude-sonnet-5".
 
 Per-user enforcement: a global/admin Glean token can impersonate a specific
@@ -32,7 +39,7 @@ def retrieve(question: str, act_as: str | None) -> list[dict]:
 
     http_headers = {"X-Glean-Act-As": act_as} if act_as else None
 
-    response = glean.client.search.query(
+    response = glean.search.query(
         query=question,
         page_size=8,
         http_headers=http_headers,
@@ -42,9 +49,7 @@ def retrieve(question: str, act_as: str | None) -> list[dict]:
     for result in response.results or []:
         if not result.title or not result.snippets:
             continue
-        text = "\n".join(
-            snippet.text for snippet in result.snippets if snippet.text
-        )
+        text = "\n".join(snippet for snippet in result.snippets if snippet)
         if text:
             sources.append({"title": result.title, "url": result.url, "text": text})
     return sources
@@ -55,8 +60,7 @@ def answer(question: str, sources: list[dict]) -> str:
         return "I don't have information on that."
 
     context = "\n\n".join(
-        f"[{i + 1}] {source['title']}\n{source['text']}"
-        for i, source in enumerate(sources)
+        f"[{i + 1}] {source['title']}\n{source['text']}" for i, source in enumerate(sources)
     )
     prompt = (
         f"Answer the question using ONLY the numbered sources below. "

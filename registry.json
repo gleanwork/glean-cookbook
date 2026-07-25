@@ -1,7 +1,7 @@
 [
   {
     "id": "acme-answers",
-    "surfaces": ["platform-api", "sdk-client", "web-sdk"],
+    "surfaces": ["client-api", "sdk-client", "web-sdk"],
     "status": "showcase",
     "category": "search",
     "level": "Beginner",
@@ -128,6 +128,7 @@
     "required_scopes": ["SEARCH"],
     "prerequisites": [
       "A Glean token with SEARCH scope (global/admin token for the act-as permissions demo)",
+      "X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)",
       "An LLM API key (any provider; example uses Claude)",
       "Python 3.10+ or Node 20+"
     ],
@@ -139,7 +140,7 @@
       {
         "repo_path": "recipes/permissions-aware-rag/python",
         "language": "python",
-        "description": "search.query -> snippets -> LLM with citations"
+        "description": "Platform API search.query -> snippets -> LLM with citations"
       },
       {
         "repo_path": "recipes/permissions-aware-rag/typescript",
@@ -156,7 +157,7 @@
         "emphasized": false
       },
       {
-        "label": "Glean Search API",
+        "label": "Glean Platform API",
         "caption": "ACL-filtered retrieval",
         "category": "search",
         "emphasized": true
@@ -168,8 +169,8 @@
         "emphasized": false
       }
     ],
-    "ai_prompt": "Build permissions-aware RAG on Glean following https://developers.glean.com/cookbook/permissions-aware-rag\n\n1. Retrieval: glean.client.search.query(query=..., page_size=8) - use the\n   Client API's search.query (glean.client.search), NOT the newer\n   top-level glean.search.query(), which is a separate data-retrieval API.\n   Collect title, url, and snippets[].text from each result - snippets are\n   the chunks.\n2. Prompt the LLM with ONLY those snippets; require inline [n] citations\n   mapped back to the result URLs.\n3. Enforce per-user: pass an X-Glean-Act-As: <email> HTTP header (not a\n   query parameter or SDK option) to impersonate a specific user with a\n   global/admin token. Demo with two users where the restricted one gets\n   \"I don't have information on that\" for HR-only queries.\n4. README must state the differentiator: no vector DB, no ACL mirroring,\n   no re-sync - Glean is the governed retrieval layer.\n\nUse claude-sonnet-5 via the anthropic SDK if the user doesn't specify a\nprovider; keep the LLM call swappable.",
-    "llm_context": "Client API search: glean.client.search.query(query, page_size, http_headers). Result shape: results[].title, results[].url, results[].snippets[].text (the modern field; .snippet is legacy). Per-user enforcement is the X-Glean-Act-As HTTP header on a global/admin token, not an SDK parameter.",
+    "ai_prompt": "Build permissions-aware RAG on Glean following https://developers.glean.com/cookbook/permissions-aware-rag\n\n1. Retrieval: glean.search.query(query=..., page_size=8) - the top-level\n   Platform API method, NOT glean.client.search.query(), which is a\n   different, older surface (the Client API). The Platform API is\n   Experimental as of its 2026-07 launch: set\n   X_GLEAN_INCLUDE_EXPERIMENTAL=true as an env var or every call fails -\n   there's no argument for this on search.query() itself. Collect title,\n   url, and snippets from each result - snippets is a plain string[] here\n   (no .text unwrap needed, unlike the Client API).\n2. Prompt the LLM with ONLY those snippets; require inline [n] citations\n   mapped back to the result URLs.\n3. Enforce per-user: pass an X-Glean-Act-As: <email> HTTP header (not a\n   query parameter or SDK option) to impersonate a specific user with a\n   global/admin token. Demo with two users where the restricted one gets\n   \"I don't have information on that\" for HR-only queries.\n4. README must state the differentiator: no vector DB, no ACL mirroring,\n   no re-sync - Glean is the governed retrieval layer.\n\nUse claude-sonnet-5 via the anthropic SDK if the user doesn't specify a\nprovider; keep the LLM call swappable.",
+    "llm_context": "Platform API search (data-first retrieval, distinct from the Client API's glean.client.search.query): glean.search.query(query, page_size, http_headers) -> PlatformSearchResponse. Result shape: results[].title, results[].url, results[].snippets (string[], not snippet objects). Experimental since its 2026-07-14 public launch - requires X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var, read automatically by the SDK) on every call or it 4xxs. Per-user enforcement is still the X-Glean-Act-As HTTP header on a global/admin token, not an SDK parameter, same as the Client API.",
     "go_dependency": false,
     "featured": true,
     "tags": ["rag", "differentiator"]
@@ -264,7 +265,7 @@
   },
   {
     "id": "a2a-client",
-    "surfaces": ["agents", "platform-api"],
+    "surfaces": ["agents", "client-api"],
     "status": "production-pattern",
     "category": "agent",
     "level": "Intermediate",
@@ -295,7 +296,7 @@
   },
   {
     "id": "no-code-pto-lookup-replit",
-    "surfaces": ["platform-api"],
+    "surfaces": ["client-api"],
     "status": "showcase",
     "category": "workflow",
     "level": "Beginner",
@@ -323,7 +324,7 @@
   },
   {
     "id": "no-code-it-helpdesk-lovable",
-    "surfaces": ["platform-api"],
+    "surfaces": ["client-api"],
     "status": "showcase",
     "category": "workflow",
     "level": "Beginner",
