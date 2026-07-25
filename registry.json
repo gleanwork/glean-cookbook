@@ -6,6 +6,7 @@
     "category": "search",
     "level": "Beginner",
     "levels": { "minimal": true, "wow": true },
+    "icon": "qna",
     "time_estimate": "~30 min",
     "required_scopes": ["CHAT"],
     "prerequisites": [
@@ -211,6 +212,7 @@
     "category": "agent",
     "level": "Advanced",
     "levels": { "minimal": true, "wow": true },
+    "icon": "assistant-tools",
     "time_estimate": "~2 hr",
     "required_scopes": ["AGENTS", "TOOLS"],
     "prerequisites": [
@@ -267,6 +269,7 @@
     "category": "agent",
     "level": "Intermediate",
     "levels": { "minimal": true, "wow": false },
+    "icon": "double-arrow",
     "time_estimate": "~45 min",
     "required_scopes": ["Agent-scoped Client API token (AGENTS)"],
     "prerequisites": [
@@ -297,6 +300,7 @@
     "category": "workflow",
     "level": "Beginner",
     "levels": { "minimal": true, "wow": false },
+    "icon": "replit",
     "time_estimate": "~45 min",
     "required_scopes": ["CHAT"],
     "prerequisites": [
@@ -324,6 +328,7 @@
     "category": "workflow",
     "level": "Beginner",
     "levels": { "minimal": true, "wow": false },
+    "icon": "lovable",
     "time_estimate": "~45 min",
     "required_scopes": ["CHAT"],
     "prerequisites": [
