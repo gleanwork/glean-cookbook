@@ -1,0 +1,17 @@
+{
+  "name": "glean-cookbook-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Claude Code / Cursor / Codex plugin for building Glean cookbook recipes.",
+  "license": "MIT",
+  "scripts": {
+    "generate:commands": "node scripts/generate-commands.mjs",
+    "build": "npm run generate:commands && pluginpack build",
+    "validate": "pluginpack validate --target claude --dir dist/claude && pluginpack validate --target cursor --dir dist/cursor && pluginpack validate --target codex --dir dist/codex",
+    "test": "npm run build && npm run validate"
+  },
+  "devDependencies": {
+    "@gleanwork/pluginpack": "^0.7.0"
+  }
+}

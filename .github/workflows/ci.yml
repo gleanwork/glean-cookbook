@@ -40,6 +40,34 @@ jobs:
           node-version: 20
       - run: node scripts/check-pinned-deps.mjs
 
+  plugin-build:
+    name: Build & validate plugin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: plugin/package-lock.json
+      - working-directory: plugin
+        run: npm ci
+      - name: Check generated commands/skill are not stale
+        working-directory: plugin
+        run: npm run generate:commands -- --check
+      - name: Build all targets
+        working-directory: plugin
+        run: npx pluginpack build
+      - name: Validate claude target
+        working-directory: plugin
+        run: npx pluginpack validate --target claude --dir dist/claude
+      - name: Validate cursor target
+        working-directory: plugin
+        run: npx pluginpack validate --target cursor --dir dist/cursor
+      - name: Validate codex target
+        working-directory: plugin
+        run: npx pluginpack validate --target codex --dir dist/codex
+
   recipe-checks:
     name: Recipe typecheck / lint
     runs-on: ubuntu-latest
