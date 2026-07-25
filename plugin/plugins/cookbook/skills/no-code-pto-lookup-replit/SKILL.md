@@ -1,6 +1,7 @@
 ---
 name: no-code-pto-lookup-replit
 description: 'Prompt Replit Agent into a working HR lookup tool on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.'
+disable-model-invocation: true
 ---
 
 I'm using Replit Agent, not you, to build this — your job is to prepare

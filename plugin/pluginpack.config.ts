@@ -1,9 +1,9 @@
 import { defineConfig } from '@gleanwork/pluginpack';
 
-// claude/cursor/antigravity/copilot omit the `commands` component by default
-// (they increasingly expose skills as slash commands instead) — opt it back
-// in explicitly since PACT-458 wants real /cookbook:{recipe-id} slash
-// commands, not just an auto-triggering skill.
+// Skills (not commands/) are the current recommendation for both Claude
+// Code and pluginpack itself — and a skill folder named {id} inside a
+// plugin named "cookbook" already produces /cookbook:{id}, so no
+// `components` override is needed to get slash-command-style invocation.
 export default defineConfig({
   name: 'glean-cookbook',
   version: '0.1.0',
@@ -19,19 +19,19 @@ export default defineConfig({
     claude: {
       outDir: 'dist/claude',
       plugins: {
-        cookbook: { from: ['cookbook'], components: ['skills', 'commands'] },
+        cookbook: { from: ['cookbook'] },
       },
     },
     cursor: {
       outDir: 'dist/cursor',
       plugins: {
-        cookbook: { from: ['cookbook'], components: ['skills', 'commands'] },
+        cookbook: { from: ['cookbook'] },
       },
     },
     codex: {
       outDir: 'dist/codex',
       plugins: {
-        cookbook: { from: ['cookbook'], components: ['skills', 'commands'] },
+        cookbook: { from: ['cookbook'] },
       },
     },
   },

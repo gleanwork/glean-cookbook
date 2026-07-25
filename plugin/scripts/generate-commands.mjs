@@ -1,15 +1,24 @@
 #!/usr/bin/env node
 
 /**
- * Generates one plugin slash command per recipe from ../../registry.json,
- * plus the recipe list embedded in the browse-cookbook skill. Regenerated on
- * every registry change so neither can drift from the single source of
- * truth (PACT-458) — same philosophy as glean-developer-site's
- * `pnpm snippets:check`.
+ * Generates one plugin skill per recipe from ../../registry.json, plus the
+ * recipe list embedded in the browse-cookbook skill. Regenerated on every
+ * registry change so neither can drift from the single source of truth
+ * (PACT-458) — same philosophy as glean-developer-site's `pnpm snippets:check`.
  *
- * A command file at commands/cookbook/{id}.md becomes the slash command
- * `/cookbook:{id}` once pluginpack compiles it for the claude target
- * (directory-nested commands are namespaced by Claude Code).
+ * Each recipe gets skills/{id}/SKILL.md. A skill folder named {id} inside a
+ * plugin named "cookbook" becomes the slash command `/cookbook:{id}` —
+ * Claude Code's *only* namespace layer is the plugin's own name; there is no
+ * additional per-directory nesting (confirmed the hard way: an earlier
+ * version of this script nested skills one level too deep, under
+ * commands/cookbook/{id}.md, which produced /cookbook:cookbook:{id}).
+ * `disable-model-invocation: true` keeps these explicit-only (typing
+ * /cookbook:{id}), since auto-triggering a multi-step app build from
+ * unrelated conversation would be surprising.
+ *
+ * commands/ (flat markdown files) is Claude Code's older mechanism; current
+ * guidance is to use skills/ for new plugins, which is also pluginpack's
+ * default component for the claude/cursor/codex targets.
  *
  * Output is always passed through the repo's own Prettier config before
  * comparison/writing, so this generator and `npm run format:check` at the
@@ -27,21 +36,8 @@ import { execFileSync } from 'node:child_process';
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
 const pluginRoot = path.resolve(import.meta.dirname, '..');
 const registryFile = path.join(repoRoot, 'registry.json');
-const commandsDir = path.join(
-  pluginRoot,
-  'plugins',
-  'cookbook',
-  'commands',
-  'cookbook',
-);
-const skillFile = path.join(
-  pluginRoot,
-  'plugins',
-  'cookbook',
-  'skills',
-  'browse-cookbook',
-  'SKILL.md',
-);
+const skillsDir = path.join(pluginRoot, 'plugins', 'cookbook', 'skills');
+const browseSkillFile = path.join(skillsDir, 'browse-cookbook', 'SKILL.md');
 
 const SCAFFOLD_ACTION_WORDS = {
   sdk: 'SDK',
@@ -62,11 +58,12 @@ function yamlQuote(value) {
   return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }
 
-function renderCommand(recipe) {
+function renderRecipeSkill(recipe) {
   const sections = [
     `---`,
     `name: ${recipe.id}`,
     `description: ${yamlQuote(recipe.description)}`,
+    `disable-model-invocation: true`,
     `---`,
     '',
     recipe.aiPrompt.trim(),
@@ -112,70 +109,73 @@ function main() {
   const check = process.argv.includes('--check');
   const registry = loadRegistry();
 
-  const desiredCommands = new Map(
-    registry.map((r) => [`${r.id}.md`, renderCommand(r)]),
+  // recipe id -> skills/{id}/SKILL.md path
+  const desiredSkills = new Map(
+    registry.map((r) => [
+      path.join(skillsDir, r.id, 'SKILL.md'),
+      renderRecipeSkill(r),
+    ]),
   );
 
-  const existingSkill = fs.existsSync(skillFile)
-    ? fs.readFileSync(skillFile, 'utf8')
+  const existingBrowseSkill = fs.existsSync(browseSkillFile)
+    ? fs.readFileSync(browseSkillFile, 'utf8')
     : '';
   const startMarker = '<!-- pluginpack-generated:recipes:start -->';
   const endMarker = '<!-- pluginpack-generated:recipes:end -->';
-  const startIdx = existingSkill.indexOf(startMarker);
-  const endIdx = existingSkill.indexOf(endMarker);
+  const startIdx = existingBrowseSkill.indexOf(startMarker);
+  const endIdx = existingBrowseSkill.indexOf(endMarker);
   if (startIdx === -1 || endIdx === -1) {
     throw new Error(
-      `${path.relative(repoRoot, skillFile)}: missing ${startMarker}/${endMarker} markers`,
+      `${path.relative(repoRoot, browseSkillFile)}: missing ${startMarker}/${endMarker} markers`,
     );
   }
-  const desiredSkill =
-    existingSkill.slice(0, startIdx + startMarker.length) +
+  const desiredBrowseSkill =
+    existingBrowseSkill.slice(0, startIdx + startMarker.length) +
     '\n' +
     renderSkillRecipeList(registry) +
     '\n' +
-    existingSkill.slice(endIdx);
+    existingBrowseSkill.slice(endIdx);
 
-  // Snapshot what's on disk today so a --check run can restore it exactly,
-  // even though we write through real target paths (simplest way to
-  // guarantee the same Prettier pass check-mode compares against is the
-  // one write-mode actually commits).
-  const existingCommandFiles = fs.existsSync(commandsDir)
-    ? fs.readdirSync(commandsDir).filter((f) => f.endsWith('.md'))
+  // Existing recipe-skill directories today (anything under skillsDir other
+  // than browse-cookbook) — used to detect stale ids removed from the
+  // registry, and to snapshot/restore around a --check run.
+  const existingRecipeIds = fs.existsSync(skillsDir)
+    ? fs
+        .readdirSync(skillsDir, { withFileTypes: true })
+        .filter((e) => e.isDirectory() && e.name !== 'browse-cookbook')
+        .map((e) => e.name)
     : [];
-  const snapshot = new Map();
-  for (const fileName of existingCommandFiles) {
-    snapshot.set(
-      path.join(commandsDir, fileName),
-      fs.readFileSync(path.join(commandsDir, fileName), 'utf8'),
-    );
-  }
-  snapshot.set(skillFile, existingSkill);
 
-  fs.mkdirSync(commandsDir, { recursive: true });
-  for (const fileName of existingCommandFiles) {
-    if (!desiredCommands.has(fileName)) {
-      fs.unlinkSync(path.join(commandsDir, fileName));
+  const snapshot = new Map();
+  for (const id of existingRecipeIds) {
+    const filePath = path.join(skillsDir, id, 'SKILL.md');
+    if (fs.existsSync(filePath)) {
+      snapshot.set(filePath, fs.readFileSync(filePath, 'utf8'));
     }
   }
+  snapshot.set(browseSkillFile, existingBrowseSkill);
+
+  const staleIds = existingRecipeIds.filter(
+    (id) => !desiredSkills.has(path.join(skillsDir, id, 'SKILL.md')),
+  );
+  for (const id of staleIds) {
+    fs.rmSync(path.join(skillsDir, id), { recursive: true, force: true });
+  }
+
   const writtenPaths = [];
-  for (const [fileName, desired] of desiredCommands) {
-    const filePath = path.join(commandsDir, fileName);
+  for (const [filePath, desired] of desiredSkills) {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, desired);
     writtenPaths.push(filePath);
   }
-  fs.writeFileSync(skillFile, desiredSkill);
-  writtenPaths.push(skillFile);
+  fs.writeFileSync(browseSkillFile, desiredBrowseSkill);
+  writtenPaths.push(browseSkillFile);
 
   formatWithPrettier(writtenPaths);
 
-  const mismatches = [];
-  for (const fileName of existingCommandFiles) {
-    if (!desiredCommands.has(fileName)) {
-      mismatches.push(
-        `${path.join('commands/cookbook', fileName)}: stale — no matching registry entry`,
-      );
-    }
-  }
+  const mismatches = staleIds.map(
+    (id) => `skills/${id}: stale — no matching registry entry`,
+  );
   for (const filePath of writtenPaths) {
     const before = snapshot.get(filePath);
     const after = fs.readFileSync(filePath, 'utf8');
@@ -187,28 +187,36 @@ function main() {
   if (check) {
     // Restore exactly what was on disk before this run — --check must be a
     // read-only operation from the caller's point of view.
+    for (const id of staleIds) {
+      const dir = path.join(skillsDir, id);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(
+        path.join(dir, 'SKILL.md'),
+        snapshot.get(path.join(dir, 'SKILL.md')),
+      );
+    }
     for (const [filePath, content] of snapshot) {
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(filePath, content);
     }
-    for (const fileName of Array.from(desiredCommands.keys())) {
-      const filePath = path.join(commandsDir, fileName);
-      if (!snapshot.has(filePath)) fs.unlinkSync(filePath); // was newly created by this run
+    for (const filePath of desiredSkills.keys()) {
+      if (!snapshot.has(filePath)) {
+        fs.rmSync(path.dirname(filePath), { recursive: true, force: true }); // newly created by this run
+      }
     }
 
     if (mismatches.length > 0) {
-      console.error(
-        `Generated command/skill content is stale (${mismatches.length}):`,
-      );
+      console.error(`Generated skill content is stale (${mismatches.length}):`);
       for (const m of mismatches) console.error(`  - ${m}`);
       console.error('Run `npm run generate:commands` and commit the result.');
       process.exit(1);
     }
-    console.log('Generated commands and skill are up to date.');
+    console.log('Generated skills are up to date.');
     return;
   }
 
   console.log(
-    `Generated ${desiredCommands.size} command(s) and updated the browse-cookbook skill.`,
+    `Generated ${desiredSkills.size} recipe skill(s) and updated the browse-cookbook skill.`,
   );
 }
 

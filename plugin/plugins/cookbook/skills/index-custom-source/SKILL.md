@@ -1,6 +1,7 @@
 ---
 name: index-custom-source
 description: 'Bring an unsupported source into Glean with the Indexing API — documents, permissions, and people — and see it live in search. This recipe seeds the Acme corpus every other recipe searches.'
+disable-model-invocation: true
 ---
 
 Index the Acme demo corpus into my Glean instance following

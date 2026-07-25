@@ -1,6 +1,7 @@
 ---
 name: a2a-client
 description: "Discover a published Glean agent's A2A card and run it from any A2A client — multi-turn, streamed, permission-aware."
+disable-model-invocation: true
 ---
 
 Build an A2A client for a Glean agent following

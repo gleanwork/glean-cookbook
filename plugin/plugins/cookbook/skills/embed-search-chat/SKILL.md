@@ -1,6 +1,7 @@
 ---
 name: embed-search-chat
 description: 'Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.'
+disable-model-invocation: true
 ---
 
 Embed Glean search and chat in my internal web app using the Glean Web

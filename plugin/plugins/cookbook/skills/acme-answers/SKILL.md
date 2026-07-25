@@ -1,6 +1,7 @@
 ---
 name: acme-answers
 description: 'The hello-world of Glean apps: one page, one input, one permission-aware cited answer — built two ways, with the Web SDK and with the Chat API.'
+disable-model-invocation: true
 ---
 
 Build "Acme Answers", a one-page company Q&A app on Glean, following

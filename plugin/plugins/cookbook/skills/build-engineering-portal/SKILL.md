@@ -1,6 +1,7 @@
 ---
 name: build-engineering-portal
 description: 'The end-to-end showcase — index a developer catalog into Glean, then embed permission-aware search and chat back into the portal your team already uses.'
+disable-model-invocation: true
 ---
 
 Build the "Engineering portal with Glean" flagship recipe from

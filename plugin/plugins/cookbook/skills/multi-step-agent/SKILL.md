@@ -1,6 +1,7 @@
 ---
 name: multi-step-agent
 description: 'Build a Glean agent that plans, retrieves, and acts through a governed custom tool — with a safe fallback when the tool is denied.'
+disable-model-invocation: true
 ---
 
 Build the governed multi-step agent from

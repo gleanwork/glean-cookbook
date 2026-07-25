@@ -1,6 +1,7 @@
 ---
 name: permissions-aware-rag
 description: "Use Glean's Platform API as the retrieval layer for your own LLM app — every chunk ACL-filtered per user before it ever reaches the model."
+disable-model-invocation: true
 ---
 
 Build permissions-aware RAG on Glean following

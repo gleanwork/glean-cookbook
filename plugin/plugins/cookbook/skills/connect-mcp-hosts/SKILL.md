@@ -1,6 +1,7 @@
 ---
 name: connect-mcp-hosts
 description: 'Point Claude Code, Cursor, and Claude Desktop at your Glean MCP endpoint and run one enterprise task from each — same context, three surfaces.'
+disable-model-invocation: true
 ---
 
 Connect me to the Glean remote MCP server following

@@ -1,6 +1,7 @@
 ---
 name: no-code-it-helpdesk-lovable
 description: 'Prompt Lovable into an IT helpdesk deflection page on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.'
+disable-model-invocation: true
 ---
 
 I'm using Lovable, not you, to build this — your job is to prepare my
