@@ -10,3 +10,5 @@ One directory per recipe, `recipes/{id}/`. See the root [README](../README.md#re
 - [`a2a-client/`](a2a-client/) — call a Glean agent from an A2A client: card discovery, multi-turn, streaming
 - [`no-code-pto-lookup-replit/`](no-code-pto-lookup-replit/) — prompt Replit Agent into an HR PTO/benefits lookup tool, zero hand-written code
 - [`no-code-it-helpdesk-lovable/`](no-code-it-helpdesk-lovable/) — prompt Lovable into an IT helpdesk deflection page, zero hand-written code
+- [`build-engineering-portal/`](build-engineering-portal/) — flagship showcase composing `index-custom-source` + `embed-search-chat` (no standalone code)
+- [`embed-search-chat/`](embed-search-chat/) — Web SDK embed snippets, documented inline (no standalone code)
