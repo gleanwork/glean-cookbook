@@ -39,16 +39,28 @@ CI (`validate-registry`) checks every registry entry against the schema and conf
 
 Every PR runs:
 
-1. **`validate-registry`** — registry entries validate against `schemas/recipe.schema.json`.
+1. **`validate-registry`** — registry entries validate against `schemas/recipe.schema.json`, plus an informational (non-failing) report of which recipes are due for re-verification (see below).
 2. **`pinned-deps`** — every recipe's Glean SDK dependency is pinned to an exact version.
 3. **`recipe-checks`** — each recipe with a `package.json` typechecks (`tsc --noEmit`); each with a `requirements.txt` lints with `ruff`.
 4. **`format-check`** — Prettier formatting.
+5. **`plugin-build`** — the `glean-cookbook` plugin (see `plugin/`) builds and validates for every target (Claude Code, Cursor, Codex), and its generated skills are checked against `registry.json` for drift.
 
 ## Contributing
 
 - Open a PR against `main`; one approving review is required.
 - Run `npm run format` and `npm run validate:registry` locally before pushing.
 - If you're building a recipe from a spec handed to you (e.g. a Linear ticket with a validated registry entry attached), the entry is normative — copy it into `registry.json` unchanged, and build the code in `recipes/{id}/` to match what it promises (demo queries must resolve against real data in `acme-corpus/`, `aiPrompt` must actually scaffold what it claims to).
+
+### Verifying a recipe
+
+`registry.json`'s `aiPrompt`/`llmContext` render on the dev site _and_ drive the cookbook
+plugin — both need to be correct standalone, so recipes hand-encode real API details rather
+than just pointing at docs. That content can drift as SDKs evolve. "Verified" means someone
+actually ran the recipe end-to-end via the plugin (`/cookbook:{id}` in Claude Code, or the
+equivalent for another host) and confirmed the result works — not that the prose still reads
+correctly. Once you've done that, set `lastVerified` to that date in the recipe's registry
+entry. `npm run check:freshness` (also runs in CI, informational only) reports which recipes
+have never been verified this way or haven't been re-checked in 90+ days.
 
 ## Related
 

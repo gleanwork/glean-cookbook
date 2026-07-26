@@ -17,6 +17,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run validate:registry
+      - name: Report recipe verification freshness (informational)
+        run: node scripts/check-recipe-freshness.mjs
 
   format-check:
     name: Format check

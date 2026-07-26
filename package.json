@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "validate:registry": "node scripts/validate-registry.mjs",
+    "check:freshness": "node scripts/check-recipe-freshness.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
