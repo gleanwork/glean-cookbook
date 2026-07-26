@@ -8,10 +8,9 @@
  *
  * Each recipe gets skills/{id}/SKILL.md. A skill folder named {id} inside a
  * plugin named "cookbook" becomes the slash command `/cookbook:{id}` —
- * Claude Code's *only* namespace layer is the plugin's own name; there is no
- * additional per-directory nesting (confirmed the hard way: an earlier
- * version of this script nested skills one level too deep, under
- * commands/cookbook/{id}.md, which produced /cookbook:cookbook:{id}).
+ * Claude Code's *only* namespace layer is the plugin's own name. Do not nest
+ * skill folders under an extra subdirectory (e.g. skills/cookbook/{id}); that
+ * doubles the namespace to /cookbook:cookbook:{id}.
  * `disable-model-invocation: true` keeps these explicit-only (typing
  * /cookbook:{id}), since auto-triggering a multi-step app build from
  * unrelated conversation would be surprising.
@@ -88,10 +87,8 @@ function renderRecipeSkill(recipe) {
   }
 
   // Any recipe that renders a Web SDK UI shares the same brand-kit and
-  // container-sizing conventions — see skills/cookbook-conventions rather
-  // than re-deriving them per recipe (that's what produced a plain color
-  // square instead of the real logomark, and an oversized empty-feeling
-  // chat panel, the first time this recipe was actually run).
+  // container-sizing conventions — point at skills/cookbook-conventions
+  // rather than re-deriving them per recipe.
   if (recipe.surfaces?.includes('web-sdk')) {
     sections.push(
       '',
