@@ -1,9 +1,19 @@
 ---
 name: cookbook-conventions
-description: Shared Acme Corp brand kit and Web SDK embed conventions for Glean cookbook recipes. Apply whenever building or styling a cookbook recipe that renders a UI (Acme Answers, embedded search/chat, the engineering portal, or a Lovable/Replit no-code build).
+description: Shared Acme Corp brand kit, Web SDK embed conventions, and live-docs lookup for Glean cookbook recipes. Apply whenever building or styling a cookbook recipe that renders a UI (Acme Answers, embedded search/chat, the engineering portal, or a Lovable/Replit no-code build), or whenever a recipe's instructions reference a Glean API/SDK detail worth confirming.
 ---
 
 # Cookbook house style
+
+## Verify API details against live docs
+
+This plugin ships the `glean-developer-docs` MCP server (`docs_search`, `docs_fetch`) —
+`developers.glean.com`'s own documentation, always current. A recipe's instructions describe
+_what_ to build and call out gotchas that aren't in the docs (deprecated classes, footguns in
+bundled SDK examples, exact field names that are easy to get wrong); they don't restate every
+method signature or response shape. When you need that level of detail, or the recipe's
+instructions seem to disagree with the SDK version you actually have installed, use
+`docs_search`/`docs_fetch` to confirm rather than guessing — that's what the server is for.
 
 Every cookbook recipe demo represents the same fictional company, Acme Corp. Use these exact
 conventions instead of approximating — a plain colored square is not the logomark, and an
