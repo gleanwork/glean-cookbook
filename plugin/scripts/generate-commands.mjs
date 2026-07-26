@@ -39,6 +39,13 @@ const registryFile = path.join(repoRoot, 'registry.json');
 const skillsDir = path.join(pluginRoot, 'plugins', 'cookbook', 'skills');
 const browseSkillFile = path.join(skillsDir, 'browse-cookbook', 'SKILL.md');
 
+// Hand-authored skills that live alongside the generated per-recipe ones —
+// never touched by the stale-id sweep in main().
+const HAND_AUTHORED_SKILLS = new Set([
+  'browse-cookbook',
+  'cookbook-conventions',
+]);
+
 const SCAFFOLD_ACTION_WORDS = {
   sdk: 'SDK',
   mcp: 'MCP',
@@ -78,6 +85,23 @@ function renderRecipeSkill(recipe) {
 
   if (recipe.llmContext) {
     sections.push('', '## Reference', recipe.llmContext.trim());
+  }
+
+  // Any recipe that renders a Web SDK UI shares the same brand-kit and
+  // container-sizing conventions — see skills/cookbook-conventions rather
+  // than re-deriving them per recipe (that's what produced a plain color
+  // square instead of the real logomark, and an oversized empty-feeling
+  // chat panel, the first time this recipe was actually run).
+  if (recipe.surfaces?.includes('web-sdk')) {
+    sections.push(
+      '',
+      '## House style',
+      "This recipe renders a Web SDK UI — apply the cookbook's shared conventions " +
+        '(see the `cookbook-conventions` skill in this plugin): the real Acme logomark ' +
+        '(not a plain colored square), a 480–500px-tall container, and `initialMessage` ' +
+        "set to this recipe's own first demo query so it opens into a real answer " +
+        'instead of an empty landing screen.',
+    );
   }
 
   return `${sections.join('\n')}\n`;
@@ -137,12 +161,12 @@ function main() {
     existingBrowseSkill.slice(endIdx);
 
   // Existing recipe-skill directories today (anything under skillsDir other
-  // than browse-cookbook) — used to detect stale ids removed from the
-  // registry, and to snapshot/restore around a --check run.
+  // than the hand-authored ones above) — used to detect stale ids removed
+  // from the registry, and to snapshot/restore around a --check run.
   const existingRecipeIds = fs.existsSync(skillsDir)
     ? fs
         .readdirSync(skillsDir, { withFileTypes: true })
-        .filter((e) => e.isDirectory() && e.name !== 'browse-cookbook')
+        .filter((e) => e.isDirectory() && !HAND_AUTHORED_SKILLS.has(e.name))
         .map((e) => e.name)
     : [];
 

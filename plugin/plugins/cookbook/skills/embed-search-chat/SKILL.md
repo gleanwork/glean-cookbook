@@ -19,10 +19,13 @@ Steps:
    import { renderSearchBox, renderSearchResults } from "@gleanwork/web-sdk";
    renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>
    renderSearchResults(resultsElement, { query }) });
-4. Add a chat container (position: relative, display: block, explicit
-   width/height), then:
+4. Add a chat container: position: relative, display: block, width: 100%,
+   height: 480px — any shorter and long answers scroll awkwardly, any
+   taller and you get dead space below Glean's own chat landing view. Then:
    import { renderChat } from "@gleanwork/web-sdk";
-   renderChat(containerElement, { backend });
+   renderChat(containerElement, { backend, initialMessage: "What's our PTO policy?" });
+   initialMessage opens straight into a real cited answer instead of an
+   empty landing screen, and doubles as your on-load verification.
 5. Default SSO auth needs no extra configuration. If I ask for
    server-to-server auth instead, follow
    https://developers.glean.com/libraries/web-sdk/authentication/server-to-server
@@ -38,3 +41,7 @@ Glean permissions.
 ## Reference
 
 Embeds Glean search and chat into an existing web app via the Glean Web SDK npm package @gleanwork/web-sdk (renderSearchBox, renderSearchResults, renderChat named exports; script-tag fallback exposes the same methods on window.GleanWebSDK). Pass the backend option to route users directly to the instance. Auth is Glean SSO by default or server-to-server tokens minted by a backend holding an admin API key with SEARCH and CHAT scopes. All results are permission-aware per user.
+
+## House style
+
+This recipe renders a Web SDK UI — apply the cookbook's shared conventions (see the `cookbook-conventions` skill in this plugin): the real Acme logomark (not a plain colored square), a 480–500px-tall container, and `initialMessage` set to this recipe's own first demo query so it opens into a real answer instead of an empty landing screen.

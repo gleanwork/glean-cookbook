@@ -69,12 +69,24 @@ ready. Don't skip this by calling Glean directly from React.
    the raw error message if the request fails (this is an internal tool
    — don't hide errors from me while I'm testing it).
 
-5. Give the assistant a short system framing so it stays on-topic: it
+5. Style it as Acme Corp: use `#0E8C84` (teal) as the primary accent —
+   the submit button, an active/focus state, or a header bar. Use this
+   exact mark as the page's logo/icon instead of a generic chat icon —
+   inline the SVG directly rather than approximating it:
+
+   ```svg
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" role="img" aria-label="Acme Corp">
+     <rect x="0" y="0" width="64" height="64" rx="18" fill="#0E8C84"></rect>
+     <path fill-rule="evenodd" fill="#ffffff" d="M32 13 L55 52 L9 52 Z M32 29 L43 46 L21 46 Z"></path>
+   </svg>
+   ```
+
+6. Give the assistant a short system framing so it stays on-topic: it
    should present itself as "Acme IT Help" and answer IT/helpdesk
    questions using only what Glean returns — don't have it improvise
    troubleshooting steps Glean didn't cite.
 
-6. When you're done, tell me the two things I need to test:
+7. When you're done, tell me the two things I need to test:
    - Ask "Where do I reset my SSO password?" and confirm the answer
      cites the SSO reset guide.
    - Ask "How do I request a new laptop?" and confirm it cites the IT
