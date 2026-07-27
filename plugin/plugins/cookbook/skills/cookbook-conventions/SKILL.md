@@ -1,9 +1,38 @@
 ---
 name: cookbook-conventions
-description: Shared Acme Corp brand kit, Web SDK embed conventions, and live-docs lookup for Glean cookbook recipes. Apply whenever building or styling a cookbook recipe that renders a UI (Acme Answers, embedded search/chat, the engineering portal, or a Lovable/Replit no-code build), or whenever a recipe's instructions reference a Glean API/SDK detail worth confirming.
+description: Shared Acme Corp brand kit, Web SDK embed conventions, OAuth-vs-token auth detection, and live-docs lookup for Glean cookbook recipes. Apply whenever building or styling a cookbook recipe that renders a UI (Acme Answers, embedded search/chat, the engineering portal, or a Lovable/Replit no-code build), whenever a recipe asks the user for a Glean instance/token/credential, or whenever a recipe's instructions reference a Glean API/SDK detail worth confirming.
 ---
 
 # Cookbook house style
+
+## Authentication: OAuth first, token as fallback — detect, don't assume
+
+Some Glean deployments don't have OAuth enabled, so don't assume either direction. Resolve it
+instead of guessing, using the same chain a real user's own instance is discoverable through:
+
+1. Ask for the user's work email — not a raw backend URL. Resolve their tenant with:
+   ```
+   POST https://app.glean.com/config/search
+   Content-Type: application/json
+
+   {"email": "<their email>"}
+   ```
+   Response: `{"search_config": {"queryURL": "https://{instance}.askscio.com/", ...}}`. Extract
+   `{instance}` from the subdomain of `queryURL`.
+2. The real Client API backend is `https://{instance}-be.glean.com` — verified live: for a
+   `glean.com` email this resolves `queryURL` to `scio-prod.askscio.com`, and
+   `https://scio-prod-be.glean.com` is a real, reachable backend; same pattern confirmed for at
+   least one real customer domain.
+3. `GET {backend}/.well-known/oauth-authorization-server`. A 200 means OAuth is configured —
+   use `authorization_code` + PKCE (verified live against `scio-prod-be.glean.com`: this is the
+   grant Glean's own docs call "the recommended authentication method for Client API
+   integrations," and what MCP hosts already use for their own sign-in flow). Do **not** use
+   `client_credentials` even though it appears in `grant_types_supported` — a general
+   client-credentials/service-account flow for the Client API is explicitly not yet a supported
+   path for this kind of integration.
+4. A 404 (or any failure) on that endpoint means OAuth isn't available for this instance — fall
+   back to asking for an API token with the scope the recipe needs, the same way recipes already
+   do when OAuth genuinely isn't an option.
 
 ## Verify API details against live docs
 
