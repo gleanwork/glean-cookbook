@@ -50,6 +50,23 @@ const SCAFFOLD_ACTION_WORDS = {
   mcp: 'MCP',
 };
 
+// Matches recipe.ts's RECIPE_AUTH_METHODS — the subsection heading each
+// value maps to in the cookbook-conventions skill's Authentication section.
+// 'none' and 'custom' have no entry: they don't point at that section at all.
+const AUTH_METHOD_SUBSECTIONS = {
+  'web-sdk-cookie': '`web-sdk-cookie`',
+  'client-api-oauth-or-token': '`client-api-oauth-or-token`',
+  'indexing-token': '`indexing-token`',
+};
+
+const LANGUAGE_LABELS = {
+  typescript: 'TypeScript',
+  javascript: 'JavaScript',
+  python: 'Python',
+  go: 'Go',
+  java: 'Java',
+};
+
 function humanizeScaffoldAction(action) {
   const withoutPrefix = action.replace(/^scaffold-/, '');
   const rest = withoutPrefix
@@ -84,6 +101,31 @@ function renderRecipeSkill(recipe) {
 
   if (recipe.llmContext) {
     sections.push('', '## Reference', recipe.llmContext.trim());
+  }
+
+  const authSubsections = (recipe.authMethod ?? [])
+    .map((method) => AUTH_METHOD_SUBSECTIONS[method])
+    .filter(Boolean);
+  if (authSubsections.length > 0) {
+    const subsectionList = authSubsections.join(' or ');
+    sections.push(
+      '',
+      '## Authentication',
+      `This recipe needs ${subsectionList} auth — follow the matching subsection under ` +
+        '"Authentication: follow the recipe\'s declared `authMethod`" in the `cookbook-conventions` ' +
+        'skill in this plugin, rather than assuming which credential path applies.',
+    );
+  }
+
+  if (recipe.languages?.length > 1) {
+    const languageList = recipe.languages
+      .map((lang) => LANGUAGE_LABELS[lang])
+      .join(', ');
+    sections.push(
+      '',
+      '## Language',
+      `Ask me which language to build in before starting: ${languageList}.`,
+    );
   }
 
   // Any recipe that renders a Web SDK UI shares the same brand-kit and

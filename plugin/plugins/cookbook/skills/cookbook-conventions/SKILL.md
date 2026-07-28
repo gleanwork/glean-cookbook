@@ -1,50 +1,87 @@
 ---
 name: cookbook-conventions
-description: Shared Acme Corp brand kit, Web SDK embed conventions, OAuth-vs-token auth detection, and live-docs lookup for Glean cookbook recipes. Apply whenever building or styling a cookbook recipe that renders a UI (Acme Answers, embedded search/chat, the engineering portal, or a Lovable/Replit no-code build), whenever a recipe asks the user for a Glean instance/token/credential, or whenever a recipe's instructions reference a Glean API/SDK detail worth confirming.
+description: Shared Acme Corp brand kit, Web SDK embed conventions, per-recipe auth-method guidance (web-sdk-cookie, client-api-oauth-or-token, indexing-token), and live-docs lookup for Glean cookbook recipes. Apply whenever building or styling a cookbook recipe that renders a UI (Acme Answers, embedded search/chat, the engineering portal, or a Lovable/Replit no-code build), whenever a recipe asks the user for a Glean instance/token/credential, or whenever a recipe's instructions reference a Glean API/SDK detail worth confirming.
 ---
 
 # Cookbook house style
 
-## Authentication: OAuth first, token as fallback — detect, don't assume
+## Authentication: follow the recipe's declared `authMethod`
 
-Some Glean deployments don't have OAuth enabled, so don't assume either direction. Resolve it
-instead of guessing, using the same chain a real user's own instance is discoverable through:
+Every recipe's registry entry declares `authMethod` — which credential category it needs. That
+declaration is the source of truth for which subsection below applies; don't re-derive it from
+the recipe's prose, and don't apply a subsection the recipe didn't declare. A recipe can declare
+more than one value when it offers a path choice (e.g. Acme Answers' Web SDK vs. Chat API paths)
+— in that case, apply whichever subsection matches the path the user picks. Recipes declaring
+`none` or `custom` don't use this section at all: `none` needs no Glean credential, and `custom`
+means the recipe's own aiPrompt already fully specifies a bespoke credential step (a per-agent
+bearer token from a Share dialog, the MCP Configurator's own OAuth flow, a token pasted into a
+third-party tool's secret store) — follow that instead of inventing a detection chain it doesn't
+need.
 
-1. Ask for the user's work email — not a raw backend URL. Resolve their tenant with:
-   ```
-   POST https://app.glean.com/config/search
-   Content-Type: application/json
+### `web-sdk-cookie`
 
-   {"email": "<their email>"}
-   ```
-   Response: `{"search_config": {"queryURL": "https://{instance}.askscio.com/", ...}}`. Extract
-   `{instance}` from the subdomain of `queryURL`.
-2. The real Client API backend is `https://{instance}-be.glean.com` — verified live: for a
-   `glean.com` email this resolves `queryURL` to `scio-prod.askscio.com`, and
-   `https://scio-prod-be.glean.com` is a real, reachable backend; same pattern confirmed for at
-   least one real customer domain.
-3. `GET {backend}/.well-known/oauth-authorization-server`. A 200 means OAuth is configured —
-   use `authorization_code` + PKCE (verified live against `scio-prod-be.glean.com`: this is the
-   grant Glean's own docs call "the recommended authentication method for Client API
-   integrations," and what MCP hosts already use for their own sign-in flow). Do **not** use
-   `client_credentials` even though it appears in `grant_types_supported` — a general
-   client-credentials/service-account flow for the Client API is explicitly not yet a supported
-   path for this kind of integration.
-4. Get a `client_id` via **Dynamic Client Registration** — the metadata's `registration_endpoint`
-   (verified live: `POST {backend}/oauth/register` with `client_name`, `redirect_uris`,
-   `grant_types: ["authorization_code", "refresh_token"]`, `response_types: ["code"]`,
-   `token_endpoint_auth_method: "none"` returns `201` with a real `client_id`, no admin
-   pre-approval needed). This is the same mechanism real MCP hosts already use to connect to
-   Glean — self-service, not something that requires the end user or their IT admin to
-   pre-register a Static OAuth Client first. Register once per app, reuse the `client_id` for
-   every subsequent login from that app.
-5. Complete the `authorization_code` + PKCE exchange with that `client_id` — a real browser login
-   (the user signs in via their normal SSO), then exchange the returned code at
-   `{backend}/oauth/token` for an access token + `refresh_token`. Use the refresh token to avoid
-   repeating the interactive login on every run.
-6. A 404 (or any failure) on the `.well-known` check in step 3 means OAuth isn't available for
-   this instance — fall back to asking for an API token with the scope the recipe needs, the same
-   way recipes already do when OAuth genuinely isn't an option.
+No explicit credential handling — the Web SDK's default `authMethod: 'sso'` relies on the user's
+existing browser session with Glean (they're already logged in, or get redirected to log in).
+Don't ask for a token or walk through OAuth for this path; that's a different, unnecessary auth
+model. If the recipe or user asks for server-to-server auth instead, that's a deliberate
+opt-out of cookie auth into `client-api-oauth-or-token` below — don't blend the two.
+
+### `client-api-oauth-or-token`
+
+Glean supports three ways to get a Client API credential. Try them in this order — don't assume
+one over the others, since which are available depends on how the tenant is configured:
+
+1. **Glean OAS (Glean's own OAuth Authorization Server)** — the most flexible, self-service
+   option, and the one to try first. It's disabled by default per-tenant, so detect it rather
+   than assume:
+   - Ask for the user's work email — not a raw backend URL. Resolve their tenant with:
+     ```
+     POST https://app.glean.com/config/search
+     Content-Type: application/json
+
+     {"email": "<their email>"}
+     ```
+     Response: `{"search_config": {"queryURL": "https://{instance}.askscio.com/", ...}}`. Extract
+     `{instance}` from the subdomain of `queryURL`. The real Client API backend is
+     `https://{instance}-be.glean.com` — verified live for a `glean.com` email (resolves to
+     `scio-prod-be.glean.com`) and for at least one real customer domain.
+   - `GET {backend}/.well-known/oauth-authorization-server`. A 200 means Glean OAS is enabled for
+     this tenant — use `authorization_code` + PKCE (verified live against
+     `scio-prod-be.glean.com`: this is the grant Glean's own docs call "the recommended
+     authentication method for Client API integrations," and what MCP hosts already use for
+     their own sign-in flow). Do **not** use `client_credentials` even though it appears in
+     `grant_types_supported` — a general client-credentials/service-account flow for the Client
+     API is explicitly not yet a supported path for this kind of integration. A 404 (or any
+     failure downstream — registration or token exchange rejected) means Glean OAS isn't enabled
+     for this tenant; move to option 2.
+   - Get a `client_id` via **Dynamic Client Registration** — the metadata's
+     `registration_endpoint` (verified live: `POST {backend}/oauth/register` with `client_name`,
+     `redirect_uris`, `grant_types: ["authorization_code", "refresh_token"]`,
+     `response_types: ["code"]`, `token_endpoint_auth_method: "none"` returns `201` with a real
+     `client_id`, no admin pre-approval needed). This is the same mechanism real MCP hosts
+     already use to connect to Glean — self-service, not something that requires the end user or
+     their IT admin to pre-register a Static OAuth Client first. Register once per app, reuse the
+     `client_id` for every subsequent login from that app.
+   - Complete the `authorization_code` + PKCE exchange with that `client_id` — a real browser
+     login (the user signs in via their normal SSO), then exchange the returned code at
+     `{backend}/oauth/token` for an access token + `refresh_token`. Use the refresh token to
+     avoid repeating the interactive login on every run.
+2. **IdP OAuth** — the customer's own identity provider (Okta, Azure AD, Google, etc.) issues the
+   token instead of Glean's own authorization server. This is admin-configured on the customer's
+   side, not something discoverable or self-service the way Glean OAS is — if Glean OAS isn't
+   enabled, ask the user whether their Glean admin has set up OAuth with an external IdP, and if
+   so get an access token via that IdP-integrated sign-in flow rather than guessing at one.
+3. **Glean Token** — least preferred, most cumbersome: the user needs either an admin to grant
+   them a token, or the API Token Creator role themselves. Fall back to this only after ruling out
+   both OAuth options above, by asking for an API token with the scope the recipe needs.
+
+### `indexing-token`
+
+Indexing API operations accept Glean-issued tokens only — OAuth does not apply here regardless of
+tenant configuration (per developers.glean.com/api-info/client/authentication/oauth). Don't run
+the OAuth detection chain above for an indexing recipe; go straight to asking for a Glean
+Indexing API token (`GLEAN_INDEXING_API_TOKEN`) and server URL (`GLEAN_SERVER_URL`), the same way
+`index-custom-source` already does.
 
 ## Verify API details against live docs
 
