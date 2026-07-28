@@ -30,9 +30,21 @@ instead of guessing, using the same chain a real user's own instance is discover
    `client_credentials` even though it appears in `grant_types_supported` — a general
    client-credentials/service-account flow for the Client API is explicitly not yet a supported
    path for this kind of integration.
-4. A 404 (or any failure) on that endpoint means OAuth isn't available for this instance — fall
-   back to asking for an API token with the scope the recipe needs, the same way recipes already
-   do when OAuth genuinely isn't an option.
+4. Get a `client_id` via **Dynamic Client Registration** — the metadata's `registration_endpoint`
+   (verified live: `POST {backend}/oauth/register` with `client_name`, `redirect_uris`,
+   `grant_types: ["authorization_code", "refresh_token"]`, `response_types: ["code"]`,
+   `token_endpoint_auth_method: "none"` returns `201` with a real `client_id`, no admin
+   pre-approval needed). This is the same mechanism real MCP hosts already use to connect to
+   Glean — self-service, not something that requires the end user or their IT admin to
+   pre-register a Static OAuth Client first. Register once per app, reuse the `client_id` for
+   every subsequent login from that app.
+5. Complete the `authorization_code` + PKCE exchange with that `client_id` — a real browser login
+   (the user signs in via their normal SSO), then exchange the returned code at
+   `{backend}/oauth/token` for an access token + `refresh_token`. Use the refresh token to avoid
+   repeating the interactive login on every run.
+6. A 404 (or any failure) on the `.well-known` check in step 3 means OAuth isn't available for
+   this instance — fall back to asking for an API token with the scope the recipe needs, the same
+   way recipes already do when OAuth genuinely isn't an option.
 
 ## Verify API details against live docs
 
