@@ -46,22 +46,31 @@ ready. Don't skip this by calling Glean directly from React.
      messages: [{ author: 'USER', fragments: [{ text: question }] }],
    });
 
-   const messages = response.messages ?? [];
+   const contentMessages = (response.messages ?? []).filter(
+     (m) => m.messageType === 'CONTENT',
+   );
+   const fragments = contentMessages.flatMap((m) => m.fragments ?? []);
 
-   const answer = messages
-     .flatMap((m) => m.fragments ?? [])
-     .map((f) => f.text ?? '')
-     .join('');
+   const answer = fragments.map((f) => f.text ?? '').join('');
 
-   const citations = messages
-     .flatMap((m) => m.citations ?? [])
-     .map((c) => c.sourceDocument)
+   const citations = fragments
+     .map((f) => f.citation?.sourceDocument)
      .filter((doc) => doc?.title && doc?.url);
+   const uniqueCitations = Array.from(
+     new Map(citations.map((doc) => [doc.url, doc])).values(),
+   );
    ```
 
-   Note: citations live on `message.citations[].sourceDocument`, not on a
-   top-level `citedDocuments` field — some older examples floating around
-   get this wrong.
+   Notes on the response shape, since guessing at field names here is
+   easy to get wrong:
+   - The response can include earlier step-narration messages (search/read
+     progress) before the real answer — filter to `messageType === 'CONTENT'`
+     or that narration text ends up prepended to the answer.
+   - Citations live per-fragment, in `fragment.citation.sourceDocument` —
+     not a top-level `citedDocuments` field, and not the older
+     `message.citations[]` field (deprecated, and not populated at all on
+     a live agentic response). Dedupe by `url` since the same source is
+     commonly cited by more than one fragment.
 
 4. Frontend: on submit, call your server-side function with the
    question, render `answer` as text, and render each citation as a link

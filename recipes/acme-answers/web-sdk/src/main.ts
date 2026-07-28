@@ -13,4 +13,5 @@ if (!container) {
 
 renderChat(container, {
   // backend: 'https://{your}-be.glean.com',
+  initialMessage: "What's our PTO policy?",
 });

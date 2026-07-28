@@ -18,10 +18,15 @@ https://developers.glean.com/cookbook/acme-answers
    new Glean({ apiToken, instance }) — NOT `domain`, which is not a
    real SDKOptions field despite appearing in one of the SDK's own
    bundled example files. POST chat.create with my question as a
-   single USER message; render answer text by joining
-   messages[].fragments[].text, and citations from
-   messages[].citations[].sourceDocument (title + url) — there is no
-   top-level citedDocuments field. Keep the API token server-side.
+   single USER message; the response can include earlier step-narration
+   messages (search/read progress) ahead of the real answer — filter to
+   messageType === 'CONTENT', then join those messages' fragments[].text
+   for the answer. Citations live per-fragment at fragments[].citation
+   .sourceDocument (title + url) — not a top-level citedDocuments field,
+   and not the older message.citations[] field, which is deprecated and
+   wasn't populated at all on a live test response. Dedupe citations by
+   url since the same source is commonly cited by more than one
+   fragment. Keep the API token server-side.
 4. Style it as Acme Corp per the house style below: the real logomark
    in the header (not a plain colored square), teal (#0E8C84) as the
    primary accent, "Acme Answers" title.
@@ -32,7 +37,7 @@ https://developers.glean.com/cookbook/acme-answers
 
 ## Reference
 
-Chat API: POST /rest/api/v1/chat (client SDK glean.client.chat.create). Answer text lives in messages[].fragments[].text (join them); citations live in messages[].citations[].sourceDocument (title, url) — not a top-level citedDocuments field. Client constructor takes apiToken + instance (or serverURL), not domain.
+Chat API: POST /rest/api/v1/chat (client SDK glean.client.chat.create). A real response can include earlier UPDATE-type messages narrating search/read steps ahead of the answer — filter to messageType === 'CONTENT' before joining fragments[].text, or that narration text ends up prepended to the answer. Citations live per-fragment at fragments[].citation.sourceDocument (title, url), not a top-level citedDocuments field and not the older message.citations[] field — that field is deprecated (removal scheduled 2026-10-15) and, verified live, wasn't populated at all on an agentic chat response even though real citations existed. Dedupe citations by url since the same source is commonly cited by more than one fragment. Client constructor takes apiToken + instance (or serverURL), not domain.
 
 ## Authentication
 

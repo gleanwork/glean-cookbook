@@ -6,14 +6,17 @@ import { fileURLToPath } from 'node:url';
 import { Glean } from '@gleanwork/api-client';
 
 // Path B (Chat API): you own the UI, the server owns the API token.
-// Verified against the pinned @gleanwork/api-client@0.18.0 types — two
-// corrections from a first-draft reading of the API:
+// Verified live against a real Glean instance — two corrections from a
+// first-draft reading of the API:
 //   1. The client constructor takes `instance` (or a full `serverURL`),
 //      not `domain` — `domain` isn't a real SDKOptions field even though
 //      it appears in one of the package's own bundled example files.
-//   2. Citations are NOT a top-level `citedDocuments` field on the
-//      response. They live per-message, in `message.citations[]`, each
-//      with a `sourceDocument` carrying `title`/`url`.
+//   2. `message.citations[]` is deprecated and, on a live agentic chat
+//      response, isn't populated at all — citations live per-fragment,
+//      in `fragment.citation.sourceDocument`. The response can also
+//      include non-answer messages (search/read step narration) ahead
+//      of the real answer — filter to `messageType === 'CONTENT'` or
+//      that narration text ends up prepended to the rendered answer.
 const glean = new Glean({
   apiToken: requireEnv('GLEAN_API_TOKEN'),
   instance: requireEnv('GLEAN_INSTANCE'),
@@ -37,19 +40,26 @@ async function askGlean(question: string) {
     ],
   });
 
-  const messages = response.messages ?? [];
+  const contentMessages = (response.messages ?? []).filter(
+    (message) => message.messageType === 'CONTENT',
+  );
+  const fragments = contentMessages.flatMap(
+    (message) => message.fragments ?? [],
+  );
 
-  const answer = messages
-    .flatMap((message) => message.fragments ?? [])
-    .map((fragment) => fragment.text ?? '')
-    .join('');
+  const answer = fragments.map((fragment) => fragment.text ?? '').join('');
 
-  const citations = messages
-    .flatMap((message) => message.citations ?? [])
-    .map((citation) => citation.sourceDocument)
-    .filter((document) => document?.title && document?.url);
+  const citations = fragments
+    .map((fragment) => fragment.citation?.sourceDocument)
+    .filter(
+      (document): document is NonNullable<typeof document> =>
+        !!document?.title && !!document?.url,
+    );
+  const uniqueCitations = Array.from(
+    new Map(citations.map((document) => [document.url, document])).values(),
+  );
 
-  return { answer, citations };
+  return { answer, citations: uniqueCitations };
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

@@ -16,13 +16,14 @@ Open `http://localhost:3000`, ask a question, get a cited answer.
 
 `server.ts` is a small Node HTTP server: `GET /` serves `public/index.html`; `POST /api/ask` calls `glean.client.chat.create` from `@gleanwork/api-client` with the question as a single `USER` message, then extracts:
 
-- **answer text** — every message's `fragments[].text`, joined
-- **citations** — every message's `citations[].sourceDocument`, filtered to ones with a `title` and `url`
+- **answer text** — `fragments[].text` from `CONTENT`-type messages only, joined (a real response can include earlier `UPDATE`-type messages narrating search/read steps; joining those in too prepends "Searching…"/"Reading…" text to the answer)
+- **citations** — `fragments[].citation.sourceDocument`, filtered to ones with a `title` and `url`, deduped by `url` (the same source is commonly cited by more than one fragment)
 
-Two corrections worth calling out (verified against the pinned `@gleanwork/api-client@0.18.0` types, not assumed):
+Three corrections worth calling out (verified live against a real Glean instance, not assumed):
 
 1. The client is constructed with `instance` (or a full `serverURL` override) — **not** `domain`. One of the SDK's own bundled example files (`examples/src/startChat.example.ts`) uses `domain`, but that isn't a field on `SDKOptions` at all.
-2. Citations are **not** a top-level `citedDocuments` field on the response. They live per-message, in `message.citations[]`.
+2. Citations are **not** a top-level `citedDocuments` field on the response, and the older per-message `message.citations[]` field is deprecated — on a live response it wasn't populated at all. Citations live per-fragment, in `fragment.citation.sourceDocument`.
+3. Don't assume every message in the response is the answer — a real chat response can include step-narration messages ahead of the actual answer; filter to `messageType === 'CONTENT'`.
 
 The API token never reaches the browser — only `server.ts` reads `GLEAN_API_TOKEN`.
 
