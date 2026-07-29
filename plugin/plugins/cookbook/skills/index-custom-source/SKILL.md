@@ -4,24 +4,35 @@ description: 'Bring an unsupported source into Glean with the Indexing API — d
 disable-model-invocation: true
 ---
 
-Index the Acme demo corpus into my Glean instance following
-https://developers.glean.com/cookbook/index-custom-source
+Build "Index a custom data source" following https://developers.glean.com/cookbook/index-custom-source
 
-1. Ask me for my Indexing API token + server URL (env vars only:
-   GLEAN_INDEXING_API_TOKEN, GLEAN_SERVER_URL).
-2. Register the custom datasource per the recipe's CustomDatasourceConfig
-   (glean-indexing-sdk==1.0.0b2, BaseDatasourceConnector.configure_datasource()).
-3. Run the connector from recipes/index-custom-source: bulk-index documents
-   WITH their permissions (DocumentPermissionsDefinition allowed_groups /
-   allowed_users) — never allow-all. Push identities via get_identities()
-   returning DatasourceIdentityDefinitions so ACLs actually evaluate.
-4. Verify: search "Who owns the payments-service catalog entry?" as me and
-   as a restricted test user; the restricted user must NOT see the
-   Acme-HR-only documents.
+1. **Scaffold the project**
+   connector.py resolves the corpus via a relative path two levels up (Path(**file**).parent.parent.parent / "acme-corpus") — scaffold both directories preserving that same nesting, not flattened into one directory.
 
-Note: this SDK version has no datasources.delete() call — only per-item
-deletes (documents, permission users/groups, employees). Don't invent a
-full datasource-teardown API.
+   ```bash
+   mkdir -p index-custom-source/recipes/index-custom-source index-custom-source/acme-corpus
+   npx tiged --mode=git gleanwork/glean-cookbook/recipes/index-custom-source index-custom-source/recipes/index-custom-source
+   npx tiged --mode=git gleanwork/glean-cookbook/acme-corpus index-custom-source/acme-corpus
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   cd index-custom-source/recipes/index-custom-source && pip install -r requirements.txt
+   ```
+
+3. **Set credentials**
+   Export GLEAN_INDEXING_API_TOKEN and GLEAN_SERVER_URL — this recipe has no .env.example, it reads directly from the environment (see indexing-token in cookbook-conventions).
+
+4. **Run it**
+   Registers the custom datasource and bulk-indexes documents/people with real per-document permissions — never allow-all.
+
+   ```bash
+   python seed.py
+   ```
+
+5. **Verify**
+   Search "Who owns the payments-service catalog entry?" as yourself and as a restricted test user — the restricted user must not see Acme-HR-only documents.
 
 ## Setup
 

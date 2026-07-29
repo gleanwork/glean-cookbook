@@ -16,7 +16,7 @@ Web SDK variant — renderChat in a page
 1. **Scaffold the project**
 
    ```bash
-   npx tiged gleanwork/glean-cookbook/recipes/acme-answers/web-sdk acme-answers
+   npx tiged --mode=git gleanwork/glean-cookbook/recipes/acme-answers/web-sdk acme-answers
    ```
 
 2. **Install dependencies**
@@ -44,7 +44,7 @@ Chat API variant — one chat.create call, citations rendered
 1. **Scaffold the project**
 
    ```bash
-   npx tiged gleanwork/glean-cookbook/recipes/acme-answers/chat-api acme-answers
+   npx tiged --mode=git gleanwork/glean-cookbook/recipes/acme-answers/chat-api acme-answers
    ```
 
 2. **Install dependencies**

@@ -53,6 +53,8 @@ const SCAFFOLD_ACTION_WORDS = {
 const VARIANT_LABEL_WORDS = {
   sdk: 'SDK',
   api: 'API',
+  typescript: 'TypeScript',
+  javascript: 'JavaScript',
 };
 
 // Matches recipe.ts's RECIPE_AUTH_METHODS — the subsection heading each
@@ -99,7 +101,12 @@ function renderStepList(steps, startNum) {
     .map((step, i) => {
       const lines = [`${startNum + i}. **${step.title}**`];
       if (step.description) lines.push(`   ${step.description}`);
-      if (step.command) lines.push('   ```bash', `   ${step.command}`, '   ```');
+      if (step.command) {
+        const commandLines = step.command
+          .split('\n')
+          .map((line) => `   ${line}`);
+        lines.push('   ```bash', ...commandLines, '   ```');
+      }
       return lines.join('\n');
     })
     .join('\n\n');

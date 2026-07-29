@@ -4,28 +4,74 @@ description: "Use Glean's Platform API as the retrieval layer for your own LLM a
 disable-model-invocation: true
 ---
 
-Build permissions-aware RAG on Glean following
-https://developers.glean.com/cookbook/permissions-aware-rag
+Build "Permissions-aware RAG" following https://developers.glean.com/cookbook/permissions-aware-rag
 
-1. Retrieval: glean.search.query(query=..., page_size=8) — the
-   top-level Platform API method, NOT glean.client.search.query(),
-   which is a different, older surface (the Client API). The Platform
-   API is Experimental as of its 2026-07 launch: set
-   X_GLEAN_INCLUDE_EXPERIMENTAL=true as an env var or every call fails
-   — there's no argument for this on search.query() itself. Collect
-   title, url, and snippets from each result — snippets is a plain
-   string[] here (no .text unwrap needed, unlike the Client API).
-2. Prompt the LLM with ONLY those snippets; require inline [n] citations
-   mapped back to the result URLs.
-3. Enforce per-user: pass an X-Glean-Act-As: <email> HTTP header (not a
-   query parameter or SDK option) to impersonate a specific user with a
-   global/admin token. Demo with two users where the restricted one
-   gets "I don't have information on that" for HR-only queries.
-4. README must state the differentiator: no vector DB, no ACL
-   mirroring, no re-sync — Glean is the governed retrieval layer.
+1. **Pick a language**
+   Both variants implement the same flow — pick whichever fits your app's stack.
 
-Use claude-sonnet-5 via the anthropic SDK if I don't specify a
-provider; keep the LLM call swappable.
+### Python
+
+Platform API search.query → snippets → LLM with citations
+
+1. **Scaffold the project**
+
+   ```bash
+   npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/python permissions-aware-rag
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   cd permissions-aware-rag && pip install -r requirements.txt
+   ```
+
+3. **Set credentials**
+   Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY, then export them into your shell — unlike the TypeScript variant, this one reads the environment directly and does not load .env automatically.
+
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Run it**
+
+   ```bash
+   python main.py "What's our PTO policy?"
+   ```
+
+5. **Verify**
+   Confirm the printed answer carries numbered citations with real titles and URLs. Re-run with --act-as <restricted-user-email> (requires a global/admin token) and confirm an HR-only query returns no fabricated answer for that user.
+
+### TypeScript
+
+Same flow in TypeScript
+
+1. **Scaffold the project**
+
+   ```bash
+   npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/typescript permissions-aware-rag
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   cd permissions-aware-rag && npm install
+   ```
+
+3. **Set credentials**
+   Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY — loaded automatically via dotenv in this variant.
+
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Run it**
+
+   ```bash
+   npm start -- "What's our PTO policy?"
+   ```
+
+5. **Verify**
+   Confirm the printed answer carries numbered citations with real titles and URLs. Re-run with -- "<question>" --act-as <restricted-user-email> (requires a global/admin token) and confirm an HR-only query returns no fabricated answer for that user.
 
 ## Reference
 

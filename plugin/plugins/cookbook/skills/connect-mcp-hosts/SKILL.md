@@ -4,27 +4,26 @@ description: 'Point Claude Code, Cursor, and Claude Desktop at your Glean MCP en
 disable-model-invocation: true
 ---
 
-Connect me to the Glean remote MCP server following
-https://developers.glean.com/cookbook/connect-mcp-hosts
+Build "Connect Glean MCP to your AI tools" following https://developers.glean.com/cookbook/connect-mcp-hosts
 
-1. Detect which MCP hosts I have installed (Claude Code, Cursor, Claude
-   Desktop).
-2. Resolve my Glean backend the same way the cookbook-conventions auth
-   chain does: ask for my work email, POST it to
-   https://app.glean.com/config/search, and extract {instance} from the
-   subdomain of the returned queryURL. The MCP server URL is
-   https://{instance}-be.glean.com/mcp/default.
-3. For each detected host, run the real, first-party configurator —
-   don't hand-walk a Configurator URL or ask me for an API token, this
-   CLI does the whole job including OAuth with Dynamic Client
-   Registration by default:
-   npx -y @gleanwork/configure-mcp-server remote --url <mcp-server-url> --client <host>
-   (--client values: claude-code, cursor, claude-desktop)
-4. Tell me to restart the host app afterward — Cursor and Claude Code
-   pick up the new server on restart; Claude Desktop needs the hammer
-   icon to confirm Glean tools are available.
-5. Verify per host by asking "Who's on call for payments-service?" and
-   confirming a Glean-cited answer.
+1. **Detect installed hosts**
+   Check for Claude Code, Cursor, and Claude Desktop on this machine.
+
+2. **Resolve your Glean backend**
+   Ask for your work email, POST it to https://app.glean.com/config/search, and extract {instance} from the subdomain of the returned queryURL — the same chain cookbook-conventions' auth section uses. The MCP server URL is https://{instance}-be.glean.com/mcp/default.
+
+3. **Configure each detected host**
+   --client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token.
+
+   ```bash
+   npx -y @gleanwork/configure-mcp-server remote --url https://{instance}-be.glean.com/mcp/default --client <host>
+   ```
+
+4. **Restart the host app**
+   Cursor and Claude Code pick up the new server on restart; Claude Desktop needs the hammer icon to confirm Glean tools are available.
+
+5. **Verify**
+   Per host, ask "Who's on call for payments-service?" and confirm a real, Glean-cited answer.
 
 ## Setup
 

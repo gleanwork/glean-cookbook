@@ -4,29 +4,36 @@ description: "Discover a published Glean agent's A2A card and run it from any A2
 disable-model-invocation: true
 ---
 
-Build an A2A client for a Glean agent following
-https://developers.glean.com/cookbook/a2a-client
+Build "Call a Glean agent from an A2A client" following https://developers.glean.com/cookbook/a2a-client
 
-1. Ask me for the agent card URL and bearer token (from the agent's
-   Share → A2A dialog).
-2. Pin a2a-sdk BELOW 1.0 (e.g. a2a-sdk==0.3.26) — Glean serves A2A
-   spec 0.3 (message/send, message/stream, tasks/get); 1.x clients
-   will not interop until the server upgrades. Note this in the
-   README.
-3. IMPORTANT: a2a-sdk's own A2AClient class (the one matching
-   message/send naming) is marked [DEPRECATED] even in the pinned
-   0.3.x release, with a runtime warning to use ClientFactory
-   instead. Use ClientFactory + Client.send_message() — do not use
-   A2AClient.
-4. Resolve the card (A2ACardResolver, bearer token via the httpx
-   client's headers), verify card.url contains /a2a/agents/.
-5. Client.send_message() is always an async iterator that yields
-   either a Message directly, or (Task, UpdateEvent) tuples for
-   task-based agents — handle both. Send a question (message/send
-   via a streaming=False client), then a follow-up reusing the
-   response's context_id to prove multi-turn, then a long question
-   via a streaming=True client. Errors: 404 = flag off or agent not
-   eligible; 403 = token scopes.
+1. **Scaffold the project**
+
+   ```bash
+   npx tiged --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client
+   ```
+
+2. **Install dependencies**
+   Pins a2a-sdk below 1.0 — Glean serves A2A spec 0.3 today; 1.x clients won't interop until the server upgrades.
+
+   ```bash
+   cd a2a-client && pip install -r requirements.txt
+   ```
+
+3. **Set credentials**
+   Fill in GLEAN_A2A_CARD_URL and GLEAN_A2A_TOKEN from the agent's Share → A2A dialog — this is a per-agent bearer token, not the general Glean OAuth/token chain.
+
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Run it**
+
+   ```bash
+   python main.py
+   ```
+
+5. **Verify**
+   Confirm a real answer to "Who owns the payments service?", a follow-up reusing the same context_id to prove multi-turn, and a streaming response — all three paths this recipe exercises.
 
 ## Reference
 
