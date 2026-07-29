@@ -90,7 +90,7 @@ jobs:
             echo "No recipes yet — nothing to check."
             exit 0
           fi
-          pip install ruff
+          pip install ruff pyright
           for recipe in "${recipe_dirs[@]}"; do
             echo "::group::${recipe}"
             find "$recipe" -name package.json -not -path '*/node_modules/*' | while read -r pkg; do
@@ -99,11 +99,17 @@ jobs:
               if [ -f "$dir/tsconfig.json" ]; then
                 (cd "$dir" && npx tsc --noEmit)
               fi
+              if [ -f "$dir/eslint.config.mjs" ]; then
+                (cd "$dir" && npx eslint .)
+              fi
             done
             find "$recipe" -name requirements.txt | while read -r req; do
               dir=$(dirname "$req")
               pip install -r "$req"
               ruff check "$dir"
+              if [ -f "$dir/pyrightconfig.json" ]; then
+                (cd "$dir" && pyright .)
+              fi
             done
             echo "::endgroup::"
           done

@@ -5,15 +5,18 @@
   "description": "Acme Answers — Chat API path: one chat.create call, you own the UI.",
   "type": "module",
   "scripts": {
-    "start": "tsx server.ts"
+    "start": "tsx server.ts",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@gleanwork/api-client": "0.18.0",
     "dotenv": "17.4.2"
   },
   "devDependencies": {
-    "typescript": "7.0.2",
+    "typescript": "6.0.3",
     "tsx": "4.23.1",
-    "@types/node": "26.1.1"
+    "@types/node": "26.1.1",
+    "eslint": "10.8.0",
+    "typescript-eslint": "8.65.0"
   }
 }
