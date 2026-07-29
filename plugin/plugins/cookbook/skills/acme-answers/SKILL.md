@@ -4,36 +4,73 @@ description: 'The hello-world of Glean apps: one page, one input, one permission
 disable-model-invocation: true
 ---
 
-Build "Acme Answers", a one-page company Q&A app on Glean, following
-https://developers.glean.com/cookbook/acme-answers
+Build "Acme Answers: a company knowledge Q&A page" following https://developers.glean.com/cookbook/acme-answers
 
-1. Ask me which path: (A) Web SDK or (B) Chat API. Build the one I pick.
-2. Path A: npm install @gleanwork/web-sdk; create a container with
-   position: relative, display: block, width: 100%, height: 480px, then
-   renderChat(el, { initialMessage: "What's our PTO policy?" }) — SSO
-   auth needs no configuration. Passing initialMessage opens straight
-   into a real cited answer instead of an empty landing screen, and
-   doubles as your on-load verification.
-3. Path B: npm install @gleanwork/api-client; construct the client with
-   new Glean({ apiToken, instance }) — NOT `domain`, which is not a
-   real SDKOptions field despite appearing in one of the SDK's own
-   bundled example files. POST chat.create with my question as a
-   single USER message; the response can include earlier step-narration
-   messages (search/read progress) ahead of the real answer — filter to
-   messageType === 'CONTENT', then join those messages' fragments[].text
-   for the answer. Citations live per-fragment at fragments[].citation
-   .sourceDocument (title + url) — not a top-level citedDocuments field,
-   and not the older message.citations[] field, which is deprecated and
-   wasn't populated at all on a live test response. Dedupe citations by
-   url since the same source is commonly cited by more than one
-   fragment. Keep the API token server-side.
-4. Style it as Acme Corp per the house style below: the real logomark
-   in the header (not a plain colored square), teal (#0E8C84) as the
-   primary accent, "Acme Answers" title.
-5. Verify with "What's our PTO policy?" — the answer must carry
-   citations and respect my permissions. Contrast note for the
-   README: the SDK path ships Glean's full UI free; the API path
-   gives total UI control.
+1. **Pick a path**
+   Path A (Web SDK) renders Glean's own chat UI for you — fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend — you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer.
+
+### Web SDK
+
+Web SDK variant — renderChat in a page
+
+1. **Scaffold the project**
+
+   ```bash
+   npx tiged gleanwork/glean-cookbook/recipes/acme-answers/web-sdk acme-answers
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   cd acme-answers && npm install
+   ```
+
+3. **Credentials**
+   Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean.
+
+4. **Run it**
+
+   ```bash
+   npm run dev
+   ```
+
+5. **Verify**
+   Open the printed local URL and ask "What's our PTO policy?" — confirm a real, cited answer renders inside Glean's chat UI.
+
+### Chat API
+
+Chat API variant — one chat.create call, citations rendered
+
+1. **Scaffold the project**
+
+   ```bash
+   npx tiged gleanwork/glean-cookbook/recipes/acme-answers/chat-api acme-answers
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   cd acme-answers && npm install
+   ```
+
+3. **Set credentials**
+   Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — see the client-api-oauth-or-token auth section in cookbook-conventions for how to get a token.
+
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Run it**
+
+   ```bash
+   npm start
+   ```
+
+5. **Verify**
+   Confirm the response carries a real answer and non-empty, deduped citations.
+   ```bash
+   curl -s -X POST http://localhost:3000/api/ask -H "Content-Type: application/json" -d '{"question": "What'"'"'s our PTO policy?"}'
+   ```
 
 ## Reference
 

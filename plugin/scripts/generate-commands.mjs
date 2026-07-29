@@ -50,6 +50,11 @@ const SCAFFOLD_ACTION_WORDS = {
   mcp: 'MCP',
 };
 
+const VARIANT_LABEL_WORDS = {
+  sdk: 'SDK',
+  api: 'API',
+};
+
 // Matches recipe.ts's RECIPE_AUTH_METHODS — the subsection heading each
 // value maps to in the cookbook-conventions skill's Authentication section.
 // 'none' and 'custom' have no entry: they don't point at that section at all.
@@ -76,6 +81,64 @@ function humanizeScaffoldAction(action) {
   return `Scaffold ${rest}`;
 }
 
+/** Last path segment of a codeAsset's repoPath, title-cased ("web-sdk" -> "Web SDK"). */
+function humanizeVariantLabel(repoPath) {
+  return repoPath
+    .split('/')
+    .pop()
+    .split('-')
+    .map(
+      (word) =>
+        VARIANT_LABEL_WORDS[word] ?? word.charAt(0).toUpperCase() + word.slice(1),
+    )
+    .join(' ');
+}
+
+function renderStepList(steps, startNum) {
+  return steps
+    .map((step, i) => {
+      const lines = [`${startNum + i}. **${step.title}**`];
+      if (step.description) lines.push(`   ${step.description}`);
+      if (step.command) lines.push('   ```bash', `   ${step.command}`, '   ```');
+      return lines.join('\n');
+    })
+    .join('\n\n');
+}
+
+/**
+ * Renders a `buildMethod: 'scaffold'` recipe's skill body from its `steps`
+ * (and any variant-specific `codeAssets[].steps`) instead of a hand-written
+ * `aiPrompt` — the same real, runnable commands the recipe page renders,
+ * not a parallel prose description of them.
+ */
+function renderStepsBody(recipe) {
+  const parts = [
+    `Build "${recipe.title}" following https://developers.glean.com/cookbook/${recipe.id}`,
+  ];
+
+  if (recipe.steps?.length > 0) {
+    parts.push(renderStepList(recipe.steps, 1));
+  }
+
+  const variantsWithSteps = (recipe.codeAssets ?? []).filter(
+    (asset) => asset.steps?.length > 0,
+  );
+  for (const asset of variantsWithSteps) {
+    parts.push(`### ${humanizeVariantLabel(asset.repoPath)}\n\n${asset.description}`);
+    parts.push(renderStepList(asset.steps, 1));
+  }
+
+  return parts.join('\n\n');
+}
+
+/** True when a recipe has real `steps` content to render from, on itself or any variant. */
+function hasStepsContent(recipe) {
+  return (
+    recipe.steps?.length > 0 ||
+    (recipe.codeAssets ?? []).some((asset) => asset.steps?.length > 0)
+  );
+}
+
 /** YAML double-quoted scalar — safe for values containing colons, which break unquoted plain scalars. */
 function yamlQuote(value) {
   return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
@@ -89,7 +152,7 @@ function renderRecipeSkill(recipe) {
     `disable-model-invocation: true`,
     `---`,
     '',
-    recipe.aiPrompt.trim(),
+    hasStepsContent(recipe) ? renderStepsBody(recipe) : recipe.aiPrompt.trim(),
   ];
 
   if (recipe.scaffoldActions?.length > 0) {
