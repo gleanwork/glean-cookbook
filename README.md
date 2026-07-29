@@ -53,14 +53,34 @@ Every PR runs:
 
 ### Verifying a recipe
 
-`registry.json`'s `aiPrompt`/`llmContext` render on the dev site _and_ drive the cookbook
-plugin — both need to be correct standalone, so recipes hand-encode real API details rather
-than just pointing at docs. That content can drift as SDKs evolve. "Verified" means someone
-actually ran the recipe end-to-end via the plugin (`/cookbook:{id}` in Claude Code, or the
-equivalent for another host) and confirmed the result works — not that the prose still reads
-correctly. Once you've done that, set `lastVerified` to that date in the recipe's registry
-entry. `npm run check:freshness` (also runs in CI, informational only) reports which recipes
-have never been verified this way or haven't been re-checked in 90+ days.
+What "verify" means depends on the recipe's `buildMethod`:
+
+- **`scaffold`** recipes render from `steps`, not a hand-written `aiPrompt` — building one means
+  running the recipe's own literal, checked commands (a `tiged` copy or a real CLI invocation),
+  not regenerating code from prose. There's no drift for an LLM to introduce in that part. What
+  still needs a real run is the recipe's own `## Verify` step and, where one exists, its `verify`
+  script (e.g. `recipes/acme-answers/chat-api/scripts/verify.mjs`) — against a live Glean instance,
+  with real credentials, asserting the exact behavior `demoQueries[].expectedBehavior` promises.
+- **`integrate`** and **`third-party-build`** recipes still drive off a hand-written `aiPrompt` —
+  this is where genuine regeneration-from-prose happens, and where drift (a stale response shape,
+  a deprecated field) can hide undetected between runs.
+
+For the second group especially, verify with a **genuinely fresh build, not inspect-and-patch**:
+spawn an isolated agent (a fresh subagent, or a scratch git worktree) whose _only_ input is the
+generated skill at `plugin/plugins/cookbook/skills/{id}/SKILL.md` — the same content a real
+`/cookbook:{id}` invocation gets. Do not hand it the existing `recipes/{id}/` code to read and
+patch; that only ever confirms "the code I'm already looking at still basically works," and misses
+the case where the _skill_ is what's wrong, not the reference code. A blind rebuild catches drift
+in either direction. Then run the recipe's demo queries against a real, live Glean instance and
+confirm each one's `expectedBehavior` actually holds — not that the prose still reads correctly.
+
+Once you've done that, set `lastVerified` to that date in the recipe's registry entry. Don't wait
+for manual initiative to decide when a recipe is due: `npm run check:freshness` (also runs in CI,
+informational only) reports which recipes have never been verified this way, or haven't been
+re-checked in 90+ days — treat either as the trigger to schedule a fresh-build pass. It does not
+currently detect a recipe whose `aiPrompt`/`llmContext` changed _without_ a fresh `lastVerified`
+bump — if you edit either field, bump `lastVerified` back to `unset` (or schedule the re-run
+yourself) rather than relying on the freshness report to notice for you.
 
 ## Related
 

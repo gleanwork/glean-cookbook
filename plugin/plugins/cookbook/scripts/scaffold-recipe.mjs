@@ -57,7 +57,9 @@ function install(targetDir) {
 
 function main() {
   const { recipeId, variant, targetDir } = parseArgs(process.argv.slice(2));
-  const subPath = variant ? `recipes/${recipeId}/${variant}` : `recipes/${recipeId}`;
+  const subPath = variant
+    ? `recipes/${recipeId}/${variant}`
+    : `recipes/${recipeId}`;
   const source = `${REPO}/${subPath}`;
 
   console.log(`Scaffolding ${source} -> ${targetDir}`);
@@ -71,7 +73,9 @@ function main() {
       `\nThis recipe needs these environment variables (see .env.example):`,
     );
     for (const key of envKeys) console.log(`  - ${key}`);
-    console.log(`Write them to ${path.join(targetDir, '.env')} before running.`);
+    console.log(
+      `Write them to ${path.join(targetDir, '.env')} before running.`,
+    );
   }
 
   install(targetDir);

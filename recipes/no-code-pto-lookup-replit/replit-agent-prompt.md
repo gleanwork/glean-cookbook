@@ -21,7 +21,7 @@ never sees a Glean API token.
 2. Install `@gleanwork/api-client` (pin the version — do not use a `^` or
    `latest` range) and construct the client like this:
 
-   ```js
+   ```ts
    import { Glean } from '@gleanwork/api-client';
 
    const glean = new Glean({
@@ -38,24 +38,30 @@ never sees a Glean API token.
 3. Call the Chat API like this — the response shape is specific, follow it
    exactly rather than guessing at field names:
 
-   ```js
-   const response = await glean.client.chat.create({
-     messages: [{ author: 'USER', fragments: [{ text: question }] }],
-   });
+   ```ts
+   export async function askGlean(question: string) {
+     const response = await glean.client.chat.create({
+       messages: [{ author: 'USER', fragments: [{ text: question }] }],
+     });
 
-   const contentMessages = (response.messages ?? []).filter(
-     (m) => m.messageType === 'CONTENT',
-   );
-   const fragments = contentMessages.flatMap((m) => m.fragments ?? []);
+     const contentMessages = (response.messages ?? []).filter(
+       (m) => m.messageType === 'CONTENT',
+     );
+     const fragments = contentMessages.flatMap((m) => m.fragments ?? []);
 
-   const answer = fragments.map((f) => f.text ?? '').join('');
+     const answer = fragments.map((f) => f.text ?? '').join('');
 
-   const citations = fragments
-     .map((f) => f.citation?.sourceDocument)
-     .filter((doc) => doc?.title && doc?.url);
-   const uniqueCitations = Array.from(
-     new Map(citations.map((doc) => [doc.url, doc])).values(),
-   );
+     const citations = fragments
+       .map((f) => f.citation?.sourceDocument)
+       .filter(
+         (doc): doc is NonNullable<typeof doc> => !!doc?.title && !!doc?.url,
+       );
+     const uniqueCitations = Array.from(
+       new Map(citations.map((doc) => [doc.url, doc])).values(),
+     );
+
+     return { answer, citations: uniqueCitations };
+   }
    ```
 
    Notes on the response shape, since guessing at field names here is

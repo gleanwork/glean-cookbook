@@ -31,8 +31,7 @@ Steps:
    https://developers.glean.com/libraries/web-sdk/authentication/server-to-server
    and keep the API key strictly server-side.
 
-Verify by running the app and issuing a search; results must respect my
-Glean permissions.
+See Verify below for what a correct build must do.
 
 ## Setup
 
@@ -53,3 +52,14 @@ Ask me which language to build in before starting: TypeScript, JavaScript.
 ## House style
 
 This recipe renders a Web SDK UI — apply the cookbook's shared conventions (see the `cookbook-conventions` skill in this plugin): the real Acme logomark (not a plain colored square), a 480–500px-tall container, and `initialMessage` set to this recipe's own first demo query so it opens into a real answer instead of an empty landing screen.
+
+## Verify
+
+Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+
+- **Query:** "What's our PTO policy?"
+  **Expected:** Embedded chat cites the PTO policy document, with a non-empty, deduped citations list — same answer shape as the standalone acme-answers recipe, since it's the same underlying Chat surface.
+- **Query:** "Who owns the payments-service catalog entry?"
+  **Expected:** Embedded chat names the real owner from the seeded payments-service catalog entry and cites it.
+- **Query:** "Summarize PAY-2114"
+  **Expected:** Embedded chat returns a cited summary of the real PAY-2114 incident, not a fabricated one.

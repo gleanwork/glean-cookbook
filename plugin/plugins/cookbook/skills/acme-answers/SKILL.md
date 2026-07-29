@@ -61,15 +61,16 @@ Chat API variant — one chat.create call, citations rendered
    ```
 
 4. **Run it**
+   Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the deterministic verify step below, which starts its own instance.
 
    ```bash
    npm start
    ```
 
 5. **Verify**
-   Confirm the response carries a real answer and non-empty, deduped citations.
+   Starts the server itself, runs both demo queries for real, and asserts the response shape (non-empty answer, non-empty deduped citations with title+url) — exits non-zero on any failure. Do not report this recipe as done until this passes.
    ```bash
-   curl -s -X POST http://localhost:3000/api/ask -H "Content-Type: application/json" -d '{"question": "What'"'"'s our PTO policy?"}'
+   npm run verify
    ```
 
 ## Reference
@@ -83,3 +84,12 @@ This recipe needs `web-sdk-cookie` or `client-api-oauth-or-token` auth — follo
 ## House style
 
 This recipe renders a Web SDK UI — apply the cookbook's shared conventions (see the `cookbook-conventions` skill in this plugin): the real Acme logomark (not a plain colored square), a 480–500px-tall container, and `initialMessage` set to this recipe's own first demo query so it opens into a real answer instead of an empty landing screen.
+
+## Verify
+
+Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+
+- **Query:** "What's our PTO policy?"
+  **Expected:** Answer cites the PTO policy document (title + url), with a non-empty, deduped citations list — no leaked step-narration text prepended to the answer.
+- **Query:** "Who owns the payments-service catalog entry?"
+  **Expected:** Answer names the real owner from the seeded payments-service catalog entry and cites that document.

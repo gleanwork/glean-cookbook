@@ -21,8 +21,7 @@ teal accent) so the catalog UI and the embedded search/chat feel like one
 cohesive app, not two mismatched pieces bolted together.
 
 Ask me for: my Glean instance/backend domain, an Indexing API token, and
-my Glean web app domain. Verify at the end that a search for a service
-name returns the indexed catalog entry, respecting my permissions.
+my Glean web app domain. See Verify below for what a correct build must do.
 
 ## Setup
 
@@ -44,3 +43,14 @@ Ask me which language to build in before starting: Python, TypeScript.
 ## House style
 
 This recipe renders a Web SDK UI — apply the cookbook's shared conventions (see the `cookbook-conventions` skill in this plugin): the real Acme logomark (not a plain colored square), a 480–500px-tall container, and `initialMessage` set to this recipe's own first demo query so it opens into a real answer instead of an empty landing screen.
+
+## Verify
+
+Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+
+- **Query:** "Who's on call for payments-service?"
+  **Expected:** Answer names the current on-call owner from the indexed developer catalog, with a citation to that catalog entry.
+- **Query:** "What's the deploy and rollback process for payments-service?"
+  **Expected:** Answer describes the real deploy/rollback steps from the indexed runbook, with a citation — not a generic, made-up process.
+- **Query:** "Summarize PAY-2114"
+  **Expected:** Answer summarizes the real indexed PAY-2114 incident ticket content, with a citation to it — not a fabricated summary.

@@ -38,3 +38,10 @@ Build "Call a Glean agent from an A2A client" following https://developers.glean
 ## Reference
 
 Per-agent A2A endpoints: /rest/api/v1/a2a/agents/{agentId} (JSON-RPC) and .../agent-card.json. GA, on by default (a2aPerAgentServerEnabled). Eligible: published auto agents, chat-message trigger, text-only. Server is A2A spec 0.3 via a2a-go; upgrade to 1.x tracked internally (EN-1972098). a2a-sdk's A2AClient class is deprecated even at 0.3.26 — use ClientFactory/ Client.send_message() instead, which unifies streaming and non-streaming behind one async-iterator method controlled by ClientConfig(streaming=bool). Message text is at message.parts[i].root.text; Task-based replies put it in task.history[-1].
+
+## Verify
+
+Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+
+- **Query:** "Who owns the payments service?"
+  **Expected:** Returns a non-empty answer naming a real owner from the seeded Acme corpus, delivered via the A2A message/send response (a Message or Task, not an error) — and the scripted follow-up turn carries the same context_id, proving multi-turn works.

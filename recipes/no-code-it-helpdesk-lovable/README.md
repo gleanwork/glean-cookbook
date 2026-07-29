@@ -20,7 +20,7 @@ This recipe's "code" is the prompt, not a project scaffold. There is nothing to 
 
 ## Same shape as `no-code-pto-lookup-replit`, different persona
 
-This recipe mirrors [`no-code-pto-lookup-replit`](../no-code-pto-lookup-replit/) — same Chat API call, same "the browser must never hold the token" constraint, same citation-shape correction (`message.citations[].sourceDocument`, not a top-level `citedDocuments`). What's different is the tool (Lovable vs. Replit) and the persona (IT helpdesk vs. HR), so the two don't read as duplicates in the cookbook. Lovable's default stack leans on a connected backend/database integration for anything server-side (including secrets) rather than a plain Node server — the prompt asks the Agent to set that up rather than assuming a specific mechanism up front, since that surface changes over time.
+This recipe mirrors [`no-code-pto-lookup-replit`](../no-code-pto-lookup-replit/) — same Chat API call, same "the browser must never hold the token" constraint, same citation-shape correction (filter to `messageType === 'CONTENT'`, read `fragments[].citation.sourceDocument`, dedupe by `url` — not the deprecated `message.citations[]` field, and not a top-level `citedDocuments` field). What's different is the tool (Lovable vs. Replit) and the persona (IT helpdesk vs. HR), so the two don't read as duplicates in the cookbook. Lovable's default stack leans on a connected backend/database integration for anything server-side (including secrets) rather than a plain Node server — the prompt asks the Agent to set that up rather than assuming a specific mechanism up front, since that surface changes over time.
 
 ## Note on demo queries
 

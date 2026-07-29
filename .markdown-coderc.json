@@ -1,0 +1,6 @@
+{
+  "snippetRoot": ".",
+  "markdownGlob": "recipes/**/*.md",
+  "excludeGlob": ["**/node_modules/**"],
+  "includeExtensions": [".ts", ".js"]
+}

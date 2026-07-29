@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "tsx server.ts",
+    "verify": "node scripts/verify.mjs",
     "lint": "eslint ."
   },
   "dependencies": {

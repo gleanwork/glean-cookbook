@@ -1,0 +1,19 @@
+{
+  "name": "no-code-it-helpdesk-lovable",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Reference snippet for the Lovable prompt template — not a runnable app.",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@gleanwork/api-client": "0.18.0"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "@types/node": "26.1.2",
+    "eslint": "10.8.0",
+    "typescript-eslint": "8.65.0"
+  }
+}

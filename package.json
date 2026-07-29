@@ -8,11 +8,14 @@
     "validate:registry": "node scripts/validate-registry.mjs",
     "check:freshness": "node scripts/check-recipe-freshness.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "snippets:check": "md-code check && node scripts/check-prompt-snippets.mjs",
+    "snippets:sync": "md-code sync"
   },
   "devDependencies": {
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
+    "markdown-code": "^1.2.0",
     "prettier": "^3.4.2"
   },
   "engines": {

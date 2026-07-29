@@ -84,3 +84,12 @@ This recipe needs `client-api-oauth-or-token` auth — follow the matching subse
 ## Language
 
 Ask me which language to build in before starting: Python, TypeScript.
+
+## Verify
+
+Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+
+- **Query:** "What's our PTO policy?"
+  **Expected:** Any user gets a cited answer — this doc is broadly readable, so permissions don't restrict it.
+- **Query:** "What are the engineering compensation bands?"
+  **Expected:** A user with access to the compensation-bands doc gets a cited answer; a user without that access gets no citation for it and the LLM must not fabricate an answer from the missing context. search.query has to respect the caller's real Glean permissions for both cases — that's the actual thing this recipe verifies.

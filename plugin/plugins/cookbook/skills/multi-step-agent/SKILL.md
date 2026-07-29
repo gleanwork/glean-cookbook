@@ -54,3 +54,10 @@ Agents API: glean.client.agents.run(agent_id, messages, http_headers) -> AgentRu
 ## Authentication
 
 This recipe needs `client-api-oauth-or-token` auth — follow the matching subsection under "Authentication: follow the recipe's declared `authMethod`" in the `cookbook-conventions` skill in this plugin, rather than assuming which credential path applies.
+
+## Verify
+
+Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+
+- **Query:** "Summarize open payments incidents and file a tracking ticket"
+  **Expected:** Run as an Acme-Engineering user (e.g. marcus.webb@acme.example.com): the agent summarizes open incidents and the governed tool call succeeds (200, a real ticket ID comes back). Run as a non-Engineering user (e.g. dana.okafor@acme.example.com): the tool server returns 403 and the agent falls back to a read-only summary instead of failing the whole run — the governance check must actually run, not be assumed.

@@ -91,7 +91,8 @@ function humanizeVariantLabel(repoPath) {
     .split('-')
     .map(
       (word) =>
-        VARIANT_LABEL_WORDS[word] ?? word.charAt(0).toUpperCase() + word.slice(1),
+        VARIANT_LABEL_WORDS[word] ??
+        word.charAt(0).toUpperCase() + word.slice(1),
     )
     .join(' ');
 }
@@ -131,7 +132,9 @@ function renderStepsBody(recipe) {
     (asset) => asset.steps?.length > 0,
   );
   for (const asset of variantsWithSteps) {
-    parts.push(`### ${humanizeVariantLabel(asset.repoPath)}\n\n${asset.description}`);
+    parts.push(
+      `### ${humanizeVariantLabel(asset.repoPath)}\n\n${asset.description}`,
+    );
     parts.push(renderStepList(asset.steps, 1));
   }
 
@@ -144,6 +147,40 @@ function hasStepsContent(recipe) {
     recipe.steps?.length > 0 ||
     (recipe.codeAssets ?? []).some((asset) => asset.steps?.length > 0)
   );
+}
+
+/**
+ * Renders the recipe's `demoQueries` as a deterministic pass/fail gate
+ * instead of advisory prose — "run it and see" left the citations bug (a
+ * genuinely broken build) reading as done. Each query's `expectedBehavior`
+ * is what a real run against a live Glean instance must produce.
+ */
+function renderVerifySection(recipe) {
+  if (!recipe.demoQueries || recipe.demoQueries.length === 0) return [];
+
+  const lines =
+    recipe.buildMethod === 'third-party-build'
+      ? [
+          "This recipe's app is built and run by a separate tool " +
+            "(Lovable, Replit), not by you. Before telling me you're " +
+            'done, give me the queries below to test myself in the ' +
+            'running app, along with what a correct result looks like:',
+          '',
+        ]
+      : [
+          'Do not report this recipe as done until you have run it for ' +
+            'real (against a live Glean instance, with real credentials) ' +
+            'and confirmed every query below produces its expected ' +
+            'behavior. A build that runs without errors but fails one of ' +
+            'these checks is not done — fix it and re-run before ' +
+            'reporting success.',
+          '',
+        ];
+  for (const { query, expectedBehavior } of recipe.demoQueries) {
+    lines.push(`- **Query:** "${query}"`);
+    lines.push(`  **Expected:** ${expectedBehavior}`);
+  }
+  return ['', '## Verify', lines.join('\n')];
 }
 
 /** YAML double-quoted scalar — safe for values containing colons, which break unquoted plain scalars. */
@@ -212,6 +249,8 @@ function renderRecipeSkill(recipe) {
         'instead of an empty landing screen.',
     );
   }
+
+  sections.push(...renderVerifySection(recipe));
 
   return `${sections.join('\n')}\n`;
 }
