@@ -7,4 +7,4 @@ Acme Corp's gamified onboarding hub for new hire Alex Kim — checklist, progres
 
 See the full recipe at [developers.glean.com/cookbook/onboarding-hub](https://developers.glean.com/cookbook/onboarding-hub) (flag-gated pre-launch) or `docs/cookbook/onboarding-hub.mdx` in [glean-developer-site](https://github.com/gleanwork/glean-developer-site).
 
-Design reference: [`prototype.html`](prototype.html) (Opus 5 mockup, M1). Spec lock: [`SPEC-LOCK.md`](SPEC-LOCK.md). Acceptance map: [`ACCEPTANCE-MAP.md`](ACCEPTANCE-MAP.md).
+Spec lock: [`SPEC-LOCK.md`](SPEC-LOCK.md). Acceptance map: [`ACCEPTANCE-MAP.md`](ACCEPTANCE-MAP.md). The M1 design prototype is kept as a review artifact outside the repo.

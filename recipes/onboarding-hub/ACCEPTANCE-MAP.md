@@ -1,6 +1,8 @@
 # Milestone 1b — Acceptance map (PACT-449)
 
-Maps each showpiece state from the approved prototype to Path A (Web SDK) and Path B (Platform Chat) acceptance criteria and proving demo query / corpus doc.
+Maps each showpiece state from the M1 prototype to Path A (Web SDK) and Path B (Platform Chat) acceptance criteria and proving demo query / corpus doc.
+
+**Status:** Draft — awaiting Chris eyes-on of the prototype (M1) and sign-off of this map (M1b).
 
 | #   | Showpiece state                       | Prototype reference                   | Path A (Web SDK)                                                        | Path B (Platform Chat)                                                         | Demo query / corpus                                                                       |
 | --- | ------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
@@ -20,4 +22,4 @@ Maps each showpiece state from the approved prototype to Path A (Web SDK) and Pa
 | How do I set up VPN?                             | Cited answer from VPN guide                                       | `support-vpn-setup-guide`          |
 | What's our PTO policy?                           | Cited PTO policy answer                                           | `hr-pto-policy`                    |
 
-**Signed:** Chris Freeman, 2026-07-30
+**Signed:** _(unsigned — pending Chris review)_

@@ -1,7 +1,7 @@
 # Milestone 0 — Spec lock (PACT-449)
 
-**Signed:** Chris Freeman, 2026-07-30  
-**FYI:** Steve Kam — Path B is Platform Chat (`POST /api/chat`), experimental opt-in, fetch-until-SDK.
+**Status:** Draft — awaiting Chris sign-off (M0 gate).  
+**FYI (once signed):** Steve Kam — Path B is Platform Chat (`POST /api/chat`), experimental opt-in, fetch-until-SDK.
 
 ## Locked decisions
 
