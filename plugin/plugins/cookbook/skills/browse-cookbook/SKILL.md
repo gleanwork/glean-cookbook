@@ -23,5 +23,6 @@ before running its command. Full write-ups live at
 - **IT helpdesk deflection page — no code, on Lovable** (`/cookbook:no-code-it-helpdesk-lovable`) — Prompt Lovable into an IT helpdesk deflection page on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.
 - **PTO & benefits lookup — no code, on Replit** (`/cookbook:no-code-pto-lookup-replit`) — Prompt Replit Agent into a working HR lookup tool on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.
 - **Permissions-aware RAG** (`/cookbook:permissions-aware-rag`) — Use Glean's Platform API as the retrieval layer for your own LLM app — every chunk ACL-filtered per user before it ever reaches the model.
+- **Acme Account Journey: Customer 360 for sales** (`/cookbook:customer-360`) — Sam Reyes's Globex account page — KPI header, parallel Platform Search tiles, journey summary, and saved prompts — built two ways with Platform Search+Chat and Platform Agents.
 
 <!-- pluginpack-generated:recipes:end -->

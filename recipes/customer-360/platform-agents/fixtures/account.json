@@ -1,0 +1,55 @@
+{
+  "account": {
+    "name": "Globex",
+    "owner": "Sam Reyes",
+    "arr": "$840,000",
+    "renewalDate": "2026-09-30",
+    "risk": "low",
+    "seats": "1,200",
+    "kpiNote": "Demo KPIs grounded in sales-globex-account-notes + sales-globex-renewal-status"
+  },
+  "tiles": [
+    {
+      "id": "account-notes",
+      "label": "Account notes",
+      "query": "Globex account notes ARR seats contacts",
+      "results": [
+        {
+          "title": "Globex — Account Notes",
+          "url": "https://portal.acme.internal/sales/accounts/globex",
+          "snippets": [
+            "Globex is Acme's largest customer account, owned by Sam Reyes (Account Executive). Current ARR: $840,000. Deployment: 1,200 licensed seats."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "renewal",
+      "label": "Renewal status",
+      "query": "Globex renewal status Q3 2026",
+      "results": [
+        {
+          "title": "Globex — Renewal Status (Q3 2026)",
+          "url": "https://portal.acme.internal/sales/accounts/globex/renewal-q3-2026",
+          "snippets": [
+            "Globex's contract renews 2026-09-30. Status: on track. Risk level: low — no competitive evaluation in progress. Open items: DPA and multi-year discount quote."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "label": "Security questionnaire",
+      "query": "Globex security questionnaire",
+      "results": [
+        {
+          "title": "Globex — Security Questionnaire Response Summary",
+          "url": "https://portal.acme.internal/sales/accounts/globex/security-questionnaire-2026-06",
+          "snippets": [
+            "SOC 2 Type II provided; Globex's security team accepted all responses with no follow-up questions."
+          ]
+        }
+      ]
+    }
+  ]
+}

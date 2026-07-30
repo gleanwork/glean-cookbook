@@ -1,0 +1,25 @@
+{
+  "name": "customer-360-platform-agents",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Customer 360 — Platform Agents createRun for prescriptive account briefs.",
+  "type": "module",
+  "scripts": {
+    "start": "tsx server.ts",
+    "verify": "node scripts/verify.mjs",
+    "verify:fixture": "GLEAN_USE_FIXTURE=true node scripts/verify.mjs",
+    "verify:live": "GLEAN_USE_FIXTURE=false node scripts/verify-live.mjs",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@gleanwork/api-client": "0.18.0",
+    "dotenv": "17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.1",
+    "eslint": "10.8.0",
+    "tsx": "4.23.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.65.0"
+  }
+}

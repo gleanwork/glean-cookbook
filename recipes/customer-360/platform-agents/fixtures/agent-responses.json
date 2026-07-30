@@ -1,0 +1,62 @@
+{
+  "What's the status of the Globex renewal?": {
+    "request_id": "fixture-renewal",
+    "run": { "status": "completed" },
+    "messages": [
+      {
+        "role": "GLEAN_AI",
+        "content": [
+          {
+            "text": "## Renewal status\n\nGlobex renews **2026-09-30** and is on track. Risk level: **low**. Open items: updated DPA (legal) and multi-year discount quote (procurement).\n\nSources: [Globex — Renewal Status (Q3 2026)](https://portal.acme.internal/sales/accounts/globex/renewal-q3-2026)",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  },
+  "Customer summary for Globex": {
+    "request_id": "fixture-summary",
+    "run": { "status": "completed" },
+    "messages": [
+      {
+        "role": "GLEAN_AI",
+        "content": [
+          {
+            "text": "## Account brief — Globex\n\n**Overview:** Largest Acme account; ARR $840,000; 1,200 seats; owner Sam Reyes.\n\n**Renewal:** 2026-09-30, on track, low risk.\n\n**Security:** June 2026 questionnaire accepted with no follow-ups.\n\nSources:\n- [Globex — Account Notes](https://portal.acme.internal/sales/accounts/globex)\n- [Globex — Renewal Status (Q3 2026)](https://portal.acme.internal/sales/accounts/globex/renewal-q3-2026)",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  },
+  "What are the renewal risks for Globex?": {
+    "request_id": "fixture-risks",
+    "run": { "status": "completed" },
+    "messages": [
+      {
+        "role": "GLEAN_AI",
+        "content": [
+          {
+            "text": "## Renewal risks — Globex\n\nOverall risk is **low** (no competitive evaluation). Watch: DPA finalization and multi-year discount quote.\n\nSource: [Globex — Renewal Status (Q3 2026)](https://portal.acme.internal/sales/accounts/globex/renewal-q3-2026)",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  },
+  "_default": {
+    "request_id": "fixture-default",
+    "run": { "status": "completed" },
+    "messages": [
+      {
+        "role": "GLEAN_AI",
+        "content": [
+          {
+            "text": "## Account brief — Globex\n\nGlobex is Acme's largest account (ARR $840,000), owned by Sam Reyes, renewing 2026-09-30 at low risk.\n\nSource: [Globex — Account Notes](https://portal.acme.internal/sales/accounts/globex)",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  }
+}

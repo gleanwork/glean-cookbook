@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Account Journey — Globex — Acme Corp</title>
+    <style>
+      :root {
+        --primary: #0e8c84;
+        --text-primary: #1f2024;
+        --text-secondary: #565a64;
+        --bg-light: #f7f8fa;
+        --border-light: #e7e8ed;
+        --card-bg: #ffffff;
+        --warning-bg: #fff8e5;
+        --font:
+          'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: var(--bg-light);
+        color: var(--text-primary);
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 24px;
+        background: #fff;
+        border-bottom: 1px solid var(--border-light);
+      }
+      .mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: var(--primary);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 14px;
+      }
+      h1 {
+        font-size: 16px;
+        margin: 0;
+      }
+      .subtitle {
+        color: var(--text-secondary);
+        font-size: 13px;
+      }
+      .path-badge {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-light);
+        border-radius: 999px;
+        padding: 4px 10px;
+      }
+      main {
+        max-width: 1100px;
+        margin: 24px auto;
+        padding: 0 24px 48px;
+        display: grid;
+        gap: 20px;
+      }
+      .card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 20px;
+      }
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+      }
+      @media (max-width: 800px) {
+        .kpi-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      .kpi dt {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin: 0 0 4px;
+      }
+      .kpi dd {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .kpi-note {
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 900px) {
+        .tiles {
+          grid-template-columns: 1fr;
+        }
+      }
+      .tile h3 {
+        margin: 0 0 12px;
+        font-size: 14px;
+      }
+      .hit {
+        border-top: 1px solid var(--border-light);
+        padding-top: 10px;
+        margin-top: 10px;
+      }
+      .hit a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .hit p {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+      .empty {
+        background: var(--warning-bg);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      button,
+      .actions button {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 14px;
+        font: inherit;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #fff;
+        color: var(--text-primary);
+        border: 1px solid var(--border-light);
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+      #journey-answer,
+      #chat-answer {
+        white-space: pre-wrap;
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 1.5em;
+      }
+      .citations {
+        margin-top: 12px;
+        display: grid;
+        gap: 6px;
+      }
+      .citations a {
+        font-size: 12px;
+        color: var(--primary);
+      }
+      .chat-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .chat-row input {
+        flex: 1;
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font: inherit;
+      }
+      .error {
+        color: #b42318;
+        font-size: 13px;
+        margin-top: 8px;
+      }
+      h2 {
+        margin: 0 0 12px;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="mark" aria-hidden="true">A</div>
+      <div>
+        <h1>Account Journey</h1>
+        <div class="subtitle">Sam Reyes · Globex</div>
+      </div>
+      <span class="path-badge">Path A · Platform Search + Chat</span>
+    </header>
+
+    <main>
+      <section class="card" id="kpi-card">
+        <h2>Globex</h2>
+        <div class="kpi-grid" id="kpi-grid"></div>
+        <p class="kpi-note" id="kpi-note"></p>
+      </section>
+
+      <section class="tiles" id="tiles"></section>
+
+      <section class="card">
+        <h2>Journey summary</h2>
+        <div class="actions">
+          <button type="button" data-prompt="Customer summary for Globex">
+            Customer summary
+          </button>
+          <button
+            type="button"
+            class="secondary"
+            data-prompt="What are the renewal risks for Globex?"
+          >
+            Renewal risks
+          </button>
+          <button
+            type="button"
+            class="secondary"
+            data-prompt="What's the status of the Globex renewal?"
+          >
+            Renewal status
+          </button>
+        </div>
+        <div id="journey-answer">Loading journey summary…</div>
+        <div class="citations" id="journey-citations"></div>
+        <div class="error" id="journey-error" hidden></div>
+      </section>
+
+      <section class="card">
+        <h2>Ask about Globex</h2>
+        <div id="chat-answer"></div>
+        <div class="citations" id="chat-citations"></div>
+        <div class="chat-row">
+          <input
+            id="chat-input"
+            type="text"
+            placeholder="Ask a follow-up about Globex…"
+            value="What's the status of the Globex renewal?"
+          />
+          <button type="button" id="chat-send">Ask</button>
+        </div>
+        <div class="error" id="chat-error" hidden></div>
+      </section>
+    </main>
+
+
+    <script>
+      function safeUrl(url) {
+        try {
+          const parsed = new URL(url);
+          if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            return parsed.href;
+          }
+        } catch {
+          // ignore invalid URLs
+        }
+        return null;
+      }
+
+      function renderCitations(el, citations) {
+        el.replaceChildren();
+        for (const citation of citations || []) {
+          const href = safeUrl(citation.url);
+          if (!href) continue;
+          const link = document.createElement('a');
+          link.href = href;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.textContent = citation.title || href;
+          el.appendChild(link);
+        }
+      }
+
+      function renderKpis(grid, account) {
+        grid.replaceChildren();
+        for (const [label, value] of [
+          ['ARR', account.arr],
+          ['Renewal', account.renewalDate],
+          ['Risk', account.risk],
+          ['Seats', account.seats],
+          ['Owner', account.owner],
+        ]) {
+          const wrap = document.createElement('div');
+          wrap.className = 'kpi';
+          const dt = document.createElement('dt');
+          dt.textContent = label;
+          const dd = document.createElement('dd');
+          dd.textContent = value ?? '';
+          wrap.append(dt, dd);
+          grid.appendChild(wrap);
+        }
+      }
+
+      function renderTiles(container, tiles) {
+        container.replaceChildren();
+        for (const tile of tiles || []) {
+          const article = document.createElement('article');
+          article.className = 'card tile';
+          const heading = document.createElement('h3');
+          heading.textContent = tile.label;
+          article.appendChild(heading);
+
+          if (tile.empty || !tile.results?.length) {
+            const empty = document.createElement('div');
+            empty.className = 'empty';
+            empty.textContent = 'No recent activity';
+            article.appendChild(empty);
+            container.appendChild(article);
+            continue;
+          }
+
+          for (const hit of tile.results) {
+            const hitEl = document.createElement('div');
+            hitEl.className = 'hit';
+            const href = safeUrl(hit.url);
+            if (href) {
+              const link = document.createElement('a');
+              link.href = href;
+              link.target = '_blank';
+              link.rel = 'noopener noreferrer';
+              link.textContent = hit.title || href;
+              hitEl.appendChild(link);
+            } else {
+              const title = document.createElement('strong');
+              title.textContent = hit.title || 'Untitled';
+              hitEl.appendChild(title);
+            }
+            const snippet = document.createElement('p');
+            snippet.textContent = (hit.snippets || []).join(' ');
+            hitEl.appendChild(snippet);
+            article.appendChild(hitEl);
+          }
+          container.appendChild(article);
+        }
+      }
+
+      async function postChat(question) {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || response.statusText);
+        return data;
+      }
+
+      async function loadAccount() {
+        const response = await fetch('/api/account');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || response.statusText);
+
+        renderKpis(document.getElementById('kpi-grid'), data.account);
+        document.getElementById('kpi-note').textContent = data.account.kpiNote;
+        renderTiles(document.getElementById('tiles'), data.tiles);
+      }
+
+      async function runJourney(question) {
+        const answerEl = document.getElementById('journey-answer');
+        const errEl = document.getElementById('journey-error');
+        errEl.hidden = true;
+        answerEl.textContent = 'Thinking…';
+        try {
+          const result = await postChat(question);
+          answerEl.textContent = result.answer || 'No answer returned.';
+          renderCitations(
+            document.getElementById('journey-citations'),
+            result.citations,
+          );
+        } catch (error) {
+          answerEl.textContent = '';
+          errEl.hidden = false;
+          errEl.textContent = error.message;
+        }
+      }
+
+      async function runChat() {
+        const input = document.getElementById('chat-input');
+        const question = input.value.trim();
+        if (!question) return;
+        const answerEl = document.getElementById('chat-answer');
+        const errEl = document.getElementById('chat-error');
+        errEl.hidden = true;
+        answerEl.textContent = 'Thinking…';
+        try {
+          const result = await postChat(question);
+          answerEl.textContent = result.answer || 'No answer returned.';
+          renderCitations(
+            document.getElementById('chat-citations'),
+            result.citations,
+          );
+        } catch (error) {
+          answerEl.textContent = '';
+          errEl.hidden = false;
+          errEl.textContent = error.message;
+        }
+      }
+
+      document.querySelectorAll('[data-prompt]').forEach((button) => {
+        button.addEventListener('click', () =>
+          runJourney(button.getAttribute('data-prompt')),
+        );
+      });
+      document.getElementById('chat-send').addEventListener('click', runChat);
+      document
+        .getElementById('chat-input')
+        .addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') runChat();
+        });
+
+      loadAccount()
+        .then(() => runJourney('Customer summary for Globex'))
+        .catch((error) => {
+          document.getElementById('journey-error').hidden = false;
+          document.getElementById('journey-error').textContent = error.message;
+        });
+    </script>
+
+  </body>
+</html>
