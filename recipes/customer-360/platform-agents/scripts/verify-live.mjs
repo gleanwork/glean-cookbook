@@ -80,7 +80,9 @@ async function main() {
     process.exit(1);
   }
 
-  const markdownLinks = [...text.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g)];
+  const markdownLinks = [
+    ...text.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g),
+  ];
   const bareUrls = [...text.matchAll(/https?:\/\/[^\s)\]>"']+/g)];
   if (markdownLinks.length === 0 && bareUrls.length === 0) {
     console.error(
