@@ -1,0 +1,29 @@
+{
+  "id": "chatcmpl-onboarding-fixture",
+  "object": "response",
+  "status": "completed",
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "Alex still needs to complete security awareness training (due within 2 weeks of start), benefits enrollment (30 days from start), a 1:1 with Priya Natarajan on 2026-07-24, and the payments-service architecture walkthrough.",
+          "annotations": [
+            {
+              "type": "citation",
+              "sources": [
+                {
+                  "type": "document",
+                  "title": "Onboarding Checklist — Alex Kim",
+                  "url": "https://portal.acme.internal/hr/onboarding/alex-kim"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

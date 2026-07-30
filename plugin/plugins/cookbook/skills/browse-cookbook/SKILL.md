@@ -23,5 +23,6 @@ before running its command. Full write-ups live at
 - **IT helpdesk deflection page — no code, on Lovable** (`/cookbook:no-code-it-helpdesk-lovable`) — Prompt Lovable into an IT helpdesk deflection page on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.
 - **PTO & benefits lookup — no code, on Replit** (`/cookbook:no-code-pto-lookup-replit`) — Prompt Replit Agent into a working HR lookup tool on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.
 - **Permissions-aware RAG** (`/cookbook:permissions-aware-rag`) — Use Glean's Platform API as the retrieval layer for your own LLM app — every chunk ACL-filtered per user before it ever reaches the model.
+- **Onboarding Hub: gamified day-one onboarding for new hires** (`/cookbook:onboarding-hub`) — Alex Kim's day-one hub — checklist, progress, milestone badges, and contextual Glean chat — built two ways with the Web SDK and Platform Chat.
 
 <!-- pluginpack-generated:recipes:end -->
