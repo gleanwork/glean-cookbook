@@ -11,7 +11,7 @@
 | `status` / `category` / `level` | `showcase` / `portal` / Intermediate                                                                               |
 | Dual impl                       | Path A Web SDK · Path B Platform Chat                                                                              |
 | `surfaces`                      | `["web-sdk", "platform-api"]`                                                                                      |
-| `requiredScopes`                | `["CHAT", "SEARCH"]`                                                                                               |
+| `requiredScopes`                | `["CHAT"]` (chat-only; no search surface)                                                                          |
 | `authMethod`                    | `["web-sdk-cookie", "client-api-oauth-or-token"]`                                                                  |
 | `combines`                      | (1) Embed search & chat / Web SDK / search / typescript; (2) Build a chatbot / Platform Chat / portal / typescript |
 | Demo queries                    | Day-one, onboarding steps remaining, VPN, PTO                                                                      |
