@@ -10,7 +10,7 @@ Build "Connect Glean MCP to your AI tools" following https://developers.glean.co
    Check for Claude Code, Cursor, and Claude Desktop on this machine.
 
 2. **Resolve your Glean backend**
-   Ask for your work email, POST it to https://app.glean.com/config/search, and extract {instance} from the subdomain of the returned queryURL — the same chain cookbook-conventions' auth section uses. The MCP server URL is https://{instance}-be.glean.com/mcp/default.
+   Find resolve-backend.mjs bundled with this plugin (a sibling of skills/, under scripts/) and run it with the user's work email — don't hand-derive the config/search call from memory, since getting it wrong silently resolves to the wrong tenant (see cookbook-conventions' auth section). It prints {instance, backend, oauthAvailable}. The MCP server URL is {backend}/mcp/default.
 
 3. **Configure each detected host**
    --client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token.
@@ -24,10 +24,6 @@ Build "Connect Glean MCP to your AI tools" following https://developers.glean.co
 
 5. **Verify**
    Per host, ask "Who's on call for payments-service?" and confirm a real, Glean-cited answer.
-
-## Setup
-
-- Scaffold MCP config
 
 ## Reference
 

@@ -34,26 +34,27 @@ one over the others, since which are available depends on how the tenant is conf
 1. **Glean OAS (Glean's own OAuth Authorization Server)** — the most flexible, self-service
    option, and the one to try first. It's disabled by default per-tenant, so detect it rather
    than assume:
-   - Ask for the user's work email — not a raw backend URL. Resolve their tenant with:
+   - Ask for the user's work email — not a raw backend URL. Resolve their tenant and check OAuth
+     availability with `resolve-backend.mjs`, bundled alongside this plugin's skills (a sibling of
+     the `skills/` directory, under `scripts/`) — locate it and run it, don't hand-derive the
+     `config/search` call or the `.well-known/oauth-authorization-server` check from memory, since
+     getting either wrong silently resolves to the wrong tenant or the wrong auth path. Its
+     invocation is:
+     ```bash
+     node <path-to-this-plugin>/scripts/resolve-backend.mjs <their work email>
      ```
-     POST https://app.glean.com/config/search
-     Content-Type: application/json
-
-     {"email": "<their email>"}
-     ```
-     Response: `{"search_config": {"queryURL": "https://{instance}.askscio.com/", ...}}`. Extract
-     `{instance}` from the subdomain of `queryURL`. The real Client API backend is
-     `https://{instance}-be.glean.com` — verified live for a `glean.com` email (resolves to
-     `scio-prod-be.glean.com`) and for at least one real customer domain.
-   - `GET {backend}/.well-known/oauth-authorization-server`. A 200 means Glean OAS is enabled for
-     this tenant — use `authorization_code` + PKCE (verified live against
+     Prints `{"instance", "backend", "oauthAvailable"}` — `backend` is the real Client API
+     backend (verified live for a `glean.com` email, resolves to `scio-prod-be.glean.com`, and for
+     at least one real customer domain), and `oauthAvailable` tells you whether to continue with
+     Glean OAS below or fall back to option 2.
+   - If `oauthAvailable` is `true` — use `authorization_code` + PKCE (verified live against
      `scio-prod-be.glean.com`: this is the grant Glean's own docs call "the recommended
      authentication method for Client API integrations," and what MCP hosts already use for
      their own sign-in flow). Do **not** use `client_credentials` even though it appears in
      `grant_types_supported` — a general client-credentials/service-account flow for the Client
-     API is explicitly not yet a supported path for this kind of integration. A 404 (or any
-     failure downstream — registration or token exchange rejected) means Glean OAS isn't enabled
-     for this tenant; move to option 2.
+     API is explicitly not yet a supported path for this kind of integration. If registration or
+     the token exchange itself fails downstream, that also means Glean OAS isn't usable for this
+     tenant; move to option 2.
    - Get a `client_id` via **Dynamic Client Registration** — the metadata's
      `registration_endpoint` (verified live: `POST {backend}/oauth/register` with `client_name`,
      `redirect_uris`, `grant_types: ["authorization_code", "refresh_token"]`,
