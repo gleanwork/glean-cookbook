@@ -22,7 +22,7 @@ Build "Index a custom data source" following https://developers.glean.com/cookbo
    ```
 
 3. **Set credentials**
-   Export GLEAN_INDEXING_API_TOKEN and GLEAN_SERVER_URL — this recipe has no .env.example, it reads directly from the environment (see indexing-token in cookbook-conventions).
+   Export GLEAN_INDEXING_API_TOKEN and GLEAN_SERVER_URL — this recipe has no .env.example, it reads directly from the environment (see the Authentication section below).
 
 4. **Run it**
    Registers the custom datasource and bulk-indexes documents/people with real per-document permissions — never allow-all.
@@ -44,11 +44,18 @@ glean-indexing-sdk==1.0.0b2. BaseDatasourceConnector subclass sets `configuratio
 
 ## Authentication
 
-This recipe needs `indexing-token` auth — follow the matching subsection under "Authentication: follow the recipe's declared `authMethod`" in the `cookbook-conventions` skill in this plugin, rather than assuming which credential path applies.
+Indexing API operations accept Glean-issued tokens only — OAuth does not apply here regardless of
+tenant configuration (per developers.glean.com/api-info/client/authentication/oauth). Don't run an
+OAuth detection chain for an indexing recipe; go straight to asking for a Glean
+Indexing API token (`GLEAN_INDEXING_API_TOKEN`) and server URL (`GLEAN_SERVER_URL`), the same way
+`index-custom-source` already does.
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+Do not report this recipe as done until you have run it for real (against a live Glean instance,
+with real credentials) and confirmed every query below produces its expected behavior. A build
+that runs without errors but fails one of these checks is not done — fix it and re-run before
+reporting success.
 
 - **Query:** "Who owns the payments-service catalog entry?"
   **Expected:** After indexing, Glean search/chat surfaces the custom-connector-indexed catalog document as a citation, naming the real owner — proving the connector's documents (not just seeded native ones) are searchable and permissions-scoped.

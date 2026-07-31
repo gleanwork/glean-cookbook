@@ -36,7 +36,18 @@ const ENTRY_METADATA = {
 
 const entry = { ...ENTRY_METADATA };
 
+// Codex requires these on the marketplace entry and pluginpack can't derive
+// them. Values match what OpenAI's own published marketplaces use.
+// `ON_USE` rather than `ON_INSTALL`: installing the plugin collects no
+// credential — recipes ask for a Glean token or walk OAuth when you run one.
+const codexEntry = {
+  ...ENTRY_METADATA,
+  policy: { installation: 'AVAILABLE', authentication: 'ON_USE' },
+  category: 'Developer Tools',
+};
+
 export default defineConfig({
+  source: { partials: 'partials' },
   name: 'glean-cookbook',
   version: '0.1.0',
   metadata: {
@@ -67,7 +78,11 @@ export default defineConfig({
       outDir: '..',
       marketplaceDir: '.agents/plugins',
       plugins: {
-        cookbook: { from: ['cookbook'], path: 'build/codex/cookbook', entry },
+        cookbook: {
+          from: ['cookbook'],
+          path: 'build/codex/cookbook',
+          entry: codexEntry,
+        },
       },
     },
   },

@@ -14,7 +14,12 @@
       },
       "homepage": "https://developers.glean.com/cookbook",
       "repository": "https://github.com/gleanwork/glean-cookbook",
-      "license": "MIT"
+      "license": "MIT",
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Developer Tools"
     }
   ]
 }

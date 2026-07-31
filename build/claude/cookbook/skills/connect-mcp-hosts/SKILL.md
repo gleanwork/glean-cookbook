@@ -10,7 +10,7 @@ Build "Connect Glean MCP to your AI tools" following https://developers.glean.co
    Check for Claude Code, Cursor, and Claude Desktop on this machine.
 
 2. **Resolve your Glean backend**
-   Find resolve-backend.mjs bundled with this plugin (a sibling of skills/, under scripts/) and run it with the user's work email — don't hand-derive the config/search call from memory, since getting it wrong silently resolves to the wrong tenant (see cookbook-conventions' auth section). It prints {instance, backend, oauthAvailable}. The MCP server URL is {backend}/mcp/default.
+   Resolve the backend from the user's work email — the Authentication section below has the exact command. The MCP server URL is {backend}/mcp/default.
 
 3. **Configure each detected host**
    --client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token.
@@ -31,7 +31,10 @@ Glean MCP server URL: https://{instance}-be.glean.com/mcp/{server-name} (default
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+Do not report this recipe as done until you have run it for real (against a live Glean instance,
+with real credentials) and confirmed every query below produces its expected behavior. A build
+that runs without errors but fails one of these checks is not done — fix it and re-run before
+reporting success.
 
 - **Query:** "Who's on call for payments-service?"
   **Expected:** The MCP host's chat surfaces a cited answer naming the current on-call owner, same shape as the Chat API path — MCP is a transport, not a different answer.

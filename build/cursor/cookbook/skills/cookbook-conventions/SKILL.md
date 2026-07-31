@@ -5,6 +5,10 @@ description: Shared Acme Corp brand kit, Web SDK embed conventions, per-recipe a
 
 # Cookbook house style
 
+Composed from `plugin/partials/` — the same fragments each recipe skill inlines directly, so a
+recipe never has to send you here to learn how auth works. This skill is the browsable copy; the
+partials are the source. Edit those, not this file.
+
 ## Authentication: follow the recipe's declared `authMethod`
 
 Every recipe's registry entry declares `authMethod` — which credential category it needs. That
@@ -13,10 +17,9 @@ the recipe's prose, and don't apply a subsection the recipe didn't declare. A re
 more than one value when it offers a path choice (e.g. Acme Answers' Web SDK vs. Chat API paths)
 — in that case, apply whichever subsection matches the path the user picks. Recipes declaring
 `none` or `custom` don't use this section at all: `none` needs no Glean credential, and `custom`
-means the recipe's own aiPrompt already fully specifies a bespoke credential step (a per-agent
-bearer token from a Share dialog, the MCP Configurator's own OAuth flow, a token pasted into a
-third-party tool's secret store) — follow that instead of inventing a detection chain it doesn't
-need.
+means the recipe's own instructions already fully specify a bespoke credential step (a per-agent
+bearer token from a Share dialog, a token pasted into a third-party tool's secret store) —
+follow that instead of inventing a detection chain it doesn't need.
 
 ### `web-sdk-cookie`
 
@@ -24,7 +27,7 @@ No explicit credential handling — the Web SDK's default `authMethod: 'sso'` re
 existing browser session with Glean (they're already logged in, or get redirected to log in).
 Don't ask for a token or walk through OAuth for this path; that's a different, unnecessary auth
 model. If the recipe or user asks for server-to-server auth instead, that's a deliberate
-opt-out of cookie auth into `client-api-oauth-or-token` below — don't blend the two.
+opt-out of cookie auth into the `client-api-oauth-or-token` flow — don't blend the two.
 
 ### `client-api-oauth-or-token`
 
@@ -79,12 +82,10 @@ one over the others, since which are available depends on how the tenant is conf
 ### `indexing-token`
 
 Indexing API operations accept Glean-issued tokens only — OAuth does not apply here regardless of
-tenant configuration (per developers.glean.com/api-info/client/authentication/oauth). Don't run
-the OAuth detection chain above for an indexing recipe; go straight to asking for a Glean
+tenant configuration (per developers.glean.com/api-info/client/authentication/oauth). Don't run an
+OAuth detection chain for an indexing recipe; go straight to asking for a Glean
 Indexing API token (`GLEAN_INDEXING_API_TOKEN`) and server URL (`GLEAN_SERVER_URL`), the same way
 `index-custom-source` already does.
-
-## Verify API details against live docs — mandatory, not a fallback
 
 This plugin ships the `glean-developer-docs` MCP server (`docs_search`, `docs_fetch`) —
 `developers.glean.com`'s own documentation, always current, including deprecation banners for any
@@ -105,8 +106,6 @@ checking the docs on anything shape-related.
 Every cookbook recipe demo represents the same fictional company, Acme Corp. Use these exact
 conventions instead of approximating — a plain colored square is not the logomark, and an
 unsized chat container is not "embedded."
-
-## Brand kit
 
 Primary accent: `#0E8C84` (teal). Use this for the primary button, header accent, or active
 state — not Glean's own blue.
@@ -136,8 +135,6 @@ mark from a text description. If you have filesystem/network access to the priva
 `gleanwork/glean-cookbook` repo, the canonical files are `brand/logomark-light.svg`,
 `brand/logomark-dark.svg`, and `brand/tokens.json` (full color/type tokens); otherwise the SVGs
 above are the complete, self-contained source.
-
-## Web SDK embed sizing
 
 `renderChat`/`renderSearchBox`/`renderSearchResults` need an explicit-sized container
 (`position: relative`, `display: block`, a real `width`, a real `height`) or the widget won't

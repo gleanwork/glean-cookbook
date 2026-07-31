@@ -79,7 +79,7 @@ Platform API search (data-first retrieval, distinct from the Client API's glean.
 
 ## Authentication
 
-This recipe needs `client-api-oauth-or-token` auth — follow the matching subsection under "Authentication: follow the recipe's declared `authMethod`" in the `cookbook-conventions` skill in this plugin, rather than assuming which credential path applies.
+{{> auth-client-api}}
 
 ## Language
 
@@ -87,7 +87,7 @@ Ask me which language to build in before starting: Python, TypeScript.
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+{{> verify-gate}}
 
 - **Query:** "What's our PTO policy?"
   **Expected:** Any user gets a cited answer — this doc is broadly readable, so permissions don't restrict it.

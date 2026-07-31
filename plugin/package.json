@@ -12,6 +12,6 @@
     "test": "npm run build && npm run validate"
   },
   "devDependencies": {
-    "@gleanwork/pluginpack": "^0.7.0"
+    "@gleanwork/pluginpack": "^0.10.0"
   }
 }

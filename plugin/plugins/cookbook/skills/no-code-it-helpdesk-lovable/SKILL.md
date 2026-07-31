@@ -21,7 +21,7 @@ This recipe's deliverable is a prompt template, not a runnable project — mirro
 
 ## Verify
 
-This recipe's app is built and run by a separate tool (Lovable, Replit), not by you. Before telling me you're done, give me the queries below to test myself in the running app, along with what a correct result looks like:
+{{> verify-gate-third-party}}
 
 - **Query:** "Where do I reset my SSO password?"
   **Expected:** Answer cites the SSO password reset guide.

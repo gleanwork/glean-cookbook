@@ -41,7 +41,7 @@ Per-agent A2A endpoints: /rest/api/v1/a2a/agents/{agentId} (JSON-RPC) and .../ag
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+{{> verify-gate}}
 
 - **Query:** "Who owns the payments service?"
   **Expected:** Returns a non-empty answer naming a real owner from the seeded Acme corpus, delivered via the A2A message/send response (a Message or Task, not an error) — and the scripted follow-up turn carries the same context_id, proving multi-turn works.
