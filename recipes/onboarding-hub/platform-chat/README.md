@@ -28,10 +28,16 @@ GLEAN_USE_FIXTURE=false npm run verify
 
 ## Platform Chat contract
 
+Aligned with `scio/openapi/public/platform/chat.yaml` (`ChatCreateRequest` / `ChatCompletedResponse`):
+
 - Request: `{ "input": "<question>", "stream": false, "store": true }`
-- Response: `output[0].content[0].text` + `annotations[].sources[]`
+- Response (required): `id` (`resp_<uuid4>`), `object: "response"`, `created_at`, `status: "completed"`, `output`, `store`, `request_id`
+- Answer text: `output[0].content[0].text` where `type` is `output_text`
+- Citations: `annotations[].type == "citation"` → `sources[]` (`document` sources use `document_id` and/or `url`, plus optional `title`)
 - Header: `X-GLEAN-INCLUDE-EXPERIMENTAL=true`
-- Platform scope: `CHAT_WRITE` (documented in registry `llmContext`)
+- Platform scope: `CHAT` (see registry `requiredScopes` / `llmContext`)
+
+`fixtures/chat-response.json` is a complete sample of that response. `npm run verify:fixture` asserts the fixture shape before exercising the parser.
 
 When `@gleanwork/api-client` ships `glean.chat.create`, swap the `fetch` call in `server.ts` for the generated SDK method — the response parsing stays the same.
 

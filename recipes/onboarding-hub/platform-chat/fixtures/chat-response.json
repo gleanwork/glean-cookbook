@@ -1,6 +1,7 @@
 {
-  "id": "chatcmpl-onboarding-fixture",
+  "id": "resp_e65a0a77-97a2-4c91-be60-eae7f6238015",
   "object": "response",
+  "created_at": "2026-07-14T20:00:00Z",
   "status": "completed",
   "output": [
     {
@@ -16,8 +17,10 @@
               "sources": [
                 {
                   "type": "document",
+                  "document_id": "HR-ONBOARDING-ALEX-KIM",
                   "title": "Onboarding Checklist — Alex Kim",
-                  "url": "https://portal.acme.internal/hr/onboarding/alex-kim"
+                  "url": "https://portal.acme.internal/hr/onboarding/alex-kim",
+                  "datasource": "acme_hr"
                 }
               ]
             }
@@ -25,5 +28,8 @@
         }
       ]
     }
-  ]
+  ],
+  "store": true,
+  "conversation_id": "conv_onboarding_hub_fixture",
+  "request_id": "req_onboarding_hub_fixture"
 }
