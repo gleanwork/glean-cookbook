@@ -1,0 +1,24 @@
+{
+  "name": "glean-cookbook",
+  "owner": {
+    "name": "Glean"
+  },
+  "metadata": {
+    "description": "Build Glean cookbook recipes hands-free from Claude Code, Cursor, or Codex."
+  },
+  "plugins": [
+    {
+      "name": "cookbook",
+      "source": "build/cursor/cookbook",
+      "description": "Build Glean cookbook recipes hands-free: browse what's available, then run a recipe's command to scaffold it against your own Glean instance.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Glean"
+      },
+      "homepage": "https://developers.glean.com/cookbook",
+      "repository": "https://github.com/gleanwork/glean-cookbook",
+      "license": "MIT"
+    }
+  ],
+  "version": "0.1.0"
+}

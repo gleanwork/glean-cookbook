@@ -74,13 +74,24 @@ jobs:
         run: npx pluginpack build
       - name: Validate claude target
         working-directory: plugin
-        run: npx pluginpack validate --target claude --dir dist/claude
+        run: npx pluginpack validate --target claude --dir ..
       - name: Validate cursor target
         working-directory: plugin
-        run: npx pluginpack validate --target cursor --dir dist/cursor
+        run: npx pluginpack validate --target cursor --dir ..
       - name: Validate codex target
         working-directory: plugin
-        run: npx pluginpack validate --target codex --dir dist/codex
+        run: npx pluginpack validate --target codex --dir ..
+      # Emitted plugin content and the root marketplace manifests are committed
+      # (each manifest's `source` points at build/, so it must exist in a fresh
+      # clone). Fail if someone edited a skill without rebuilding.
+      - name: Check committed build output is not stale
+        working-directory: plugin
+        run: |
+          npx pluginpack diff --target claude --against ..
+          npx pluginpack diff --target cursor --against ..
+          npx pluginpack diff --target codex --against ..
+      - name: Validate root marketplace manifest with Claude Code itself
+        run: npx --yes @anthropic-ai/claude-code plugin validate .
 
   recipe-checks:
     name: Recipe typecheck / lint
