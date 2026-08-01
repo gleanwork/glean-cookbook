@@ -11,9 +11,14 @@ uv run main.py "What's our PTO policy?"
 
 Dependencies are declared inline in `main.py` ([PEP 723](https://peps.python.org/pep-0723/)),
 so [uv](https://docs.astral.sh/uv/) installs them into an isolated environment on first run —
-no `requirements.txt`, no virtualenv, no activate step. Prefer pip? The pins are in that same
-block: `pip install glean-api-client==0.15.4 anthropic==0.120.0` inside a virtualenv you
-manage yourself.
+no `requirements.txt`, no virtualenv, no activate step. `main.py.lock` pins the whole
+transitive tree with hashes, so this runs the same today as it did when it was verified; add
+`--locked` to fail rather than re-resolve if it ever drifts. After editing the inline
+dependencies, re-run `uv lock --script main.py`.
+
+Prefer pip? The direct pins are in that same block: `pip install glean-api-client==0.15.4
+anthropic==0.120.0` inside a virtualenv you manage yourself — though you lose the transitive
+pinning the lock gives you.
 
 ## The permissions demo
 

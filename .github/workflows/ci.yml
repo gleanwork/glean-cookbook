@@ -56,7 +56,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: node scripts/check-pinned-deps.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Node-side deps (package.json, requirements.txt)
+        run: node scripts/check-pinned-deps.mjs
+      - name: Python-side deps (PEP 723 via uv locks)
+        run: python3 scripts/check_pinned_deps.py
 
   plugin-build:
     name: Build & validate plugin
@@ -147,7 +153,10 @@ jobs:
             find "$recipe" -name '*.py' -not -path '*/.venv/*' | while read -r script; do
               grep -q '^# /// script' "$script" || continue
               dir=$(dirname "$script")
-              env_path=$(uv sync --script "$script" 2>&1 | sed -n 's/.*script environment at: //p')
+              # Fails if the committed lock no longer matches the inline
+              # dependencies, so a recipe can't drift transitively.
+              uv lock --script "$script" --check
+              env_path=$(uv sync --script "$script" --locked 2>&1 | sed -n 's/.*script environment at: //p')
               if [ -z "$env_path" ]; then
                 echo "Could not resolve a uv script environment for $script"
                 exit 1
