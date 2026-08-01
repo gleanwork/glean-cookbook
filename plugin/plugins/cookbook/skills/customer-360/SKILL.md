@@ -85,11 +85,11 @@ Platform-only recipe. Search: glean.search.query -> POST /api/search, results[].
 
 ## Authentication
 
-This recipe needs `client-api-oauth-or-token` auth — follow the matching subsection under "Authentication: follow the recipe's declared `authMethod`" in the `cookbook-conventions` skill in this plugin, rather than assuming which credential path applies.
+{{> auth-client-api}}
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+{{> verify-gate}}
 
 - **Query:** "What's the status of the Globex renewal?"
   **Expected:** Answer cites sales-globex-renewal-status with renewal date 2026-09-30, on-track status, and open items (DPA / procurement).
