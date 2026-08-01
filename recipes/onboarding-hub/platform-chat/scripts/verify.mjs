@@ -44,7 +44,10 @@ function assertFixtureMatchesOpenApi(fixture) {
   if (typeof fixture.request_id !== 'string' || fixture.request_id.length < 1) {
     return 'fixture.request_id must be a non-empty string';
   }
-  if (typeof fixture.created_at !== 'string' || Number.isNaN(Date.parse(fixture.created_at))) {
+  if (
+    typeof fixture.created_at !== 'string' ||
+    Number.isNaN(Date.parse(fixture.created_at))
+  ) {
     return 'fixture.created_at must be an RFC 3339 timestamp';
   }
   if (!RESPONSE_ID_RE.test(fixture.id)) {
