@@ -1,0 +1,129 @@
+{
+  "id": "acme-answers",
+  "title": "Acme Answers: a company knowledge Q&A page",
+  "description": "The hello-world of Glean apps: one page, one input, one permission-aware cited answer \u2014 built two ways, with the Web SDK and with the Chat API.",
+  "sidebarLabel": "Acme Answers",
+  "surfaces": ["client-api", "sdk-client", "web-sdk"],
+  "status": "showcase",
+  "category": "search",
+  "level": "Beginner",
+  "levels": {
+    "minimal": true,
+    "wow": true
+  },
+  "timeEstimate": "~30 min",
+  "icon": "qna",
+  "requiredScopes": ["CHAT"],
+  "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
+  "buildMethod": "scaffold",
+  "languages": ["typescript"],
+  "prerequisites": [
+    "A Glean instance with content indexed",
+    "An OAuth access token or Glean API token with the CHAT scope",
+    "Node 20+ (Chat API path) or any static page (Web SDK path)"
+  ],
+  "demoQueries": [
+    {
+      "query": "What's our PTO policy?",
+      "expectedBehavior": "Answer cites the PTO policy document (title + url), with a non-empty, deduped citations list \u2014 no leaked step-narration text prepended to the answer."
+    },
+    {
+      "query": "Who owns the payments-service catalog entry?",
+      "expectedBehavior": "Answer names the real owner from the seeded payments-service catalog entry and cites that document."
+    }
+  ],
+  "codeAssets": [
+    {
+      "repoPath": "recipes/acme-answers/web-sdk",
+      "language": "typescript",
+      "description": "Web SDK variant \u2014 renderChat in a page",
+      "steps": [
+        {
+          "title": "Scaffold the project",
+          "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/acme-answers/web-sdk acme-answers"
+        },
+        {
+          "title": "Install dependencies",
+          "command": "cd acme-answers && npm install"
+        },
+        {
+          "title": "Credentials",
+          "description": "Default SSO auth needs no configuration \u2014 the Web SDK relies on the user's existing browser session with Glean."
+        },
+        {
+          "title": "Run it",
+          "command": "npm run dev"
+        },
+        {
+          "title": "Verify",
+          "description": "Open the printed local URL and ask \"What's our PTO policy?\" \u2014 confirm a real, cited answer renders inside Glean's chat UI."
+        }
+      ]
+    },
+    {
+      "repoPath": "recipes/acme-answers/chat-api",
+      "language": "typescript",
+      "description": "Chat API variant \u2014 one chat.create call, citations rendered",
+      "steps": [
+        {
+          "title": "Scaffold the project",
+          "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/acme-answers/chat-api acme-answers"
+        },
+        {
+          "title": "Install dependencies",
+          "command": "cd acme-answers && npm install"
+        },
+        {
+          "title": "Set credentials",
+          "command": "cp .env.example .env",
+          "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE \u2014 the Authentication section below covers how to get a token."
+        },
+        {
+          "title": "Run it",
+          "command": "npm start",
+          "description": "Leaves the server running so you can try it yourself at http://localhost:3000 \u2014 stop it (Ctrl-C) before the deterministic verify step below, which starts its own instance."
+        },
+        {
+          "title": "Verify",
+          "command": "npm run verify",
+          "description": "Starts the server itself, runs both demo queries for real, and asserts the response shape (non-empty answer, non-empty deduped citations with title+url) \u2014 exits non-zero on any failure. Do not report this recipe as done until this passes."
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "title": "Pick a path",
+      "description": "Path A (Web SDK) renders Glean's own chat UI for you \u2014 fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend \u2014 you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer."
+    }
+  ],
+  "scaffoldActions": [],
+  "architecture": [
+    {
+      "label": "Acme Answers page",
+      "caption": "single input + answer card",
+      "icon": "layout-outlined"
+    },
+    {
+      "label": "Path A: Web SDK",
+      "caption": "renderChat \u2014 Glean owns the UI",
+      "category": "search"
+    },
+    {
+      "label": "Path B: Chat API",
+      "caption": "chat.create \u2014 you own the UI",
+      "category": "agent"
+    },
+    {
+      "label": "Glean",
+      "caption": "permission-aware answers with citations",
+      "emphasized": true
+    }
+  ],
+  "aiPrompt": "Build \"Acme Answers\", a one-page company Q&A app on Glean, following\nhttps://developers.glean.com/cookbook/acme-answers\n\n1. Ask me which path: (A) Web SDK or (B) Chat API. Build the one I pick.\n2. Path A: npm install @gleanwork/web-sdk; create a container with\n   position: relative, display: block, width: 100%, height: 480px, then\n   renderChat(el, { initialMessage: \"What's our PTO policy?\" }) \u2014 SSO\n   auth needs no configuration. Passing initialMessage opens straight\n   into a real cited answer instead of an empty landing screen, and\n   doubles as your on-load verification.\n3. Path B: npm install @gleanwork/api-client; construct the client with\n   new Glean({ apiToken, instance }) \u2014 NOT `domain`, which is not a\n   real SDKOptions field despite appearing in one of the SDK's own\n   bundled example files. POST chat.create with my question as a\n   single USER message; the response can include earlier step-narration\n   messages (search/read progress) ahead of the real answer \u2014 filter to\n   messageType === 'CONTENT', then join those messages' fragments[].text\n   for the answer. Citations live per-fragment at fragments[].citation\n   .sourceDocument (title + url) \u2014 not a top-level citedDocuments field,\n   and not the older message.citations[] field, which is deprecated and\n   wasn't populated at all on a live test response. Dedupe citations by\n   url since the same source is commonly cited by more than one\n   fragment. Keep the API token server-side.\n4. Style it as Acme Corp per the house style below: the real logomark\n   in the header (not a plain colored square), teal (#0E8C84) as the\n   primary accent, \"Acme Answers\" title.\n5. Verify with \"What's our PTO policy?\" \u2014 the answer must carry\n   citations and respect my permissions. Contrast note for the\n   README: the SDK path ships Glean's full UI free; the API path\n   gives total UI control.",
+  "llmContext": "Chat API: POST /rest/api/v1/chat (client SDK glean.client.chat.create). A real response can include earlier UPDATE-type messages narrating search/read steps ahead of the answer \u2014 filter to messageType === 'CONTENT' before joining fragments[].text, or that narration text ends up prepended to the answer. Citations live per-fragment at fragments[].citation.sourceDocument (title, url), not a top-level citedDocuments field and not the older message.citations[] field \u2014 that field is deprecated (removal scheduled 2026-10-15) and, verified live, wasn't populated at all on an agentic chat response even though real citations existed. Dedupe citations by url since the same source is commonly cited by more than one fragment. Client constructor takes apiToken + instance (or serverURL), not domain.",
+  "goDependency": false,
+  "featured": true,
+  "tags": ["starter", "dual-implementation"],
+  "lastVerified": "2026-07-28"
+}

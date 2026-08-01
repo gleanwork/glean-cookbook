@@ -5,6 +5,7 @@
   "description": "Runnable recipes for building on the Glean platform.",
   "type": "module",
   "scripts": {
+    "build:registry": "node scripts/build-registry.mjs",
     "validate:registry": "node scripts/validate-registry.mjs",
     "check:freshness": "node scripts/check-recipe-freshness.mjs",
     "format": "prettier --write .",

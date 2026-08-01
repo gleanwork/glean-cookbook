@@ -1,0 +1,46 @@
+{
+  "id": "no-code-it-helpdesk-lovable",
+  "title": "IT helpdesk deflection page \u2014 no code, on Lovable",
+  "description": "Prompt Lovable into an IT helpdesk deflection page on the Glean Chat API \u2014 zero hand-written backend, permissions enforced by Glean.",
+  "sidebarLabel": "IT Helpdesk (Lovable)",
+  "surfaces": ["client-api"],
+  "status": "showcase",
+  "category": "workflow",
+  "level": "Beginner",
+  "levels": {
+    "minimal": true,
+    "wow": false
+  },
+  "timeEstimate": "~45 min",
+  "icon": "lovable",
+  "requiredScopes": ["CHAT"],
+  "authMethod": ["custom"],
+  "buildMethod": "third-party-build",
+  "prerequisites": [
+    "A Lovable account",
+    "A Glean API token with the CHAT scope (kept as a Lovable backend secret)"
+  ],
+  "demoQueries": [
+    {
+      "query": "Where do I reset my SSO password?",
+      "expectedBehavior": "Answer cites the SSO password reset guide."
+    },
+    {
+      "query": "How do I request a new laptop?",
+      "expectedBehavior": "Answer cites the IT helpdesk FAQ (loaner laptops, same-day, from the IT desk)."
+    }
+  ],
+  "codeAssets": [
+    {
+      "repoPath": "recipes/no-code-it-helpdesk-lovable",
+      "language": "markdown",
+      "description": "The exact Lovable prompt + secrets checklist"
+    }
+  ],
+  "scaffoldActions": [],
+  "aiPrompt": "I'm using Lovable, not you, to build this \u2014 your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt.\n3. After Lovable builds it, hand it back to me \u2014 see Verify below for\n   the exact queries to test and what a correct result looks like.",
+  "llmContext": "This recipe's deliverable is a prompt template, not a runnable project \u2014 mirrors no-code-pto-lookup-replit's shape (same Chat API call, same \"browser never holds the token\" constraint, same citation correction: filter to messageType === 'CONTENT' before joining fragments[].text, and read citations from fragments[].citation.sourceDocument \u2014 not the deprecated message.citations[] field, which wasn't populated at all on a live test response) with a different tool and persona so the two don't read as duplicates. Lovable's default stack leans on a connected backend/database integration for server-side secrets rather than a plain Node server, so the prompt asks the agent to set that up rather than assuming a fixed mechanism. Both demo queries are answered by existing seeded Acme corpus documents \u2014 no corpus changes were needed.",
+  "goDependency": false,
+  "featured": false,
+  "tags": ["no-code", "it"]
+}

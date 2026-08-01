@@ -25,15 +25,30 @@ Each `recipes/{id}/` directory is a **self-contained, runnable example** — it 
 
 ### The registry
 
-`registry.json` is the **single source of truth for recipe metadata** — title, description, sidebar label, prerequisites, `aiPrompt`, everything a recipe's dev site page or the `glean-cookbook` plugin needs (see `schemas/recipe.schema.json`, generated from [`src/types/recipe.ts`](https://github.com/gleanwork/glean-developer-site/blob/main/src/types/recipe.ts) in the dev site repo). The dev site's `docs/cookbook/{id}.mdx` files are prose-only — no metadata frontmatter — and are matched to their registry entry by filename === `id`.
+Recipe metadata is authored **one file per recipe**, at `recipes/{id}/recipe.json` — title,
+description, sidebar label, prerequisites, `aiPrompt`, everything a recipe's dev site page or the
+`glean-cookbook` plugin needs (see `schemas/recipe.schema.json`, generated from
+[`src/types/recipe.ts`](https://github.com/gleanwork/glean-developer-site/blob/main/src/types/recipe.ts)
+in the dev site repo). Keeping it next to the code it describes means adding a recipe touches only
+its own directory, so two recipes in flight don't collide in one file.
+
+`registry.json` at the repo root is **generated** from those files by `npm run build:registry`, and
+committed: the dev site syncs it as a single fetch, and the plugin's skills are generated from it.
+Don't hand-edit it — CI fails if it's out of sync with the `recipe.json` files. The dev site's
+`docs/cookbook/{id}.mdx` files are prose-only — no metadata frontmatter — and are matched to their
+recipe by filename === `id`.
 
 Adding a recipe means adding all three:
 
 1. `recipes/{id}/` with the runnable code (or a short README explaining why there isn't any)
-2. an entry in `registry.json` with matching `id`
+2. `recipes/{id}/recipe.json`, then `npm run build:registry` to refresh `registry.json`
 3. a prose page at `docs/cookbook/{id}.mdx` in [glean-developer-site](https://github.com/gleanwork/glean-developer-site)
 
-CI (`validate-registry`) checks every registry entry against the schema and confirms its `recipes/{id}/` directory exists. The dev site pulls this registry via `pnpm registry:sync` (fetched into its own `data/cookbook-registry.json` snapshot, then compiled by `pnpm recipes:compile`) — run both there after changing `registry.json` here, or wait for the `sync-cookbook-registry` CI workflow to open a PR automatically.
+CI (`validate-registry`) checks every `recipe.json` against the schema, confirms its `recipes/{id}/`
+directory exists, and confirms `registry.json` matches what the recipe files build to. The dev site
+pulls the built registry via `pnpm registry:sync` (fetched into its own `data/cookbook-registry.json`
+snapshot, then compiled by `pnpm recipes:compile`) — run both there after changing a recipe here, or
+wait for the `sync-cookbook-registry` CI workflow to open a PR automatically.
 
 ## CI
 

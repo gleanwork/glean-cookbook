@@ -16,6 +16,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # registry.json is built from recipes/<id>/recipe.json and committed,
+      # since the dev site and the plugin both consume it as one file.
+      - name: Check registry.json is not stale
+        run: node scripts/build-registry.mjs --check
       - run: npm run validate:registry
       - name: Report recipe verification freshness (informational)
         run: node scripts/check-recipe-freshness.mjs
