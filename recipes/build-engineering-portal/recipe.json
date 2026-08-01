@@ -1,0 +1,92 @@
+{
+  "id": "build-engineering-portal",
+  "title": "Build an engineering portal",
+  "description": "The end-to-end showcase \u2014 index a developer catalog into Glean, then embed permission-aware search and chat back into the portal your team already uses.",
+  "sidebarLabel": "Engineering Portal",
+  "surfaces": ["connector-sdk", "indexing-api", "web-sdk", "client-api"],
+  "status": "showcase",
+  "category": "portal",
+  "level": "Intermediate",
+  "levels": {
+    "minimal": true,
+    "wow": true
+  },
+  "timeEstimate": "~30 min",
+  "requiredScopes": ["SEARCH", "CHAT"],
+  "authMethod": [
+    "indexing-token",
+    "web-sdk-cookie",
+    "client-api-oauth-or-token"
+  ],
+  "buildMethod": "integrate",
+  "languages": ["python", "typescript"],
+  "prerequisites": [
+    "A Glean instance where you can add a custom datasource",
+    "A Glean-issued Indexing API token",
+    "Node.js 18+ to run the portal app locally"
+  ],
+  "demoQueries": [
+    {
+      "query": "Who's on call for payments-service?",
+      "expectedBehavior": "Answer names the current on-call owner from the indexed developer catalog, with a citation to that catalog entry."
+    },
+    {
+      "query": "What's the deploy and rollback process for payments-service?",
+      "expectedBehavior": "Answer describes the real deploy/rollback steps from the indexed runbook, with a citation \u2014 not a generic, made-up process."
+    },
+    {
+      "query": "Summarize PAY-2114",
+      "expectedBehavior": "Answer summarizes the real indexed PAY-2114 incident ticket content, with a citation to it \u2014 not a fabricated summary."
+    }
+  ],
+  "scaffoldActions": ["scaffold-connector", "scaffold-web-sdk-embed"],
+  "combines": [
+    {
+      "title": "Index a developer catalog",
+      "surface": "Connector SDK",
+      "category": "index",
+      "language": "python"
+    },
+    {
+      "title": "Embed search into the portal",
+      "surface": "Web SDK",
+      "category": "search",
+      "language": "typescript"
+    },
+    {
+      "title": "Ground chat in the catalog",
+      "surface": "Client API",
+      "category": "mcp",
+      "language": "typescript"
+    }
+  ],
+  "architecture": [
+    {
+      "label": "Service catalog",
+      "caption": "YAML + runbooks",
+      "category": "index"
+    },
+    {
+      "label": "Custom connector",
+      "caption": "Indexing API",
+      "category": "workflow",
+      "icon": "plug"
+    },
+    {
+      "label": "Glean",
+      "caption": "permission-aware index",
+      "emphasized": true
+    },
+    {
+      "label": "Portal UI",
+      "caption": "Web SDK embed",
+      "category": "portal",
+      "icon": "layout-outlined"
+    }
+  ],
+  "aiPrompt": "Build the \"Engineering portal with Glean\" flagship recipe from\nhttps://developers.glean.com/cookbook/build-engineering-portal\n\nIt composes two building blocks:\n1. Index the portal's service catalog into Glean with the open-source\n   indexing SDK (follow\n   https://developers.glean.com/api-info/indexing/getting-started/overview).\n2. Embed Glean search and chat into the portal UI with the Web SDK (see\n   https://developers.glean.com/cookbook/embed-search-chat \u2014 same\n   container sizing and initialMessage guidance applies here).\n\nStyle the portal shell itself per the house style below (real logomark,\nteal accent) so the catalog UI and the embedded search/chat feel like one\ncohesive app, not two mismatched pieces bolted together.\n\nAsk me for: my Glean instance/backend domain, an Indexing API token, and\nmy Glean web app domain. See Verify below for what a correct build must do.",
+  "llmContext": "Flagship showcase composing the custom-connector and Web SDK embed recipes: a service-catalog portal whose catalog is indexed into Glean via the indexing SDK, with Glean search and chat embedded back into the portal UI. Requires a Glean-issued Indexing API token for the connector and SEARCH/CHAT scopes for the embed.",
+  "goDependency": false,
+  "featured": false,
+  "tags": ["flagship", "portal"]
+}

@@ -10,7 +10,7 @@ Build "Connect Glean MCP to your AI tools" following https://developers.glean.co
    Check for Claude Code, Cursor, and Claude Desktop on this machine.
 
 2. **Resolve your Glean backend**
-   Ask for your work email, POST it to https://app.glean.com/config/search, and extract {instance} from the subdomain of the returned queryURL — the same chain cookbook-conventions' auth section uses. The MCP server URL is https://{instance}-be.glean.com/mcp/default.
+   Resolve the backend from the user's work email — the Authentication section below has the exact command. The MCP server URL is {backend}/mcp/default.
 
 3. **Configure each detected host**
    --client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token.
@@ -25,17 +25,13 @@ Build "Connect Glean MCP to your AI tools" following https://developers.glean.co
 5. **Verify**
    Per host, ask "Who's on call for payments-service?" and confirm a real, Glean-cited answer.
 
-## Setup
-
-- Scaffold MCP config
-
 ## Reference
 
 Glean MCP server URL: https://{instance}-be.glean.com/mcp/{server-name} (default server-name is "default"). @gleanwork/configure-mcp-server (npx -y @gleanwork/configure-mcp-server remote --url <url> --client <host>) is the real, GA, first-party CLI for wiring this up -- it handles OAuth with Dynamic Client Registration by default and writes the correct host-specific config (Claude Code/Cursor connect natively over HTTP; Claude Desktop is stdio-only, so the CLI wires the mcp-remote bridge automatically). Never reference @gleanwork/mcp-server (deprecated local package), never hand-walk the app.glean.com/settings/install MCP Configurator URL pattern when this CLI exists, and never tell users an API token is required by default -- pass --token only if a host genuinely doesn't support OAuth.
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+{{> verify-gate}}
 
 - **Query:** "Who's on call for payments-service?"
   **Expected:** The MCP host's chat surfaces a cited answer naming the current on-call owner, same shape as the Chat API path — MCP is a transport, not a different answer.

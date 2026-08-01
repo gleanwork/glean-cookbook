@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "target": "codex",
+  "files": [
+    ".agents/plugins/marketplace.json",
+    "build/codex/cookbook/.codex-plugin/plugin.json",
+    "build/codex/cookbook/.mcp.json",
+    "build/codex/cookbook/scripts/resolve-backend.mjs",
+    "build/codex/cookbook/scripts/scaffold-recipe.mjs",
+    "build/codex/cookbook/skills/a2a-client/SKILL.md",
+    "build/codex/cookbook/skills/acme-answers/SKILL.md",
+    "build/codex/cookbook/skills/browse-cookbook/SKILL.md",
+    "build/codex/cookbook/skills/build-engineering-portal/SKILL.md",
+    "build/codex/cookbook/skills/connect-mcp-hosts/SKILL.md",
+    "build/codex/cookbook/skills/cookbook-conventions/SKILL.md",
+    "build/codex/cookbook/skills/embed-search-chat/SKILL.md",
+    "build/codex/cookbook/skills/index-custom-source/SKILL.md",
+    "build/codex/cookbook/skills/multi-step-agent/SKILL.md",
+    "build/codex/cookbook/skills/no-code-it-helpdesk-lovable/SKILL.md",
+    "build/codex/cookbook/skills/no-code-pto-lookup-replit/SKILL.md",
+    "build/codex/cookbook/skills/permissions-aware-rag/SKILL.md"
+  ]
+}

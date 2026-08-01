@@ -2,61 +2,22 @@
 
 Connect Claude Code, Cursor, and Claude Desktop to the Glean remote MCP server and run one enterprise task from each — same context, three surfaces.
 
-## Recommended: the MCP Configurator
+## Run it
 
-For real setup, use the **MCP Configurator** (Settings → Your Settings → Install tab → MCP Configurator), or jump straight to a host's config page:
+1. Find your Glean backend URL: `https://{instance}-be.glean.com/mcp/default` (find `{instance}` at `app.glean.com/admin/about-glean`, under Server instance — or resolve it from your work email via `https://app.glean.com/config/search`).
+2. For each host you have installed, run `@gleanwork/configure-mcp-server` — the real, GA, first-party CLI for this job. It handles OAuth with Dynamic Client Registration by default; you don't need an API token, and there's no MCP Configurator web flow to hand-walk.
 
-- Claude Code: `https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=claude-code`
-- Cursor: `https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=cursor`
-- Claude Desktop: `https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=claude-desktop`
+   ```bash
+   npx -y @gleanwork/configure-mcp-server remote --url https://{instance}-be.glean.com/mcp/default --client <host>
+   ```
 
-The Configurator authenticates via **OAuth** — no API token needed for supported hosts. See [/guides/mcp](https://developers.glean.com/guides/mcp).
+   `<host>` is one of `claude-code`, `cursor`, `claude-desktop` (the CLI also supports codex, goose, jetbrains, junie, vscode, and windsurf — run `npx -y @gleanwork/configure-mcp-server help` for the full list).
 
-## What's in this directory
+3. Restart the host app — Cursor and Claude Code pick up the new server on restart; Claude Desktop needs the hammer icon to confirm Glean tools are available.
 
-`generate-configs.mjs` uses `@gleanwork/mcp-config-schema` — the same library behind the Configurator — to generate the config each host actually needs, so you can see exactly what gets written and why the three differ:
+## Why Claude Desktop's config looks different
 
-```bash
-npm install
-GLEAN_INSTANCE=acme node generate-configs.mjs
-```
-
-`claude-code.json`, `cursor.json`, and `claude-desktop.json` are checked in as reference output (`instance=acme`, a placeholder token).
-
-## Why the three configs differ
-
-- **Claude Code** and **Cursor** support the remote MCP server natively over HTTP:
-  ```json
-  {
-    "mcpServers": {
-      "glean": {
-        "type": "http",
-        "url": "https://acme-be.glean.com/mcp/default",
-        "headers": { "Authorization": "Bearer ${GLEAN_API_TOKEN}" }
-      }
-    }
-  }
-  ```
-- **Claude Desktop** only supports stdio, so it needs the [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) bridge — the schema library detects this (`registry.clientNeedsMcpRemote('claude-desktop')` is `true`) and wraps the same URL automatically:
-  ```json
-  {
-    "mcpServers": {
-      "glean": {
-        "type": "stdio",
-        "command": "npx",
-        "args": [
-          "-y",
-          "mcp-remote",
-          "https://acme-be.glean.com/mcp/default",
-          "--header",
-          "Authorization: Bearer ${GLEAN_API_TOKEN}"
-        ]
-      }
-    }
-  }
-  ```
-
-Every server URL follows `https://{instance}-be.glean.com/mcp/{server-name}` — find yours at `app.glean.com/admin/about-glean`, under Server instance.
+Claude Code and Cursor support the remote MCP server natively over HTTP. Claude Desktop only supports stdio, so it needs the [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) bridge — the CLI detects this per-host and wraps the same URL in it automatically. You don't need to know this to run the command above; it's just why the two config shapes differ if you go looking at what got written.
 
 ## Verify
 
