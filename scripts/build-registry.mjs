@@ -71,11 +71,39 @@ const contents = await prettier.format(JSON.stringify(entries), {
   filepath: registryFile,
 });
 
+/**
+ * An id in the committed registry with no recipes/<id>/recipe.json behind it
+ * is almost always a branch written before the split — someone added an entry
+ * to registry.json directly, then merged main. Rebuilding would delete their
+ * recipe, and the stale-check's own message tells them to run exactly that.
+ * Refuse instead, unless the removal is stated explicitly.
+ */
+const existingRaw = fs.existsSync(registryFile)
+  ? fs.readFileSync(registryFile, 'utf8')
+  : '';
+if (existingRaw.trim()) {
+  const builtIds = new Set(entries.map((entry) => entry.id));
+  let previousIds = [];
+  try {
+    previousIds = JSON.parse(existingRaw).map((entry) => entry.id);
+  } catch {
+    // Unparseable registry: nothing to protect, the rebuild replaces it.
+  }
+  const dropped = previousIds.filter((id) => !builtIds.has(id));
+  if (dropped.length > 0 && !process.argv.includes('--allow-removals')) {
+    fail(
+      `registry.json contains ${dropped.length} recipe(s) with no recipes/<id>/recipe.json:\n` +
+        dropped.map((id) => `  ${id}`).join('\n') +
+        `\n\nRecipe metadata now lives in recipes/<id>/recipe.json (registry.json is built\n` +
+        `from it). If this is a branch written before that change, move each entry out of\n` +
+        `registry.json into its own recipe.json and re-run. If you really are deleting\n` +
+        `these recipes, re-run with --allow-removals.`,
+    );
+  }
+}
+
 if (check) {
-  const existing = fs.existsSync(registryFile)
-    ? fs.readFileSync(registryFile, 'utf8')
-    : '';
-  if (existing !== contents) {
+  if (existingRaw !== contents) {
     console.error(
       'registry.json is stale. Run `npm run build:registry` and commit the result.',
     );
