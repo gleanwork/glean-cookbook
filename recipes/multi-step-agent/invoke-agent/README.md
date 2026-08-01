@@ -14,10 +14,14 @@ There's no API to create an agent from scratch. In the Glean Agent Builder:
 ## Run it
 
 ```bash
-pip install -r requirements.txt
 cp .env.example .env   # fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, GLEAN_AGENT_ID
-python main.py
+uv run main.py
 ```
+
+Dependencies are declared inline ([PEP 723](https://peps.python.org/pep-0723/)) and locked,
+so [uv](https://docs.astral.sh/uv/) installs them into an isolated environment on first run —
+no `requirements.txt`, virtualenv, or activate step. Re-run `uv lock --script <script>` after
+editing the inline dependencies.
 
 ## What this does
 

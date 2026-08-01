@@ -1,3 +1,10 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "a2a-sdk==0.3.26",
+#     "httpx==0.28.1",
+# ]
+# ///
 """Call a Glean agent from an A2A client: card discovery, message/send,
 multi-turn via context_id, and streaming.
 

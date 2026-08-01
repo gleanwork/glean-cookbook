@@ -12,27 +12,21 @@ Build "Call a Glean agent from an A2A client" following https://developers.glean
    npx tiged --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client
    ```
 
-2. **Install dependencies**
-   Pins a2a-sdk below 1.0 — Glean serves A2A spec 0.3 today; 1.x clients won't interop until the server upgrades.
-
-   ```bash
-   cd a2a-client && pip install -r requirements.txt
-   ```
-
-3. **Set credentials**
+2. **Set credentials**
    Fill in GLEAN_A2A_CARD_URL and GLEAN_A2A_TOKEN from the agent's Share → A2A dialog — this is a per-agent bearer token, not the general Glean OAuth/token chain.
 
    ```bash
    cp .env.example .env
    ```
 
-4. **Run it**
+3. **Run it**
+   Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.
 
    ```bash
-   python main.py
+   cd a2a-client && uv run main.py
    ```
 
-5. **Verify**
+4. **Verify**
    Confirm a real answer to "Who owns the payments service?", a follow-up reusing the same context_id to prove multi-turn, and a streaming response — all three paths this recipe exercises.
 
 ## Reference

@@ -1,3 +1,9 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "flask==3.1.3",
+# ]
+# ///
 """A governed custom Tool server for Acme's incident-tracking system.
 
 Mirrors the verified pattern in this repo's own guides/tools/examples/

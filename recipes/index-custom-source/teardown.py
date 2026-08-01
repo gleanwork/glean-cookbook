@@ -1,3 +1,9 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "glean-indexing-sdk==1.0.0b2",
+# ]
+# ///
 """Tear down everything seed.py created, for a clean re-run.
 
 IMPORTANT — verified against the installed glean-api-client==0.12.20 source

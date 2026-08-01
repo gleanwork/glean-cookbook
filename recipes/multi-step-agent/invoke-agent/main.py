@@ -1,3 +1,9 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "glean-api-client==0.15.4",
+# ]
+# ///
 """Invoke the Acme incident-triage agent and demo the governed-tool branch.
 
 Verified against the actually installed glean-api-client==0.15.4:

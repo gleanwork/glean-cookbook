@@ -15,23 +15,17 @@ Build "Index a custom data source" following https://developers.glean.com/cookbo
    npx tiged --mode=git gleanwork/glean-cookbook/acme-corpus index-custom-source/acme-corpus
    ```
 
-2. **Install dependencies**
-
-   ```bash
-   cd index-custom-source/recipes/index-custom-source && pip install -r requirements.txt
-   ```
-
-3. **Set credentials**
+2. **Set credentials**
    Export GLEAN_INDEXING_API_TOKEN and GLEAN_SERVER_URL — this recipe has no .env.example, it reads directly from the environment (see the Authentication section below).
 
-4. **Run it**
-   Registers the custom datasource and bulk-indexes documents/people with real per-document permissions — never allow-all.
+3. **Run it**
+   Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.
 
    ```bash
-   python seed.py
+   cd index-custom-source/recipes/index-custom-source && uv run seed.py
    ```
 
-5. **Verify**
+4. **Verify**
    Search "Who owns the payments-service catalog entry?" as yourself and as a restricted test user — the restricted user must not see Acme-HR-only documents.
 
 ## Setup

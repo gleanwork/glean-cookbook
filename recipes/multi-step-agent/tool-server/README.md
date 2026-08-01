@@ -5,9 +5,13 @@ A governed custom Tool that files Acme payments-service incident tickets — onl
 ## Run it
 
 ```bash
-pip install -r requirements.txt
-python server.py
+uv run server.py
 ```
+
+Dependencies are declared inline ([PEP 723](https://peps.python.org/pep-0723/)) and locked,
+so [uv](https://docs.astral.sh/uv/) installs them into an isolated environment on first run —
+no `requirements.txt`, virtualenv, or activate step. Re-run `uv lock --script <script>` after
+editing the inline dependencies.
 
 Then, from the Glean admin console (**Admin console → Platform → Tools → Add**), create a custom tool from scratch, upload `openapi.yaml` as its API spec, and point it at wherever you've deployed `server.py`. **Tool registration is an admin-console step, not an API call** — there's no SDK method for it.
 

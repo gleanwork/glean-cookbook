@@ -12,39 +12,34 @@ Build "Multi-step agent with governed tools" following https://developers.glean.
    npx tiged --mode=git gleanwork/glean-cookbook/recipes/multi-step-agent multi-step-agent
    ```
 
-2. **Install dependencies**
-
-   ```bash
-   cd multi-step-agent/tool-server && pip install -r requirements.txt && cd ../invoke-agent && pip install -r requirements.txt
-   ```
-
-3. **Run the tool server**
+2. **Run the tool server**
    Listens on port 8080. Keep this running in its own terminal — the agent calls it over HTTP once registered.
 
    ```bash
-   cd multi-step-agent/tool-server && python server.py
+   cd multi-step-agent/tool-server && uv run server.py
    ```
 
-4. **Register the tool**
+3. **Register the tool**
    Manual, UI-only step — there is no API to create a tool. In Admin > Platform > Tools > Add, register the tool and upload multi-step-agent/tool-server/openapi.yaml as its API spec.
 
-5. **Create the agent**
+4. **Create the agent**
    Manual, UI-only step. In Agent Builder: paste the recipe's instructions, turn retrieval on, attach the tool you just registered. Copy the agent's ID for the next step.
 
-6. **Set credentials**
+5. **Set credentials**
    Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and GLEAN_AGENT_ID (the ID from the previous step).
 
    ```bash
    cd multi-step-agent/invoke-agent && cp .env.example .env
    ```
 
-7. **Run it**
+6. **Run it**
+   Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.
 
    ```bash
-   python main.py
+   cd multi-step-agent/invoke-agent && uv run main.py
    ```
 
-8. **Verify**
+7. **Verify**
    Run as a permitted user (Acme-Engineering) and confirm the ticket actually gets filed; run as a non-permitted user and confirm a graceful no-write fallback summary instead of a hard failure.
 
 ## Reference

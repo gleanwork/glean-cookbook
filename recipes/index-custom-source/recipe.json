@@ -19,7 +19,7 @@
   "languages": ["python"],
   "prerequisites": [
     "Admin access to create a custom datasource and Indexing API token",
-    "Python 3.10+ (uses glean-indexing-sdk)"
+    "uv (uses glean-indexing-sdk)"
   ],
   "demoQueries": [
     {
@@ -50,17 +50,13 @@
       "command": "mkdir -p index-custom-source/recipes/index-custom-source index-custom-source/acme-corpus\nnpx tiged --mode=git gleanwork/glean-cookbook/recipes/index-custom-source index-custom-source/recipes/index-custom-source\nnpx tiged --mode=git gleanwork/glean-cookbook/acme-corpus index-custom-source/acme-corpus"
     },
     {
-      "title": "Install dependencies",
-      "command": "cd index-custom-source/recipes/index-custom-source && pip install -r requirements.txt"
-    },
-    {
       "title": "Set credentials",
       "description": "Export GLEAN_INDEXING_API_TOKEN and GLEAN_SERVER_URL \u2014 this recipe has no .env.example, it reads directly from the environment (see the Authentication section below)."
     },
     {
       "title": "Run it",
-      "command": "python seed.py",
-      "description": "Registers the custom datasource and bulk-indexes documents/people with real per-document permissions \u2014 never allow-all."
+      "command": "cd index-custom-source/recipes/index-custom-source && uv run seed.py",
+      "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run \u2014 no requirements.txt, venv, or activate step."
     },
     {
       "title": "Verify",

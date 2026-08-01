@@ -1,3 +1,9 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "glean-indexing-sdk==1.0.0b2",
+# ]
+# ///
 """Seed the Acme corpus into a Glean instance.
 
 Requires GLEAN_INDEXING_API_TOKEN and GLEAN_SERVER_URL in the environment

@@ -5,12 +5,16 @@ Bring an unsupported source into Glean with the Indexing API — documents, perm
 ## Run it
 
 ```bash
-pip install -r requirements.txt
 export GLEAN_INDEXING_API_TOKEN=...
 export GLEAN_SERVER_URL=...
-python seed.py       # registers the acme_corpus datasource, indexes documents + identities + employee profiles
-python teardown.py   # deletes everything seed.py created (see caveat below)
+uv run seed.py       # registers the acme_corpus datasource, indexes documents + identities + employee profiles
+uv run teardown.py   # deletes everything seed.py created (see caveat below)
 ```
+
+Dependencies are declared inline ([PEP 723](https://peps.python.org/pep-0723/)) and locked,
+so [uv](https://docs.astral.sh/uv/) installs them into an isolated environment on first run —
+no `requirements.txt`, virtualenv, or activate step. Re-run `uv lock --script <script>` after
+editing the inline dependencies.
 
 ## What this does
 

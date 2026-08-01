@@ -46,12 +46,8 @@
       "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/multi-step-agent multi-step-agent"
     },
     {
-      "title": "Install dependencies",
-      "command": "cd multi-step-agent/tool-server && pip install -r requirements.txt && cd ../invoke-agent && pip install -r requirements.txt"
-    },
-    {
       "title": "Run the tool server",
-      "command": "cd multi-step-agent/tool-server && python server.py",
+      "command": "cd multi-step-agent/tool-server && uv run server.py",
       "description": "Listens on port 8080. Keep this running in its own terminal \u2014 the agent calls it over HTTP once registered."
     },
     {
@@ -69,7 +65,8 @@
     },
     {
       "title": "Run it",
-      "command": "python main.py"
+      "command": "cd multi-step-agent/invoke-agent && uv run main.py",
+      "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run \u2014 no requirements.txt, venv, or activate step."
     },
     {
       "title": "Verify",
