@@ -1,0 +1,13 @@
+{
+  "name": "cookbook",
+  "version": "0.1.0",
+  "description": "Build Glean cookbook recipes hands-free: browse what's available, then run a recipe's command to scaffold it against your own Glean instance.",
+  "author": {
+    "name": "Glean"
+  },
+  "homepage": "https://developers.glean.com/cookbook",
+  "repository": "https://github.com/gleanwork/glean-cookbook",
+  "license": "MIT",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}

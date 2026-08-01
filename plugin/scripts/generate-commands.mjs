@@ -57,13 +57,13 @@ const VARIANT_LABEL_WORDS = {
   javascript: 'JavaScript',
 };
 
-// Matches recipe.ts's RECIPE_AUTH_METHODS — the subsection heading each
-// value maps to in the cookbook-conventions skill's Authentication section.
-// 'none' and 'custom' have no entry: they don't point at that section at all.
-const AUTH_METHOD_SUBSECTIONS = {
-  'web-sdk-cookie': '`web-sdk-cookie`',
-  'client-api-oauth-or-token': '`client-api-oauth-or-token`',
-  'indexing-token': '`indexing-token`',
+// Matches recipe.ts's RECIPE_AUTH_METHODS — the partial under plugin/partials/
+// each value inlines. 'none' and 'custom' have no entry: they need no shared
+// credential guidance at all.
+const AUTH_METHOD_PARTIALS = {
+  'web-sdk-cookie': 'auth-web-sdk-cookie',
+  'client-api-oauth-or-token': 'auth-client-api',
+  'indexing-token': 'auth-indexing-token',
 };
 
 const LANGUAGE_LABELS = {
@@ -160,22 +160,8 @@ function renderVerifySection(recipe) {
 
   const lines =
     recipe.buildMethod === 'third-party-build'
-      ? [
-          "This recipe's app is built and run by a separate tool " +
-            "(Lovable, Replit), not by you. Before telling me you're " +
-            'done, give me the queries below to test myself in the ' +
-            'running app, along with what a correct result looks like:',
-          '',
-        ]
-      : [
-          'Do not report this recipe as done until you have run it for ' +
-            'real (against a live Glean instance, with real credentials) ' +
-            'and confirmed every query below produces its expected ' +
-            'behavior. A build that runs without errors but fails one of ' +
-            'these checks is not done — fix it and re-run before ' +
-            'reporting success.',
-          '',
-        ];
+      ? ['{{> verify-gate-third-party}}', '']
+      : ['{{> verify-gate}}', ''];
   for (const { query, expectedBehavior } of recipe.demoQueries) {
     lines.push(`- **Query:** "${query}"`);
     lines.push(`  **Expected:** ${expectedBehavior}`);
@@ -210,18 +196,29 @@ function renderRecipeSkill(recipe) {
     sections.push('', '## Reference', recipe.llmContext.trim());
   }
 
-  const authSubsections = (recipe.authMethod ?? [])
-    .map((method) => AUTH_METHOD_SUBSECTIONS[method])
-    .filter(Boolean);
-  if (authSubsections.length > 0) {
-    const subsectionList = authSubsections.join(' or ');
-    sections.push(
-      '',
-      '## Authentication',
-      `This recipe needs ${subsectionList} auth — follow the matching subsection under ` +
-        '"Authentication: follow the recipe\'s declared `authMethod`" in the `cookbook-conventions` ' +
-        'skill in this plugin, rather than assuming which credential path applies.',
-    );
+  // Auth guidance is inlined from a partial per declared authMethod, not
+  // pointed at another skill. A cross-skill pointer costs the model a hop it
+  // may not take, and the pointer sentence itself was prose living in this
+  // script. The partials under plugin/partials/ are the single source; the
+  // cookbook-conventions skill renders the same ones for browsing.
+  const authPartials = (recipe.authMethod ?? [])
+    .filter((method) => AUTH_METHOD_PARTIALS[method])
+    .map((method) => [method, AUTH_METHOD_PARTIALS[method]]);
+  if (authPartials.length > 0) {
+    sections.push('', '## Authentication');
+    if (authPartials.length === 1) {
+      sections.push(`{{> ${authPartials[0][1]}}}`);
+    } else {
+      // Multiple declared methods means the recipe offers a path choice, so
+      // each block needs its method name as a heading — an unlabelled run of
+      // two auth flows can't be matched to the path the user picked.
+      sections.push(
+        'This recipe offers a path choice. Apply the block matching the path the user picks:',
+      );
+      for (const [method, partial] of authPartials) {
+        sections.push('', `### \`${method}\``, '', `{{> ${partial}}}`);
+      }
+    }
   }
 
   if (recipe.languages?.length > 1) {
@@ -235,18 +232,17 @@ function renderRecipeSkill(recipe) {
     );
   }
 
-  // Any recipe that renders a Web SDK UI shares the same brand-kit and
-  // container-sizing conventions — point at skills/cookbook-conventions
-  // rather than re-deriving them per recipe.
+  // Web SDK recipes share brand-kit and container-sizing conventions; inline
+  // the same partials cookbook-conventions renders rather than pointing at it.
   if (recipe.surfaces?.includes('web-sdk')) {
     sections.push(
       '',
       '## House style',
-      "This recipe renders a Web SDK UI — apply the cookbook's shared conventions " +
-        '(see the `cookbook-conventions` skill in this plugin): the real Acme logomark ' +
-        '(not a plain colored square), a 480–500px-tall container, and `initialMessage` ' +
-        "set to this recipe's own first demo query so it opens into a real answer " +
-        'instead of an empty landing screen.',
+      '{{> web-sdk-house-style}}',
+      '',
+      '{{> brand-kit}}',
+      '',
+      '{{> web-sdk-sizing}}',
     );
   }
 

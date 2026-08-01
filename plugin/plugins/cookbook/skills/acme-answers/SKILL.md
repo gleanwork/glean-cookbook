@@ -54,7 +54,7 @@ Chat API variant — one chat.create call, citations rendered
    ```
 
 3. **Set credentials**
-   Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — see the client-api-oauth-or-token auth section in cookbook-conventions for how to get a token.
+   Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — the Authentication section below covers how to get a token.
 
    ```bash
    cp .env.example .env
@@ -79,15 +79,27 @@ Chat API: POST /rest/api/v1/chat (client SDK glean.client.chat.create). A real r
 
 ## Authentication
 
-This recipe needs `web-sdk-cookie` or `client-api-oauth-or-token` auth — follow the matching subsection under "Authentication: follow the recipe's declared `authMethod`" in the `cookbook-conventions` skill in this plugin, rather than assuming which credential path applies.
+This recipe offers a path choice. Apply the block matching the path the user picks:
+
+### `web-sdk-cookie`
+
+{{> auth-web-sdk-cookie}}
+
+### `client-api-oauth-or-token`
+
+{{> auth-client-api}}
 
 ## House style
 
-This recipe renders a Web SDK UI — apply the cookbook's shared conventions (see the `cookbook-conventions` skill in this plugin): the real Acme logomark (not a plain colored square), a 480–500px-tall container, and `initialMessage` set to this recipe's own first demo query so it opens into a real answer instead of an empty landing screen.
+{{> web-sdk-house-style}}
+
+{{> brand-kit}}
+
+{{> web-sdk-sizing}}
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance, with real credentials) and confirmed every query below produces its expected behavior. A build that runs without errors but fails one of these checks is not done — fix it and re-run before reporting success.
+{{> verify-gate}}
 
 - **Query:** "What's our PTO policy?"
   **Expected:** Answer cites the PTO policy document (title + url), with a non-empty, deduped citations list — no leaked step-narration text prepended to the answer.

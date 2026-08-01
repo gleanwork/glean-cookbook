@@ -8,10 +8,10 @@
   "scripts": {
     "generate:commands": "node scripts/generate-commands.mjs",
     "build": "npm run generate:commands && pluginpack build",
-    "validate": "pluginpack validate --target claude --dir dist/claude && pluginpack validate --target cursor --dir dist/cursor && pluginpack validate --target codex --dir dist/codex",
+    "validate": "pluginpack validate --target claude --dir .. && pluginpack validate --target cursor --dir .. && pluginpack validate --target codex --dir ..",
     "test": "npm run build && npm run validate"
   },
   "devDependencies": {
-    "@gleanwork/pluginpack": "^0.7.0"
+    "@gleanwork/pluginpack": "^0.10.0"
   }
 }
