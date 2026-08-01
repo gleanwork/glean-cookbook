@@ -1,3 +1,10 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "glean-api-client==0.15.4",
+#     "anthropic==0.120.0",
+# ]
+# ///
 """Permissions-aware RAG — Glean's data-first Platform API as the retrieval
 layer for your own LLM app.
 

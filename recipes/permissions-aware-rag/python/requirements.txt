@@ -1,2 +1,0 @@
-glean-api-client==0.15.4
-anthropic==0.120.0

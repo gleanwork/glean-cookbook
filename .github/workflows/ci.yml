@@ -108,6 +108,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - uses: astral-sh/setup-uv@v5
       - name: Typecheck and lint every recipe
         run: |
           set -e
@@ -136,6 +137,24 @@ jobs:
               ruff check "$dir"
               if [ -f "$dir/pyrightconfig.json" ]; then
                 (cd "$dir" && pyright .)
+              fi
+            done
+            # PEP 723 scripts declare their deps inline and have no
+            # requirements.txt, so the loop above never sees them. uv builds an
+            # isolated env per script; pyright needs --pythonpath pointed at it
+            # (VIRTUAL_ENV is not honoured by the CLI and silently falls back
+            # to the ambient interpreter, which reports a false pass).
+            find "$recipe" -name '*.py' -not -path '*/.venv/*' | while read -r script; do
+              grep -q '^# /// script' "$script" || continue
+              dir=$(dirname "$script")
+              env_path=$(uv sync --script "$script" 2>&1 | sed -n 's/.*script environment at: //p')
+              if [ -z "$env_path" ]; then
+                echo "Could not resolve a uv script environment for $script"
+                exit 1
+              fi
+              ruff check "$dir"
+              if [ -f "$dir/pyrightconfig.json" ]; then
+                (cd "$dir" && pyright --pythonpath "$env_path/bin/python" .)
               fi
             done
             echo "::endgroup::"

@@ -21,7 +21,7 @@
     "A Glean token with SEARCH scope (global/admin token for the act-as permissions demo)",
     "X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)",
     "An LLM API key (any provider; example uses Claude)",
-    "Python 3.10+ or Node 20+"
+    "uv (for the Python path) or Node 20+"
   ],
   "demoQueries": [
     {
@@ -44,17 +44,14 @@
           "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/python permissions-aware-rag"
         },
         {
-          "title": "Install dependencies",
-          "command": "cd permissions-aware-rag && pip install -r requirements.txt"
-        },
-        {
           "title": "Set credentials",
           "command": "cp .env.example .env",
           "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY, then export them into your shell \u2014 unlike the TypeScript variant, this one reads the environment directly and does not load .env automatically."
         },
         {
           "title": "Run it",
-          "command": "python main.py \"What's our PTO policy?\""
+          "command": "cd permissions-aware-rag && uv run main.py \"What's our PTO policy?\"",
+          "description": "Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run \u2014 there's no requirements.txt, venv, or activate step."
         },
         {
           "title": "Verify",

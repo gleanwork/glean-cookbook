@@ -19,26 +19,21 @@ Platform API search.query → snippets → LLM with citations
    npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/python permissions-aware-rag
    ```
 
-2. **Install dependencies**
-
-   ```bash
-   cd permissions-aware-rag && pip install -r requirements.txt
-   ```
-
-3. **Set credentials**
+2. **Set credentials**
    Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY, then export them into your shell — unlike the TypeScript variant, this one reads the environment directly and does not load .env automatically.
 
    ```bash
    cp .env.example .env
    ```
 
-4. **Run it**
+3. **Run it**
+   Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run — there's no requirements.txt, venv, or activate step.
 
    ```bash
-   python main.py "What's our PTO policy?"
+   cd permissions-aware-rag && uv run main.py "What's our PTO policy?"
    ```
 
-5. **Verify**
+4. **Verify**
    Confirm the printed answer carries numbered citations with real titles and URLs. Re-run with --act-as <restricted-user-email> (requires a global/admin token) and confirm an HR-only query returns no fabricated answer for that user.
 
 ### TypeScript

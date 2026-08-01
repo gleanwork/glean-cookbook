@@ -5,20 +5,25 @@ Use Glean Search as the retrieval layer for your own LLM app — every result is
 ## Run it
 
 ```bash
-pip install -r requirements.txt
 cp .env.example .env   # fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, ANTHROPIC_API_KEY
-python main.py "What's our PTO policy?"
+uv run main.py "What's our PTO policy?"
 ```
+
+Dependencies are declared inline in `main.py` ([PEP 723](https://peps.python.org/pep-0723/)),
+so [uv](https://docs.astral.sh/uv/) installs them into an isolated environment on first run —
+no `requirements.txt`, no virtualenv, no activate step. Prefer pip? The pins are in that same
+block: `pip install glean-api-client==0.15.4 anthropic==0.120.0` inside a virtualenv you
+manage yourself.
 
 ## The permissions demo
 
 With a **global/admin** Glean token, impersonate a specific user via `--act-as` to prove retrieval is scoped to _their_ permissions, not the token's:
 
 ```bash
-python main.py "What are the engineering compensation bands?" --act-as marcus.webb@acme.example.com
+uv run main.py "What are the engineering compensation bands?" --act-as marcus.webb@acme.example.com
 # -> "I don't have information on that." (Marcus is Acme-Engineering only, not Acme-HR)
 
-python main.py "What are the engineering compensation bands?" --act-as dana.okafor@acme.example.com
+uv run main.py "What are the engineering compensation bands?" --act-as dana.okafor@acme.example.com
 # -> answers, cited (Dana is in Acme-HR)
 ```
 
