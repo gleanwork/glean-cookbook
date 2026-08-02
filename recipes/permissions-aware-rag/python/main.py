@@ -52,11 +52,46 @@ def require_env(name: str) -> str:
     return value
 
 
+# An identity that cannot exist, so a working implementation grants it nothing.
+_IMPOSSIBLE_IDENTITY = "act-as-preflight@invalid.invalid"
+
+
+def _assert_act_as_applies(glean: Glean, question: str) -> None:
+    """Refuse to serve per-user results the token cannot actually scope.
+
+    X-Glean-Act-As requires a global/admin token. An ordinary user token does not
+    get rejected -- the header is silently ignored, and every call returns the
+    token owner's own results. Verified live: a header of "this is not an email at
+    all" returned byte-identical results to sending no header.
+
+    That is invisible from a single call, and it is the exact leak this recipe
+    exists to prevent: an app that looks per-user while serving one person's
+    documents to everyone who asks. An identity that cannot exist should be able
+    to see nothing, so if it sees anything, the header is not being applied.
+    """
+    response = glean.search.query(
+        query=question,
+        page_size=1,
+        http_headers={"X-Glean-Act-As": _IMPOSSIBLE_IDENTITY},
+    )
+    if response.results:
+        raise SystemExit(
+            "X-Glean-Act-As is not being applied: searching as "
+            f"{_IMPOSSIBLE_IDENTITY} still returned results, which means every "
+            "--act-as request is silently answered with this token's own "
+            "permissions. Use a global/admin token. Serving per-user results "
+            "this way would show one person's documents to every user."
+        )
+
+
 def retrieve(question: str, act_as: str | None) -> list[dict]:
     glean = Glean(
         api_token=require_env("GLEAN_API_TOKEN"),
         instance=require_env("GLEAN_INSTANCE"),
     )
+
+    if act_as:
+        _assert_act_as_applies(glean, question)
 
     http_headers = {"X-Glean-Act-As": act_as} if act_as else None
 

@@ -49,6 +49,20 @@ async function askGlean(question: string) {
 
   const answer = fragments.map((fragment) => fragment.text ?? '').join('');
 
+  // A chat run that invoked a server tool can come back HTTP 200 with the run
+  // unfinished: the CONTENT message is present but empty, the last message is a
+  // SERVER_TOOL, and there is no error field anywhere. Verified live -- about one
+  // in four runs of a tool-invoking question. Returning the empty string here
+  // would render a blank answer panel and look like the app is broken, so treat
+  // it as the failure it is and let the caller retry.
+  if (answer.trim().length === 0) {
+    throw new Error(
+      'Glean returned no answer text. This happens when a chat run ends while ' +
+        'a server tool is still pending; the request succeeded but the answer ' +
+        'was never produced. Retrying usually works.',
+    );
+  }
+
   const citations = fragments
     .map((fragment) => fragment.citation?.sourceDocument)
     .filter(

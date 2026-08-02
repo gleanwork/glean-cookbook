@@ -70,8 +70,20 @@ export function extractAnswer(body) {
 
 /** Returns null on success, or a string naming the promised behaviour that failed. */
 export async function assertCitedAnswer(query, actAs) {
-  const { answer, citations } = extractAnswer(await chat(query, actAs));
-  if (!answer) return 'chat returned no answer text for the query';
+  const body = await chat(query, actAs);
+  const { answer, citations } = extractAnswer(body);
+  if (!answer) {
+    // Distinguish the two ways this happens. A run that ends while a server tool
+    // is still pending returns 200 with an empty CONTENT message and a trailing
+    // SERVER_TOOL -- naming that keeps a future failure diagnosable instead of
+    // just "no answer".
+    const last = (body.messages ?? []).at(-1)?.messageType;
+    return last === 'SERVER_TOOL'
+      ? 'chat returned no answer text: the run ended while a server tool was ' +
+          'still pending (200, empty CONTENT, trailing SERVER_TOOL). This is ' +
+          'intermittent on tool-invoking queries.'
+      : 'chat returned no answer text for the query';
+  }
   if (citations.length === 0) {
     return 'chat answered with no citations — the recipe promises cited, grounded answers';
   }

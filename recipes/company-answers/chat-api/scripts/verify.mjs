@@ -5,38 +5,36 @@
 // checkable behavior every recipe skill's "## Verify" section promises.
 // Exits 0 only if every query passes.
 
+import fs from 'node:fs';
+import path from 'node:path';
 import { spawn } from 'node:child_process';
 
 const PORT = Number(process.env.PORT ?? 3000);
 const BASE_URL = `http://localhost:${PORT}`;
 const START_TIMEOUT_MS = 15_000;
 
-const CHECKS = [
-  {
-    query: "What's our PTO policy?",
-    assert(result) {
-      if (result.answer.trim().length === 0) {
-        return 'answer was empty';
-      }
-      if (result.citations.length === 0) {
-        return 'citations were empty — expected the PTO policy document';
-      }
-      return null;
-    },
-  },
-  {
-    query: 'Who owns the payments-service catalog entry?',
-    assert(result) {
-      if (result.answer.trim().length === 0) {
-        return 'answer was empty';
-      }
-      if (result.citations.length === 0) {
-        return 'citations were empty — expected the payments-service catalog entry';
-      }
-      return null;
-    },
-  },
-];
+// Generated from this recipe's registry entry, so the questions asked here are
+// the ones the recipe documents. They were hardcoded once and drifted: this
+// script went on asking about a demo corpus long after the recipe stopped using
+// one. Regenerate with `npm run build:registry` in the cookbook repo.
+const QUERIES = JSON.parse(
+  fs.readFileSync(path.join(import.meta.dirname, 'demo-queries.json'), 'utf8'),
+);
+
+/**
+ * What every query must produce. The recipe's promise is a grounded answer, so
+ * an answer with no citations is a failure even though the request succeeded --
+ * that distinction is the whole point of the gate.
+ */
+function assertAnswer(result) {
+  if (result.answer.trim().length === 0) return 'answer was empty';
+  if (result.citations.length === 0) {
+    return 'answer had no citations — the recipe promises cited, grounded answers';
+  }
+  return null;
+}
+
+const CHECKS = QUERIES.map((query) => ({ query, assert: assertAnswer }));
 
 function assertCitationShape(citations) {
   for (const citation of citations) {
