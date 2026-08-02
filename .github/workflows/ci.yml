@@ -24,6 +24,18 @@ jobs:
       - name: Report recipe verification freshness (informational)
         run: node scripts/check-recipe-freshness.mjs
 
+  harness-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The verify harness owns an OAuth flow; state validation and PKCE
+      # derivation are not things to leave untested. No credentials needed --
+      # the live-discovery test skips itself without GLEAN_INSTANCE.
+      - run: npm test
+
   format-check:
     name: Format check
     runs-on: ubuntu-latest
