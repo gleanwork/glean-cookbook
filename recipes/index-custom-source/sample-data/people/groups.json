@@ -1,8 +1,8 @@
 [
-  { "name": "Acme-All-Employees" },
-  { "name": "Acme-Engineering" },
-  { "name": "Acme-HR" },
-  { "name": "Acme-Sales" },
-  { "name": "Acme-Finance" },
-  { "name": "Acme-Support" }
+  { "name": "Sample-All-Employees" },
+  { "name": "Sample-Engineering" },
+  { "name": "Sample-HR" },
+  { "name": "Sample-Sales" },
+  { "name": "Sample-Finance" },
+  { "name": "Sample-Support" }
 ]

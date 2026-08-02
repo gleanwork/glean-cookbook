@@ -2,9 +2,9 @@
   "id": "hr-compensation-bands",
   "title": "Engineering Compensation Bands — Confidential",
   "department": "HR",
-  "view_url": "https://portal.acme.internal/hr/confidential/compensation-bands-engineering",
+  "view_url": "https://portal.sample.internal/hr/confidential/compensation-bands-engineering",
   "created_at": "2026-01-15T00:00:00Z",
   "updated_at": "2026-06-01T00:00:00Z",
-  "permission": { "groups": ["Acme-HR"] },
+  "permission": { "groups": ["Sample-HR"] },
   "body": "CONFIDENTIAL — HR only. Engineering compensation bands (base salary, USD, annual): L3 Software Engineer $120,000–$145,000; L4 Software Engineer $145,000–$175,000; L5 Senior Software Engineer $175,000–$210,000; L6 Staff Engineer $210,000–$250,000; L6 Tech Lead $220,000–$260,000. Bands are reviewed annually each January. Equity grants are handled separately by Finance and are not reflected here. Do not share these figures outside HR and the compensation committee."
 }

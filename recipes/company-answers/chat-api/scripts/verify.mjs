@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Deterministic verify gate for the acme-answers/chat-api recipe: starts the
+// Deterministic verify gate for the company-answers/chat-api recipe: starts the
 // real server (requires GLEAN_API_TOKEN + GLEAN_INSTANCE already set, same
 // as `npm start`), runs each demo query against it for real, and asserts the
 // checkable behavior every recipe skill's "## Verify" section promises.

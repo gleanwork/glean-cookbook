@@ -1,8 +1,8 @@
 {
-  "name": "acme-answers-web-sdk",
+  "name": "company-answers-web-sdk",
   "version": "0.0.0",
   "private": true,
-  "description": "Acme Answers — Web SDK path: renderChat in a page, Glean owns the UI.",
+  "description": "Company Answers \u2014 Web SDK path: renderChat in a page, Glean owns the UI.",
   "type": "module",
   "scripts": {
     "dev": "vite",

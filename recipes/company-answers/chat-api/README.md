@@ -1,6 +1,6 @@
-# acme-answers / chat-api
+# company-answers / chat-api
 
-Path B of the [Acme Answers](../../../docs/cookbook/acme-answers.mdx) recipe — you own the UI, the server owns the API token.
+Path B of the [Company Answers](../../../docs/cookbook/company-answers.mdx) recipe — you own the UI, the server owns the API token.
 
 ## Run it
 

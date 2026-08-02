@@ -23,7 +23,7 @@ editing the inline dependencies.
 - **`SampleCatalogConnector`** (`BaseDatasourceConnector`) — reads every JSON file in `sample-data/documents/`, transforms each into a `DocumentDefinition` with a `DocumentPermissionsDefinition` built from that document's `permission` block (`allowed_groups` or `allowed_users`), and pushes the permission identities (`sample-data/people/*.json`) needed to evaluate those ACLs.
 - **`SampleCatalogPeopleConnector`** (`BasePeopleConnector`) — indexes the same cast as searchable employee profiles, a separate Glean capability from document permissions.
 
-**Never allow-all.** Every document carries a real permission block — general company docs are `Acme-All-Employees`, a few (compensation bands, HR case notes, one person's onboarding checklist) are restricted, so the permissions story is demonstrable, not just claimed.
+**Never allow-all.** Every document carries a real permission block — general company docs are `Sample-All-Employees`, a few (compensation bands, HR case notes, one person's onboarding checklist) are restricted, so the permissions story is demonstrable, not just claimed.
 
 **Teardown caveat:** `glean-indexing-sdk==1.0.0b2` has no `datasources.delete()` call — verified against the pinned `glean-api-client==0.15.4` (the only `delete_all` in the package is on chat, not datasources). `teardown.py` deletes every document, group, permission-user, and employee profile the seed created, but the `sample_catalog` datasource _registration_ itself is left in place (orphaned but harmless — `seed.py` re-populates it cleanly on the next run). To fully remove the datasource entity, use the Glean admin console.
 

@@ -1,8 +1,8 @@
-// The recipe's own verify script (recipes/acme-answers/chat-api/scripts/verify.mjs)
+// The recipe's own verify script (recipes/company-answers/chat-api/scripts/verify.mjs)
 // starts the built server and drives it end to end, which is a stronger check
 // than calling the API directly -- it exercises the recipe's extraction code,
 // where the citations bug actually lived. This module delegates to it rather
-// than duplicating it, and exists so `verify:recipe acme-answers` works the same
+// than duplicating it, and exists so `verify:recipe company-answers` works the same
 // way as every other recipe.
 
 import { execFile } from 'node:child_process';
@@ -14,7 +14,7 @@ const execFileAsync = promisify(execFile);
 export const requiredEnv = ['GLEAN_API_TOKEN', 'GLEAN_INSTANCE'];
 
 export async function setup(context) {
-  const cwd = path.join(context.repoRoot, 'recipes/acme-answers/chat-api');
+  const cwd = path.join(context.repoRoot, 'recipes/company-answers/chat-api');
   try {
     const { stdout } = await execFileAsync('node', ['scripts/verify.mjs'], {
       cwd,

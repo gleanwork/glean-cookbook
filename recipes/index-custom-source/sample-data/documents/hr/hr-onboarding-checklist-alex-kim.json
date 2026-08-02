@@ -2,14 +2,14 @@
   "id": "hr-onboarding-checklist-alex-kim",
   "title": "Onboarding Checklist — Alex Kim",
   "department": "HR",
-  "view_url": "https://portal.acme.internal/hr/onboarding/alex-kim",
+  "view_url": "https://portal.sample.internal/hr/onboarding/alex-kim",
   "created_at": "2026-07-06T00:00:00Z",
   "updated_at": "2026-07-20T00:00:00Z",
   "permission": {
     "users": [
-      "alex.kim@acme.example.com",
-      "dana.okafor@acme.example.com",
-      "priya.natarajan@acme.example.com"
+      "alex.kim@sample.example.com",
+      "dana.okafor@sample.example.com",
+      "priya.natarajan@sample.example.com"
     ]
   },
   "body": "Onboarding checklist for Alex Kim (Software Engineer, Engineering, start date 2026-07-06, manager: Priya Natarajan). Completed: laptop provisioned, badge access, IT account setup, Slack/email access, team introduction meeting. Still pending: security awareness training (due within 2 weeks of start), benefits enrollment (deadline is 30 days from start date), 1:1 scheduled with Priya Natarajan for 2026-07-24, and payments-service architecture walkthrough with the team. This checklist is visible to Alex, Alex's manager, and HR only."

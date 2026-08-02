@@ -2,9 +2,9 @@
   "id": "support-vpn-setup-guide",
   "title": "VPN Setup Guide",
   "department": "Support",
-  "view_url": "https://portal.acme.internal/support/vpn-setup",
+  "view_url": "https://portal.sample.internal/support/vpn-setup",
   "created_at": "2025-06-01T00:00:00Z",
   "updated_at": "2026-03-01T00:00:00Z",
-  "permission": { "groups": ["Acme-All-Employees"] },
-  "body": "Install the Acme VPN client from the IT portal's software catalog. Log in with your SSO credentials; MFA is required on first connection per device. Split-tunneling is enabled by default, so only internal-network traffic (portal.acme.internal, internal APIs, and internal Git) routes through the VPN — general internet browsing is unaffected. If the client fails to connect, confirm your SSO password is current and that your device's clock is in sync (VPN auth fails if the clock drifts more than 5 minutes)."
+  "permission": { "groups": ["Sample-All-Employees"] },
+  "body": "Install the Sample Corp VPN client from the IT portal's software catalog. Log in with your SSO credentials; MFA is required on first connection per device. Split-tunneling is enabled by default, so only internal-network traffic (portal.sample.internal, internal APIs, and internal Git) routes through the VPN — general internet browsing is unaffected. If the client fails to connect, confirm your SSO password is current and that your device's clock is in sync (VPN auth fails if the clock drifts more than 5 minutes)."
 }

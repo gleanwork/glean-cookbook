@@ -4,7 +4,7 @@
 #     "glean-api-client==0.15.4",
 # ]
 # ///
-"""Invoke the Acme incident-triage agent and demo the governed-tool branch.
+"""Invoke the incident-triage agent and demo the governed-tool branch.
 
 Verified against the actually installed glean-api-client==0.15.4:
 - Agents use glean.client.agents.run() (or .run_stream()), NOT the
@@ -65,13 +65,13 @@ def main() -> None:
         "Summarize open payments incidents and file a tracking ticket for the canary alarm issue."
     )
 
-    # Permitted: Marcus Webb is Acme-Engineering -> the tool call succeeds.
-    run_as(glean, agent_id, question, "marcus.webb@acme.example.com")
-
-    # Denied: Dana Okafor is Acme-HR, not Engineering -> the tool server
-    # returns 403, and the agent (per its instructions) falls back to a
-    # read-only summary instead of failing the whole run.
-    run_as(glean, agent_id, question, "dana.okafor@acme.example.com")
+    # Two real users from your own instance, so this recipe stands alone rather
+    # than depending on another recipe having seeded a cast first. The permitted
+    # one is on the tool server's AUTHORIZED_EMAILS allow-list; the denied one
+    # is not, so the tool returns 403 and the agent falls back to a read-only
+    # summary instead of failing the whole run.
+    run_as(glean, agent_id, question, requireEnv("GLEAN_PERMITTED_USER_EMAIL"))
+    run_as(glean, agent_id, question, requireEnv("GLEAN_DENIED_USER_EMAIL"))
 
 
 if __name__ == "__main__":

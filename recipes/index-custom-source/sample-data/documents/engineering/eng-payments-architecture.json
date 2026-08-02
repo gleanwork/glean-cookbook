@@ -2,9 +2,9 @@
   "id": "eng-payments-architecture",
   "title": "payments-service — Architecture Overview",
   "department": "Engineering",
-  "view_url": "https://portal.acme.internal/services/payments-service/architecture",
+  "view_url": "https://portal.sample.internal/services/payments-service/architecture",
   "created_at": "2026-02-01T00:00:00Z",
   "updated_at": "2026-06-05T00:00:00Z",
-  "permission": { "groups": ["Acme-All-Employees"] },
+  "permission": { "groups": ["Sample-All-Employees"] },
   "body": "payments-service is a Go service backed by a Postgres primary/replica pair for authorization state and a Kafka topic (payments.events) that ledger-service and the fraud-review pipeline both consume. External calls go to Stripe for card processing. The service exposes a gRPC API to checkout-service and a REST API for internal tooling. Scaling: horizontally autoscaled on GKE based on request queue depth, with a floor of 6 pods to keep connection pools warm — the floor that PAY-2114's fix made traffic-share-aware for canary pods specifically."
 }

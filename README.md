@@ -8,7 +8,7 @@ Runnable, copy-paste-able examples of building on the [Glean platform](https://d
 
 ```
 recipes/{id}/       one directory per recipe, self-contained and runnable
-brand/              the Acme Corp brand kit shared by every recipe and mock
+brand/              Glean styling assets shared by every recipe demo
 registry.json        the manifest — one entry per recipe, validated in CI
 schemas/            recipe.schema.json, generated from developers.glean.com
 ```
@@ -74,7 +74,7 @@ What "verify" means depends on the recipe's `buildMethod`:
   running the recipe's own literal, checked commands (a `tiged` copy or a real CLI invocation),
   not regenerating code from prose. There's no drift for an LLM to introduce in that part. What
   still needs a real run is the recipe's own `## Verify` step and, where one exists, its `verify`
-  script (e.g. `recipes/acme-answers/chat-api/scripts/verify.mjs`) — against a live Glean instance,
+  script (e.g. `recipes/company-answers/chat-api/scripts/verify.mjs`) — against a live Glean instance,
   with real credentials, asserting the exact behavior `demoQueries[].expectedBehavior` promises.
 - **`integrate`** and **`third-party-build`** recipes still drive off a hand-written `aiPrompt` —
   this is where genuine regeneration-from-prose happens, and where drift (a stale response shape,

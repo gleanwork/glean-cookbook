@@ -2,9 +2,9 @@
   "id": "support-zendesk-escalation-guide",
   "title": "Support Escalation Guide",
   "department": "Support",
-  "view_url": "https://portal.acme.internal/support/escalation-guide",
+  "view_url": "https://portal.sample.internal/support/escalation-guide",
   "created_at": "2025-07-01T00:00:00Z",
   "updated_at": "2026-02-15T00:00:00Z",
-  "permission": { "groups": ["Acme-All-Employees"] },
+  "permission": { "groups": ["Sample-All-Employees"] },
   "body": "Support tickets that turn out to be product incidents (not user error or a how-to question) escalate from the support queue to Engineering by tagging the ticket 'engineering-escalation' and posting a summary in #eng-oncall with a link to the ticket. Engineering's on-call rotation picks these up the same way as a direct page. Tickets suspected to involve a security or data-privacy issue escalate directly to the security team instead, bypassing the normal Engineering on-call path."
 }

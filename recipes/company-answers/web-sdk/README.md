@@ -1,6 +1,6 @@
-# acme-answers / web-sdk
+# company-answers / web-sdk
 
-Path A of the [Acme Answers](../../../docs/cookbook/acme-answers.mdx) recipe — Glean owns the UI. One `renderChat` call, no backend code.
+Path A of the [Company Answers](../../../docs/cookbook/company-answers.mdx) recipe — Glean owns the UI. One `renderChat` call, no backend code.
 
 ## Run it
 

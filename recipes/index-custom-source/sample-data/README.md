@@ -22,27 +22,27 @@ people/memberships.json                                    who's in which group
 Each document JSON file has `id`, `title`, `department`, `view_url`, `created_at`/`updated_at` (ISO 8601 — the connector converts to the epoch seconds the API expects), and a `permission` block:
 
 ```json
-{ "permission": { "groups": ["Acme-All-Employees"] } }
-{ "permission": { "groups": ["Acme-HR"] } }
-{ "permission": { "users": ["alex.kim@acme.example.com", "dana.okafor@acme.example.com"] } }
+{ "permission": { "groups": ["Sample-All-Employees"] } }
+{ "permission": { "groups": ["Sample-HR"] } }
+{ "permission": { "users": ["alex.kim@sample.example.com", "dana.okafor@sample.example.com"] } }
 ```
 
 ## Permission model
 
-Six groups: `Acme-All-Employees`, `Acme-Engineering`, `Acme-HR`, `Acme-Sales`, `Acme-Finance`, `Acme-Support`. Every cast member is in `Acme-All-Employees` plus their department group. Two departments have a restricted document set for permissions-aware-rag to demonstrate against:
+Six groups: `Sample-All-Employees`, `Sample-Engineering`, `Sample-HR`, `Sample-Sales`, `Sample-Finance`, `Sample-Support`. Every cast member is in `Sample-All-Employees` plus their department group. Some documents are deliberately restricted, so a query run as one person returns them and the same query run as another returns nothing:
 
-- **HR** (`hr-compensation-bands`, `hr-investigation-notes`) — restricted to `Acme-HR`.
-- **Finance** (`finance-q3-budget-summary`) — restricted to `Acme-Finance`.
+- **HR** (`hr-compensation-bands`, `hr-investigation-notes`) — restricted to `Sample-HR`.
+- **Finance** (`finance-q3-budget-summary`) — restricted to `Sample-Finance`.
 - One document (`hr-onboarding-checklist-alex-kim`) is restricted to specific users rather than a group, to demonstrate `allowed_users`.
 
 ## Seeding it
 
-The connector, `seed.py`, and `teardown.py` live in [`../recipes/index-custom-source/`](../recipes/index-custom-source/) — see that recipe's README for how to run them and the teardown caveat (this SDK version has no `datasources.delete()` call).
+`connector.py`, `seed.py`, and `teardown.py` live one directory up, in [`../`](../) — see that recipe's README for how to run them and the teardown caveat (this SDK version has no `datasources.delete()` call).
 
-## Acceptance test (per PACT-438)
+## Checking a seed worked
 
 After seeding a test instance:
 
-1. Every query in [`brand/FICTION.md`](../brand/FICTION.md)'s canonical pool should return a relevant, cited result.
-2. Querying as **Marcus Webb** (`Acme-Engineering` + `Acme-All-Employees` only, no HR access) for something in `hr-compensation-bands` or `hr-investigation-notes` should return nothing — he's not in `Acme-HR`.
-3. Querying as **Dana Okafor** (`Acme-HR`) for the same should surface those documents.
+1. Every document should be findable by a query drawn from its own title or body — search for `payments-service` and the service-catalog entry comes back cited.
+2. Querying as **Marcus Webb** (`Sample-Engineering` + `Sample-All-Employees` only, no HR access) for something in `hr-compensation-bands` or `hr-investigation-notes` should return nothing — he's not in `Sample-HR`.
+3. Querying as **Dana Okafor** (`Sample-HR`) for the same should surface those documents.

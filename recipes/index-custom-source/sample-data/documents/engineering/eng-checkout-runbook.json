@@ -2,9 +2,9 @@
   "id": "eng-checkout-runbook",
   "title": "checkout-service — Operational Runbook",
   "department": "Engineering",
-  "view_url": "https://portal.acme.internal/runbooks/checkout-service",
+  "view_url": "https://portal.sample.internal/runbooks/checkout-service",
   "created_at": "2026-01-20T00:00:00Z",
   "updated_at": "2026-06-18T00:00:00Z",
-  "permission": { "groups": ["Acme-All-Employees"] },
+  "permission": { "groups": ["Sample-All-Employees"] },
   "body": "checkout-service renders the cart and checkout flow and calls payments-service to authorize and capture payment. Common incidents: elevated checkout abandonment (check payments-service latency first — it's the most common root cause), cart pricing mismatches (check the pricing-cache TTL), and inventory oversell (check the inventory-service webhook queue). Owned by the Commerce team; page the Commerce on-call for checkout-specific issues and the Engineering on-call rotation for anything that traces back to payments-service."
 }

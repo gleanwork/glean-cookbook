@@ -14,8 +14,8 @@ before running its command. Full write-ups live at
 <!-- pluginpack-generated:recipes:start -->
 
 - **Call a Glean agent from an A2A client** (`/cookbook:a2a-client`) — Discover a published Glean agent's A2A card and run it from any A2A client — multi-turn, streamed, permission-aware.
-- **Acme Answers: a company knowledge Q&A page** (`/cookbook:acme-answers`) — The hello-world of Glean apps: one page, one input, one permission-aware cited answer — built two ways, with the Web SDK and with the Chat API.
 - **Build an engineering portal** (`/cookbook:build-engineering-portal`) — The end-to-end showcase — index a developer catalog into Glean, then embed permission-aware search and chat back into the portal your team already uses.
+- **Company Answers: a cited Q&A page on your own content** (`/cookbook:company-answers`) — The hello-world of Glean apps: one page, one input, one permission-aware cited answer — built two ways, with the Web SDK and with the Chat API.
 - **Connect Glean MCP to your AI tools** (`/cookbook:connect-mcp-hosts`) — Point Claude Code, Cursor, and Claude Desktop at your Glean MCP endpoint and run one enterprise task from each — same context, three surfaces.
 - **Embed search & chat in an internal app** (`/cookbook:embed-search-chat`) — Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.
 - **Index a custom data source** (`/cookbook:index-custom-source`) — Bring an unsupported source into Glean with the Indexing API — documents, permissions, and people — and see it live in search. Ships sample fixtures so it runs standalone; point it at your own source to make it real.

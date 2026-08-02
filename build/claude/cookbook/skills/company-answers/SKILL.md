@@ -1,10 +1,10 @@
 ---
-name: acme-answers
+name: company-answers
 description: 'The hello-world of Glean apps: one page, one input, one permission-aware cited answer — built two ways, with the Web SDK and with the Chat API.'
 disable-model-invocation: true
 ---
 
-Build "Acme Answers: a company knowledge Q&A page" following https://developers.glean.com/cookbook/acme-answers
+Build "Company Answers: a cited Q&A page on your own content" following https://developers.glean.com/cookbook/company-answers
 
 1. **Pick a path**
    Path A (Web SDK) renders Glean's own chat UI for you — fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend — you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer.
@@ -16,13 +16,13 @@ Web SDK variant — renderChat in a page
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/acme-answers/web-sdk acme-answers
+   npx tiged --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers
    ```
 
 2. **Install dependencies**
 
    ```bash
-   cd acme-answers && npm install
+   cd company-answers && npm install
    ```
 
 3. **Credentials**
@@ -44,13 +44,13 @@ Chat API variant — one chat.create call, citations rendered
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/acme-answers/chat-api acme-answers
+   npx tiged --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers
    ```
 
 2. **Install dependencies**
 
    ```bash
-   cd acme-answers && npm install
+   cd company-answers && npm install
    ```
 
 3. **Set credentials**

@@ -108,5 +108,5 @@ function readJsonBody(
 
 const port = Number(process.env.PORT ?? 3000);
 server.listen(port, () => {
-  console.log(`Acme Answers (Chat API) running at http://localhost:${port}`);
+  console.log(`Company Answers (Chat API) running at http://localhost:${port}`);
 });

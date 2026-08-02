@@ -2,9 +2,9 @@
   "id": "support-it-helpdesk-faq",
   "title": "IT Helpdesk FAQ",
   "department": "Support",
-  "view_url": "https://portal.acme.internal/support/it-helpdesk-faq",
+  "view_url": "https://portal.sample.internal/support/it-helpdesk-faq",
   "created_at": "2025-06-01T00:00:00Z",
   "updated_at": "2026-04-01T00:00:00Z",
-  "permission": { "groups": ["Acme-All-Employees"] },
+  "permission": { "groups": ["Sample-All-Employees"] },
   "body": "Common IT helpdesk requests: password/SSO resets (see the dedicated guide), VPN setup (see the VPN setup guide), new software requests (submit via the IT portal, most standard tools auto-approve), and laptop issues (loaner laptops available same-day from the IT desk on each floor). Helpdesk hours: 8am-6pm local time, Monday-Friday; urgent after-hours issues page the on-call support rotation."
 }

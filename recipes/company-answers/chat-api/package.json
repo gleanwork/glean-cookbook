@@ -1,8 +1,8 @@
 {
-  "name": "acme-answers-chat-api",
+  "name": "company-answers-chat-api",
   "version": "0.0.0",
   "private": true,
-  "description": "Acme Answers — Chat API path: one chat.create call, you own the UI.",
+  "description": "Company Answers \u2014 Chat API path: one chat.create call, you own the UI.",
   "type": "module",
   "scripts": {
     "start": "tsx server.ts",

@@ -2,9 +2,9 @@
   "id": "hr-investigation-notes",
   "title": "HR Case Notes — Confidential",
   "department": "HR",
-  "view_url": "https://portal.acme.internal/hr/confidential/case-notes-hr-0142",
+  "view_url": "https://portal.sample.internal/hr/confidential/case-notes-hr-0142",
   "created_at": "2026-05-20T00:00:00Z",
   "updated_at": "2026-05-28T00:00:00Z",
-  "permission": { "groups": ["Acme-HR"] },
-  "body": "CONFIDENTIAL — HR only. Case HR-0142: a workplace-conduct complaint was received and reviewed per Acme's standard investigation process. The investigation concluded on 2026-05-28 with a coaching plan issued; no further disciplinary action was required. This document exists purely as a permissions-model fixture for the cookbook's permissions-aware-rag recipe — it demonstrates that a document restricted to the Acme-HR group is invisible to a general employee query, exactly the property the recipe's demo verifies."
+  "permission": { "groups": ["Sample-HR"] },
+  "body": "CONFIDENTIAL — HR only. Case HR-0142: a workplace-conduct complaint was received and reviewed per Sample Corp's standard investigation process. The investigation concluded on 2026-05-28 with a coaching plan issued; no further disciplinary action was required. This document exists purely as a permissions-model fixture for the cookbook's permissions-aware-rag recipe — it demonstrates that a document restricted to the Sample-HR group is invisible to a general employee query, exactly the property the recipe's demo verifies."
 }

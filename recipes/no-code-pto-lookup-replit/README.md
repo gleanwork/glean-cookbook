@@ -20,7 +20,7 @@ This recipe's "code" is the prompt, not a Node or Python project. There is nothi
 
 ## A correction worth knowing about
 
-The prompt tells the Agent to filter to `messageType === 'CONTENT'` before joining `fragments[].text`, and to read citations from `fragments[].citation.sourceDocument` (deduped by `url`) — not the deprecated `message.citations[]` field, and not a top-level `citedDocuments` field. This is the same correction documented in [`acme-answers`](../acme-answers/) — Replit Agent, like any LLM, will confidently guess the wrong shape here if you don't pin it down, so the prompt states the exact code rather than describing the API in prose.
+The prompt tells the Agent to filter to `messageType === 'CONTENT'` before joining `fragments[].text`, and to read citations from `fragments[].citation.sourceDocument` (deduped by `url`) — not the deprecated `message.citations[]` field, and not a top-level `citedDocuments` field. This is the same correction documented in [`company-answers`](../company-answers/) — Replit Agent, like any LLM, will confidently guess the wrong shape here if you don't pin it down, so the prompt states the exact code rather than describing the API in prose.
 
 ## Note on the demo query change
 

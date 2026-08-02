@@ -2,9 +2,9 @@
   "id": "eng-incident-response-runbook",
   "title": "Engineering Incident Response Runbook",
   "department": "Engineering",
-  "view_url": "https://portal.acme.internal/runbooks/incident-response",
+  "view_url": "https://portal.sample.internal/runbooks/incident-response",
   "created_at": "2026-01-10T00:00:00Z",
   "updated_at": "2026-05-02T00:00:00Z",
-  "permission": { "groups": ["Acme-All-Employees"] },
+  "permission": { "groups": ["Sample-All-Employees"] },
   "body": "Severity levels: Sev1 (full outage or data loss, page immediately, open an incident channel), Sev2 (major degradation, page on-call, incident channel optional), Sev3 (minor/contained, file a ticket, no page). Every Sev1/Sev2 gets a written incident review within 3 business days (see PAY-2114 for a worked example) covering timeline, root cause, customer impact, and action items. The incident commander is whoever first acknowledges the page unless a more senior engineer explicitly takes over."
 }
