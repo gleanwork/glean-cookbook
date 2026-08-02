@@ -47,7 +47,7 @@ async function search(query, actAs) {
         Authorization: `Bearer ${process.env.GLEAN_API_TOKEN}`,
         'Content-Type': 'application/json',
         'X-Glean-Include-Experimental': 'true',
-        ...(actAs ? { 'X-Glean-Act-As': actAs } : {}),
+        ...(actAs ? { 'X-Glean-ActAs': actAs } : {}),
       },
       body: JSON.stringify({ query, page_size: 10 }),
     },

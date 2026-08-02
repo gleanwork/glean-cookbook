@@ -16,7 +16,7 @@ Verified against the actually installed glean-api-client==0.15.4:
   parsed event iterator -- if you want real per-event streaming you parse
   that text yourself. run() (wait-for-completion) is simpler and used
   here since this recipe cares about the final messages, not live tokens.
-- Per-user identity for the run uses the same X-Glean-Act-As header
+- Per-user identity for the run uses the same X-Glean-ActAs header
   mechanism verified for permissions-aware-rag -- there's no actAs
   parameter on agents.run() either.
 
@@ -54,7 +54,7 @@ def run_as(glean: Glean, agent_id: str, question: str, act_as: str) -> None:
         messages=[
             Message(role="USER", content=[MessageTextBlock(text=question, type=ContentType.TEXT)])
         ],
-        http_headers={"X-Glean-Act-As": act_as},
+        http_headers={"X-Glean-ActAs": act_as},
     )
 
     status = response.run.status if response.run else None

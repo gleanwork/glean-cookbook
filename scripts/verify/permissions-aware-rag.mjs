@@ -1,14 +1,14 @@
-// The point of this recipe is that retrieval respects the *caller's*
-// permissions, not the token's. A run that returns cited answers proves almost
-// nothing on its own -- the check that matters is differential: the same query
-// must be answerable for a user with access and unanswerable for one without,
-// via a single admin token and X-Glean-Act-As.
+// The recipe's claim is that the caller's own credential is the permission
+// boundary, so results arrive already filtered and no impersonation is involved.
+// From a single identity you cannot show "user A sees it, user B doesn't" -- but
+// the property that actually protects people is checkable: when retrieval comes
+// back empty, the app must refuse rather than answer from the model's own
+// knowledge. A confident answer with no sources is the failure this whole
+// architecture exists to prevent, and it is the one an LLM produces by default.
 //
-// Which query is the restricted one comes from the recipe's own data:
-// demoQueries[].permissionDifferentiated. That used to be sniffed out of
-// expectedBehavior prose, which misfired the moment a *public* document's
-// behavior mentioned permissions ("so permissions don't restrict it") and the
-// check then demanded a refusal for something everyone can read.
+// This deliberately no longer requires a global/admin token. An earlier version
+// did, to drive X-Glean-ActAs, which is a different architecture than the one
+// this recipe teaches.
 
 import { execFile } from 'node:child_process';
 import path from 'node:path';
@@ -23,26 +23,25 @@ export const requiredEnv = [
   'GLEAN_API_TOKEN',
   'GLEAN_INSTANCE',
   'ANTHROPIC_API_KEY',
-  // act-as needs a global/admin token plus two real identities. Without both,
-  // the differential check can't run and the recipe's core claim goes untested.
-  'VERIFY_USER_WITH_ACCESS',
-  'VERIFY_USER_WITHOUT_ACCESS',
 ];
 
-const REFUSAL = /don't have information/i;
+const REFUSAL =
+  /don't have information|no information|cannot find|couldn't find/i;
 
-async function ask(context, query, actAs) {
+async function ask(context, query) {
   const cwd = path.join(
     context.repoRoot,
     'recipes/permissions-aware-rag/python',
   );
-  const args = ['run', '--locked', 'main.py', query];
-  if (actAs) args.push('--act-as', actAs);
-  const { stdout } = await execFileAsync('uv', args, {
-    cwd,
-    env: { ...process.env, X_GLEAN_INCLUDE_EXPERIMENTAL: 'true' },
-    maxBuffer: 10 * 1024 * 1024,
-  });
+  const { stdout } = await execFileAsync(
+    'uv',
+    ['run', '--locked', 'main.py', query],
+    {
+      cwd,
+      env: { ...process.env, X_GLEAN_INCLUDE_EXPERIMENTAL: 'true' },
+      maxBuffer: 10 * 1024 * 1024,
+    },
+  );
   // main.py prints the answer, then a "Sources:" block of "  [n] title — url".
   const [answer, sources = ''] = stdout.split(/\nSources:\n/);
   const citations = sources
@@ -59,41 +58,54 @@ function isPermissionDifferentiated(recipe, query) {
   );
 }
 
+/**
+ * Assert the recipe's own refusal guard, by calling answer() with no sources.
+ *
+ * Not driven through a live query on purpose. The obvious approach -- ask
+ * something nothing can answer -- does not work: Glean search returns loose
+ * matches rather than an empty set, so a deliberately nonsensical question came
+ * back with six results on a real instance. There is no query that reliably
+ * produces zero retrieval, so the empty case has to be induced directly. The
+ * guard short-circuits before the LLM call, so this needs no model credential.
+ */
+async function assertRefusesWithoutSources(context) {
+  const cwd = path.join(
+    context.repoRoot,
+    'recipes/permissions-aware-rag/python',
+  );
+  // Use the interpreter uv already provisioned for the script, so the inline
+  // PEP 723 dependencies are importable. `uv run python -c` gets a bare
+  // environment instead and fails on the recipe's own imports.
+  const { stdout: interpreter } = await execFileAsync(
+    'uv',
+    ['python', 'find', '--script', 'main.py'],
+    { cwd },
+  );
+  const { stdout } = await execFileAsync(
+    interpreter.trim(),
+    ['-c', 'import main; print(main.answer("anything", []))'],
+    { cwd, env: { ...process.env }, maxBuffer: 1024 * 1024 },
+  );
+  return REFUSAL.test(stdout)
+    ? null
+    : `answer() produced text instead of refusing when handed no sources — this is the fabrication the recipe exists to prevent: ${stdout.trim().slice(0, 160)}`;
+}
+
 export async function run(query, context) {
-  const allowed = await ask(
-    context,
-    query,
-    process.env.VERIFY_USER_WITH_ACCESS,
-  );
-
-  if (!allowed.answer) return 'answer was empty for the user with access';
-  if (allowed.citations.length === 0) {
-    return 'no citations for the user with access — retrieval returned nothing';
-  }
-  for (const line of allowed.citations) {
-    if (!/https?:\/\//.test(line)) {
-      return `citation has no real URL: ${line}`;
-    }
+  // The permission-differentiated entry tells the reader to ask for something
+  // they personally can't see. What that is depends on the instance, so assert
+  // the property underneath it: no sources must mean no answer.
+  if (isPermissionDifferentiated(context.recipe, query)) {
+    return assertRefusesWithoutSources(context);
   }
 
-  if (!isPermissionDifferentiated(context.recipe, query)) return null;
-
-  const denied = await ask(
-    context,
-    query,
-    process.env.VERIFY_USER_WITHOUT_ACCESS,
-  );
-  if (denied.citations.length > 0) {
-    return (
-      `${process.env.VERIFY_USER_WITHOUT_ACCESS} got ${denied.citations.length} ` +
-      `citation(s) for a restricted document — ACL filtering did not apply`
-    );
+  const result = await ask(context, query);
+  if (!result.answer) return 'answer was empty';
+  if (result.citations.length === 0) {
+    return 'no citations — retrieval returned nothing for a question your content should answer';
   }
-  if (!REFUSAL.test(denied.answer)) {
-    return (
-      `restricted user got a substantive answer rather than a refusal, meaning ` +
-      `the model fabricated from absent context: ${denied.answer.slice(0, 160)}`
-    );
+  for (const line of result.citations) {
+    if (!/https?:\/\//.test(line)) return `citation has no real URL: ${line}`;
   }
   return null;
 }

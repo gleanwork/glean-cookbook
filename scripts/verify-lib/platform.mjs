@@ -15,7 +15,7 @@ export async function chat(query, actAs) {
       headers: {
         Authorization: `Bearer ${process.env.GLEAN_API_TOKEN}`,
         'Content-Type': 'application/json',
-        ...(actAs ? { 'X-Glean-Act-As': actAs } : {}),
+        ...(actAs ? { 'X-Glean-ActAs': actAs } : {}),
       },
       body: JSON.stringify({
         // Explicit, not relying on the default: the spec gives saveChat no

@@ -16,12 +16,16 @@
  *   like the Client API's search.query() — one less unwrap.
  * - @anthropic-ai/sdk@0.115.0: messages.create() with model "claude-sonnet-5".
  *
- * Per-user enforcement: a global/admin Glean token can impersonate a
- * specific user via the X-Glean-Act-As header (confirmed against internal
- * auth docs, not guessed) — there is no actAs option on search.query()
- * itself; it's passed as a raw request header, via the second argument's
- * fetchOptions.headers (search.query() only takes 2 args, unlike
- * client.search.query()'s 3).
+ * Per-user enforcement needs no code: the caller's own credential is the
+ * permission boundary, so results come back already filtered to what that
+ * person can see. With a token from the Glean Authorization Server, no extra
+ * headers are required — not X-Glean-Auth-Type, not X-Glean-ActAs. Those are
+ * for other setups (an external-IdP token, and a service architecture holding
+ * one global token and impersonating per request), neither of which this
+ * recipe is.
+ *
+ * What does need code is the empty case: when retrieval returns nothing, the
+ * app must refuse rather than answer from the model's own knowledge.
  */
 
 import 'dotenv/config';
@@ -42,21 +46,16 @@ interface Source {
   text: string;
 }
 
-async function retrieve(
-  question: string,
-  actAs: string | undefined,
-): Promise<Source[]> {
+async function retrieve(question: string): Promise<Source[]> {
   const glean = new Glean({
     apiToken: requireEnv('GLEAN_API_TOKEN'),
     instance: requireEnv('GLEAN_INSTANCE'),
   });
 
-  const response = await glean.search.query(
-    { query: question, page_size: 8 },
-    actAs
-      ? { fetchOptions: { headers: { 'X-Glean-Act-As': actAs } } }
-      : undefined,
-  );
+  const response = await glean.search.query({
+    query: question,
+    page_size: 8,
+  });
 
   const sources: Source[] = [];
   for (const result of response.results ?? []) {
@@ -91,14 +90,13 @@ async function answer(question: string, sources: Source[]): Promise<string> {
 }
 
 async function main() {
-  const [question, actAsFlag, actAsValue] = process.argv.slice(2);
+  const [question] = process.argv.slice(2);
   if (!question) {
-    console.error('Usage: npm start -- "<question>" [--act-as <email>]');
+    console.error('Usage: npm start -- "<question>"');
     process.exit(1);
   }
-  const actAs = actAsFlag === '--act-as' ? actAsValue : undefined;
 
-  const sources = await retrieve(question, actAs);
+  const sources = await retrieve(question);
   console.log(await answer(question, sources));
   console.log('\nSources:');
   sources.forEach((source, i) => {

@@ -5,21 +5,20 @@ Use Glean's Platform API (the data-first retrieval surface, not the older Client
 - **[`python/`](python/)**
 - **[`typescript/`](typescript/)**
 
-Both variants: retrieve via `glean.search.query()` (the top-level method — not `glean.client.search.query()`, a different, older surface), extract `title`/`url`/`snippets` (a plain `string[]` in this API — no `.text` unwrap needed), send only those sources to an LLM (Claude here, swappable) with required inline `[n]` citations. Both support `--act-as <email>` to demonstrate the permissions boundary against your own instance — a global/admin Glean token impersonating a restricted user gets nothing back for documents outside their ACLs. Pick any document your instance restricts and a user who can't see it.
+Both variants: retrieve via `glean.search.query()` (the top-level method — not `glean.client.search.query()`, a different, older surface), extract `title`/`url`/`snippets` (a plain `string[]` in this API — no `.text` unwrap needed), send only those sources to an LLM (Claude here, swappable) with required inline `[n]` citations. Neither takes an impersonation flag, because neither needs one: your own credential is the permission boundary, so results arrive already filtered. Demonstrate it by asking for something another team owns — retrieval returns nothing and the app must say so rather than answering from the model's own knowledge.
 
 **The Platform API is Experimental** (launched 2026-07, not yet GA) — every call must opt in with `X_GLEAN_INCLUDE_EXPERIMENTAL=true`, which both variants below set up for you via `.env`. Verified with a real HTTP round-trip against a local echo server (headers, body, and response parsing all confirmed) before shipping this recipe — no live Glean instance was available to test against, so that final check is still on you.
 
-## The act-as trap
+## Why there is no impersonation flag
 
-`X-Glean-Act-As` needs a **global/admin** token. With an ordinary user token it is
-not rejected — it is silently ignored, and every request comes back with the
-token owner's own results. Verified against a live instance: a header of
-`this is not an email at all` returned byte-identical results to sending no
-header at all.
+Your credential is the permission boundary, so per-user filtering needs no code
+and no headers. With a token from the Glean Authorization Server, send neither
+`X-Glean-Auth-Type` nor `X-Glean-ActAs`.
 
-An app built on that looks per-user while serving one person's documents to
-everyone who asks, which is precisely the failure this recipe exists to
-demonstrate against. It cannot be detected from a single call, so `main.py`
-preflights whenever `--act-as` is used: it searches as an identity that cannot
-exist, and stops if that identity can see anything. Keep that check if you adapt
-this code.
+`X-Glean-ActAs` exists for a different architecture — one service credential
+impersonating users request by request — and applies to **global tokens only**.
+An earlier version of this recipe was built around it, which forced readers to
+obtain a global/admin token to run a demo that needs nothing of the sort. Note
+the spelling if you ever do need it: `X-Glean-ActAs`, not the plausible-looking
+`X-Glean-Act-As`, which a global token rejects with
+`400 Required header missing: X-Glean-ActAs`.

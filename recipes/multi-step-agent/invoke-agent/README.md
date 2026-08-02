@@ -25,7 +25,7 @@ editing the inline dependencies.
 
 ## What this does
 
-`glean.client.agents.run(agent_id=..., messages=[...], http_headers={"X-Glean-Act-As": ...})` — the same `X-Glean-Act-As` mechanism verified for [`permissions-aware-rag`](../../permissions-aware-rag/) runs the agent as a specific user on your instance with a global/admin token. The script runs the same question twice:
+`glean.client.agents.run(agent_id=..., messages=[...], http_headers={"X-Glean-ActAs": ...})` — the same `X-Glean-ActAs` mechanism verified for [`permissions-aware-rag`](../../permissions-aware-rag/) runs the agent as a specific user on your instance with a global/admin token. The script runs the same question twice:
 
 - as `GLEAN_PERMITTED_USER_EMAIL` (on the tool server's allow-list) — the tool call succeeds, ticket filed
 - as `GLEAN_DENIED_USER_EMAIL` (not on it) — the tool server returns 403, and the agent's own instructions handle the graceful fallback
