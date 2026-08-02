@@ -23,7 +23,8 @@ inspected):
   Client API's search.query() -- one less unwrap.
 - anthropic==0.120.0: messages.create() with model="claude-sonnet-5".
 
-Per-user enforcement: a global/admin Glean token can impersonate a specific
+Per-user filtering needs no header and no impersonation: the caller's own
+credential is the permission boundary, so results arrive already filtered.
 """
 
 from __future__ import annotations

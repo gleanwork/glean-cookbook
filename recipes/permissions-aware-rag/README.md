@@ -12,13 +12,6 @@ Both variants: retrieve via `glean.search.query()` (the top-level method — not
 ## Why there is no impersonation flag
 
 Your credential is the permission boundary, so per-user filtering needs no code
-and no headers. With a token from the Glean Authorization Server, send neither
-`X-Glean-Auth-Type` nor `X-Glean-ActAs`.
-
-`X-Glean-ActAs` exists for a different architecture — one service credential
-impersonating users request by request — and applies to **global tokens only**.
-An earlier version of this recipe was built around it, which forced readers to
-obtain a global/admin token to run a demo that needs nothing of the sort. Note
-the spelling if you ever do need it: `X-Glean-ActAs`, not the plausible-looking
-`X-Glean-Act-As`, which a global token rejects with
-`400 Required header missing: X-Glean-ActAs`.
+and no headers. An earlier version of this recipe impersonated users with a
+global/admin token, which forced readers to obtain admin access for a demo that
+needs nothing of the sort.

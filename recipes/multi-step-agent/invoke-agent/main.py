@@ -16,9 +16,9 @@ Verified against the actually installed glean-api-client==0.15.4:
   parsed event iterator -- if you want real per-event streaming you parse
   that text yourself. run() (wait-for-completion) is simpler and used
   here since this recipe cares about the final messages, not live tokens.
-- Per-user identity for the run uses the same X-Glean-ActAs header
-  mechanism verified for permissions-aware-rag -- there's no actAs
-  parameter on agents.run() either.
+- The agent runs as whoever the credential belongs to. Glean forwards that
+  identity to a custom tool as the Glean-User-Email header, which is where
+  the tool server enforces its own authorization -- see ../tool-server/.
 
 The agent itself (instructions, retrieval, the incident-ticket tool
 attached) is built in the Glean Agent Builder UI -- there's no API to
@@ -47,14 +47,12 @@ def requireEnv(name: str) -> str:
     return value
 
 
-def run_as(glean: Glean, agent_id: str, question: str, act_as: str) -> None:
-    print(f"\n=== Running as {act_as} ===")
+def ask(glean: Glean, agent_id: str, question: str) -> None:
     response = glean.client.agents.run(
         agent_id=agent_id,
         messages=[
             Message(role="USER", content=[MessageTextBlock(text=question, type=ContentType.TEXT)])
         ],
-        http_headers={"X-Glean-ActAs": act_as},
     )
 
     status = response.run.status if response.run else None
@@ -72,13 +70,13 @@ def main() -> None:
         "Summarize open payments incidents and file a tracking ticket for the canary alarm issue."
     )
 
-    # Two real users from your own instance, so this recipe stands alone rather
-    # than depending on another recipe having seeded a cast first. The permitted
-    # one is on the tool server's AUTHORIZED_EMAILS allow-list; the denied one
-    # is not, so the tool returns 403 and the agent falls back to a read-only
-    # summary instead of failing the whole run.
-    run_as(glean, agent_id, question, requireEnv("GLEAN_PERMITTED_USER_EMAIL"))
-    run_as(glean, agent_id, question, requireEnv("GLEAN_DENIED_USER_EMAIL"))
+    # The agent runs as you, so both governance branches are demonstrated by
+    # changing the tool server's allow-list rather than by impersonating anyone.
+    # Run this once with your email in AUTHORIZED_EMAILS (the ticket is filed),
+    # then once without it: the tool returns 403 and the agent falls back to a
+    # read-only summary instead of failing the whole run. That fallback is the
+    # behaviour worth seeing, and it comes from the agent's own instructions.
+    ask(glean, agent_id, question)
 
 
 if __name__ == "__main__":

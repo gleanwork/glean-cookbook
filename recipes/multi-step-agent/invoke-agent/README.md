@@ -14,7 +14,7 @@ There's no API to create an agent from scratch. In the Glean Agent Builder:
 ## Run it
 
 ```bash
-cp .env.example .env   # GLEAN_API_TOKEN, GLEAN_INSTANCE, GLEAN_AGENT_ID, and the two user emails
+cp .env.example .env   # GLEAN_API_TOKEN, GLEAN_INSTANCE, GLEAN_AGENT_ID
 uv run main.py
 ```
 
@@ -25,12 +25,27 @@ editing the inline dependencies.
 
 ## What this does
 
-`glean.client.agents.run(agent_id=..., messages=[...], http_headers={"X-Glean-ActAs": ...})` — the same `X-Glean-ActAs` mechanism verified for [`permissions-aware-rag`](../../permissions-aware-rag/) runs the agent as a specific user on your instance with a global/admin token. The script runs the same question twice:
+`glean.client.agents.run(agent_id=..., messages=[...])` — the agent runs as
+whoever your credential belongs to. No impersonation, and no admin token: Glean
+forwards your identity to the custom tool as the `Glean-User-Email` header, and
+[the tool server](../tool-server/) decides from there.
 
-- as `GLEAN_PERMITTED_USER_EMAIL` (on the tool server's allow-list) — the tool call succeeds, ticket filed
-- as `GLEAN_DENIED_USER_EMAIL` (not on it) — the tool server returns 403, and the agent's own instructions handle the graceful fallback
+Demonstrate both governance branches by changing the allow-list rather than the
+caller:
 
-Both are real users on your own instance, so nothing needs seeding first.
+```bash
+# 1. your email IS in the tool server's AUTHORIZED_EMAILS
+uv run main.py
+# -> the tool call succeeds, ticket filed
+
+# 2. restart the tool server with your email removed
+uv run main.py
+# -> the tool returns 403, and the agent's own instructions produce a
+#    read-only summary instead of failing the run
+```
+
+That second run is the one worth watching. A governed tool refusing is easy; an
+agent degrading gracefully instead of erroring is the part you have to build.
 
 Two things worth calling out, verified against the actually installed `glean-api-client==0.15.4`, not assumed:
 

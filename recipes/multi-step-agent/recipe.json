@@ -21,12 +21,12 @@
     "Agent builder access in your Glean instance",
     "Permission to register a custom tool (or admin help)",
     "A Glean token with AGENTS scope for API invocation",
-    "Two real users on your instance: one who should be allowed to file tickets, one who shouldn't"
+    "Your own email, to put on (and take off) the tool server's allow-list between the two runs"
   ],
   "demoQueries": [
     {
       "query": "Summarize our open incidents and file a tracking ticket",
-      "expectedBehavior": "Run as the user on the tool server's allow-list: the agent summarizes and the governed tool call succeeds (200, a real ticket id). Run as a user not on it: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The governance check must actually fire, not be assumed."
+      "expectedBehavior": "With your email on the tool server's allow-list: the agent summarizes and the governed tool call succeeds (200, a real ticket id). With it removed: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The governance check must actually fire, not be assumed."
     }
   ],
   "codeAssets": [
@@ -49,7 +49,7 @@
     {
       "title": "Set the tool server's allow-list",
       "command": "cd multi-step-agent/tool-server && cp .env.example .env",
-      "description": "Set AUTHORIZED_EMAILS to two real users on your instance: one who should be able to file tickets, one who shouldn't. The server refuses to start on an empty allow-list, since that denies everyone and makes the permitted branch unobservable."
+      "description": "Set AUTHORIZED_EMAILS to your own email for the first run. You'll remove it for the second run to see the denied branch \u2014 changing the allow-list is how both governance paths get demonstrated, since the agent always runs as you. The server refuses to start on an empty allow-list, since that denies everyone and makes the permitted branch unobservable."
     },
     {
       "title": "Run the tool server",
@@ -67,7 +67,7 @@
     {
       "title": "Set credentials",
       "command": "cd multi-step-agent/invoke-agent && cp .env.example .env",
-      "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, GLEAN_AGENT_ID (the ID from the previous step), and the two user emails \u2014 GLEAN_PERMITTED_USER_EMAIL must be on the tool server's allow-list, GLEAN_DENIED_USER_EMAIL must not be."
+      "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and GLEAN_AGENT_ID (the ID from the previous step)."
     },
     {
       "title": "Run it",
@@ -76,7 +76,7 @@
     },
     {
       "title": "Verify",
-      "description": "Confirm the permitted user's ticket actually gets filed, and that the denied user gets a graceful no-write fallback summary instead of a hard failure."
+      "description": "With your email on the allow-list, confirm the ticket actually gets filed. Then restart the tool server without it and confirm the agent produces a read-only fallback summary instead of a hard failure."
     }
   ],
   "scaffoldActions": [],
@@ -98,8 +98,8 @@
       "category": "workflow"
     }
   ],
-  "aiPrompt": "Build the governed multi-step agent from\nhttps://developers.glean.com/cookbook/multi-step-agent\n\n1. Register the recipe's custom tool (an incident-ticket-creation HTTP\n   tool) in the Glean admin console (Admin > Platform > Tools > Add) \u2014\n   this is a manual/admin-console step, there is no API to create a\n   tool. Upload the recipe's openapi.yaml as the tool's API spec.\n2. Create an agent in the Agent Builder (also a UI step, not an API\n   call): instructions from the recipe, retrieval on, the tool\n   attached. Copy the agent's ID.\n3. Invoke via glean.client.agents.run(agent_id=..., messages=[...],\n   http_headers={\"X-Glean-ActAs\": email}) \u2014 NOT chat.create's\n   ChatMessage/ChatMessageFragment shape; agents use Message/\n   MessageTextBlock instead. run_stream() returns raw SSE text (a\n   string), not a parsed event iterator \u2014 use run() unless you're\n   ready to parse SSE yourself.\n4. Demo both branches by running as two real users on my instance,\n   supplied as GLEAN_PERMITTED_USER_EMAIL and GLEAN_DENIED_USER_EMAIL.\n   The tool server's own allow-list is AUTHORIZED_EMAILS, so put the\n   permitted user on it and leave the denied one off. The permitted\n   user gets the ticket filed; the denied one gets a graceful no-write\n   fallback summary, because the tool server returned 403 and the\n   agent's own instructions handle that case. Don't hardcode either\n   email -- there's no seeded cast to draw one from.",
-  "llmContext": "Agents API: glean.client.agents.run(agent_id, messages, http_headers) -> AgentRunWaitResponse{run.status, messages}. messages use Message(role, content=[MessageTextBlock(text, type=ContentType.TEXT)]) \u2014 distinct from chat.create's ChatMessage/ChatMessageFragment. run_stream() returns a raw SSE string, not an iterator. Tools are registered via the admin console (upload an OpenAPI spec), not an API call. Per-user identity for a run uses the X-Glean-ActAs header on a global/admin token, same as Search. Custom tool servers receive the acting user's email via the Glean-User-Email header, which is where tool-level authorization (governance) is actually enforced for scratch-built tools.",
+  "aiPrompt": "Build the governed multi-step agent from\nhttps://developers.glean.com/cookbook/multi-step-agent\n\n1. Register the recipe's custom tool (an incident-ticket-creation HTTP\n   tool) in the Glean admin console (Admin > Platform > Tools > Add) \u2014\n   this is a manual/admin-console step, there is no API to create a\n   tool. Upload the recipe's openapi.yaml as the tool's API spec.\n2. Create an agent in the Agent Builder (also a UI step, not an API\n   call): instructions from the recipe, retrieval on, the tool\n   attached. Copy the agent's ID.\n3. Invoke via glean.client.agents.run(agent_id=..., messages=[...])\n   \u2014 the agent runs as whoever my credential belongs to, so send no\n   impersonation header and don't ask me for an admin token. NOT\n   chat.create's\n   ChatMessage/ChatMessageFragment shape; agents use Message/\n   MessageTextBlock instead. run_stream() returns raw SSE text (a\n   string), not a parsed event iterator \u2014 use run() unless you're\n   ready to parse SSE yourself.\n4. Demo both governance branches by changing the tool server's\n   AUTHORIZED_EMAILS allow-list between runs, not by impersonating\n   anyone: once with my email on it (the ticket is filed), once\n   without (the tool returns 403 and the agent's own instructions\n   produce a read-only summary rather than failing the run). Glean\n   forwards my identity to the tool as the Glean-User-Email header,\n   which is where that authorization is enforced.",
+  "llmContext": "Agents API: glean.client.agents.run(agent_id, messages) -> AgentRunWaitResponse{run.status, messages}. messages use Message(role, content=[MessageTextBlock(text, type=ContentType.TEXT)]) \u2014 distinct from chat.create's ChatMessage/ChatMessageFragment. run_stream() returns a raw SSE string, not an iterator. Tools are registered via the admin console (upload an OpenAPI spec), not an API call. A run executes as the identity behind the credential; there is no impersonation header to add and no admin token needed. Custom tool servers receive the acting user's email via the Glean-User-Email header, which is where tool-level authorization (governance) is actually enforced for scratch-built tools.",
   "goDependency": false,
   "featured": true,
   "tags": ["agents", "governance"]

@@ -34,7 +34,7 @@ Platform API search.query → snippets → LLM with citations
    ```
 
 4. **Verify**
-   Confirm the printed answer carries numbered citations with real titles and URLs. Re-run with --act-as <restricted-user-email> (requires a global/admin token) and confirm an HR-only query returns no fabricated answer for that user.
+   Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge.
 
 ### TypeScript
 
@@ -66,11 +66,11 @@ Same flow in TypeScript
    ```
 
 5. **Verify**
-   Confirm the printed answer carries numbered citations with real titles and URLs. Re-run with -- "<question>" --act-as <restricted-user-email> (requires a global/admin token) and confirm an HR-only query returns no fabricated answer for that user.
+   Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge.
 
 ## Reference
 
-Platform API search (data-first retrieval, distinct from the Client API's glean.client.search.query): glean.search.query(query, page_size, http_headers) -> PlatformSearchResponse. Result shape: results[].title, results[].url, results[].snippets (string[], not snippet objects). Experimental since its 2026-07-14 public launch — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var, read automatically by the SDK) on every call or it 4xxs. Per-user enforcement is still the X-Glean-ActAs HTTP header on a global/admin token, not an SDK parameter, same as the Client API. Per-user filtering needs no headers: with a token from the Glean Authorization Server the caller's own credential is the permission boundary. Do not add X-Glean-ActAs -- that is for a service architecture holding one global token, it applies to global tokens only, and it is spelled X-Glean-ActAs rather than the plausible-looking X-Glean-Act-As (Glean's own Web SDK bundle and every doc occurrence use the former; a global token sent the latter fails with 400 Required header missing). X-Glean-Auth-Type: OAUTH is likewise only needed for external-IdP tokens. The verifiable claim for this recipe is that an empty retrieval produces a refusal rather than a fabricated answer.
+Platform API search (data-first retrieval, distinct from the Client API's glean.client.search.query): glean.search.query(query, page_size, http_headers) -> PlatformSearchResponse. Result shape: results[].title, results[].url, results[].snippets (string[], not snippet objects). Experimental since its 2026-07-14 public launch — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var, read automatically by the SDK) on every call or it 4xxs. Per-user filtering needs no headers: with a token from the Glean Authorization Server the caller's own credential is the permission boundary. Send no impersonation header; that belongs to a different architecture and does not apply here. The verifiable claim for this recipe is that an empty retrieval produces a refusal rather than a fabricated answer.
 
 ## Authentication
 

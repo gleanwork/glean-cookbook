@@ -18,11 +18,7 @@
  *
  * Per-user enforcement needs no code: the caller's own credential is the
  * permission boundary, so results come back already filtered to what that
- * person can see. With a token from the Glean Authorization Server, no extra
- * headers are required — not X-Glean-Auth-Type, not X-Glean-ActAs. Those are
- * for other setups (an external-IdP token, and a service architecture holding
- * one global token and impersonating per request), neither of which this
- * recipe is.
+ * person can see. No extra headers, and no impersonation.
  *
  * What does need code is the empty case: when retrieval returns nothing, the
  * app must refuse rather than answer from the model's own knowledge.

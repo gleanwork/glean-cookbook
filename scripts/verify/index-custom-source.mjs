@@ -38,7 +38,7 @@ export async function setup(context) {
   return { seeded: true };
 }
 
-async function search(query, actAs) {
+async function search(query) {
   const response = await fetch(
     `https://${process.env.GLEAN_INSTANCE}-be.glean.com/api/search`,
     {
@@ -47,7 +47,6 @@ async function search(query, actAs) {
         Authorization: `Bearer ${process.env.GLEAN_API_TOKEN}`,
         'Content-Type': 'application/json',
         'X-Glean-Include-Experimental': 'true',
-        ...(actAs ? { 'X-Glean-ActAs': actAs } : {}),
       },
       body: JSON.stringify({ query, page_size: 10 }),
     },
@@ -62,11 +61,11 @@ async function search(query, actAs) {
 }
 
 /** Indexing is eventually consistent; poll rather than assume it's immediate. */
-async function searchUntilFound(query, actAs, timeoutMs = 120_000) {
+async function searchUntilFound(query, timeoutMs = 120_000) {
   const deadline = Date.now() + timeoutMs;
   let results = [];
   while (Date.now() < deadline) {
-    results = await search(query, actAs);
+    results = await search(query);
     if (results.some((r) => r.datasource === 'sample_catalog')) return results;
     await new Promise((resolve) => setTimeout(resolve, 5_000));
   }

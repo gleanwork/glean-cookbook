@@ -7,7 +7,7 @@
 // verifies the foundation that integration rests on; if this fails, the recipe
 // is telling people to build on something that doesn't work.
 
-export async function chat(query, actAs) {
+export async function chat(query) {
   const response = await fetch(
     `https://${process.env.GLEAN_INSTANCE}-be.glean.com/rest/api/v1/chat`,
     {
@@ -15,7 +15,6 @@ export async function chat(query, actAs) {
       headers: {
         Authorization: `Bearer ${process.env.GLEAN_API_TOKEN}`,
         'Content-Type': 'application/json',
-        ...(actAs ? { 'X-Glean-ActAs': actAs } : {}),
       },
       body: JSON.stringify({
         // Explicit, not relying on the default: the spec gives saveChat no
@@ -69,8 +68,8 @@ export function extractAnswer(body) {
 }
 
 /** Returns null on success, or a string naming the promised behaviour that failed. */
-export async function assertCitedAnswer(query, actAs) {
-  const body = await chat(query, actAs);
+export async function assertCitedAnswer(query) {
+  const body = await chat(query);
   const { answer, citations } = extractAnswer(body);
   if (!answer) {
     // Distinguish the two ways this happens. A run that ends while a server tool

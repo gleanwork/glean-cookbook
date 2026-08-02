@@ -39,13 +39,8 @@ is the refusal. An LLM handed no sources will happily answer from its own
 training data, and a confident answer with no citations is precisely the failure
 this architecture exists to prevent.
 
-Do **not** reach for `X-Glean-ActAs` here. It applies to global tokens only, and
-it exists for a different architecture: one service credential impersonating
-users request by request. With your own OAuth token from the Glean Authorization
-Server you send no extra headers at all — not `X-Glean-Auth-Type`, not
-`X-Glean-ActAs`. (Also note the spelling: `X-Glean-ActAs`, not
-`X-Glean-Act-As`. A global token sent the hyphenated form fails with
-`400 Required header missing`.)
+Per-user filtering needs no headers and no impersonation — your credential is
+the boundary.
 
 ## What this does
 

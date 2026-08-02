@@ -1,5 +1,5 @@
 // The recipe's claim is that the caller's own credential is the permission
-// boundary, so results arrive already filtered and no impersonation is involved.
+// boundary, so results arrive already filtered and nothing needs impersonating.
 // From a single identity you cannot show "user A sees it, user B doesn't" -- but
 // the property that actually protects people is checkable: when retrieval comes
 // back empty, the app must refuse rather than answer from the model's own
@@ -7,8 +7,8 @@
 // architecture exists to prevent, and it is the one an LLM produces by default.
 //
 // This deliberately no longer requires a global/admin token. An earlier version
-// did, to drive X-Glean-ActAs, which is a different architecture than the one
-// this recipe teaches.
+// did, to drive an impersonation header that belongs to a different
+// architecture than the one this recipe teaches.
 
 import { execFile } from 'node:child_process';
 import path from 'node:path';
