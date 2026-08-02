@@ -434,18 +434,12 @@
         "repoPath": "recipes/index-custom-source",
         "language": "python",
         "description": "Custom connector indexing the Acme corpus with per-document permissions"
-      },
-      {
-        "repoPath": "acme-corpus",
-        "language": "json",
-        "description": "The seed dataset itself"
       }
     ],
     "steps": [
       {
         "title": "Scaffold the project",
-        "description": "connector.py resolves the corpus via a relative path two levels up (Path(__file__).parent.parent.parent / \"acme-corpus\") — scaffold both directories preserving that same nesting, not flattened into one directory.",
-        "command": "mkdir -p index-custom-source/recipes/index-custom-source index-custom-source/acme-corpus\nnpx tiged --mode=git gleanwork/glean-cookbook/recipes/index-custom-source index-custom-source/recipes/index-custom-source\nnpx tiged --mode=git gleanwork/glean-cookbook/acme-corpus index-custom-source/acme-corpus"
+        "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/index-custom-source index-custom-source"
       },
       {
         "title": "Set credentials",
@@ -453,7 +447,7 @@
       },
       {
         "title": "Run it",
-        "command": "cd index-custom-source/recipes/index-custom-source && uv run seed.py",
+        "command": "cd index-custom-source && uv run seed.py",
         "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step."
       },
       {

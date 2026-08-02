@@ -8,7 +8,6 @@ Runnable, copy-paste-able examples of building on the [Glean platform](https://d
 
 ```
 recipes/{id}/       one directory per recipe, self-contained and runnable
-acme-corpus/        the seed dataset every recipe's demo queries resolve against
 brand/              the Acme Corp brand kit shared by every recipe and mock
 registry.json        the manifest — one entry per recipe, validated in CI
 schemas/            recipe.schema.json, generated from developers.glean.com
@@ -65,7 +64,7 @@ Every PR runs:
 
 - Open a PR against `main`; one approving review is required.
 - Run `npm run format` and `npm run validate:registry` locally before pushing.
-- If you're building a recipe from a spec handed to you (e.g. a Linear ticket with a validated registry entry attached), the entry is normative — copy it into `registry.json` unchanged, and build the code in `recipes/{id}/` to match what it promises (demo queries must resolve against real data in `acme-corpus/`, `aiPrompt` must actually scaffold what it claims to).
+- If you're building a recipe from a spec handed to you (e.g. a Linear ticket with a validated registry entry attached), the entry is normative — copy it into `registry.json` unchanged, and build the code in `recipes/{id}/` to match what it promises (demo queries must be answerable on a reader's own instance, `aiPrompt` must actually scaffold what it claims to).
 
 ### Verifying a recipe
 

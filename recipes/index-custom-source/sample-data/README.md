@@ -1,6 +1,14 @@
-# acme-corpus/
+# sample-data/
 
-The seed dataset every recipe's `demo_queries` resolve against. Built for **PACT-438**. The connector code that indexes this data now lives in [`../recipes/index-custom-source/`](../recipes/index-custom-source/) (PACT-444) — this directory is pure data.
+Fixtures for the `index-custom-source` recipe: a small set of documents, groups
+and people standing in for an unsupported system, so the recipe has something
+to index out of the box. Pure data — the connector that reads it is
+[`../connector.py`](../connector.py).
+
+This is sample data, not a shared corpus. No other recipe depends on it, and
+nothing needs seeding before you run any recipe. If you have a real unsupported
+source, point the connector at that instead — that's the actual use case this
+recipe teaches.
 
 ## What's here
 

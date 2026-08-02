@@ -23,7 +23,8 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-# Mirrors acme-corpus/people/memberships.json — Acme-Engineering only.
+# Stand-in group membership: only Engineering may file incident tickets.
+# The governance check is the point; the roster is deliberately trivial.
 ENGINEERING_EMAILS = {
     "priya.natarajan@acme.example.com",
     "marcus.webb@acme.example.com",

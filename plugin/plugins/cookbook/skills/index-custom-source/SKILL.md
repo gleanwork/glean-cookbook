@@ -7,12 +7,9 @@ disable-model-invocation: true
 Build "Index a custom data source" following https://developers.glean.com/cookbook/index-custom-source
 
 1. **Scaffold the project**
-   connector.py resolves the corpus via a relative path two levels up (Path(**file**).parent.parent.parent / "acme-corpus") — scaffold both directories preserving that same nesting, not flattened into one directory.
 
    ```bash
-   mkdir -p index-custom-source/recipes/index-custom-source index-custom-source/acme-corpus
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/index-custom-source index-custom-source/recipes/index-custom-source
-   npx tiged --mode=git gleanwork/glean-cookbook/acme-corpus index-custom-source/acme-corpus
+   npx tiged --mode=git gleanwork/glean-cookbook/recipes/index-custom-source index-custom-source
    ```
 
 2. **Set credentials**
@@ -22,7 +19,7 @@ Build "Index a custom data source" following https://developers.glean.com/cookbo
    Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.
 
    ```bash
-   cd index-custom-source/recipes/index-custom-source && uv run seed.py
+   cd index-custom-source && uv run seed.py
    ```
 
 4. **Verify**

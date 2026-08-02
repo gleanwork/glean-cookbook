@@ -1,6 +1,6 @@
 # index-custom-source
 
-Bring an unsupported source into Glean with the Indexing API — documents, permissions, and people — and see it live in search. This recipe indexes the [`acme-corpus`](../../acme-corpus/) dataset (PACT-438), so it doubles as the seed script every other recipe's demo depends on.
+Bring an unsupported source into Glean with the Indexing API — documents, permissions, and people — and see it live in search. It ships its own `sample-data/` fixtures, so the recipe is self-contained: nothing needs seeding first, and no other recipe has to run before it.
 
 ## Run it
 
@@ -20,7 +20,7 @@ editing the inline dependencies.
 
 `connector.py` defines two connectors against `glean-indexing-sdk==1.0.0b2`:
 
-- **`AcmeCorpusConnector`** (`BaseDatasourceConnector`) — reads every JSON file in `../../acme-corpus/documents/`, transforms each into a `DocumentDefinition` with a `DocumentPermissionsDefinition` built from that document's `permission` block (`allowed_groups` or `allowed_users`), and pushes the permission identities (`../../acme-corpus/people/*.json`) needed to evaluate those ACLs.
+- **`AcmeCorpusConnector`** (`BaseDatasourceConnector`) — reads every JSON file in `sample-data/documents/`, transforms each into a `DocumentDefinition` with a `DocumentPermissionsDefinition` built from that document's `permission` block (`allowed_groups` or `allowed_users`), and pushes the permission identities (`sample-data/people/*.json`) needed to evaluate those ACLs.
 - **`AcmeCorpusPeopleConnector`** (`BasePeopleConnector`) — indexes the same cast as searchable employee profiles, a separate Glean capability from document permissions.
 
 **Never allow-all.** Every document carries a real permission block — general company docs are `Acme-All-Employees`, a few (compensation bands, HR case notes, one person's onboarding checklist) are restricted, so the permissions story is demonstrable, not just claimed.

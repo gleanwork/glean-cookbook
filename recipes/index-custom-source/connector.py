@@ -1,10 +1,11 @@
 """index-custom-source recipe connector — glean-indexing-sdk==1.0.0b2.
 
 Two connectors, both reading straight off the JSON fixtures in
-../../acme-corpus/ (no external system involved — the fixtures ARE the
+sample-data/ (no external system involved — the fixtures ARE the
 source of truth). This is the runnable code for the index-custom-source
 recipe (PACT-444); the corpus it indexes is owned by PACT-438 and lives
-in acme-corpus/ so every other recipe can demo against the same data.
+beside this script, so the recipe is self-contained: running it needs no
+separate corpus checkout and no other recipe run first.
 
 - AcmeCorpusConnector: a BaseDatasourceConnector that indexes documents/**/*.json
   into a custom "acme_corpus" datasource, and pushes the permission identities
@@ -44,7 +45,7 @@ from glean.indexing.models import (
     DocumentDefinition,
 )
 
-CORPUS_ROOT = Path(__file__).parent.parent.parent / "acme-corpus"
+CORPUS_ROOT = Path(__file__).parent / "sample-data"
 DOCUMENTS_DIR = CORPUS_ROOT / "documents"
 PEOPLE_DIR = CORPUS_ROOT / "people"
 
@@ -96,7 +97,7 @@ class AcmeCorpusDataClient(BaseDataClient[dict]):
 
 
 class AcmeCorpusConnector(BaseDatasourceConnector[dict]):
-    """Indexes acme-corpus/documents/**/*.json into the 'acme_corpus' datasource."""
+    """Indexes sample-data/documents/**/*.json into the 'acme_corpus' datasource."""
 
     configuration: CustomDatasourceConfig = CustomDatasourceConfig(
         name=DATASOURCE_NAME,
