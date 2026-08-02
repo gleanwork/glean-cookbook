@@ -7,9 +7,25 @@ Bring an unsupported source into Glean with the Indexing API — documents, perm
 ```bash
 export GLEAN_INDEXING_API_TOKEN=...
 export GLEAN_SERVER_URL=...
-uv run seed.py       # registers the sample_catalog datasource, indexes documents + identities + employee profiles
+export GLEAN_BETA_USER_EMAILS=you@yourcompany.com
+uv run seed.py       # registers the sample_catalog test datasource, indexes documents + identities + employee profiles, allow-lists you as a viewer
 uv run teardown.py   # deletes everything seed.py created (see caveat below)
 ```
+
+## Safe against a real instance
+
+The fixtures are invented, so indexing them into the instance your colleagues
+search would put a made-up PTO policy next to the real one. `connector.py`
+therefore registers `sample_catalog` as a **test datasource**
+(`is_test_datasource=True`), which does two things: Glean turns off all ranking
+signals from it, and it stays invisible to everyone — including you — until
+specific emails are allow-listed.
+
+`seed.py` makes that second call for you with `GLEAN_BETA_USER_EMAILS`, and
+refuses to start if it's unset, since indexing first and discovering the problem
+afterwards leaves content in the instance you can't see and didn't mean to
+leave. Set `SAMPLE_CATALOG_PRODUCTION=1` once you've swapped the fixtures for a
+real source and want a normal, everyone-visible datasource.
 
 Dependencies are declared inline ([PEP 723](https://peps.python.org/pep-0723/)) and locked,
 so [uv](https://docs.astral.sh/uv/) installs them into an isolated environment on first run —
@@ -25,8 +41,10 @@ editing the inline dependencies.
 
 **Never allow-all.** Every document carries a real permission block — general company docs are `Sample-All-Employees`, a few (compensation bands, HR case notes, one person's onboarding checklist) are restricted, so the permissions story is demonstrable, not just claimed.
 
-**Teardown caveat:** `glean-indexing-sdk==1.0.0b2` has no `datasources.delete()` call — verified against the pinned `glean-api-client==0.15.4` (the only `delete_all` in the package is on chat, not datasources). `teardown.py` deletes every document, group, permission-user, and employee profile the seed created, but the `sample_catalog` datasource _registration_ itself is left in place (orphaned but harmless — `seed.py` re-populates it cleanly on the next run). To fully remove the datasource entity, use the Glean admin console.
+**Teardown caveat:** there is no datasource-level delete anywhere in the Indexing API — this isn't a gap in the pinned SDK, the endpoint doesn't exist. `teardown.py` deletes every document, group, permission-user, and employee profile the seed created, but the `sample_catalog` datasource _registration_ itself is left in place. That leftover is a test datasource with no ranking impact and no viewers beyond whoever you allow-listed, and `seed.py` re-populates it cleanly on the next run; remove the entity itself from the Glean admin console if you want it gone. A single-page `documents.bulk_index` with an empty `documents` list is the other documented way to clear the content in one call — bulk endpoints replace rather than append, which is exactly what `disable_stale_document_deletion_check` guards against.
 
 ## Verify
 
 Search "Who owns the payments-service catalog entry?" as yourself, then act as one of the sample users who is only in the Engineering fixture group — they should see it. Search for something in `hr-compensation-bands` as that same user; it should return nothing, since that document is restricted to the HR fixture group.
+
+Getting no results at all for either query usually means the searching identity isn't on the beta-user allow-list — a test datasource is invisible to anyone who isn't, which looks identical to a failed index.

@@ -20,6 +20,7 @@ separate corpus checkout and no other recipe run first.
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
@@ -105,7 +106,14 @@ class SampleCatalogConnector(BaseDatasourceConnector[dict]):
         datasource_category=DatasourceCategory.KNOWLEDGE_HUB,
         url_regex="https://portal.example.internal/.*",
         is_entity_datasource=False,
-        is_test_datasource=False,
+        # Sample fixtures go into a test datasource by default. A test
+        # datasource has ranking signals turned off and is visible to nobody
+        # until specific emails are allow-listed via authorize_beta_users, so
+        # 29 invented documents can't compete with the real PTO policy in
+        # anyone's search results. Set SAMPLE_CATALOG_PRODUCTION=1 when you've
+        # swapped in a real source and want a normal, everyone-visible
+        # datasource.
+        is_test_datasource=not os.environ.get("SAMPLE_CATALOG_PRODUCTION"),
         is_user_referenced_by_email=True,
         object_definitions=[
             ObjectDefinition(
