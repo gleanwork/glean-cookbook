@@ -1,5 +1,4 @@
 {
   "typeCheckingMode": "basic",
-  "reportAttributeAccessIssue": "none",
   "reportDeprecated": "error"
 }

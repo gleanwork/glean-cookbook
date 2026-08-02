@@ -82,7 +82,11 @@ def answer(question: str, sources: list[dict]) -> str:
         max_tokens=1024,
         messages=[{"role": "user", "content": prompt}],
     )
-    return message.content[0].text
+    # content blocks are a union (text, tool-use, container-upload, ...); only
+    # a text block carries .text, so narrow rather than assume, the same way
+    # the TypeScript variant does.
+    block = message.content[0]
+    return block.text if block.type == "text" else ""
 
 
 def main() -> None:

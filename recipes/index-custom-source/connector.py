@@ -29,6 +29,7 @@ from glean.api_client.models import (
     DatasourceCategory,
     DatasourceGroupDefinition,
     DatasourceUserDefinition,
+    DocCategory,
     DocumentPermissionsDefinition,
     EmployeeInfoDefinition,
     ObjectDefinition,
@@ -109,7 +110,7 @@ class AcmeCorpusConnector(BaseDatasourceConnector[dict]):
             ObjectDefinition(
                 name="document",
                 display_label="Document",
-                doc_category=DatasourceCategory.KNOWLEDGE_HUB,
+                doc_category=DocCategory.KNOWLEDGE_HUB,
             ),
         ],
     )
