@@ -13,7 +13,7 @@ custom tool server can enforce its own authorization — this is what
 "governed" means here, not something Glean's admin UI does for you
 automatically for scratch-built tools.
 
-Governance rule for this recipe: only users in Acme's Engineering
+Governance rule for this recipe: only users in the Engineering
 department may file a payments-service incident ticket. Anyone else gets
 a 403, and the agent (per its instructions — see the recipe doc) falls
 back to a read-only summary instead of a write it isn't allowed to make.
@@ -44,8 +44,8 @@ def file_incident_ticket():
         return jsonify(
             {
                 "error": "Not authorized",
-                "details": f"{user_email} is not in Acme-Engineering; only "
-                "Engineering can file payments-service incident tickets.",
+                "details": f"{user_email} is not in Engineering; only "
+                "Engineering can file incident tickets for this service.",
             }
         ), 403
 

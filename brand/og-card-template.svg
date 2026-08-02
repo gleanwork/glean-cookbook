@@ -3,10 +3,10 @@
   <desc id="og-subtitle">{{SUBTITLE}}</desc>
 
   <rect x="0" y="0" width="1200" height="630" fill="#f7f8fa"></rect>
-  <rect x="0" y="0" width="1200" height="10" fill="#0E8C84"></rect>
+  <rect x="0" y="0" width="1200" height="10" fill="#343ced"></rect>
 
   <g transform="translate(80, 80) scale(0.875)">
-    <rect x="0" y="0" width="64" height="64" rx="18" fill="#0E8C84"></rect>
+    <rect x="0" y="0" width="64" height="64" rx="18" fill="#343ced"></rect>
     <path fill-rule="evenodd" fill="#ffffff" d="M32 13 L55 52 L9 52 Z M32 29 L43 46 L21 46 Z"></path>
   </g>
   <text x="148" y="119" font-family="&#39;Inter&#39;, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, &#39;DM Sans&#39;, system-ui, sans-serif" font-size="28" font-weight="650" fill="#1f2024">Acme Corp</text>

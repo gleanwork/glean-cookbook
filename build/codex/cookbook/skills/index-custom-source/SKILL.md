@@ -1,6 +1,6 @@
 ---
 name: index-custom-source
-description: 'Bring an unsupported source into Glean with the Indexing API — documents, permissions, and people — and see it live in search. This recipe seeds the Acme corpus every other recipe searches.'
+description: 'Bring an unsupported source into Glean with the Indexing API — documents, permissions, and people — and see it live in search. Ships sample fixtures so it runs standalone; point it at your own source to make it real.'
 disable-model-invocation: true
 ---
 
@@ -23,7 +23,7 @@ Build "Index a custom data source" following https://developers.glean.com/cookbo
    ```
 
 4. **Verify**
-   Search "Who owns the payments-service catalog entry?" as yourself and as a restricted test user — the restricted user must not see Acme-HR-only documents.
+   Search "Who owns the payments-service catalog entry?" as yourself and as a restricted test user — the restricted user must not see the HR-restricted fixtures.
 
 ## Setup
 

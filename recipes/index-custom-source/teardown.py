@@ -11,7 +11,7 @@ IMPORTANT — verified against the pinned glean-api-client==0.15.4 (every
 this SDK version has no datasources.delete() call, only per-item deletes for
 documents, permission users/groups/memberships, and employees. This script deletes every document,
 group, permission-user, and employee profile the seed created; the
-"acme_corpus" datasource *registration* itself (name, category, object
+"sample_catalog" datasource *registration* itself (name, category, object
 definitions) is left in place — orphaned but harmless, and ready to be
 re-populated by seed.py on the next run. To fully remove the datasource
 entity, use the Glean admin console; there's no verified API for it here.

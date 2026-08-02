@@ -40,7 +40,7 @@ Build "Multi-step agent with governed tools" following https://developers.glean.
    ```
 
 7. **Verify**
-   Run as a permitted user (Acme-Engineering) and confirm the ticket actually gets filed; run as a non-permitted user and confirm a graceful no-write fallback summary instead of a hard failure.
+   Run as a user in the permitted group and confirm the ticket actually gets filed; run as a non-permitted user and confirm a graceful no-write fallback summary instead of a hard failure.
 
 ## Reference
 

@@ -25,11 +25,11 @@ pinning the lock gives you.
 With a **global/admin** Glean token, impersonate a specific user via `--act-as` to prove retrieval is scoped to _their_ permissions, not the token's:
 
 ```bash
-uv run main.py "What are the engineering compensation bands?" --act-as marcus.webb@acme.example.com
-# -> "I don't have information on that." (Marcus is Acme-Engineering only, not Acme-HR)
+uv run main.py "<a question only one team should be able to answer>" --act-as <user-without-access@yourcompany.com>
+# -> "I don't have information on that." — outside their ACLs, so nothing is retrieved
 
-uv run main.py "What are the engineering compensation bands?" --act-as dana.okafor@acme.example.com
-# -> answers, cited (Dana is in Acme-HR)
+uv run main.py "<a question only one team should be able to answer>" --act-as <user-with-access@yourcompany.com>
+# -> answers, cited — the document is within their ACLs
 ```
 
 This only works with a token that has permission to impersonate — a user-scoped token will search as that user regardless of `--act-as`.

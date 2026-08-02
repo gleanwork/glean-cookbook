@@ -64,7 +64,7 @@ async function searchUntilFound(query, actAs, timeoutMs = 120_000) {
   let results = [];
   while (Date.now() < deadline) {
     results = await search(query, actAs);
-    if (results.some((r) => r.datasource === 'acme_corpus')) return results;
+    if (results.some((r) => r.datasource === 'sample_catalog')) return results;
     await new Promise((resolve) => setTimeout(resolve, 5_000));
   }
   return results;
@@ -75,19 +75,21 @@ export async function run(query, context) {
     query,
     process.env.VERIFY_USER_WITH_ACCESS,
   );
-  const fromConnector = allowed.filter((r) => r.datasource === 'acme_corpus');
+  const fromConnector = allowed.filter(
+    (r) => r.datasource === 'sample_catalog',
+  );
   if (fromConnector.length === 0) {
     return (
-      'no acme_corpus results — the connector-indexed documents are not ' +
+      'no sample_catalog results — the connector-indexed documents are not ' +
       'searchable, so indexing either failed or has not converged'
     );
   }
 
   // Restricted-document check: whatever the permitted user can see from
-  // acme_corpus, a user outside the owning group must not see all of it.
+  // sample_catalog, a user outside the owning group must not see all of it.
   const denied = await search(query, process.env.VERIFY_USER_WITHOUT_ACCESS);
   const deniedUrls = new Set(
-    denied.filter((r) => r.datasource === 'acme_corpus').map((r) => r.url),
+    denied.filter((r) => r.datasource === 'sample_catalog').map((r) => r.url),
   );
   const restricted = fromConnector.filter((r) =>
     /hr|compensation/i.test(r.url),

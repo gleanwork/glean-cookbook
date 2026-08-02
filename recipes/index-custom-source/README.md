@@ -7,7 +7,7 @@ Bring an unsupported source into Glean with the Indexing API — documents, perm
 ```bash
 export GLEAN_INDEXING_API_TOKEN=...
 export GLEAN_SERVER_URL=...
-uv run seed.py       # registers the acme_corpus datasource, indexes documents + identities + employee profiles
+uv run seed.py       # registers the sample_catalog datasource, indexes documents + identities + employee profiles
 uv run teardown.py   # deletes everything seed.py created (see caveat below)
 ```
 
@@ -20,13 +20,13 @@ editing the inline dependencies.
 
 `connector.py` defines two connectors against `glean-indexing-sdk==1.0.0b2`:
 
-- **`AcmeCorpusConnector`** (`BaseDatasourceConnector`) — reads every JSON file in `sample-data/documents/`, transforms each into a `DocumentDefinition` with a `DocumentPermissionsDefinition` built from that document's `permission` block (`allowed_groups` or `allowed_users`), and pushes the permission identities (`sample-data/people/*.json`) needed to evaluate those ACLs.
-- **`AcmeCorpusPeopleConnector`** (`BasePeopleConnector`) — indexes the same cast as searchable employee profiles, a separate Glean capability from document permissions.
+- **`SampleCatalogConnector`** (`BaseDatasourceConnector`) — reads every JSON file in `sample-data/documents/`, transforms each into a `DocumentDefinition` with a `DocumentPermissionsDefinition` built from that document's `permission` block (`allowed_groups` or `allowed_users`), and pushes the permission identities (`sample-data/people/*.json`) needed to evaluate those ACLs.
+- **`SampleCatalogPeopleConnector`** (`BasePeopleConnector`) — indexes the same cast as searchable employee profiles, a separate Glean capability from document permissions.
 
 **Never allow-all.** Every document carries a real permission block — general company docs are `Acme-All-Employees`, a few (compensation bands, HR case notes, one person's onboarding checklist) are restricted, so the permissions story is demonstrable, not just claimed.
 
-**Teardown caveat:** `glean-indexing-sdk==1.0.0b2` has no `datasources.delete()` call — verified against the pinned `glean-api-client==0.15.4` (the only `delete_all` in the package is on chat, not datasources). `teardown.py` deletes every document, group, permission-user, and employee profile the seed created, but the `acme_corpus` datasource _registration_ itself is left in place (orphaned but harmless — `seed.py` re-populates it cleanly on the next run). To fully remove the datasource entity, use the Glean admin console.
+**Teardown caveat:** `glean-indexing-sdk==1.0.0b2` has no `datasources.delete()` call — verified against the pinned `glean-api-client==0.15.4` (the only `delete_all` in the package is on chat, not datasources). `teardown.py` deletes every document, group, permission-user, and employee profile the seed created, but the `sample_catalog` datasource _registration_ itself is left in place (orphaned but harmless — `seed.py` re-populates it cleanly on the next run). To fully remove the datasource entity, use the Glean admin console.
 
 ## Verify
 
-Search "Who's on call for payments-service?" as yourself, then as a user only in `Acme-Engineering` (e.g. Marcus Webb) — they should see it. Search for something in `hr-compensation-bands` as that same restricted user — it should return nothing, since they're not in `Acme-HR`.
+Search "Who owns the payments-service catalog entry?" as yourself, then act as one of the sample users who is only in the Engineering fixture group — they should see it. Search for something in `hr-compensation-bands` as that same user; it should return nothing, since that document is restricted to the HR fixture group.

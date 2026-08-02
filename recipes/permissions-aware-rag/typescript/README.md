@@ -15,11 +15,11 @@ npm start -- "What's our PTO policy?"
 With a **global/admin** Glean token, impersonate a specific user via `--act-as` to prove retrieval is scoped to _their_ permissions, not the token's:
 
 ```bash
-npm start -- "What are the engineering compensation bands?" --act-as marcus.webb@acme.example.com
-# -> "I don't have information on that." (Marcus is Acme-Engineering only, not Acme-HR)
+npm start -- "<a question only one team should be able to answer>" --act-as <user-without-access@yourcompany.com>
+# -> "I don't have information on that." — outside their ACLs, so nothing is retrieved
 
-npm start -- "What are the engineering compensation bands?" --act-as dana.okafor@acme.example.com
-# -> answers, cited (Dana is in Acme-HR)
+npm start -- "<a question only one team should be able to answer>" --act-as <user-with-access@yourcompany.com>
+# -> answers, cited — the document is within their ACLs
 ```
 
 ## What this does

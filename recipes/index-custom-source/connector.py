@@ -7,11 +7,11 @@ recipe (PACT-444); the corpus it indexes is owned by PACT-438 and lives
 beside this script, so the recipe is self-contained: running it needs no
 separate corpus checkout and no other recipe run first.
 
-- AcmeCorpusConnector: a BaseDatasourceConnector that indexes documents/**/*.json
-  into a custom "acme_corpus" datasource, and pushes the permission identities
+- SampleCatalogConnector: a BaseDatasourceConnector that indexes documents/**/*.json
+  into a custom "sample_catalog" datasource, and pushes the permission identities
   (users/groups/memberships from people/*.json) needed to evaluate each
   document's ACLs.
-- AcmeCorpusPeopleConnector: a BasePeopleConnector that indexes people/employees.json
+- SampleCatalogPeopleConnector: a BasePeopleConnector that indexes people/employees.json
   as searchable employee profiles (a separate Glean capability from document
   permissions — this is what makes "who is Priya Natarajan" resolve to a person
   card, independent of any document ACL).
@@ -49,7 +49,7 @@ CORPUS_ROOT = Path(__file__).parent / "sample-data"
 DOCUMENTS_DIR = CORPUS_ROOT / "documents"
 PEOPLE_DIR = CORPUS_ROOT / "people"
 
-DATASOURCE_NAME = "acme_corpus"
+DATASOURCE_NAME = "sample_catalog"
 
 
 def _load_json(path: Path) -> Any:
@@ -89,21 +89,21 @@ def _permissions_from(spec: dict) -> DocumentPermissionsDefinition:
     raise ValueError(f"Document permission spec must have 'groups' or 'users': {spec!r}")
 
 
-class AcmeCorpusDataClient(BaseDataClient[dict]):
+class SampleCatalogDataClient(BaseDataClient[dict]):
     """Reads the seed documents straight off disk."""
 
     def get_source_data(self, **kwargs: Any) -> Sequence[dict]:
         return _load_documents()
 
 
-class AcmeCorpusConnector(BaseDatasourceConnector[dict]):
-    """Indexes sample-data/documents/**/*.json into the 'acme_corpus' datasource."""
+class SampleCatalogConnector(BaseDatasourceConnector[dict]):
+    """Indexes sample-data/documents/**/*.json into the 'sample_catalog' datasource."""
 
     configuration: CustomDatasourceConfig = CustomDatasourceConfig(
         name=DATASOURCE_NAME,
-        display_name="Acme Corpus",
+        display_name="Sample Catalog",
         datasource_category=DatasourceCategory.KNOWLEDGE_HUB,
-        url_regex="https://portal.acme.internal/.*",
+        url_regex="https://portal.example.internal/.*",
         is_entity_datasource=False,
         is_test_datasource=False,
         is_user_referenced_by_email=True,
@@ -154,7 +154,7 @@ class AcmeCorpusConnector(BaseDatasourceConnector[dict]):
         return DatasourceIdentityDefinitions(users=users, groups=groups, memberships=memberships)
 
 
-class AcmeCorpusPeopleConnector(BasePeopleConnector[dict]):
+class SampleCatalogPeopleConnector(BasePeopleConnector[dict]):
     """Indexes people/employees.json as searchable employee profiles.
 
     Note: BasePeopleConnector's docstring says subclasses "must define a

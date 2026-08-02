@@ -24,4 +24,4 @@ The prompt tells the Agent to filter to `messageType === 'CONTENT'` before joini
 
 ## Note on the demo query change
 
-The ticket this recipe shipped from specified "How do I enroll in the commuter benefit?" as the second demo query. The seeded Acme corpus's benefits guide doesn't mention a commuter benefit, so asking that would either produce no citation or (worse, if a model fills the gap) a fabricated answer. Swapped in "When is open enrollment?", which the corpus actually answers.
+The ticket this recipe shipped from specified "How do I enroll in the commuter benefit?" as the second demo query — too specific to assume any given company documents it, which would produce either no citation or (worse, if a model fills the gap) a fabricated answer. Swapped in "When is open enrollment?", which most companies' benefits documentation covers.
