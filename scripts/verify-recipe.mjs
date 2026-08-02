@@ -20,6 +20,12 @@
  * worse than one that fails, because it reports success for an unverified
  * recipe. Missing environment fails before any query runs.
  *
+ * A Client API credential comes from GLEAN_API_TOKEN if set, otherwise from an
+ * OAuth token cached by @gleanwork/mcp-server-tester (see verify-lib/auth.mjs).
+ * Modules keep reading process.env.GLEAN_API_TOKEN; this resolves it for them,
+ * so no module needs to know which path produced it -- the same way a reader
+ * doesn't.
+ *
  * Pass --read-only to refuse any recipe whose verification writes to the
  * instance. Each module declares `sideEffects`:
  *
@@ -34,6 +40,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { loginCommand, resolveCredential } from './verify-lib/auth.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 
@@ -126,6 +133,22 @@ if (queries.length === 0) {
   );
 }
 
+// Resolve a Client API credential before the environment gate below, so a
+// module that lists GLEAN_API_TOKEN is satisfied by an OAuth login just as well
+// as by an exported token.
+if (
+  (mod.requiredEnv ?? []).includes('GLEAN_API_TOKEN') &&
+  !process.env.GLEAN_API_TOKEN
+) {
+  try {
+    const { token, source } = await resolveCredential(recipe);
+    process.env.GLEAN_API_TOKEN = token;
+    console.log(`credential: ${source}`);
+  } catch (error) {
+    fail(error.message);
+  }
+}
+
 // Each module declares the environment its recipe genuinely needs, so the run
 // stops with a list of what to set instead of failing mid-query on an
 // undefined token.
@@ -135,7 +158,11 @@ if (missing.length > 0) {
     `${recipeId} needs environment that isn't set:\n` +
       missing.map((n) => `  ${n}`).join('\n') +
       `\n\nThis gate verifies against a live Glean instance; there is no ` +
-      `offline mode, because a skipped check reads as a pass.`,
+      `offline mode, because a skipped check reads as a pass.` +
+      (missing.includes('GLEAN_INSTANCE')
+        ? ''
+        : `\n\nFor a Client API credential you can also sign in once:\n  ` +
+          `${loginCommand(recipe)}`),
   );
 }
 
