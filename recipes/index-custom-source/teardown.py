@@ -6,10 +6,10 @@
 # ///
 """Tear down everything seed.py created, for a clean re-run.
 
-IMPORTANT — verified against the installed glean-api-client==0.12.20 source
-(grepped every `def delete` across the package): this SDK version has no
-datasources.delete() call, only per-item deletes for documents, permission
-users/groups/memberships, and employees. This script deletes every document,
+IMPORTANT — verified against the pinned glean-api-client==0.15.4 (every
+`def delete*` in the package: the only delete_all is on chat, not datasources):
+this SDK version has no datasources.delete() call, only per-item deletes for
+documents, permission users/groups/memberships, and employees. This script deletes every document,
 group, permission-user, and employee profile the seed created; the
 "acme_corpus" datasource *registration* itself (name, category, object
 definitions) is left in place — orphaned but harmless, and ready to be

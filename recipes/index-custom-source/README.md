@@ -25,7 +25,7 @@ editing the inline dependencies.
 
 **Never allow-all.** Every document carries a real permission block — general company docs are `Acme-All-Employees`, a few (compensation bands, HR case notes, one person's onboarding checklist) are restricted, so the permissions story is demonstrable, not just claimed.
 
-**Teardown caveat:** `glean-indexing-sdk==1.0.0b2` has no `datasources.delete()` call — verified by grepping every `def delete` in the installed `glean-api-client==0.12.20` package. `teardown.py` deletes every document, group, permission-user, and employee profile the seed created, but the `acme_corpus` datasource _registration_ itself is left in place (orphaned but harmless — `seed.py` re-populates it cleanly on the next run). To fully remove the datasource entity, use the Glean admin console.
+**Teardown caveat:** `glean-indexing-sdk==1.0.0b2` has no `datasources.delete()` call — verified against the pinned `glean-api-client==0.15.4` (the only `delete_all` in the package is on chat, not datasources). `teardown.py` deletes every document, group, permission-user, and employee profile the seed created, but the `acme_corpus` datasource _registration_ itself is left in place (orphaned but harmless — `seed.py` re-populates it cleanly on the next run). To fully remove the datasource entity, use the Glean admin console.
 
 ## Verify
 
