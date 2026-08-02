@@ -24,7 +24,17 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 
-const CLIENT_NAME = 'glean-cookbook-verify';
+// Glean's authorization server derives client_id from this: spaces become
+// underscores and the result is truncated to 16 characters, then suffixed with a
+// uuid. That's why a Claude Code login appears as Claude_Code_<uuid>, and why
+// this name is deliberately short -- "Glean Cookbook Recipe Verification"
+// registers as the unhelpful Glean_Cookbook_R_<uuid>, verified against a real
+// registration. Keep any replacement at or under 16 characters so the client
+// stays identifiable in the admin console's OAuth client list.
+//
+// client_name is the only lever: client_uri and software_id are accepted and
+// then dropped, so there's nowhere else to record provenance.
+const CLIENT_NAME = 'Glean Cookbook';
 
 /** Where tokens live. Never inside the repo -- these are real credentials. */
 function stateFile(backend) {
