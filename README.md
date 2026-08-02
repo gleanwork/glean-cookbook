@@ -90,6 +90,26 @@ the case where the _skill_ is what's wrong, not the reference code. A blind rebu
 in either direction. Then run the recipe's demo queries against a real, live Glean instance and
 confirm each one's `expectedBehavior` actually holds — not that the prose still reads correctly.
 
+### The verify gate
+
+`npm run verify:recipe <recipe-id>` is the executable form of a recipe's `## Verify` section. It
+reads the queries from `recipes/<id>/recipe.json`'s `demoQueries` — never restates them — and runs
+each one against a live instance, so adding a query to the registry adds it to verification.
+`expectedBehavior` stays prose for humans; the executable assertion lives in
+`scripts/verify/<id>.mjs`, the only per-recipe part.
+
+It requires real credentials and **fails rather than skipping** when they're absent: a verify run
+that quietly skips reports success for an unverified recipe, which is worse than no gate at all.
+Each module declares the environment it needs, so a run stops with a list of what to set.
+
+Two recipes have no module by design. `buildMethod: 'third-party-build'` means the app is built and
+run by Lovable or Replit, so there is nothing of ours to drive — the driver prints the manual
+checklist (each `demoQuery` with its `expectedBehavior`) for a human to walk instead.
+
+`integrate` recipes ship no code either, so theirs verify the platform behaviour the recipe tells
+readers to build on, not a reader's integration. If those fail, the recipe is pointing people at
+something that doesn't work.
+
 Once you've done that, set `lastVerified` to that date in the recipe's registry entry. Don't wait
 for manual initiative to decide when a recipe is due: `npm run check:freshness` (also runs in CI,
 informational only) reports which recipes have never been verified this way, or haven't been

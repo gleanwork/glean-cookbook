@@ -7,6 +7,7 @@
   "scripts": {
     "build:registry": "node scripts/build-registry.mjs",
     "validate:registry": "node scripts/validate-registry.mjs",
+    "verify:recipe": "node scripts/verify-recipe.mjs",
     "check:freshness": "node scripts/check-recipe-freshness.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

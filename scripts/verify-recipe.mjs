@@ -1,0 +1,150 @@
+#!/usr/bin/env node
+/**
+ * Live verification gate for one recipe.
+ *
+ *   node scripts/verify-recipe.mjs <recipe-id>
+ *
+ * Queries are read from recipes/<id>/recipe.json's `demoQueries` -- never
+ * restated here. That field is the single source of truth for what a recipe
+ * claims to answer, so adding a query to the registry adds it to verification,
+ * and the two can't drift. `expectedBehavior` stays prose for humans; the
+ * executable assertion for each query lives in scripts/verify/<id>.mjs, which
+ * is the only per-recipe part.
+ *
+ * This tooling deliberately lives at repo level rather than inside
+ * recipes/<id>/: a recipe directory is meant to work when copied out on its
+ * own, and a maintainer's verification harness is not part of what a user
+ * copies.
+ *
+ * Credentials are required, not optional -- a verify run that quietly skips is
+ * worse than one that fails, because it reports success for an unverified
+ * recipe. Missing environment fails before any query runs.
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repoRoot = path.resolve(import.meta.dirname, '..');
+
+function fail(message) {
+  console.error(message);
+  process.exit(1);
+}
+
+const recipeId = process.argv[2];
+if (!recipeId) {
+  fail(
+    'Usage: node scripts/verify-recipe.mjs <recipe-id>\n\n' +
+      `Recipes with a verify module: ${listVerifiable().join(', ')}`,
+  );
+}
+
+function listVerifiable() {
+  const dir = path.join(repoRoot, 'scripts', 'verify');
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.mjs'))
+    .map((f) => f.replace(/\.mjs$/, ''))
+    .sort();
+}
+
+const recipeFile = path.join(repoRoot, 'recipes', recipeId, 'recipe.json');
+if (!fs.existsSync(recipeFile)) {
+  fail(`No recipe at recipes/${recipeId}/recipe.json`);
+}
+const recipe = JSON.parse(fs.readFileSync(recipeFile, 'utf8'));
+
+const modulePath = path.join(repoRoot, 'scripts', 'verify', `${recipeId}.mjs`);
+if (!fs.existsSync(modulePath)) {
+  // A third-party-build recipe's app is built and run by Lovable or Replit, so
+  // there is nothing of ours to drive. Say so, rather than implying someone
+  // forgot to write a module.
+  if (recipe.buildMethod === 'third-party-build') {
+    fail(
+      `${recipeId} has buildMethod "third-party-build": the app is built and run ` +
+        `by a third-party tool, so it cannot be verified from here.\n\n` +
+        `Verify it by hand: paste the recipe's prompt into that tool, then run ` +
+        `each demoQuery in the built app and check its expectedBehavior:\n` +
+        (recipe.demoQueries ?? [])
+          .map((q) => `  "${q.query}"\n    expect: ${q.expectedBehavior}`)
+          .join('\n'),
+    );
+  }
+  fail(
+    `No verify module at scripts/verify/${recipeId}.mjs.\n` +
+      `Recipes with one: ${listVerifiable().join(', ') || '(none)'}`,
+  );
+}
+const mod = await import(modulePath);
+
+if (typeof mod.run !== 'function') {
+  fail(`scripts/verify/${recipeId}.mjs must export: run(query, context)`);
+}
+
+const queries = recipe.demoQueries ?? [];
+if (queries.length === 0) {
+  fail(
+    `recipes/${recipeId}/recipe.json has no demoQueries — nothing to verify. ` +
+      `Add them there rather than to this harness.`,
+  );
+}
+
+// Each module declares the environment its recipe genuinely needs, so the run
+// stops with a list of what to set instead of failing mid-query on an
+// undefined token.
+const missing = (mod.requiredEnv ?? []).filter((name) => !process.env[name]);
+if (missing.length > 0) {
+  fail(
+    `${recipeId} needs environment that isn't set:\n` +
+      missing.map((n) => `  ${n}`).join('\n') +
+      `\n\nThis gate verifies against a live Glean instance; there is no ` +
+      `offline mode, because a skipped check reads as a pass.`,
+  );
+}
+
+const context = { recipeId, recipe, repoRoot };
+if (typeof mod.setup === 'function') {
+  try {
+    Object.assign(context, (await mod.setup(context)) ?? {});
+  } catch (error) {
+    fail(`setup failed for ${recipeId}: ${error.message}`);
+  }
+}
+
+let failed = 0;
+try {
+  for (const { query, expectedBehavior } of queries) {
+    try {
+      // A module returns null/undefined on success, or a string explaining
+      // precisely which promised behavior did not hold.
+      const problem = await mod.run(query, context);
+      if (problem) {
+        failed += 1;
+        console.error(`FAIL "${query}"\n      ${problem}`);
+        console.error(`      expected: ${expectedBehavior}`);
+      } else {
+        console.log(`ok   "${query}"`);
+      }
+    } catch (error) {
+      failed += 1;
+      console.error(`FAIL "${query}"\n      threw: ${error.message}`);
+    }
+  }
+} finally {
+  if (typeof mod.teardown === 'function') {
+    try {
+      await mod.teardown(context);
+    } catch (error) {
+      console.error(`(teardown warning: ${error.message})`);
+    }
+  }
+}
+
+if (failed > 0) {
+  console.error(
+    `\n${failed} of ${queries.length} demo queries failed for ${recipeId}.`,
+  );
+  process.exit(1);
+}
+console.log(`\nAll ${queries.length} demo queries passed for ${recipeId}.`);
