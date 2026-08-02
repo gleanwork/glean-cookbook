@@ -3,6 +3,7 @@
 # dependencies = [
 #     "a2a-sdk==0.3.26",
 #     "httpx==0.28.1",
+#     "python-dotenv==1.1.1",
 # ]
 # ///
 """Call a Glean agent from an A2A client: card discovery, message/send,
@@ -34,6 +35,12 @@ import httpx
 from a2a.client import A2ACardResolver, ClientConfig, ClientFactory
 from a2a.client.helpers import create_text_message_object
 from a2a.types import Message, Role, Task
+from dotenv import load_dotenv
+
+# Every recipe README says to `cp .env.example .env`; uv run doesn't read that
+# file and neither did this script, so following the documented setup failed on
+# a missing credential. Loading it here makes the instructions true.
+load_dotenv()
 
 
 def require_env(name: str) -> str:

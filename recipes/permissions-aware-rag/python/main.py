@@ -1,8 +1,9 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#     "glean-api-client==0.15.4",
 #     "anthropic==0.120.0",
+#     "glean-api-client==0.15.4",
+#     "python-dotenv==1.1.1",
 # ]
 # ///
 """Permissions-aware RAG — Glean's data-first Platform API as the retrieval
@@ -33,15 +34,28 @@ import argparse
 import os
 
 from anthropic import Anthropic
+from dotenv import load_dotenv
 from glean.api_client import Glean
+
+# Every recipe README says to `cp .env.example .env`; uv run doesn't read that
+# file and neither did this script, so following the documented setup failed on
+# a missing credential. Loading it here makes the instructions true.
+load_dotenv()
 
 MODEL = "claude-sonnet-5"
 
 
+def require_env(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise SystemExit(f"Missing required environment variable: {name}")
+    return value
+
+
 def retrieve(question: str, act_as: str | None) -> list[dict]:
     glean = Glean(
-        api_token=os.environ["GLEAN_API_TOKEN"],
-        instance=os.environ["GLEAN_INSTANCE"],
+        api_token=require_env("GLEAN_API_TOKEN"),
+        instance=require_env("GLEAN_INSTANCE"),
     )
 
     http_headers = {"X-Glean-Act-As": act_as} if act_as else None
@@ -76,7 +90,7 @@ def answer(question: str, sources: list[dict]) -> str:
         f"Sources:\n{context}\n\nQuestion: {question}"
     )
 
-    client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    client = Anthropic(api_key=require_env("ANTHROPIC_API_KEY"))
     message = client.messages.create(
         model=MODEL,
         max_tokens=1024,

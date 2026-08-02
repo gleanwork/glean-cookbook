@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = [
 #     "glean-api-client==0.15.4",
+#     "python-dotenv==1.1.1",
 # ]
 # ///
 """Invoke the incident-triage agent and demo the governed-tool branch.
@@ -29,8 +30,14 @@ from __future__ import annotations
 
 import os
 
+from dotenv import load_dotenv
 from glean.api_client import Glean
 from glean.api_client.models import ContentType, Message, MessageTextBlock
+
+# Every recipe README says to `cp .env.example .env`; uv run doesn't read that
+# file and neither did this script, so following the documented setup failed on
+# a missing credential. Loading it here makes the instructions true.
+load_dotenv()
 
 
 def requireEnv(name: str) -> str:

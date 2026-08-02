@@ -2,6 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = [
 #     "flask==3.1.3",
+#     "python-dotenv==1.1.1",
 # ]
 # ///
 """A governed custom Tool server for an incident-tracking system.
@@ -21,7 +22,13 @@ summary instead of a write it isn't allowed to make.
 
 import os
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request
+
+# Every recipe README says to `cp .env.example .env`; uv run doesn't read that
+# file and neither did this script, so following the documented setup failed on
+# a missing credential. Loading it here makes the instructions true.
+load_dotenv()
 
 app = Flask(__name__)
 

@@ -52,7 +52,7 @@ paths:
         '401':
           description: Missing user identity
         '403':
-          description: Not authorized (not in Sample-Engineering)
+          description: Not authorized (caller is not on the allow-list)
 components:
   schemas:
     FileIncidentTicketResponse:
