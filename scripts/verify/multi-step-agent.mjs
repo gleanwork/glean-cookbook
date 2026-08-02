@@ -13,6 +13,9 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 const TOOL_PORT = Number(process.env.TOOL_SERVER_PORT ?? 8080);
 
+// Tickets are filed against a local Flask server, never a real system. On the instance it invokes an existing agent, so same caveat as a2a-client.
+export const sideEffects = 'agent-run';
+
 export const requiredEnv = [
   'GLEAN_API_TOKEN',
   'GLEAN_INSTANCE',

@@ -19,6 +19,17 @@
  * Credentials are required, not optional -- a verify run that quietly skips is
  * worse than one that fails, because it reports success for an unverified
  * recipe. Missing environment fails before any query runs.
+ *
+ * Pass --read-only to refuse any recipe whose verification writes to the
+ * instance. Each module declares `sideEffects`:
+ *
+ *   'read-only'       search/chat calls only, saveChat off
+ *   'agent-run'       invokes an existing agent; no content written, but the
+ *                     run is recorded, and the agent had to be created by hand
+ *   'indexes-content' uploads documents (index-custom-source only)
+ *
+ * A module with no declaration is treated as writing, so forgetting to declare
+ * fails closed rather than quietly passing the gate.
  */
 
 import fs from 'node:fs';
@@ -31,10 +42,12 @@ function fail(message) {
   process.exit(1);
 }
 
-const recipeId = process.argv[2];
+const args = process.argv.slice(2);
+const readOnly = args.includes('--read-only');
+const recipeId = args.find((a) => !a.startsWith('--'));
 if (!recipeId) {
   fail(
-    'Usage: node scripts/verify-recipe.mjs <recipe-id>\n\n' +
+    'Usage: node scripts/verify-recipe.mjs <recipe-id> [--read-only]\n\n' +
       `Recipes with a verify module: ${listVerifiable().join(', ')}`,
   );
 }
@@ -80,6 +93,29 @@ const mod = await import(modulePath);
 
 if (typeof mod.run !== 'function') {
   fail(`scripts/verify/${recipeId}.mjs must export: run(query, context)`);
+}
+
+// Default to 'writes' for an undeclared module: a missing declaration is
+// indistinguishable from an unaudited one, and guessing 'read-only' would let
+// exactly the run this flag exists to prevent through.
+const sideEffects = mod.sideEffects ?? 'writes';
+if (readOnly && sideEffects !== 'read-only') {
+  fail(
+    `${recipeId} declares sideEffects "${sideEffects}", so it cannot run under ` +
+      `--read-only.\n\nRecipes verifiable without touching the instance: ` +
+      `${(await listReadOnly()).join(', ')}`,
+  );
+}
+
+async function listReadOnly() {
+  const ids = [];
+  for (const id of listVerifiable()) {
+    const m = await import(
+      path.join(repoRoot, 'scripts', 'verify', `${id}.mjs`)
+    );
+    if (m.sideEffects === 'read-only') ids.push(id);
+  }
+  return ids;
 }
 
 const queries = recipe.demoQueries ?? [];

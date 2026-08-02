@@ -10,6 +10,9 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
+// Invokes an already-published agent three times. No content is written, but each run is recorded as activity, and the agent itself had to be created by hand first.
+export const sideEffects = 'agent-run';
+
 export const requiredEnv = ['GLEAN_A2A_CARD_URL', 'GLEAN_A2A_TOKEN'];
 
 export async function setup(context) {

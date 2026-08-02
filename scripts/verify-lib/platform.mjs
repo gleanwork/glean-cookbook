@@ -18,6 +18,11 @@ export async function chat(query, actAs) {
         ...(actAs ? { 'X-Glean-Act-As': actAs } : {}),
       },
       body: JSON.stringify({
+        // Explicit, not relying on the default: the spec gives saveChat no
+        // default and documents a chat as saved only when it's true, so leaving
+        // it out probably doesn't persist -- but "probably" is not a property
+        // to rest a no-writes guarantee on.
+        saveChat: false,
         messages: [
           {
             author: 'USER',

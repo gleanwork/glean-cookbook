@@ -13,6 +13,9 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
+// Runs seed.py, which uploads the sample fixtures. Safe by construction -- a test datasource, ranking signals off, visible only to GLEAN_BETA_USER_EMAILS -- and teardown.py reverses it, but it is a real write.
+export const sideEffects = 'indexes-content';
+
 export const requiredEnv = [
   'GLEAN_INDEXING_API_TOKEN',
   'GLEAN_SERVER_URL',

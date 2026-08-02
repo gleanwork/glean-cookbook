@@ -16,6 +16,9 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
+// Platform API search plus an LLM call to a third party; nothing is written to Glean.
+export const sideEffects = 'read-only';
+
 export const requiredEnv = [
   'GLEAN_API_TOKEN',
   'GLEAN_INSTANCE',

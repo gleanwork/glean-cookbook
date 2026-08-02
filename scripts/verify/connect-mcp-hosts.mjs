@@ -6,6 +6,9 @@
 // Whether a given host wrote its own config file is checked by the CLI itself;
 // re-asserting it here would just re-implement @gleanwork/configure-mcp-server.
 
+// A company_search tool call over MCP. Deliberately does not run configure-mcp-server, so not even local host config is touched.
+export const sideEffects = 'read-only';
+
 export const requiredEnv = ['GLEAN_API_TOKEN', 'GLEAN_INSTANCE'];
 
 function endpoint() {

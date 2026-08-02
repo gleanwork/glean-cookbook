@@ -11,6 +11,9 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
+// Chat and search calls only; saveChat is off, so no chat history is kept.
+export const sideEffects = 'read-only';
+
 export const requiredEnv = ['GLEAN_API_TOKEN', 'GLEAN_INSTANCE'];
 
 export async function setup(context) {

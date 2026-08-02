@@ -3,6 +3,9 @@
 // for why that's the honest scope here.
 import { assertCitedAnswer } from '../verify-lib/platform.mjs';
 
+// One chat call per query, saveChat off.
+export const sideEffects = 'read-only';
+
 export const requiredEnv = ['GLEAN_API_TOKEN', 'GLEAN_INSTANCE'];
 
 export async function run(query) {
