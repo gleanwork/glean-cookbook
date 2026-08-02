@@ -26,6 +26,6 @@ telling me you're done, give me the queries below to test myself in the running 
 what a correct result looks like:
 
 - **Query:** "Where do I reset my SSO password?"
-  **Expected:** Answer cites the SSO password reset guide.
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
 - **Query:** "How do I request a new laptop?"
-  **Expected:** Answer cites the IT helpdesk FAQ (loaner laptops, same-day, from the IT desk).
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

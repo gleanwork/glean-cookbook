@@ -37,5 +37,5 @@ Per-agent A2A endpoints: /rest/api/v1/a2a/agents/{agentId} (JSON-RPC) and .../ag
 
 {{> verify-gate}}
 
-- **Query:** "Who owns the payments service?"
-  **Expected:** Returns a non-empty answer naming a real owner from the seeded Acme corpus, delivered via the A2A message/send response (a Message or Task, not an error) — and the scripted follow-up turn carries the same context_id, proving multi-turn works.
+- **Query:** "Who owns our most critical service?"
+  **Expected:** The agent returns a non-empty answer via the A2A message/send response (a Message or Task, not an error), and the scripted follow-up carries the same context_id, proving multi-turn works.

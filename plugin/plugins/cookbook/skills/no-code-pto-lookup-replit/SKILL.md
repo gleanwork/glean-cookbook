@@ -24,6 +24,6 @@ This recipe's deliverable is a prompt template, not a runnable project — "buil
 {{> verify-gate-third-party}}
 
 - **Query:** "What is our PTO policy?"
-  **Expected:** Answer cites the PTO policy document.
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
 - **Query:** "When is open enrollment?"
-  **Expected:** Answer cites the benefits guide and states open enrollment runs in November.
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

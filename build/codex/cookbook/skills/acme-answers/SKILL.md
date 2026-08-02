@@ -192,6 +192,6 @@ that runs without errors but fails one of these checks is not done — fix it an
 reporting success.
 
 - **Query:** "What's our PTO policy?"
-  **Expected:** Answer cites the PTO policy document (title + url), with a non-empty, deduped citations list — no leaked step-narration text prepended to the answer.
-- **Query:** "Who owns the payments-service catalog entry?"
-  **Expected:** Answer names the real owner from the seeded payments-service catalog entry and cites that document.
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+- **Query:** "How do I request time off?"
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

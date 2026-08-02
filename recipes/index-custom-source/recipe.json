@@ -24,11 +24,11 @@
   "demoQueries": [
     {
       "query": "Who owns the payments-service catalog entry?",
-      "expectedBehavior": "After indexing, Glean search/chat surfaces the custom-connector-indexed catalog document as a citation, naming the real owner \u2014 proving the connector's documents (not just seeded native ones) are searchable and permissions-scoped."
+      "expectedBehavior": "After indexing, search surfaces the connector-indexed catalog document as a citation. This query targets the recipe's own sample-data, which is the one corpus you do control."
     },
     {
       "query": "What's the on-call runbook for checkout-service?",
-      "expectedBehavior": "Glean search/chat surfaces the custom-connector-indexed checkout-service runbook document as a citation."
+      "expectedBehavior": "Search surfaces the connector-indexed checkout-service runbook, proving the connector's own documents (not just natively indexed ones) are searchable and permission-scoped."
     }
   ],
   "codeAssets": [

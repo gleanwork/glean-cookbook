@@ -27,16 +27,16 @@
   ],
   "demoQueries": [
     {
-      "query": "Who's on call for payments-service?",
-      "expectedBehavior": "Answer names the current on-call owner from the indexed developer catalog, with a citation to that catalog entry."
+      "query": "Who's on call this week?",
+      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
     },
     {
-      "query": "What's the deploy and rollback process for payments-service?",
-      "expectedBehavior": "Answer describes the real deploy/rollback steps from the indexed runbook, with a citation \u2014 not a generic, made-up process."
+      "query": "How do I deploy a service?",
+      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
     },
     {
-      "query": "Summarize PAY-2114",
-      "expectedBehavior": "Answer summarizes the real indexed PAY-2114 incident ticket content, with a citation to it \u2014 not a fabricated summary."
+      "query": "What's our incident response process?",
+      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
     }
   ],
   "scaffoldActions": ["scaffold-connector", "scaffold-web-sdk-embed"],

@@ -33,7 +33,7 @@ Glean MCP server URL: https://{instance}-be.glean.com/mcp/{server-name} (default
 
 {{> verify-gate}}
 
-- **Query:** "Who's on call for payments-service?"
-  **Expected:** The MCP host's chat surfaces a cited answer naming the current on-call owner, same shape as the Chat API path — MCP is a transport, not a different answer.
-- **Query:** "Summarize PAY-2114"
-  **Expected:** The MCP host's chat returns a cited summary of the real PAY-2114 incident, not a fabricated one.
+- **Query:** "What does our team own?"
+  **Expected:** The MCP host's chat returns an answer grounded in your Glean content, with citations, proving the server is connected and authenticated.
+- **Query:** "Summarize our most recent incident review"
+  **Expected:** The host returns a cited summary grounded in your own content — not a fabricated one. If it answers without citations, the MCP server is not actually being consulted.

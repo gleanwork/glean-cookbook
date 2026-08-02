@@ -23,11 +23,11 @@
   "demoQueries": [
     {
       "query": "What is our PTO policy?",
-      "expectedBehavior": "Answer cites the PTO policy document."
+      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
     },
     {
       "query": "When is open enrollment?",
-      "expectedBehavior": "Answer cites the benefits guide and states open enrollment runs in November."
+      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
     }
   ],
   "codeAssets": [

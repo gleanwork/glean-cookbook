@@ -4,9 +4,11 @@
 // must be answerable for a user with access and unanswerable for one without,
 // via a single admin token and X-Glean-Act-As.
 //
-// Which query is the restricted one is derived from the recipe's own
-// demoQueries, not hardcoded here: it's whichever query's expectedBehavior
-// describes access-dependent results.
+// Which query is the restricted one comes from the recipe's own data:
+// demoQueries[].permissionDifferentiated. That used to be sniffed out of
+// expectedBehavior prose, which misfired the moment a *public* document's
+// behavior mentioned permissions ("so permissions don't restrict it") and the
+// check then demanded a refusal for something everyone can read.
 
 import { execFile } from 'node:child_process';
 import path from 'node:path';
@@ -48,9 +50,9 @@ async function ask(context, query, actAs) {
 }
 
 function isPermissionDifferentiated(recipe, query) {
-  const entry = recipe.demoQueries.find((q) => q.query === query);
-  return /without that access|no citation|permission/i.test(
-    entry?.expectedBehavior ?? '',
+  return (
+    recipe.demoQueries.find((q) => q.query === query)
+      ?.permissionDifferentiated === true
   );
 }
 

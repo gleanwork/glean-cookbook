@@ -26,6 +26,6 @@ telling me you're done, give me the queries below to test myself in the running 
 what a correct result looks like:
 
 - **Query:** "What is our PTO policy?"
-  **Expected:** Answer cites the PTO policy document.
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
 - **Query:** "When is open enrollment?"
-  **Expected:** Answer cites the benefits guide and states open enrollment runs in November.
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

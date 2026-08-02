@@ -85,6 +85,6 @@ Ask me which language to build in before starting: Python, TypeScript.
 {{> verify-gate}}
 
 - **Query:** "What's our PTO policy?"
-  **Expected:** Any user gets a cited answer — this doc is broadly readable, so permissions don't restrict it.
-- **Query:** "What are the engineering compensation bands?"
-  **Expected:** A user with access to the compensation-bands doc gets a cited answer; a user without that access gets no citation for it and the LLM must not fabricate an answer from the missing context. search.query has to respect the caller's real Glean permissions for both cases — that's the actual thing this recipe verifies.
+  **Expected:** Any user gets a cited answer — a broadly readable document, so permissions don't restrict it.
+- **Query:** "Ask something only one team should see (compensation, an HR investigation, a security review)"
+  **Expected:** A user with access gets a cited answer; a user without it gets no citation for that document and the model must not fabricate an answer from the missing context. search.query has to respect the caller's real permissions in both cases — that's the actual thing this verifies.

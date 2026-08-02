@@ -40,5 +40,5 @@ with real credentials) and confirmed every query below produces its expected beh
 that runs without errors but fails one of these checks is not done — fix it and re-run before
 reporting success.
 
-- **Query:** "Who owns the payments service?"
-  **Expected:** Returns a non-empty answer naming a real owner from the seeded Acme corpus, delivered via the A2A message/send response (a Message or Task, not an error) — and the scripted follow-up turn carries the same context_id, proving multi-turn works.
+- **Query:** "Who owns our most critical service?"
+  **Expected:** The agent returns a non-empty answer via the A2A message/send response (a Message or Task, not an error), and the scripted follow-up carries the same context_id, proving multi-turn works.

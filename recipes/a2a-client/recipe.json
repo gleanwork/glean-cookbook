@@ -24,8 +24,8 @@
   ],
   "demoQueries": [
     {
-      "query": "Who owns the payments service?",
-      "expectedBehavior": "Returns a non-empty answer naming a real owner from the seeded Acme corpus, delivered via the A2A message/send response (a Message or Task, not an error) \u2014 and the scripted follow-up turn carries the same context_id, proving multi-turn works."
+      "query": "Who owns our most critical service?",
+      "expectedBehavior": "The agent returns a non-empty answer via the A2A message/send response (a Message or Task, not an error), and the scripted follow-up carries the same context_id, proving multi-turn works."
     }
   ],
   "codeAssets": [

@@ -49,6 +49,6 @@ that runs without errors but fails one of these checks is not done — fix it an
 reporting success.
 
 - **Query:** "Who owns the payments-service catalog entry?"
-  **Expected:** After indexing, Glean search/chat surfaces the custom-connector-indexed catalog document as a citation, naming the real owner — proving the connector's documents (not just seeded native ones) are searchable and permissions-scoped.
+  **Expected:** After indexing, search surfaces the connector-indexed catalog document as a citation. This query targets the recipe's own sample-data, which is the one corpus you do control.
 - **Query:** "What's the on-call runbook for checkout-service?"
-  **Expected:** Glean search/chat surfaces the custom-connector-indexed checkout-service runbook document as a citation.
+  **Expected:** Search surfaces the connector-indexed checkout-service runbook, proving the connector's own documents (not just natively indexed ones) are searchable and permission-scoped.

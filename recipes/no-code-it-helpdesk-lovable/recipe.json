@@ -23,11 +23,11 @@
   "demoQueries": [
     {
       "query": "Where do I reset my SSO password?",
-      "expectedBehavior": "Answer cites the SSO password reset guide."
+      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
     },
     {
       "query": "How do I request a new laptop?",
-      "expectedBehavior": "Answer cites the IT helpdesk FAQ (loaner laptops, same-day, from the IT desk)."
+      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
     }
   ],
   "codeAssets": [

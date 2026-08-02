@@ -24,8 +24,8 @@
   ],
   "demoQueries": [
     {
-      "query": "Summarize open payments incidents and file a tracking ticket",
-      "expectedBehavior": "Run as an Acme-Engineering user (e.g. marcus.webb@acme.example.com): the agent summarizes open incidents and the governed tool call succeeds (200, a real ticket ID comes back). Run as a non-Engineering user (e.g. dana.okafor@acme.example.com): the tool server returns 403 and the agent falls back to a read-only summary instead of failing the whole run \u2014 the governance check must actually run, not be assumed."
+      "query": "Summarize our open incidents and file a tracking ticket",
+      "expectedBehavior": "Run as a user in the permitted group: the agent summarizes and the governed tool call succeeds (200, a real ticket id). Run as a user outside it: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The governance check must actually fire, not be assumed."
     }
   ],
   "codeAssets": [

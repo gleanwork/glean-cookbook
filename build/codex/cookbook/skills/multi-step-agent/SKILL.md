@@ -103,5 +103,5 @@ with real credentials) and confirmed every query below produces its expected beh
 that runs without errors but fails one of these checks is not done — fix it and re-run before
 reporting success.
 
-- **Query:** "Summarize open payments incidents and file a tracking ticket"
-  **Expected:** Run as an Acme-Engineering user (e.g. marcus.webb@acme.example.com): the agent summarizes open incidents and the governed tool call succeeds (200, a real ticket ID comes back). Run as a non-Engineering user (e.g. dana.okafor@acme.example.com): the tool server returns 403 and the agent falls back to a read-only summary instead of failing the whole run — the governance check must actually run, not be assumed.
+- **Query:** "Summarize our open incidents and file a tracking ticket"
+  **Expected:** Run as a user in the permitted group: the agent summarizes and the governed tool call succeeds (200, a real ticket id). Run as a user outside it: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The governance check must actually fire, not be assumed.

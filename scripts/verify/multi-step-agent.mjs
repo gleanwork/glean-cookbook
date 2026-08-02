@@ -69,7 +69,7 @@ async function fileTicket(actAs) {
         'Glean-User-Email': actAs,
       },
       body: JSON.stringify({
-        summary: 'verify: open payments incidents',
+        summary: 'verify: open incidents',
         description: 'filed by scripts/verify-recipe.mjs',
       }),
     },

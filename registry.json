@@ -22,8 +22,8 @@
     ],
     "demoQueries": [
       {
-        "query": "Who owns the payments service?",
-        "expectedBehavior": "Returns a non-empty answer naming a real owner from the seeded Acme corpus, delivered via the A2A message/send response (a Message or Task, not an error) — and the scripted follow-up turn carries the same context_id, proving multi-turn works."
+        "query": "Who owns our most critical service?",
+        "expectedBehavior": "The agent returns a non-empty answer via the A2A message/send response (a Message or Task, not an error), and the scripted follow-up carries the same context_id, proving multi-turn works."
       }
     ],
     "codeAssets": [
@@ -85,11 +85,11 @@
     "demoQueries": [
       {
         "query": "What's our PTO policy?",
-        "expectedBehavior": "Answer cites the PTO policy document (title + url), with a non-empty, deduped citations list — no leaked step-narration text prepended to the answer."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
-        "query": "Who owns the payments-service catalog entry?",
-        "expectedBehavior": "Answer names the real owner from the seeded payments-service catalog entry and cites that document."
+        "query": "How do I request time off?",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       }
     ],
     "codeAssets": [
@@ -210,16 +210,16 @@
     ],
     "demoQueries": [
       {
-        "query": "Who's on call for payments-service?",
-        "expectedBehavior": "Answer names the current on-call owner from the indexed developer catalog, with a citation to that catalog entry."
+        "query": "Who's on call this week?",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
-        "query": "What's the deploy and rollback process for payments-service?",
-        "expectedBehavior": "Answer describes the real deploy/rollback steps from the indexed runbook, with a citation — not a generic, made-up process."
+        "query": "How do I deploy a service?",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
-        "query": "Summarize PAY-2114",
-        "expectedBehavior": "Answer summarizes the real indexed PAY-2114 incident ticket content, with a citation to it — not a fabricated summary."
+        "query": "What's our incident response process?",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       }
     ],
     "scaffoldActions": ["scaffold-connector", "scaffold-web-sdk-embed"],
@@ -293,12 +293,12 @@
     ],
     "demoQueries": [
       {
-        "query": "Who's on call for payments-service?",
-        "expectedBehavior": "The MCP host's chat surfaces a cited answer naming the current on-call owner, same shape as the Chat API path — MCP is a transport, not a different answer."
+        "query": "What does our team own?",
+        "expectedBehavior": "The MCP host's chat returns an answer grounded in your Glean content, with citations, proving the server is connected and authenticated."
       },
       {
-        "query": "Summarize PAY-2114",
-        "expectedBehavior": "The MCP host's chat returns a cited summary of the real PAY-2114 incident, not a fabricated one."
+        "query": "Summarize our most recent incident review",
+        "expectedBehavior": "The host returns a cited summary grounded in your own content — not a fabricated one. If it answers without citations, the MCP server is not actually being consulted."
       }
     ],
     "codeAssets": [],
@@ -357,15 +357,15 @@
     "demoQueries": [
       {
         "query": "What's our PTO policy?",
-        "expectedBehavior": "Embedded chat cites the PTO policy document, with a non-empty, deduped citations list — same answer shape as the standalone acme-answers recipe, since it's the same underlying Chat surface."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
-        "query": "Who owns the payments-service catalog entry?",
-        "expectedBehavior": "Embedded chat names the real owner from the seeded payments-service catalog entry and cites it."
+        "query": "Who should I ask about billing?",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
-        "query": "Summarize PAY-2114",
-        "expectedBehavior": "Embedded chat returns a cited summary of the real PAY-2114 incident, not a fabricated one."
+        "query": "Summarize our latest product update",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       }
     ],
     "scaffoldActions": ["scaffold-web-sdk-embed"],
@@ -422,11 +422,11 @@
     "demoQueries": [
       {
         "query": "Who owns the payments-service catalog entry?",
-        "expectedBehavior": "After indexing, Glean search/chat surfaces the custom-connector-indexed catalog document as a citation, naming the real owner — proving the connector's documents (not just seeded native ones) are searchable and permissions-scoped."
+        "expectedBehavior": "After indexing, search surfaces the connector-indexed catalog document as a citation. This query targets the recipe's own sample-data, which is the one corpus you do control."
       },
       {
         "query": "What's the on-call runbook for checkout-service?",
-        "expectedBehavior": "Glean search/chat surfaces the custom-connector-indexed checkout-service runbook document as a citation."
+        "expectedBehavior": "Search surfaces the connector-indexed checkout-service runbook, proving the connector's own documents (not just natively indexed ones) are searchable and permission-scoped."
       }
     ],
     "codeAssets": [
@@ -502,8 +502,8 @@
     ],
     "demoQueries": [
       {
-        "query": "Summarize open payments incidents and file a tracking ticket",
-        "expectedBehavior": "Run as an Acme-Engineering user (e.g. marcus.webb@acme.example.com): the agent summarizes open incidents and the governed tool call succeeds (200, a real ticket ID comes back). Run as a non-Engineering user (e.g. dana.okafor@acme.example.com): the tool server returns 403 and the agent falls back to a read-only summary instead of failing the whole run — the governance check must actually run, not be assumed."
+        "query": "Summarize our open incidents and file a tracking ticket",
+        "expectedBehavior": "Run as a user in the permitted group: the agent summarizes and the governed tool call succeeds (200, a real ticket id). Run as a user outside it: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The governance check must actually fire, not be assumed."
       }
     ],
     "codeAssets": [
@@ -598,11 +598,11 @@
     "demoQueries": [
       {
         "query": "Where do I reset my SSO password?",
-        "expectedBehavior": "Answer cites the SSO password reset guide."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
         "query": "How do I request a new laptop?",
-        "expectedBehavior": "Answer cites the IT helpdesk FAQ (loaner laptops, same-day, from the IT desk)."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       }
     ],
     "codeAssets": [
@@ -641,11 +641,11 @@
     "demoQueries": [
       {
         "query": "What is our PTO policy?",
-        "expectedBehavior": "Answer cites the PTO policy document."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
         "query": "When is open enrollment?",
-        "expectedBehavior": "Answer cites the benefits guide and states open enrollment runs in November."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       }
     ],
     "codeAssets": [
@@ -687,11 +687,12 @@
     "demoQueries": [
       {
         "query": "What's our PTO policy?",
-        "expectedBehavior": "Any user gets a cited answer — this doc is broadly readable, so permissions don't restrict it."
+        "expectedBehavior": "Any user gets a cited answer — a broadly readable document, so permissions don't restrict it."
       },
       {
-        "query": "What are the engineering compensation bands?",
-        "expectedBehavior": "A user with access to the compensation-bands doc gets a cited answer; a user without that access gets no citation for it and the LLM must not fabricate an answer from the missing context. search.query has to respect the caller's real Glean permissions for both cases — that's the actual thing this recipe verifies."
+        "query": "Ask something only one team should see (compensation, an HR investigation, a security review)",
+        "expectedBehavior": "A user with access gets a cited answer; a user without it gets no citation for that document and the model must not fabricate an answer from the missing context. search.query has to respect the caller's real permissions in both cases — that's the actual thing this verifies.",
+        "permissionDifferentiated": true
       }
     ],
     "codeAssets": [

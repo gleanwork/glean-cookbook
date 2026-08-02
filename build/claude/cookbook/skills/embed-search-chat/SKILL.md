@@ -160,8 +160,8 @@ that runs without errors but fails one of these checks is not done — fix it an
 reporting success.
 
 - **Query:** "What's our PTO policy?"
-  **Expected:** Embedded chat cites the PTO policy document, with a non-empty, deduped citations list — same answer shape as the standalone acme-answers recipe, since it's the same underlying Chat surface.
-- **Query:** "Who owns the payments-service catalog entry?"
-  **Expected:** Embedded chat names the real owner from the seeded payments-service catalog entry and cites it.
-- **Query:** "Summarize PAY-2114"
-  **Expected:** Embedded chat returns a cited summary of the real PAY-2114 incident, not a fabricated one.
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+- **Query:** "Who should I ask about billing?"
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+- **Query:** "Summarize our latest product update"
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

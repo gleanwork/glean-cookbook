@@ -1,7 +1,7 @@
-// This recipe is the corpus every other recipe's demo queries resolve against,
-// so verifying it is a precondition for verifying anything else. Two claims to
-// prove: the connector's own documents become searchable (not just the natively
-// seeded ones), and per-document permissions actually bite.
+// The one recipe with content we control: it indexes its own sample-data, so its
+// demo queries can name specific documents where every other recipe's must work
+// against whatever the reader already has. Two claims to prove: the connector's
+// own documents become searchable, and per-document permissions actually bite.
 //
 // Search runs through the Platform API rather than the recipe's own code
 // because the recipe writes; reading back via a separate path is what shows the

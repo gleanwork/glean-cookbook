@@ -21,12 +21,12 @@
   ],
   "demoQueries": [
     {
-      "query": "Who's on call for payments-service?",
-      "expectedBehavior": "The MCP host's chat surfaces a cited answer naming the current on-call owner, same shape as the Chat API path \u2014 MCP is a transport, not a different answer."
+      "query": "What does our team own?",
+      "expectedBehavior": "The MCP host's chat returns an answer grounded in your Glean content, with citations, proving the server is connected and authenticated."
     },
     {
-      "query": "Summarize PAY-2114",
-      "expectedBehavior": "The MCP host's chat returns a cited summary of the real PAY-2114 incident, not a fabricated one."
+      "query": "Summarize our most recent incident review",
+      "expectedBehavior": "The host returns a cited summary grounded in your own content \u2014 not a fabricated one. If it answers without citations, the MCP server is not actually being consulted."
     }
   ],
   "codeAssets": [],

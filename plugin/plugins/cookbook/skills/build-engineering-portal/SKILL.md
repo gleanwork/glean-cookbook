@@ -64,9 +64,9 @@ Ask me which language to build in before starting: Python, TypeScript.
 
 {{> verify-gate}}
 
-- **Query:** "Who's on call for payments-service?"
-  **Expected:** Answer names the current on-call owner from the indexed developer catalog, with a citation to that catalog entry.
-- **Query:** "What's the deploy and rollback process for payments-service?"
-  **Expected:** Answer describes the real deploy/rollback steps from the indexed runbook, with a citation — not a generic, made-up process.
-- **Query:** "Summarize PAY-2114"
-  **Expected:** Answer summarizes the real indexed PAY-2114 incident ticket content, with a citation to it — not a fabricated summary.
+- **Query:** "Who's on call this week?"
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+- **Query:** "How do I deploy a service?"
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+- **Query:** "What's our incident response process?"
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

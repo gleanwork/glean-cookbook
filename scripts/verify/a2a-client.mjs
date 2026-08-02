@@ -34,8 +34,8 @@ export async function run(query, context) {
   if (!turn1) {
     return 'turn 1 produced no answer — message/send returned nothing usable';
   }
-  // The recipe's demo query asks who owns the payments service; a real answer
-  // names someone rather than refusing.
+  // The demo query asks about ownership in the reader's own content, so a real
+  // answer says something rather than refusing.
   if (/don't (have|know)|no information|unable/i.test(turn1)) {
     return `turn 1 refused instead of answering: ${turn1.slice(0, 160)}`;
   }
