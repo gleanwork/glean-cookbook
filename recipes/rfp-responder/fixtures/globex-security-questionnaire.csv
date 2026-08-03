@@ -1,0 +1,21 @@
+row_id,tab,question_id,question,expected_grounding,dedup_of,notes
+1,Security,SEC-01,Do you hold a current SOC 2 Type II attestation?,strong,,"sales-globex-security-questionnaire: provided, renewed annually"
+2,Security,SEC-02,Is customer data encrypted at rest?,strong,,sales-globex-security-questionnaire: AES-256
+3,Security,SEC-03,Is customer data encrypted in transit?,strong,,sales-globex-security-questionnaire: TLS 1.2+
+4,Security,SEC-04,Where is customer data stored? Confirm data residency.,strong,,sales-globex-security-questionnaire: US-only
+5,Security,SEC-05,Do you support SSO via SAML 2.0?,strong,,sales-globex-security-questionnaire: SSO/SAML supported
+6,Security,SEC-06,What is your breach notification SLA to customers?,strong,,sales-globex-security-questionnaire: 24-hour SLA for confirmed breaches
+7,Security,SEC-07,Do you maintain a documented incident response process?,strong,,sales-globex-security-questionnaire + eng-incident-response-runbook
+8,Security,SEC-08,"Describe your at-rest encryption, including key length.",strong,2,near-duplicate of SEC-02 with different wording
+9,Security,SEC-09,Do you have a SOC 2 Type II report available under NDA?,strong,1,near-duplicate of SEC-01
+10,Access,ACC-01,Do you support SSO via SAML 2.0?,strong,5,exact duplicate of SEC-05 on a second tab
+11,Access,ACC-02,Do you enforce multi-factor authentication for administrative access?,weak,,support-sso-password-reset is internal IT guidance and only topically adjacent
+12,Access,ACC-03,Describe your self-service credential reset flow.,weak,,support-sso-password-reset is internal-facing not a customer-facing control statement
+13,Access,ACC-04,Do you support customer-managed encryption keys (BYOK/CMEK)?,none,,unanswerable on purpose -> needs SME
+14,Access,ACC-05,Do you support SCIM user provisioning?,none,,unanswerable on purpose -> needs SME
+15,Compliance,CMP-01,Are you certified to ISO/IEC 27001?,none,,unanswerable on purpose -> needs SME
+16,Compliance,CMP-02,Do you maintain a published list of subprocessors?,none,,gap: add a subprocessor list doc to strengthen the strong-grounding set
+17,Compliance,CMP-03,What is your data retention and deletion policy?,none,,gap: add a retention/deletion policy doc
+18,Compliance,CMP-04,Do you conduct independent penetration testing at least annually?,none,,gap: add a pen-test / vuln-management summary
+19,Resilience,RES-01,What are your documented RTO and RPO for disaster recovery?,none,,unanswerable on purpose -> needs SME
+20,Resilience,RES-02,Attach your most recent external vulnerability scan report.,none,,"edge case: an evidence request, not a question -> must route to SME, never draft prose"
