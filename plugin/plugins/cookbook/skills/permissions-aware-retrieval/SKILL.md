@@ -1,10 +1,10 @@
 ---
-name: permissions-aware-rag
-description: "Use Glean's Platform API as the retrieval layer for your own LLM app — every chunk ACL-filtered per user before it ever reaches the model."
+name: permissions-aware-retrieval
+description: "Use Glean's Platform API as the retrieval layer for your own LLM app — every result ACL-filtered for the caller before it ever reaches the model."
 disable-model-invocation: true
 ---
 
-Build "Permissions-aware RAG" following https://developers.glean.com/cookbook/permissions-aware-rag
+Build "Ground your own LLM app in Glean" following https://developers.glean.com/cookbook/permissions-aware-retrieval
 
 1. **Pick a language**
    Both variants implement the same flow — pick whichever fits your app's stack.
@@ -16,7 +16,7 @@ Platform API search.query → snippets → LLM with citations
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/python permissions-aware-rag
+   npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval
    ```
 
 2. **Set credentials**
@@ -30,7 +30,7 @@ Platform API search.query → snippets → LLM with citations
    Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run — there's no requirements.txt, venv, or activate step.
 
    ```bash
-   cd permissions-aware-rag && uv run main.py "What's our PTO policy?"
+   cd permissions-aware-retrieval && uv run main.py "What's our PTO policy?"
    ```
 
 4. **Verify**
@@ -43,13 +43,13 @@ Same flow in TypeScript
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/typescript permissions-aware-rag
+   npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval
    ```
 
 2. **Install dependencies**
 
    ```bash
-   cd permissions-aware-rag && npm install
+   cd permissions-aware-retrieval && npm install
    ```
 
 3. **Set credentials**

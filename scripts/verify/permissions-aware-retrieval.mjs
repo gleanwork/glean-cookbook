@@ -31,7 +31,7 @@ const REFUSAL =
 async function ask(context, query) {
   const cwd = path.join(
     context.repoRoot,
-    'recipes/permissions-aware-rag/python',
+    'recipes/permissions-aware-retrieval/python',
   );
   const { stdout } = await execFileAsync(
     'uv',
@@ -71,7 +71,7 @@ function isPermissionDifferentiated(recipe, query) {
 async function assertRefusesWithoutSources(context) {
   const cwd = path.join(
     context.repoRoot,
-    'recipes/permissions-aware-rag/python',
+    'recipes/permissions-aware-retrieval/python',
   );
   // Use the interpreter uv already provisioned for the script, so the inline
   // PEP 723 dependencies are importable. `uv run python -c` gets a bare

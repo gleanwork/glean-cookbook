@@ -17,7 +17,7 @@ schemas/            recipe.schema.json, generated from developers.glean.com
 
 Each `recipes/{id}/` directory is a **self-contained, runnable example** — it should work if someone clones just that directory (plus repo-root env var docs) into a fresh project. Conventions:
 
-- **Language subdirectories** where a recipe ships more than one client (e.g. `recipes/permissions-aware-rag/python/`, `recipes/permissions-aware-rag/typescript/`).
+- **Language subdirectories** where a recipe ships more than one client (e.g. `recipes/permissions-aware-retrieval/python/`, `recipes/permissions-aware-retrieval/typescript/`).
 - **A `README.md` per recipe** — the quickstart for someone browsing GitHub directly. Prose lives on the dev site page instead (see below); recipes with no standalone runnable code (e.g. `build-engineering-portal/`, `embed-search-chat/`) still get a directory with a short README explaining why.
 - **No hardcoded credentials, ever.** All recipes read `GLEAN_INSTANCE` and `GLEAN_API_TOKEN` (or the recipe-specific scoped token) from the environment. Include a `.env.example` if the recipe needs more than those two.
 - **Pinned dependencies.** Glean SDKs (`glean-api-client`, `@gleanwork/api-client`, `@gleanwork/web-sdk`, `glean-indexing-sdk`) are pinned to an exact released version — no `^`, `~`, or `latest`. CI (`pinned-deps`) fails a recipe that isn't: `scripts/check-pinned-deps.mjs` covers `package.json`/`requirements.txt`, and `scripts/check_pinned_deps.py` covers Python recipes that declare dependencies inline, reading the specifiers uv parsed into each `<script>.py.lock` rather than re-implementing PEP 723 in JavaScript.

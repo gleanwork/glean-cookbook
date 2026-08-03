@@ -1,4 +1,4 @@
-# permissions-aware-rag / typescript
+# permissions-aware-retrieval / typescript
 
 Same flow as [`../python/`](../python/): Glean Search as the retrieval layer for your own LLM app, every result already ACL-filtered per user. No vector DB, no ACL mirroring, no re-sync.
 

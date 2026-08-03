@@ -1,4 +1,4 @@
-# permissions-aware-rag / python
+# permissions-aware-retrieval / python
 
 Use Glean Search as the retrieval layer for your own LLM app — every result is already ACL-filtered per user before it ever reaches the model. No vector DB, no ACL mirroring, no re-sync: Glean is the governed retrieval layer.
 

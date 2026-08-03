@@ -1,4 +1,4 @@
-# permissions-aware-rag
+# permissions-aware-retrieval
 
 Use Glean's Platform API (the data-first retrieval surface, not the older Client API) as the retrieval layer for your own LLM app — every result is ACL-filtered per user before it ever reaches the model. The enterprise differentiator: no vector DB, no ACL mirroring, no re-sync.
 

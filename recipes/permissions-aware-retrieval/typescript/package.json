@@ -1,8 +1,8 @@
 {
-  "name": "permissions-aware-rag-typescript",
+  "name": "permissions-aware-retrieval-typescript",
   "version": "0.0.0",
   "private": true,
-  "description": "Permissions-aware RAG — Glean Search as the retrieval layer for your own LLM app.",
+  "description": "Glean Search as the permissions-aware retrieval layer for your own LLM app.",
   "type": "module",
   "scripts": {
     "start": "tsx src/main.ts",

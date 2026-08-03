@@ -6,7 +6,7 @@
 #     "python-dotenv==1.1.1",
 # ]
 # ///
-"""Permissions-aware RAG — Glean's data-first Platform API as the retrieval
+"""Permissions-aware retrieval — Glean's data-first Platform API as the retrieval
 layer for your own LLM app.
 
 Verified against the actually installed pinned SDKs (real HTTP round-trip

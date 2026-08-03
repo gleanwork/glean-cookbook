@@ -21,6 +21,6 @@ before running its command. Full write-ups live at
 - **Multi-step agent with governed tools** (`/cookbook:multi-step-agent`) — Build a Glean agent that plans, retrieves, and acts through a governed custom tool — with a safe fallback when the tool is denied.
 - **IT helpdesk deflection page — no code, on Lovable** (`/cookbook:no-code-it-helpdesk-lovable`) — Prompt Lovable into an IT helpdesk deflection page on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.
 - **PTO & benefits lookup — no code, on Replit** (`/cookbook:no-code-pto-lookup-replit`) — Prompt Replit Agent into a working HR lookup tool on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.
-- **Permissions-aware RAG** (`/cookbook:permissions-aware-rag`) — Use Glean's Platform API as the retrieval layer for your own LLM app — every chunk ACL-filtered per user before it ever reaches the model.
+- **Ground your own LLM app in Glean** (`/cookbook:permissions-aware-retrieval`) — Use Glean's Platform API as the retrieval layer for your own LLM app — every result ACL-filtered for the caller before it ever reaches the model.
 
 <!-- pluginpack-generated:recipes:end -->
