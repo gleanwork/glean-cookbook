@@ -13,7 +13,12 @@ import path from 'node:path';
  */
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
-const recipesDir = path.join(repoRoot, 'recipes');
+// Both trees: examples/ holds runnable code that is not a registry recipe, and
+// its pins matter exactly as much.
+const scanDirs = [
+  path.join(repoRoot, 'recipes'),
+  path.join(repoRoot, 'examples'),
+].filter((dir) => fs.existsSync(dir));
 
 const GLEAN_SDKS = new Set([
   'glean-api-client',
@@ -60,28 +65,31 @@ function checkRequirementsTxt(label, filePath) {
   }
 }
 
-if (!fs.existsSync(recipesDir)) {
-  console.log('No recipes/ directory yet — nothing more to check.');
+if (scanDirs.length === 0) {
+  console.log(
+    'No recipes/ or examples/ directory yet — nothing more to check.',
+  );
 } else {
-  const recipeIds = fs
-    .readdirSync(recipesDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name);
+  const recipeIds = scanDirs.flatMap((dir) =>
+    fs
+      .readdirSync(dir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => path.join(dir, entry.name)),
+  );
 
   if (recipeIds.length === 0) {
     console.log('No recipes yet — nothing more to check.');
   }
 
-  for (const recipeId of recipeIds) {
-    const recipeDir = path.join(recipesDir, recipeId);
+  for (const recipeDir of recipeIds) {
+    const recipeId = path.relative(repoRoot, recipeDir);
     for (const sub of walkDirs(recipeDir)) {
       const pkgJson = path.join(sub, 'package.json');
-      if (fs.existsSync(pkgJson))
-        checkPackageJson(`recipes/${recipeId}`, pkgJson);
+      if (fs.existsSync(pkgJson)) checkPackageJson(recipeId, pkgJson);
 
       const requirementsTxt = path.join(sub, 'requirements.txt');
       if (fs.existsSync(requirementsTxt))
-        checkRequirementsTxt(`recipes/${recipeId}`, requirementsTxt);
+        checkRequirementsTxt(recipeId, requirementsTxt);
     }
   }
 }

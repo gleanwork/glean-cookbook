@@ -26,14 +26,14 @@ from pathlib import Path
 GLEAN_SDKS = {"glean-api-client", "glean-indexing-sdk"}
 
 repo_root = Path(__file__).resolve().parent.parent
-recipes_dir = repo_root / "recipes"
+scan_dirs = [repo_root / "recipes", repo_root / "examples"]
 
 
 def main() -> int:
-    locks = sorted(recipes_dir.glob("**/*.py.lock"))
+    locks = sorted(lock for d in scan_dirs if d.is_dir() for lock in d.glob("**/*.py.lock"))
     scripts = [
         path
-        for path in sorted(recipes_dir.glob("**/*.py"))
+        for path in sorted(p for d in scan_dirs if d.is_dir() for p in d.glob("**/*.py"))
         if ".venv" not in path.parts
         and path.read_text(encoding="utf-8").startswith("# /// script")
     ]

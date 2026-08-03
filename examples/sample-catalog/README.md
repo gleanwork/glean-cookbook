@@ -1,6 +1,19 @@
-# index-custom-source
+# sample-catalog
 
-Bring an unsupported source into Glean with the Indexing API — documents, permissions, and people — and see it live in search. It ships its own `sample-data/` fixtures, so the recipe is self-contained: nothing needs seeding first, and no other recipe has to run before it.
+A complete, runnable Indexing SDK example: 29 documents with a real permission
+model, the identities needed to evaluate those permissions, and the connector
+that pushes them.
+
+This is **not a cookbook recipe** — it is the optional sample dataset for the
+[Indexing SDK quickstart](https://developers.glean.com/libraries/indexing-sdk/quickstart),
+for readers who would rather index something ready-made than invent their own
+data client first. The quickstart teaches the mechanics; this gives you content
+with interesting permissions to point it at.
+
+It lives here rather than under `recipes/` because it writes to your instance.
+Every cookbook recipe reads from content you already have, which makes them safe
+to run on any instance at any time; this one does not, and shouldn't be presented
+as though it were the same kind of thing.
 
 ## Run it
 

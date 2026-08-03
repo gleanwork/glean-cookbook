@@ -131,7 +131,10 @@ jobs:
         run: |
           set -e
           shopt -s nullglob
-          recipe_dirs=(recipes/*/)
+          # examples/ too: examples/sample-catalog is real, runnable Python that
+          # used to be a recipe, and dropping it from this glob would remove its
+          # lint, typecheck and lock coverage without any check going red.
+          recipe_dirs=(recipes/*/ examples/*/)
           if [ ${#recipe_dirs[@]} -eq 0 ]; then
             echo "No recipes yet — nothing to check."
             exit 0

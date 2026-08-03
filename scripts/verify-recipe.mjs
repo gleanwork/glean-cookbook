@@ -32,7 +32,10 @@
  *   'read-only'       search/chat calls only, saveChat off
  *   'agent-run'       invokes an existing agent; no content written, but the
  *                     run is recorded, and the agent had to be created by hand
- *   'indexes-content' uploads documents (index-custom-source only)
+ *   'indexes-content' uploads documents. No recipe declares this any more --
+ *                     the one that did was retired to examples/sample-catalog,
+ *                     since every recipe now reads content you already have.
+ *                     Kept because a future recipe may need it.
  *
  * A module with no declaration is treated as writing, so forgetting to declare
  * fails closed rather than quietly passing the gate.
