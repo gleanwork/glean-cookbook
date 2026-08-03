@@ -1,0 +1,94 @@
+{
+  "id": "customer-360",
+  "title": "Customer 360: an account page built from your own content",
+  "description": "One page per account \u2014 status, risks, and a drill-in chat \u2014 assembled from whatever your instance already knows about that customer. No CRM export, no separate index.",
+  "sidebarLabel": "Customer 360",
+  "surfaces": ["platform-api"],
+  "status": "showcase",
+  "category": "workflow",
+  "level": "Intermediate",
+  "levels": {
+    "minimal": true,
+    "wow": true
+  },
+  "timeEstimate": "~1 hr",
+  "icon": "layout-outlined",
+  "requiredScopes": ["SEARCH", "CHAT", "AGENTS"],
+  "authMethod": ["client-api-oauth-or-token"],
+  "buildMethod": "integrate",
+  "languages": ["typescript"],
+  "prerequisites": [
+    "An OAuth access token or Glean API token with the SEARCH and CHAT scopes",
+    "X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)",
+    "An account name your instance has content about \u2014 the app is built around it",
+    "Node 20+, and a page you can serve with a small server so the token stays server-side"
+  ],
+  "demoQueries": [
+    {
+      "query": "What's the status of the <account> renewal?",
+      "expectedBehavior": "Returns a non-empty answer citing real documents about that account from your own instance. Substitute an account your content actually covers \u2014 the page is built around whichever one you pick."
+    },
+    {
+      "query": "Give me a customer summary for <account>",
+      "expectedBehavior": "Synthesizes across more than one source, with a citation per claim, rather than restating a single document."
+    },
+    {
+      "query": "What are the renewal risks for <account>?",
+      "expectedBehavior": "Either names risks grounded in cited content, or says it has none to report. It must not infer risk the sources don't support \u2014 an account with no recorded risk is a real answer, not a gap to fill."
+    }
+  ],
+  "steps": [
+    {
+      "title": "Pick a path",
+      "description": "Path A (Platform Search + Chat) builds an open-ended explorable dashboard: parallel search.query tiles and POST /api/chat for journey summary and saved prompts. Path B (Platform Agents) keeps the same page UX but runs synthesis through glean.agents.createRun against a template Account Brief agent."
+    }
+  ],
+  "scaffoldActions": [],
+  "combines": [
+    {
+      "title": "Permissions-aware RAG",
+      "surface": "Platform Search",
+      "category": "search",
+      "language": "typescript"
+    },
+    {
+      "title": "Platform Chat synthesis",
+      "surface": "Platform Chat",
+      "category": "workflow",
+      "language": "typescript"
+    },
+    {
+      "title": "Platform Agents createRun",
+      "surface": "Platform Agents",
+      "category": "agent",
+      "language": "typescript"
+    }
+  ],
+  "architecture": [
+    {
+      "label": "Account page",
+      "caption": "KPIs + tiles + journey + prompts",
+      "icon": "layout-outlined"
+    },
+    {
+      "label": "Path A: Search + Chat",
+      "caption": "glean.search.query + POST /api/chat",
+      "category": "search"
+    },
+    {
+      "label": "Path B: Agents",
+      "caption": "glean.agents.createRun",
+      "category": "agent"
+    },
+    {
+      "label": "Glean Platform API",
+      "caption": "permission-aware retrieval + synthesis",
+      "emphasized": true
+    }
+  ],
+  "aiPrompt": "Build a Customer 360 account page on Glean following\nhttps://developers.glean.com/cookbook/customer-360\n\n1. Ask me which path: (A) Platform Search + Chat or (B) Platform Agents.\n   Build the one I pick. Do NOT use Client API chat.create,\n   client.search.query, or client.agents.run.\n2. Ask me which account to build the page around, and which of my own\n   sources cover it. Do not invent an account, and do not hardcode\n   figures like ARR, seat count or renewal date \u2014 read them from\n   retrieval, and leave a field blank when nothing supports it.\n3. Layout: a KPI header, source tiles for the retrieved documents, a\n   synthesized journey summary, saved-prompt buttons, and a drill-in\n   chat. Empty tiles read \"no recent activity\" rather than \"0\".\n4. Path A: parallel glean.search.query calls for the tiles; summary\n   and follow-ups via a server-side POST /api/chat with\n   { input, stream: false, store: true } and\n   X_GLEAN_INCLUDE_EXPERIMENTAL. Parse output_text plus\n   annotations[].sources[]. The token never reaches the browser.\n5. Path B: same page; synthesis via glean.agents.createRun({ messages,\n   stream: false }, GLEAN_AGENT_ID). Document the Agent Builder\n   prerequisite, and degrade gracefully if the agent is missing or\n   unauthorized rather than failing the page.\n6. Whatever the path: when retrieval returns nothing for a tile or a\n   prompt, say so. Never let the model answer from its own knowledge \u2014\n   a confident, uncited claim about a real customer is the worst\n   possible output for this app.\n7. Style it per the house style below: the real Glean logomark, Glean\n   Blue (#343ced) as the accent.\n8. Verify with the demo queries against the account I chose.",
+  "llmContext": "Platform-only recipe. Search: glean.search.query -> POST /api/search, results[].title/url/snippets (string[]). Chat: fetch POST /api/chat (until glean.chat.create ships); request {input, stream:false, store:true}; response output[].content[] type=output_text with annotations[].sources[]. Agents: glean.agents.createRun(request, agentId) -> POST /api/agents/{agent_id}/runs; stream:false returns PlatformAgentRunWaitResponse synchronously (no polling); messages use role USER|GLEAN_AI and content[{text,type:text}]. Experimental opt-in via X_GLEAN_INCLUDE_EXPERIMENTAL. Do NOT teach glean.client.chat.create, glean.client.search.query, or glean.client.agents.run. Tokens server-side only. The account and its facts come from the reader's own instance: nothing here may hardcode an account name, ARR, seat count or renewal date. An earlier draft of this recipe was written against a demo corpus that no longer exists, which made the page display one fictional customer's numbers regardless of what was retrieved. Treat an empty retrieval as a first-class state and render it as such -- for an app that speaks about named customers, an uncited claim is worse than a blank field.",
+  "goDependency": false,
+  "featured": false,
+  "tags": ["dual-implementation", "sales", "platform-api"]
+}
