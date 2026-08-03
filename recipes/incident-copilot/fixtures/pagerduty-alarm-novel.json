@@ -1,0 +1,9 @@
+{
+  "id": "PAY-2232",
+  "service": "payments-service",
+  "kind": "saturation",
+  "metric": "ledger write queue depth",
+  "summary": "Ledger write queue depth growing unbounded; no deploy in flight",
+  "severity": "Sev2",
+  "firedAt": "2026-08-03T22:10:00Z"
+}

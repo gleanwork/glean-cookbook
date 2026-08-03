@@ -1,0 +1,133 @@
+{
+  "payments-service service catalog entry": {
+    "results": [
+      {
+        "title": "payments-service \u2014 Service Catalog Entry",
+        "url": "https://portal.sample.internal/services/payments-service",
+        "snippets": [
+          {
+            "snippet": "payments-service is Sample Corp's core payments processing service, handling checkout authorization, capture, and refunds for all customer-facing storefronts. Tech lead: Priya Natarajan. On-call this week: Marcus Webb. Tier: Tier-0 (customer-impacting outage triggers immediate paging). Language/runtime: Go, deployed on GKE. Dependencies: checkout-service (upstream), ledger-service (downstream), Stripe (external processor). Related docs: the deploy and rollback runbook, and the PAY-2114 incident review. On-call escalation path: page the Engineering on-call rotation, then Priya Natarajan if unresolved after 30 minutes."
+          }
+        ]
+      }
+    ]
+  },
+  "payments-service canary runbook": {
+    "results": [
+      {
+        "title": "payments-service \u2014 Deploy & Rollback Runbook",
+        "url": "https://portal.sample.internal/runbooks/payments-service-deploy",
+        "snippets": [
+          {
+            "snippet": "Deploying payments-service: 1) merge to main triggers the CI pipeline (lint, unit tests, integration tests against a staging ledger). 2) A canary rollout ships to 5% of pods for 15 minutes, watched against the canary-alarm dashboard (error rate, p99 latency, authorization failure rate). 3) If canary alarms stay green, promote to 100%; otherwise auto-rollback fires. Manual rollback: run `deploy rollback payments-service --to <previous-version>` from the deploy CLI, which reverts pods and drains in-flight requests gracefully. Marcus Webb is on call this week for any deploy that pages after hours; page via the Engineering on-call rotation for anyone else. See the PAY-2114 incident review for a real example of a canary-triggered rollback."
+          }
+        ]
+      },
+      {
+        "title": "Engineering Incident Response Runbook",
+        "url": "https://portal.sample.internal/runbooks/incident-response",
+        "snippets": [
+          {
+            "snippet": "Severity levels: Sev1 (full outage or data loss, page immediately, open an incident channel), Sev2 (major degradation, page on-call, incident channel optional), Sev3 (minor/contained, file a ticket, no page). Every Sev1/Sev2 gets a written incident review within 3 business days (see PAY-2114 for a worked example) covering timeline, root cause, customer impact, and action items. The incident commander is whoever first acknowledges the page unless a more senior engineer explicitly takes over."
+          }
+        ]
+      }
+    ]
+  },
+  "payments-service incident review authorization failure rate": {
+    "results": [
+      {
+        "title": "PAY-2114: Canary Alarms During Deploy \u2014 Incident Review",
+        "url": "https://portal.sample.internal/incidents/PAY-2114",
+        "snippets": [
+          {
+            "snippet": "PAY-2114 summary: a payments-service deploy on 2026-06-28 tripped canary alarms 6 minutes into the 5% rollout \u2014 authorization failure rate rose from 0.2% to 4.1%. Auto-rollback triggered and fully reverted within 90 seconds; no customer-facing outage, but roughly 340 authorization attempts failed during the canary window and were not automatically retried. Root cause: a new connection-pool setting for the Stripe client was too aggressive for the canary pod's lower traffic share, causing premature connection eviction. Fix: the connection-pool floor now scales with traffic percentage rather than using a fixed value. Marcus Webb was on call and handled the response; Priya Natarajan led the follow-up fix. Action item: add a synthetic-traffic floor to canary pods so connection pools warm up correctly regardless of real traffic share \u2014 tracked as a follow-up ticket."
+          }
+        ]
+      },
+      {
+        "title": "Engineering Incident Response Runbook",
+        "url": "https://portal.sample.internal/runbooks/incident-response",
+        "snippets": [
+          {
+            "snippet": "Severity levels: Sev1 (full outage or data loss, page immediately, open an incident channel), Sev2 (major degradation, page on-call, incident channel optional), Sev3 (minor/contained, file a ticket, no page). Every Sev1/Sev2 gets a written incident review within 3 business days (see PAY-2114 for a worked example) covering timeline, root cause, customer impact, and action items. The incident commander is whoever first acknowledges the page unless a more senior engineer explicitly takes over."
+          }
+        ]
+      }
+    ]
+  },
+  "payments-service deploy rollback": {
+    "results": [
+      {
+        "title": "payments-service \u2014 Deploy & Rollback Runbook",
+        "url": "https://portal.sample.internal/runbooks/payments-service-deploy",
+        "snippets": [
+          {
+            "snippet": "Deploying payments-service: 1) merge to main triggers the CI pipeline (lint, unit tests, integration tests against a staging ledger). 2) A canary rollout ships to 5% of pods for 15 minutes, watched against the canary-alarm dashboard (error rate, p99 latency, authorization failure rate). 3) If canary alarms stay green, promote to 100%; otherwise auto-rollback fires. Manual rollback: run `deploy rollback payments-service --to <previous-version>` from the deploy CLI, which reverts pods and drains in-flight requests gracefully. Marcus Webb is on call this week for any deploy that pages after hours; page via the Engineering on-call rotation for anyone else. See the PAY-2114 incident review for a real example of a canary-triggered rollback."
+          }
+        ]
+      }
+    ]
+  },
+  "payments-service architecture dependencies": {
+    "results": [
+      {
+        "title": "payments-service \u2014 Architecture Overview",
+        "url": "https://portal.sample.internal/services/payments-service/architecture",
+        "snippets": [
+          {
+            "snippet": "payments-service is a Go service backed by a Postgres primary/replica pair for authorization state and a Kafka topic (payments.events) that ledger-service and the fraud-review pipeline both consume. External calls go to Stripe for card processing. The service exposes a gRPC API to checkout-service and a REST API for internal tooling. Scaling: horizontally autoscaled on GKE based on request queue depth, with a floor of 6 pods to keep connection pools warm \u2014 the floor that PAY-2114's fix made traffic-share-aware for canary pods specifically."
+          }
+        ]
+      },
+      {
+        "title": "payments-service \u2014 Service Catalog Entry",
+        "url": "https://portal.sample.internal/services/payments-service",
+        "snippets": [
+          {
+            "snippet": "payments-service is Sample Corp's core payments processing service, handling checkout authorization, capture, and refunds for all customer-facing storefronts. Tech lead: Priya Natarajan. On-call this week: Marcus Webb. Tier: Tier-0 (customer-impacting outage triggers immediate paging). Language/runtime: Go, deployed on GKE. Dependencies: checkout-service (upstream), ledger-service (downstream), Stripe (external processor). Related docs: the deploy and rollback runbook, and the PAY-2114 incident review. On-call escalation path: page the Engineering on-call rotation, then Priya Natarajan if unresolved after 30 minutes."
+          }
+        ]
+      }
+    ]
+  },
+  "priya.natarajan@sample.example.com payments-service on-call rotation": {
+    "results": [
+      {
+        "title": "Engineering On-Call Rotation",
+        "url": "https://portal.sample.internal/oncall/engineering",
+        "snippets": [
+          {
+            "snippet": "Engineering on-call rotates weekly, Monday to Monday. This week's primary: Marcus Webb. Secondary escalation: Priya Natarajan. To page the on-call engineer, use the #eng-oncall Slack channel or the PagerDuty escalation policy 'Engineering Primary'. The rotation covers payments-service, checkout-service, and the shared platform services; product-specific teams (Commerce, Growth) maintain their own secondary rotations for non-platform incidents."
+          }
+        ]
+      }
+    ]
+  },
+  "payments-service saturation runbook": {
+    "results": [
+      {
+        "title": "Engineering Incident Response Runbook",
+        "url": "https://portal.sample.internal/runbooks/incident-response",
+        "snippets": [
+          {
+            "snippet": "Severity levels: Sev1 (full outage or data loss, page immediately, open an incident channel), Sev2 (major degradation, page on-call, incident channel optional), Sev3 (minor/contained, file a ticket, no page). Every Sev1/Sev2 gets a written incident review within 3 business days (see PAY-2114 for a worked example) covering timeline, root cause, customer impact, and action items. The incident commander is whoever first acknowledges the page unless a more senior engineer explicitly takes over."
+          }
+        ]
+      }
+    ]
+  },
+  "payments-service incident review ledger write queue depth": {
+    "results": [
+      {
+        "title": "PAY-2114: Canary Alarms During Deploy \u2014 Incident Review",
+        "url": "https://portal.sample.internal/incidents/PAY-2114",
+        "snippets": [
+          {
+            "snippet": "PAY-2114 summary: a payments-service deploy on 2026-06-28 tripped canary alarms 6 minutes into the 5% rollout \u2014 authorization failure rate rose from 0.2% to 4.1%. Auto-rollback triggered and fully reverted within 90 seconds; no customer-facing outage, but roughly 340 authorization attempts failed during the canary window and were not automatically retried. Root cause: a new connection-pool setting for the Stripe client was too aggressive for the canary pod's lower traffic share, causing premature connection eviction. Fix: the connection-pool floor now scales with traffic percentage rather than using a fixed value. Marcus Webb was on call and handled the response; Priya Natarajan led the follow-up fix. Action item: add a synthetic-traffic floor to canary pods so connection pools warm up correctly regardless of real traffic share \u2014 tracked as a follow-up ticket."
+          }
+        ]
+      }
+    ]
+  }
+}

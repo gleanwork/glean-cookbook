@@ -1,0 +1,23 @@
+{
+  "name": "incident-copilot",
+  "version": "0.0.0",
+  "private": true,
+  "description": "On-call copilot: evidence-ranked triage, a real approval gate, and pre-registered actions only.",
+  "type": "module",
+  "scripts": {
+    "start": "tsx server.ts",
+    "verify": "node scripts/verify.mjs",
+    "verify:fixture": "GLEAN_USE_FIXTURE=true node scripts/verify.mjs",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "dotenv": "17.4.2"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "tsx": "4.23.1",
+    "@types/node": "26.1.1",
+    "eslint": "10.8.0",
+    "typescript-eslint": "8.65.0"
+  }
+}

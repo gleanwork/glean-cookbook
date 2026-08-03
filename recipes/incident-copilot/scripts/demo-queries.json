@@ -1,0 +1,7 @@
+[
+  "Triage a real alert from one of your services",
+  "Triage an alert with no matching past incident",
+  "Approve the proposed action as someone who is not on call",
+  "Let the approval window expire",
+  "Have the Glean agent propose an action that is not registered"
+]
