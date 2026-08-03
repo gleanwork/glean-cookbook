@@ -70,9 +70,9 @@ with real credentials) and confirmed every query below produces its expected beh
 that runs without errors but fails one of these checks is not done — fix it and re-run before
 reporting success.
 
-- **Query:** "What's the status of the <account> renewal?"
-  **Expected:** Returns a non-empty answer citing real documents about that account from your own instance. Substitute an account your content actually covers — the page is built around whichever one you pick.
-- **Query:** "Give me a customer summary for <account>"
+- **Query:** "What's the status of our renewal with that account?"
+  **Expected:** Returns a non-empty answer citing real documents about the account you built the page around. Substitute the account name when you ask it — the page is built around whichever one you pick, so there is no fixed query text here.
+- **Query:** "Give me a customer summary"
   **Expected:** Synthesizes across more than one source, with a citation per claim, rather than restating a single document.
-- **Query:** "What are the renewal risks for <account>?"
+- **Query:** "What are the renewal risks?"
   **Expected:** Either names risks grounded in cited content, or says it has none to report. It must not infer risk the sources don't support — an account with no recorded risk is a real answer, not a gap to fill.
