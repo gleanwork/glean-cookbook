@@ -39,7 +39,7 @@ See Verify below for what a correct build must do.
 
 ## Reference
 
-Embeds Glean search and chat into an existing web app via the Glean Web SDK npm package @gleanwork/web-sdk (renderSearchBox, renderSearchResults, renderChat named exports; script-tag fallback exposes the same methods on window.GleanWebSDK). Pass the backend option to route users directly to the instance. Auth is Glean SSO by default or server-to-server tokens minted by a backend holding an admin API key with SEARCH and CHAT scopes. All results are permission-aware per user.
+Embeds Glean search and chat into an existing web app via the Glean Web SDK npm package @gleanwork/web-sdk (renderSearchBox, renderSearchResults, renderChat named exports; script-tag fallback exposes the same methods on window.GleanWebSDK). Pass the backend option to route users directly to the instance. Auth is Glean SSO by default or server-to-server tokens minted by a backend holding an admin API key with SEARCH and CHAT scopes. All results are permission-aware per user. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.
 
 ## Authentication
 
@@ -70,8 +70,8 @@ Ask me which language to build in before starting: TypeScript, JavaScript.
 {{> verify-gate}}
 
 - **Query:** "What's our PTO policy?"
-  **Expected:** Embedded chat cites the PTO policy document, with a non-empty, deduped citations list — same answer shape as the standalone acme-answers recipe, since it's the same underlying Chat surface.
-- **Query:** "Who owns the payments-service catalog entry?"
-  **Expected:** Embedded chat names the real owner from the seeded payments-service catalog entry and cites it.
-- **Query:** "Summarize PAY-2114"
-  **Expected:** Embedded chat returns a cited summary of the real PAY-2114 incident, not a fabricated one.
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+- **Query:** "Who should I ask about billing?"
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+- **Query:** "Summarize our latest product update"
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

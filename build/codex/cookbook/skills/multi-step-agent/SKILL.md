@@ -12,17 +12,18 @@ Build "Multi-step agent with governed tools" following https://developers.glean.
    npx tiged --mode=git gleanwork/glean-cookbook/recipes/multi-step-agent multi-step-agent
    ```
 
-2. **Install dependencies**
+2. **Set the tool server's allow-list**
+   Set AUTHORIZED_EMAILS to your own email for the first run. You'll remove it for the second run to see the denied branch — changing the allow-list is how both governance paths get demonstrated, since the agent always runs as you. The server refuses to start on an empty allow-list, since that denies everyone and makes the permitted branch unobservable.
 
    ```bash
-   cd multi-step-agent/tool-server && pip install -r requirements.txt && cd ../invoke-agent && pip install -r requirements.txt
+   cd multi-step-agent/tool-server && cp .env.example .env
    ```
 
 3. **Run the tool server**
    Listens on port 8080. Keep this running in its own terminal — the agent calls it over HTTP once registered.
 
    ```bash
-   cd multi-step-agent/tool-server && python server.py
+   cd multi-step-agent/tool-server && uv run server.py
    ```
 
 4. **Register the tool**
@@ -39,17 +40,18 @@ Build "Multi-step agent with governed tools" following https://developers.glean.
    ```
 
 7. **Run it**
+   Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.
 
    ```bash
-   python main.py
+   cd multi-step-agent/invoke-agent && uv run main.py
    ```
 
 8. **Verify**
-   Run as a permitted user (Acme-Engineering) and confirm the ticket actually gets filed; run as a non-permitted user and confirm a graceful no-write fallback summary instead of a hard failure.
+   With your email on the allow-list, confirm the ticket actually gets filed. Then restart the tool server without it and confirm the agent produces a read-only fallback summary instead of a hard failure.
 
 ## Reference
 
-Agents API: glean.client.agents.run(agent_id, messages, http_headers) -> AgentRunWaitResponse{run.status, messages}. messages use Message(role, content=[MessageTextBlock(text, type=ContentType.TEXT)]) — distinct from chat.create's ChatMessage/ChatMessageFragment. run_stream() returns a raw SSE string, not an iterator. Tools are registered via the admin console (upload an OpenAPI spec), not an API call. Per-user identity for a run uses the X-Glean-Act-As header on a global/admin token, same as Search. Custom tool servers receive the acting user's email via the Glean-User-Email header, which is where tool-level authorization (governance) is actually enforced for scratch-built tools.
+Agents API: glean.client.agents.run(agent_id, messages) -> AgentRunWaitResponse{run.status, messages}. messages use Message(role, content=[MessageTextBlock(text, type=ContentType.TEXT)]) — distinct from chat.create's ChatMessage/ChatMessageFragment. run_stream() returns a raw SSE string, not an iterator. Tools are registered via the admin console (upload an OpenAPI spec), not an API call. A run executes as the identity behind the credential; there is no impersonation header to add and no admin token needed. Custom tool servers receive the acting user's email via the Glean-User-Email header, which is where tool-level authorization (governance) is actually enforced for scratch-built tools.
 
 ## Authentication
 
@@ -108,5 +110,5 @@ with real credentials) and confirmed every query below produces its expected beh
 that runs without errors but fails one of these checks is not done — fix it and re-run before
 reporting success.
 
-- **Query:** "Summarize open payments incidents and file a tracking ticket"
-  **Expected:** Run as an Acme-Engineering user (e.g. marcus.webb@acme.example.com): the agent summarizes open incidents and the governed tool call succeeds (200, a real ticket ID comes back). Run as a non-Engineering user (e.g. dana.okafor@acme.example.com): the tool server returns 403 and the agent falls back to a read-only summary instead of failing the whole run — the governance check must actually run, not be assumed.
+- **Query:** "Summarize our open incidents and file a tracking ticket"
+  **Expected:** With your email on the tool server's allow-list: the agent summarizes and the governed tool call succeeds (200, a real ticket id). With it removed: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The governance check must actually fire, not be assumed.

@@ -1,0 +1,10 @@
+{
+  "id": "hr-parental-leave-policy",
+  "title": "Parental Leave Policy",
+  "department": "HR",
+  "view_url": "https://portal.sample.internal/hr/parental-leave-policy",
+  "created_at": "2025-09-01T00:00:00Z",
+  "updated_at": "2026-01-05T00:00:00Z",
+  "permission": { "groups": ["Sample-All-Employees"] },
+  "body": "All full-time employees are eligible for 16 weeks of fully paid parental leave following the birth, adoption, or foster placement of a child, regardless of gender or which parent is the primary caregiver. Leave can be taken continuously or split into two blocks within the first 12 months. Notify Dana Okafor (HR) at least 30 days before your planned leave start date where possible. Benefits continue uninterrupted during leave."
+}

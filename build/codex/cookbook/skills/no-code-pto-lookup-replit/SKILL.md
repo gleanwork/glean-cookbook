@@ -17,7 +17,7 @@ https://developers.glean.com/cookbook/no-code-pto-lookup-replit
 
 ## Reference
 
-This recipe's deliverable is a prompt template, not a runnable project — "building" it means pasting the prompt into Replit Agent, which then writes and runs the actual code. The prompt pins the same Chat API shape used elsewhere in this cookbook: Glean({ apiToken, instance }) (never `domain`), chat.create({ messages: [{ author: 'USER', fragments: [{ text }] }] }), filtering the response to messageType === 'CONTENT' before joining fragments[].text (a real response can include earlier step-narration messages), and reading citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response. The demo query "How do I enroll in the commuter benefit?" from this recipe's source ticket was swapped for "When is open enrollment?" because the seeded Acme benefits guide doesn't mention a commuter benefit — asking the original question would produce no citation or a fabricated answer.
+This recipe's deliverable is a prompt template, not a runnable project — "building" it means pasting the prompt into Replit Agent, which then writes and runs the actual code. The prompt pins the same Chat API shape used elsewhere in this cookbook: Glean({ apiToken, instance }) (never `domain`), chat.create({ messages: [{ author: 'USER', fragments: [{ text }] }] }), filtering the response to messageType === 'CONTENT' before joining fragments[].text (a real response can include earlier step-narration messages), and reading citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response. The demo query "How do I enroll in the commuter benefit?" from this recipe's source ticket was swapped for "When is open enrollment?" because it is too company-specific to assume any instance documents it — asking the original question would produce no citation or a fabricated answer. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.
 
 ## Verify
 
@@ -26,6 +26,6 @@ telling me you're done, give me the queries below to test myself in the running 
 what a correct result looks like:
 
 - **Query:** "What is our PTO policy?"
-  **Expected:** Answer cites the PTO policy document.
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
 - **Query:** "When is open enrollment?"
-  **Expected:** Answer cites the benefits guide and states open enrollment runs in November.
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

@@ -1,6 +1,6 @@
 ---
 name: cookbook-conventions
-description: Shared Acme Corp brand kit, Web SDK embed conventions, per-recipe auth-method guidance (web-sdk-cookie, client-api-oauth-or-token, indexing-token), and live-docs lookup for Glean cookbook recipes. Apply whenever building or styling a cookbook recipe that renders a UI (Acme Answers, embedded search/chat, the engineering portal, or a Lovable/Replit no-code build), whenever a recipe asks the user for a Glean instance/token/credential, or whenever a recipe's instructions reference a Glean API/SDK detail worth confirming.
+description: Shared Glean styling kit, Web SDK embed conventions, per-recipe auth-method guidance (web-sdk-cookie, client-api-oauth-or-token, indexing-token), and live-docs lookup for Glean cookbook recipes. Apply whenever building or styling a cookbook recipe that renders a UI (Company Answers, embedded search/chat, the engineering portal, or a Lovable/Replit no-code build), whenever a recipe asks the user for a Glean instance/token/credential, or whenever a recipe's instructions reference a Glean API/SDK detail worth confirming.
 ---
 
 # Cookbook house style
@@ -14,7 +14,7 @@ partials are the source. Edit those, not this file.
 Every recipe's registry entry declares `authMethod` — which credential category it needs. That
 declaration is the source of truth for which subsection below applies; don't re-derive it from
 the recipe's prose, and don't apply a subsection the recipe didn't declare. A recipe can declare
-more than one value when it offers a path choice (e.g. Acme Answers' Web SDK vs. Chat API paths)
+more than one value when it offers a path choice (e.g. Company Answers' Web SDK vs. Chat API paths)
 — in that case, apply whichever subsection matches the path the user picks. Recipes declaring
 `none` or `custom` don't use this section at all: `none` needs no Glean credential, and `custom`
 means the recipe's own instructions already fully specify a bespoke credential step (a per-agent
@@ -35,9 +35,10 @@ follow that instead of inventing a detection chain it doesn't need.
 
 {{> docs-lookup}}
 
-Every cookbook recipe demo represents the same fictional company, Acme Corp. Use these exact
-conventions instead of approximating — a plain colored square is not the logomark, and an
-unsized chat container is not "embedded."
+Recipes demo Glean against the reader's own instance and their own content, so demo apps carry
+Glean's identity rather than a fictional company's. Use these exact conventions instead of
+approximating — a plain colored square is not the logomark, and an unsized chat container is not
+"embedded."
 
 {{> brand-kit}}
 

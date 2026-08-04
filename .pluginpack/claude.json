@@ -8,17 +8,19 @@
     "build/claude/cookbook/scripts/resolve-backend.mjs",
     "build/claude/cookbook/scripts/scaffold-recipe.mjs",
     "build/claude/cookbook/skills/a2a-client/SKILL.md",
-    "build/claude/cookbook/skills/acme-answers/SKILL.md",
     "build/claude/cookbook/skills/browse-cookbook/SKILL.md",
     "build/claude/cookbook/skills/build-engineering-portal/SKILL.md",
+    "build/claude/cookbook/skills/company-answers/SKILL.md",
     "build/claude/cookbook/skills/connect-mcp-hosts/SKILL.md",
     "build/claude/cookbook/skills/cookbook-conventions/SKILL.md",
     "build/claude/cookbook/skills/customer-360/SKILL.md",
     "build/claude/cookbook/skills/embed-search-chat/SKILL.md",
-    "build/claude/cookbook/skills/index-custom-source/SKILL.md",
+    "build/claude/cookbook/skills/incident-copilot/SKILL.md",
     "build/claude/cookbook/skills/multi-step-agent/SKILL.md",
     "build/claude/cookbook/skills/no-code-it-helpdesk-lovable/SKILL.md",
     "build/claude/cookbook/skills/no-code-pto-lookup-replit/SKILL.md",
-    "build/claude/cookbook/skills/permissions-aware-rag/SKILL.md"
+    "build/claude/cookbook/skills/onboarding-hub/SKILL.md",
+    "build/claude/cookbook/skills/permissions-aware-retrieval/SKILL.md",
+    "build/claude/cookbook/skills/rfp-responder/SKILL.md"
   ]
 }

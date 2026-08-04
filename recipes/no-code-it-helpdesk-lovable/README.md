@@ -24,4 +24,4 @@ This recipe mirrors [`no-code-pto-lookup-replit`](../no-code-pto-lookup-replit/)
 
 ## Note on demo queries
 
-The ticket's demo queries ("Where do I reset my SSO password?", "How do I request a new laptop?") are both directly answered by existing seeded Acme corpus documents (`support-sso-password-reset`, `support-it-helpdesk-faq`) — no corpus changes were needed for this recipe.
+The demo queries ("Where do I reset my SSO password?", "How do I request a new laptop?") are deliberately the kind of question almost every company's IT documentation answers, so the recipe works against your own instance without any seeding.

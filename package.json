@@ -7,11 +7,14 @@
   "scripts": {
     "build:registry": "node scripts/build-registry.mjs",
     "validate:registry": "node scripts/validate-registry.mjs",
+    "verify:recipe": "node scripts/verify-recipe.mjs",
     "check:freshness": "node scripts/check-recipe-freshness.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "snippets:check": "md-code check && node scripts/check-prompt-snippets.mjs",
-    "snippets:sync": "md-code sync"
+    "snippets:sync": "md-code sync",
+    "test": "node --test \"scripts/**/*.test.mjs\"",
+    "verify:login": "node scripts/verify-login.mjs"
   },
   "devDependencies": {
     "ajv": "^8.17.1",

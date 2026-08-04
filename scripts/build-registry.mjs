@@ -102,7 +102,60 @@ if (existingRaw.trim()) {
   }
 }
 
+/**
+ * Demo queries, emitted next to any recipe that ships its own verify script.
+ *
+ * Those scripts run from a scaffolded copy -- `tiged` fetches a single
+ * subdirectory, so recipe.json isn't there to read. Hardcoding the queries in
+ * the script is what let company-answers/chat-api drift until it was still
+ * asking "Who owns the payments-service catalog entry?", a question about a
+ * fixture corpus that no longer exists and that no reader's instance can answer.
+ * Generating the list keeps recipe.json the one source and makes drift a CI
+ * failure rather than something a live run has to discover.
+ */
+const queryFiles = [];
+for (const entry of entries) {
+  const recipeDir = path.join(recipesDir, entry.id);
+  for (const scriptPath of findVerifyScripts(recipeDir)) {
+    const target = path.join(path.dirname(scriptPath), 'demo-queries.json');
+    queryFiles.push({
+      file: target,
+      contents: await prettier.format(
+        JSON.stringify(entry.demoQueries.map((q) => q.query)),
+        { ...(await prettier.resolveConfig(target)), filepath: target },
+      ),
+    });
+  }
+}
+
+function findVerifyScripts(dir) {
+  const found = [];
+  if (!fs.existsSync(dir)) return found;
+  for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (item.name === 'node_modules' || item.name === '.venv') continue;
+    const full = path.join(dir, item.name);
+    if (item.isDirectory()) found.push(...findVerifyScripts(full));
+    else if (item.name === 'verify.mjs') found.push(full);
+  }
+  return found;
+}
+
+const staleQueryFiles = queryFiles.filter(
+  ({ file, contents: expected }) =>
+    !fs.existsSync(file) || fs.readFileSync(file, 'utf8') !== expected,
+);
+
 if (check) {
+  if (staleQueryFiles.length > 0) {
+    console.error(
+      'These generated demo-queries.json files are stale. Run ' +
+        '`npm run build:registry` and commit the result:\n' +
+        staleQueryFiles
+          .map(({ file }) => `  ${path.relative(repoRoot, file)}`)
+          .join('\n'),
+    );
+    process.exit(1);
+  }
   if (existingRaw !== contents) {
     console.error(
       'registry.json is stale. Run `npm run build:registry` and commit the result.',
@@ -113,4 +166,8 @@ if (check) {
 } else {
   fs.writeFileSync(registryFile, contents);
   console.log(`Wrote registry.json from ${entries.length} recipe file(s).`);
+  for (const { file, contents: queries } of queryFiles) {
+    fs.writeFileSync(file, queries);
+    console.log(`Wrote ${path.relative(repoRoot, file)}`);
+  }
 }

@@ -21,12 +21,12 @@
   ],
   "demoQueries": [
     {
-      "query": "Who's on call for payments-service?",
-      "expectedBehavior": "The MCP host's chat surfaces a cited answer naming the current on-call owner, same shape as the Chat API path \u2014 MCP is a transport, not a different answer."
+      "query": "What does our team own?",
+      "expectedBehavior": "The MCP host's chat returns an answer grounded in your Glean content, with citations, proving the server is connected and authenticated."
     },
     {
-      "query": "Summarize PAY-2114",
-      "expectedBehavior": "The MCP host's chat returns a cited summary of the real PAY-2114 incident, not a fabricated one."
+      "query": "Summarize our most recent incident review",
+      "expectedBehavior": "The host returns a cited summary grounded in your own content \u2014 not a fabricated one. If it answers without citations, the MCP server is not actually being consulted."
     }
   ],
   "codeAssets": [],
@@ -58,5 +58,6 @@
   "llmContext": "Glean MCP server URL: https://{instance}-be.glean.com/mcp/{server-name} (default server-name is \"default\"). @gleanwork/configure-mcp-server (npx -y @gleanwork/configure-mcp-server remote --url <url> --client <host>) is the real, GA, first-party CLI for wiring this up -- it handles OAuth with Dynamic Client Registration by default and writes the correct host-specific config (Claude Code/Cursor connect natively over HTTP; Claude Desktop is stdio-only, so the CLI wires the mcp-remote bridge automatically). Never reference @gleanwork/mcp-server (deprecated local package), never hand-walk the app.glean.com/settings/install MCP Configurator URL pattern when this CLI exists, and never tell users an API token is required by default -- pass --token only if a host genuinely doesn't support OAuth.",
   "goDependency": false,
   "featured": false,
-  "tags": ["mcp", "starter"]
+  "tags": ["mcp", "starter"],
+  "lastVerified": "2026-08-02"
 }

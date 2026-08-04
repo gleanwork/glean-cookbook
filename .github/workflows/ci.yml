@@ -24,6 +24,18 @@ jobs:
       - name: Report recipe verification freshness (informational)
         run: node scripts/check-recipe-freshness.mjs
 
+  harness-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The verify harness owns an OAuth flow; state validation and PKCE
+      # derivation are not things to leave untested. No credentials needed --
+      # the live-discovery test skips itself without GLEAN_INSTANCE.
+      - run: npm test
+
   format-check:
     name: Format check
     runs-on: ubuntu-latest
@@ -56,7 +68,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: node scripts/check-pinned-deps.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Node-side deps (package.json, requirements.txt)
+        run: node scripts/check-pinned-deps.mjs
+      - name: Python-side deps (PEP 723 via uv locks)
+        run: python3 scripts/check_pinned_deps.py
 
   plugin-build:
     name: Build & validate plugin
@@ -108,11 +126,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - uses: astral-sh/setup-uv@v5
       - name: Typecheck and lint every recipe
         run: |
           set -e
           shopt -s nullglob
-          recipe_dirs=(recipes/*/)
+          # examples/ too: examples/sample-catalog is real, runnable Python that
+          # used to be a recipe, and dropping it from this glob would remove its
+          # lint, typecheck and lock coverage without any check going red.
+          recipe_dirs=(recipes/*/ examples/*/)
           if [ ${#recipe_dirs[@]} -eq 0 ]; then
             echo "No recipes yet — nothing to check."
             exit 0
@@ -136,6 +158,27 @@ jobs:
               ruff check "$dir"
               if [ -f "$dir/pyrightconfig.json" ]; then
                 (cd "$dir" && pyright .)
+              fi
+            done
+            # PEP 723 scripts declare their deps inline and have no
+            # requirements.txt, so the loop above never sees them. uv builds an
+            # isolated env per script; pyright needs --pythonpath pointed at it
+            # (VIRTUAL_ENV is not honoured by the CLI and silently falls back
+            # to the ambient interpreter, which reports a false pass).
+            find "$recipe" -name '*.py' -not -path '*/.venv/*' | while read -r script; do
+              grep -q '^# /// script' "$script" || continue
+              dir=$(dirname "$script")
+              # Fails if the committed lock no longer matches the inline
+              # dependencies, so a recipe can't drift transitively.
+              uv lock --script "$script" --check
+              env_path=$(uv sync --script "$script" --locked 2>&1 | sed -n 's/.*script environment at: //p')
+              if [ -z "$env_path" ]; then
+                echo "Could not resolve a uv script environment for $script"
+                exit 1
+              fi
+              ruff check "$dir"
+              if [ -f "$dir/pyrightconfig.json" ]; then
+                (cd "$dir" && pyright --pythonpath "$env_path/bin/python" .)
               fi
             done
             echo "::endgroup::"

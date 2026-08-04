@@ -30,7 +30,7 @@ my Glean web app domain. See Verify below for what a correct build must do.
 
 ## Reference
 
-Flagship showcase composing the custom-connector and Web SDK embed recipes: a service-catalog portal whose catalog is indexed into Glean via the indexing SDK, with Glean search and chat embedded back into the portal UI. Requires a Glean-issued Indexing API token for the connector and SEARCH/CHAT scopes for the embed.
+Flagship showcase composing the custom-connector and Web SDK embed recipes: a service-catalog portal whose catalog is indexed into Glean via the indexing SDK, with Glean search and chat embedded back into the portal UI. Requires a Glean-issued Indexing API token for the connector and SEARCH/CHAT scopes for the embed. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.
 
 ## Authentication
 
@@ -64,9 +64,9 @@ Ask me which language to build in before starting: Python, TypeScript.
 
 {{> verify-gate}}
 
-- **Query:** "Who's on call for payments-service?"
-  **Expected:** Answer names the current on-call owner from the indexed developer catalog, with a citation to that catalog entry.
-- **Query:** "What's the deploy and rollback process for payments-service?"
-  **Expected:** Answer describes the real deploy/rollback steps from the indexed runbook, with a citation — not a generic, made-up process.
-- **Query:** "Summarize PAY-2114"
-  **Expected:** Answer summarizes the real indexed PAY-2114 incident ticket content, with a citation to it — not a fabricated summary.
+- **Query:** "How do I find out who is on call?"
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content. Asked this way rather than "who's on call this week?" deliberately: the live roster is answered by a schedule tool with no citable document, so the direct question intermittently returns an answer with no citations, or no answer at all. Verified live -- three runs of the direct form produced all three outcomes; this form returned 3-4 citations every time.
+- **Query:** "How do I deploy a service?"
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+- **Query:** "What's our incident response process?"
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

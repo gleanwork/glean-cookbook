@@ -1,0 +1,46 @@
+[
+  {
+    "member_user_id": "priya.natarajan@sample.example.com",
+    "member_group_name": "Sample-All-Employees"
+  },
+  {
+    "member_user_id": "priya.natarajan@sample.example.com",
+    "member_group_name": "Sample-Engineering"
+  },
+
+  {
+    "member_user_id": "marcus.webb@sample.example.com",
+    "member_group_name": "Sample-All-Employees"
+  },
+  {
+    "member_user_id": "marcus.webb@sample.example.com",
+    "member_group_name": "Sample-Engineering"
+  },
+
+  {
+    "member_user_id": "dana.okafor@sample.example.com",
+    "member_group_name": "Sample-All-Employees"
+  },
+  {
+    "member_user_id": "dana.okafor@sample.example.com",
+    "member_group_name": "Sample-HR"
+  },
+
+  {
+    "member_user_id": "sam.reyes@sample.example.com",
+    "member_group_name": "Sample-All-Employees"
+  },
+  {
+    "member_user_id": "sam.reyes@sample.example.com",
+    "member_group_name": "Sample-Sales"
+  },
+
+  {
+    "member_user_id": "alex.kim@sample.example.com",
+    "member_group_name": "Sample-All-Employees"
+  },
+  {
+    "member_user_id": "alex.kim@sample.example.com",
+    "member_group_name": "Sample-Engineering"
+  }
+]

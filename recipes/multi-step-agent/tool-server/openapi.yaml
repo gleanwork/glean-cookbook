@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Acme Incident Ticket Tool
+  title: Incident Ticket Tool
   version: 1.0.0
 servers:
   - url: https://your-tool-server.example.com/tools/incidents
@@ -9,9 +9,9 @@ paths:
     post:
       summary: Files a payments-service incident tracking ticket
       description: |
-        Creates an incident ticket for the payments-service. Only Acme
-        Engineering can file tickets; the server returns 403 for anyone
-        else.
+        Creates an incident ticket for the payments-service. Only users on
+        the tool server's allow-list can file tickets; the server returns
+        403 for anyone else.
       parameters:
         - name: Glean-User-Email
           in: header
@@ -52,7 +52,7 @@ paths:
         '401':
           description: Missing user identity
         '403':
-          description: Not authorized (not in Acme-Engineering)
+          description: Not authorized (caller is not on the allow-list)
 components:
   schemas:
     FileIncidentTicketResponse:

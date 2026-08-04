@@ -26,15 +26,15 @@
   "demoQueries": [
     {
       "query": "What's our PTO policy?",
-      "expectedBehavior": "Embedded chat cites the PTO policy document, with a non-empty, deduped citations list \u2014 same answer shape as the standalone acme-answers recipe, since it's the same underlying Chat surface."
+      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
     },
     {
-      "query": "Who owns the payments-service catalog entry?",
-      "expectedBehavior": "Embedded chat names the real owner from the seeded payments-service catalog entry and cites it."
+      "query": "Who should I ask about billing?",
+      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
     },
     {
-      "query": "Summarize PAY-2114",
-      "expectedBehavior": "Embedded chat returns a cited summary of the real PAY-2114 incident, not a fabricated one."
+      "query": "Summarize our latest product update",
+      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
     }
   ],
   "scaffoldActions": ["scaffold-web-sdk-embed"],
@@ -63,8 +63,9 @@
     }
   ],
   "aiPrompt": "Embed Glean search and chat in my internal web app using the Glean Web\nSDK, following the recipe at\nhttps://developers.glean.com/cookbook/embed-search-chat\n\nSteps:\n1. Ask me for my Glean backend URL (https://{instance}-be.glean.com).\n2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no\n   build toolchain, fall back to the script tag from my Glean app domain:\n   <script defer src=\"https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js\"></script>\n   \u2014 the same methods appear on window.GleanWebSDK.)\n3. Add a search box and results container, then:\n   import { renderSearchBox, renderSearchResults } from \"@gleanwork/web-sdk\";\n   renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>\n     renderSearchResults(resultsElement, { query }) });\n4. Add a chat container: position: relative, display: block, width: 100%,\n   height: 480px \u2014 any shorter and long answers scroll awkwardly, any\n   taller and you get dead space below Glean's own chat landing view. Then:\n   import { renderChat } from \"@gleanwork/web-sdk\";\n   renderChat(containerElement, { backend, initialMessage: \"What's our PTO policy?\" });\n   initialMessage opens straight into a real cited answer instead of an\n   empty landing screen, and doubles as your on-load verification.\n5. Default SSO auth needs no extra configuration. If I ask for\n   server-to-server auth instead, follow\n   https://developers.glean.com/libraries/web-sdk/authentication/server-to-server\n   and keep the API key strictly server-side.\n\nSee Verify below for what a correct build must do.",
-  "llmContext": "Embeds Glean search and chat into an existing web app via the Glean Web SDK npm package @gleanwork/web-sdk (renderSearchBox, renderSearchResults, renderChat named exports; script-tag fallback exposes the same methods on window.GleanWebSDK). Pass the backend option to route users directly to the instance. Auth is Glean SSO by default or server-to-server tokens minted by a backend holding an admin API key with SEARCH and CHAT scopes. All results are permission-aware per user.",
+  "llmContext": "Embeds Glean search and chat into an existing web app via the Glean Web SDK npm package @gleanwork/web-sdk (renderSearchBox, renderSearchResults, renderChat named exports; script-tag fallback exposes the same methods on window.GleanWebSDK). Pass the backend option to route users directly to the instance. Auth is Glean SSO by default or server-to-server tokens minted by a backend holding an admin API key with SEARCH and CHAT scopes. All results are permission-aware per user. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.",
   "goDependency": false,
   "featured": true,
-  "tags": ["embed", "web-sdk"]
+  "tags": ["embed", "web-sdk"],
+  "lastVerified": "2026-08-02"
 }
