@@ -490,7 +490,8 @@
       function safeHttpUrl(value) {
         try {
           const url = new URL(String(value));
-          if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+          if (url.protocol !== 'http:' && url.protocol !== 'https:')
+            return null;
           return url.href;
         } catch {
           return null;

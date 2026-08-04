@@ -155,9 +155,7 @@ function parsePlatformChatResponse(data: PlatformChatResponse): {
       rawCitations
         .filter(
           (source) =>
-            source.title &&
-            source.url &&
-            isSafeHttpUrl(source.url as string),
+            source.title && source.url && isSafeHttpUrl(source.url as string),
         )
         .map((source) => [
           source.url as string,

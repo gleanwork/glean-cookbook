@@ -348,9 +348,7 @@ async function main() {
             `✗ "${unsafeQuery}": expected the long fixture answer to remain after stripping citations`,
           );
         } else {
-          console.log(
-            `✓ "${unsafeQuery}" — unsafe URL stripped, escalate`,
-          );
+          console.log(`✓ "${unsafeQuery}" — unsafe URL stripped, escalate`);
         }
       } catch (error) {
         failed = true;
