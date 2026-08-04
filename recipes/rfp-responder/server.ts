@@ -108,7 +108,9 @@ async function handleRun(res: http.ServerResponse): Promise<void> {
     try {
       const { answer, citations } = await askChat(row.questionId, row.question);
       const verdict = classify(row.question, answer, citations);
-      row.answer = answer;
+      // From the verdict, not the raw reply: a row routed to a human must not
+      // keep the prose or the citations that were refused.
+      row.answer = verdict.answer;
       row.citations = verdict.citations;
       row.confidence = verdict.confidence;
       row.reason = verdict.reason;
@@ -150,7 +152,7 @@ const server = http.createServer(async (req, res) => {
     // Convenience for the demo: load the committed questionnaire fixture.
     if (req.method === 'GET' && req.url === '/api/sample') {
       const csv = fs.readFileSync(
-        path.join(__dirname, 'fixtures', 'globex-security-questionnaire.csv'),
+        path.join(__dirname, 'fixtures', 'sample-security-questionnaire.csv'),
         'utf8',
       );
       json(res, 200, { csv, columns: Object.keys(parseCsv(csv)[0] ?? {}) });
@@ -169,7 +171,7 @@ const server = http.createServer(async (req, res) => {
         handleParse(
           body.csv,
           body.mapping,
-          body.sourceName ?? 'globex-security-questionnaire.csv',
+          body.sourceName ?? 'sample-security-questionnaire.csv',
         ),
       );
       return;
@@ -193,7 +195,9 @@ const server = http.createServer(async (req, res) => {
         steering,
       );
       const verdict = classify(row.question, answer, citations);
-      row.answer = answer;
+      // From the verdict, not the raw reply: a row routed to a human must not
+      // keep the prose or the citations that were refused.
+      row.answer = verdict.answer;
       row.citations = verdict.citations;
       row.confidence = verdict.confidence;
       row.reason = verdict.reason;
@@ -313,7 +317,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition':
-          'attachment; filename="globex-security-questionnaire-answered.csv"',
+          'attachment; filename="sample-security-questionnaire-answered.csv"',
       });
       res.end([header, ...body].join('\n'));
       return;

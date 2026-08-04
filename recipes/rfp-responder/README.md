@@ -22,7 +22,7 @@ npm start                # http://localhost:3000
 responses and asserts the contract, so you can see the guarantees before wiring up
 a token.
 
-For live use, `cp .env.example .env` and set `GLEAN_INSTANCE` plus your own
+For live use, `cp .env.example .env` and set `GLEAN_SERVER_URL` plus your own
 `GLEAN_API_TOKEN` with the `CHAT` scope.
 
 ## Auth: this app runs as you
@@ -38,7 +38,10 @@ collapses to "needs SME" instead of quietly answering from a different source.
 
 ## The flow
 
-1. **Load and map.** Enumerate tabs, confirm which column holds the questions.
+1. **Load and map.** Upload your own CSV, paste one, or fall back to the
+   bundled sample. Prefer your own: the argument this app makes is about _your_
+   evidence, and the sample drafts answers about a company that does not exist.
+   Enumerate tabs, confirm which column holds the questions.
 2. **Dedup and confirm.** Merge exact repeats, propose the rest, before any API call.
 3. **Draft.** One Chat call per unique question, batched, progress streamed.
 4. **Review.** Per row: the draft, its citations, and an evidence classification.
@@ -54,7 +57,7 @@ thing that looks fine in a demo and fails in production.
 ### Lexical similarity cannot deduplicate a security questionnaire
 
 The obvious design is to score question similarity and auto-merge above a
-threshold. Measured on `fixtures/globex-security-questionnaire.csv`:
+threshold. Measured on `fixtures/sample-security-questionnaire.csv`:
 
 | Pair                                                                                               | Score    | Reality                          |
 | -------------------------------------------------------------------------------------------------- | -------- | -------------------------------- |
@@ -98,6 +101,21 @@ separately:
 
 That list is exactly the kind of thing a customer would own and review with their
 security team. Putting it in a heuristic would have been the mistake.
+
+## Refusal is enforced, not requested
+
+`classify()` returns the answer text a row may display, which is not always the
+answer the model produced. Two callers previously assigned `row.answer = answer`
+before checking the verdict, so a row routed to a human kept the model's prose and
+citations — the failure this recipe exists to report, reintroduced by the code
+reporting it.
+
+The offline fixtures hid it. The recorded reply for the attachment request was
+literally `INSUFFICIENT_EVIDENCE`, which normalises to empty, so the contract
+appeared to hold. On a real instance that question retrieves a
+vulnerability-management policy and Chat answers it fluently. The fixture now
+records that fluent answer, which makes three previously vacuous checks real:
+revert the enforcement and they fail.
 
 ## Deliberately not solved
 

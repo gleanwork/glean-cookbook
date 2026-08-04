@@ -3,7 +3,7 @@
 //
 // Fixture mode (default) runs the whole flow with no credentials and no network:
 // recorded /api/chat responses in fixtures/chat-responses.json drive the app, and
-// the extra columns in fixtures/globex-security-questionnaire.csv act as a test
+// the extra columns in fixtures/sample-security-questionnaire.csv act as a test
 // oracle. That means a regression in dedup, in the confidence classifier, or in
 // the refusal path fails CI instead of quietly shipping a confident wrong answer
 // into a customer's questionnaire.
@@ -11,7 +11,7 @@
 // GLEAN_USE_FIXTURE=false with real credentials verifies live. Grounding
 // assertions are skipped there — a live corpus is not the fixture corpus.
 
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -76,7 +76,7 @@ function assertFixtureContract() {
 
 function parseOracle() {
   const text = fs.readFileSync(
-    path.join(root, 'fixtures', 'globex-security-questionnaire.csv'),
+    path.join(root, 'fixtures', 'sample-security-questionnaire.csv'),
     'utf8',
   );
   const lines = [];
@@ -419,6 +419,40 @@ async function main() {
     child.kill();
     fs.rmSync(path.join(root, '.answer-library.json'), { force: true });
   }
+
+  // Pin DIRECT_OVERLAP_THRESHOLD. Every questionnaire row sits well clear of the
+  // boundary, so the suite above classifies identically anywhere from about 0.30
+  // to 0.39 -- moving the number would downgrade real rows with every check still
+  // green. SEC-08 is the row nearest the edge and is the one that flips.
+  const probe = JSON.parse(
+    execFileSync('npx', ['tsx', 'scripts/threshold-probe.ts'], {
+      cwd: root,
+      encoding: 'utf8',
+      env: { ...process.env, GLEAN_USE_FIXTURE: 'true' },
+    })
+      .trim()
+      .split('\n')
+      .pop(),
+  );
+
+  check(
+    'the term-overlap score for SEC-08 is 0.40',
+    Math.abs(probe['SEC-08'].bestOverlap - 0.4) < 1e-9,
+  );
+  check(
+    'SEC-08 is strong at the shipped threshold of 0.34',
+    probe['SEC-08'].at034 === 'strong',
+  );
+  check(
+    'raising the threshold to 0.45 downgrades SEC-08 to weak',
+    probe['SEC-08'].at045 === 'weak',
+  );
+  // Approval is not a function of relevance: a lower bar cannot promote a source
+  // that was never cleared for customer use.
+  check(
+    'ACC-03 stays weak even at a threshold of 0.25, because its best source is unapproved',
+    probe['ACC-03'].at025 === 'weak',
+  );
 }
 
 await main();

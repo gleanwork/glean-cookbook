@@ -38,6 +38,22 @@ export interface Classified {
   needsSme: boolean;
   reason: string;
   citations: Citation[];
+  /**
+   * The answer text the row may display, which is not always the answer the
+   * model produced.
+   *
+   * classify() owns this rather than returning a verdict for the caller to apply
+   * alongside the raw answer. Two callers assigned `row.answer = answer` before
+   * checking `needsSme`, so an ungrounded row kept the model's prose and its
+   * citations -- the exact failure this recipe argues against, reintroduced by
+   * the code that reports it. Enforcing it here means no caller can get it wrong.
+   *
+   * The offline fixtures hid this: the recorded reply for the attachment request
+   * is literally INSUFFICIENT_EVIDENCE, which normalises to empty, so the
+   * contract appeared to hold. On a real instance that question retrieves a
+   * vulnerability-management policy and Chat answers it in fluent prose.
+   */
+  answer: string;
 }
 
 /** Overlap of question terms present in the cited document's text. */
@@ -66,6 +82,12 @@ export function classify(
   question: string,
   answer: string,
   citations: Citation[],
+  /**
+   * Injectable so the threshold can be pinned by a test rather than only
+   * exercised at its current value. The strong/weak split is the judgement this
+   * whole app turns on, and nothing else in the suite would notice it moving.
+   */
+  threshold: number = DIRECT_OVERLAP_THRESHOLD,
 ): Classified {
   if (EVIDENCE_REQUEST.test(question)) {
     return {
@@ -73,7 +95,11 @@ export function classify(
       needsSme: true,
       reason:
         'Requests an artifact, not an answer. A document has to be attached by a person.',
-      citations,
+      // Deliberately dropped. A question asking for a file will still retrieve
+      // topical policy documents, and answering it in prose is how an unattached
+      // artifact becomes a claim nobody verified.
+      citations: [],
+      answer: '',
     };
   }
 
@@ -84,6 +110,7 @@ export function classify(
       reason:
         'Retrieval returned no citable source. Answering from model knowledge alone is exactly the failure this app exists to prevent.',
       citations,
+      answer: '',
     };
   }
 
@@ -93,6 +120,7 @@ export function classify(
       needsSme: true,
       reason: 'No answer text was produced.',
       citations,
+      answer: '',
     };
   }
 
@@ -107,12 +135,13 @@ export function classify(
     ? Math.max(...approved.map((entry) => entry.overlap))
     : 0;
 
-  if (bestApproved >= DIRECT_OVERLAP_THRESHOLD) {
+  if (bestApproved >= threshold) {
     return {
       confidence: 'strong',
       needsSme: false,
       reason: `Approved source addresses the question directly (term overlap ${bestApproved.toFixed(2)}).`,
       citations,
+      answer,
     };
   }
 
@@ -124,13 +153,14 @@ export function classify(
   if (
     topical &&
     topical.sourceClass !== 'approved' &&
-    bestOverall >= DIRECT_OVERLAP_THRESHOLD
+    bestOverall >= threshold
   ) {
     return {
       confidence: 'weak',
       needsSme: false,
       reason: `On topic, but the best source is ${describeSourceClass(topical.sourceClass)} ("${topical.citation.title}"). A person must clear this before it goes to the customer.`,
       citations,
+      answer,
     };
   }
 
@@ -139,5 +169,6 @@ export function classify(
     needsSme: false,
     reason: `Citations are only topically adjacent (best term overlap ${bestOverall.toFixed(2)}). Verify before sending.`,
     citations,
+    answer,
   };
 }

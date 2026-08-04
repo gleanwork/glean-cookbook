@@ -529,8 +529,18 @@
         "content": [
           {
             "type": "output_text",
-            "text": "INSUFFICIENT_EVIDENCE",
-            "annotations": []
+            "text": "Sample Corp runs authenticated external vulnerability scans monthly against all internet-facing services, and remediates critical findings within seven days under the vulnerability management policy.",
+            "annotations": [
+              {
+                "type": "citation",
+                "sources": [
+                  {
+                    "title": "Vulnerability Management Policy",
+                    "url": "https://sample.example.com/security/vulnerability-management"
+                  }
+                ]
+              }
+            ]
           }
         ]
       }

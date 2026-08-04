@@ -143,10 +143,14 @@ export async function askChat(
     return parsePlatformChatResponse(recorded);
   }
 
-  const instance = requireEnv('GLEAN_INSTANCE');
+  // GLEAN_SERVER_URL rather than an instance name: deriving the backend as
+  // `https://${instance}-be.glean.com` only holds for the default naming and
+  // silently points at nothing when a deployment differs. The dev site docs use
+  // GLEAN_SERVER_URL throughout for the same reason.
+  const backend = requireEnv('GLEAN_SERVER_URL').replace(/\/$/u, '');
   const token = requireEnv('GLEAN_API_TOKEN');
 
-  const response = await fetch(`https://${instance}-be.glean.com/api/chat`, {
+  const response = await fetch(`${backend}/api/chat`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,

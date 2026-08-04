@@ -211,6 +211,33 @@
         color: var(--text-2);
         font-style: italic;
       }
+      .hint {
+        color: #5b6472;
+        font-size: 0.9rem;
+        max-width: 62ch;
+        margin: 0 0 0.75rem;
+      }
+      .file {
+        display: block;
+        margin-bottom: 0.75rem;
+      }
+      details {
+        margin-bottom: 0.75rem;
+      }
+      details textarea {
+        width: 100%;
+        max-width: 62ch;
+        font-family: ui-monospace, monospace;
+        font-size: 0.85rem;
+        display: block;
+        margin: 0.5rem 0;
+      }
+      button.secondary {
+        background: #fff;
+        color: #343ce0;
+        border: 1px solid #c7cbd4;
+      }
+
       .note {
         background: var(--warn-bg);
         border: 1px solid var(--warn-border);
@@ -249,7 +276,24 @@
       <section id="load-section">
         <h2>1 · Load questionnaire</h2>
         <div id="mapping-note" class="note hidden"></div>
-        <button id="load">Load Globex security questionnaire</button>
+        <p class="hint">
+          Use your own questionnaire — the argument this app makes is about
+          <em>your</em> evidence, and answers drafted from the bundled sample
+          are answers about a company that does not exist.
+        </p>
+        <label class="file">
+          <input id="file" type="file" accept=".csv,text/csv" />
+        </label>
+        <details>
+          <summary>or paste CSV</summary>
+          <textarea
+            id="paste"
+            rows="6"
+            placeholder="tab,question_id,question&#10;Security,SEC-01,Do you hold a current SOC 2 Type II attestation?"
+          ></textarea>
+          <button id="load-paste">Use pasted CSV</button>
+        </details>
+        <button id="load" class="secondary">Or try the bundled sample</button>
       </section>
 
       <section id="parse-section" class="hidden">
@@ -334,29 +378,61 @@
         return el('li', {}, [a]);
       }
 
-      $('load').addEventListener('click', async () => {
-        const sample = await (await fetch('/api/sample')).json();
-        csv = sample.csv;
+      async function loadCsv(text, sourceName) {
+        csv = text;
+        const parsedCols = (text.split('\n')[0] ?? '')
+          .split(',')
+          .map((column) => column.trim().replace(/^"|"$/gu, ''));
         $('mapping-note').classList.remove('hidden');
         $('mapping-note').textContent =
           'Columns detected: ' +
-          sample.columns.join(', ') +
-          ' — using "question" as the question column and "tab" as the sheet. Confirm below before any API call runs.';
-        const parsed = await (
-          await fetch('/api/parse', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              csv,
-              mapping: {
-                tab: 'tab',
-                questionId: 'question_id',
-                question: 'question',
-              },
-            }),
-          })
-        ).json();
-        renderParsed(parsed);
+          parsedCols.join(', ') +
+          ' — using "question" as the question column and "tab" as the sheet. ' +
+          'Confirm below before any API call runs.';
+        await parseAndRender(sourceName);
+      }
+
+      $('file').addEventListener('change', async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        await loadCsv(await file.text(), file.name);
+      });
+
+      $('load-paste').addEventListener('click', async () => {
+        const text = $('paste').value.trim();
+        if (!text) return;
+        await loadCsv(text, 'pasted.csv');
+      });
+
+      async function parseAndRender(sourceName) {
+        const response = await fetch('/api/parse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            csv,
+            sourceName,
+            mapping: {
+              tab: 'tab',
+              questionId: 'question_id',
+              question: 'question',
+            },
+          }),
+        });
+        if (!response.ok) {
+          // A reader's own file is the likeliest thing to be shaped wrong, so say
+          // what was expected rather than failing blank.
+          $('mapping-note').textContent =
+            'Could not parse that file. Expected a CSV with a "question" column, ' +
+            'optionally "tab" and "question_id". ' +
+            (await response.text());
+          return;
+        }
+        renderParsed(await response.json());
+      }
+
+      $('load').addEventListener('click', async () => {
+        const sample = await (await fetch('/api/sample')).json();
+        await loadCsv(sample.csv, 'sample-security-questionnaire.csv');
       });
 
       function renderParsed(parsed) {
@@ -597,7 +673,7 @@
         const url = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
         const a = el('a', {
           href: url,
-          download: 'globex-security-questionnaire-answered.csv',
+          download: 'sample-security-questionnaire-answered.csv',
         });
         document.body.append(a);
         a.click();

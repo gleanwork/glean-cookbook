@@ -59,7 +59,7 @@
     {
       "title": "Set credentials",
       "command": "cp .env.example .env",
-      "description": "Fill in GLEAN_INSTANCE and your own GLEAN_API_TOKEN. The app runs as you; there is no act-as."
+      "description": "Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. The app runs as you; there is no act-as."
     },
     {
       "title": "Run it",

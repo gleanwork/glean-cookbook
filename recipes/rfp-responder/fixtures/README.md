@@ -1,6 +1,6 @@
 # rfp-responder fixtures
 
-## `globex-security-questionnaire.csv`
+## `sample-security-questionnaire.csv`
 
 The questionnaire input for the demo: **20 rows, 4 tabs, 3 duplicate pairs (17 unique after dedup).**
 

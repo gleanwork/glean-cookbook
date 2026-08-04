@@ -26,7 +26,7 @@ Build "Answer an RFP or security questionnaire" following https://developers.gle
    ```
 
 4. **Set credentials**
-   Fill in GLEAN_INSTANCE and your own GLEAN_API_TOKEN. The app runs as you; there is no act-as.
+   Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. The app runs as you; there is no act-as.
 
    ```bash
    cp .env.example .env

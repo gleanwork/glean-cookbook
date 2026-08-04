@@ -5,7 +5,7 @@
 //
 // We tried scoring token-set similarity and auto-merging above a threshold. On a
 // real security questionnaire that is actively unsafe. Measured on
-// fixtures/globex-security-questionnaire.csv:
+// fixtures/sample-security-questionnaire.csv:
 //
 //   "Is customer data encrypted at rest?"                     vs
 //   "Is customer data encrypted in transit?"        -> 0.60   DIFFERENT CONTROLS
