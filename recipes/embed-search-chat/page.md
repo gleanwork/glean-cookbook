@@ -9,7 +9,7 @@ already use — with permissions enforced per user, automatically.
 1. Install the Web SDK: add the npm package to your app. It ships TypeScript
    types for every component and option.
 
-   ```bash snippet=embed-search-chat/snippet-01.sh
+   ```bash snippet=recipes/embed-search-chat/snippets/snippet-01.sh
    npm install @gleanwork/web-sdk
    ```
 
@@ -27,7 +27,7 @@ already use — with permissions enforced per user, automatically.
    [Autocomplete + Search Page guide](/libraries/web-sdk/components/autocomplete)
    for the full options.
 
-   ```typescript snippet=embed-search-chat/snippet-02.ts
+   ```typescript snippet=recipes/embed-search-chat/snippets/snippet-02.ts
    import { renderSearchBox, renderSearchResults } from '@gleanwork/web-sdk';
 
    renderSearchBox(searchBoxElement, {
@@ -45,7 +45,7 @@ already use — with permissions enforced per user, automatically.
    instead of an empty landing screen, and doubles as your on-load
    verification.
 
-   ```typescript snippet=embed-search-chat/snippet-03.ts
+   ```typescript snippet=recipes/embed-search-chat/snippets/snippet-03.ts
    import { renderChat } from '@gleanwork/web-sdk';
 
    renderChat(containerElement, {
