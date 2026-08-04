@@ -117,6 +117,24 @@ vulnerability-management policy and Chat answers it fluently. The fixture now
 records that fluent answer, which makes three previously vacuous checks real:
 revert the enforcement and they fail.
 
+## A failed call is not a finding
+
+`/api/chat` can return HTTP 200 for a run that never finished — an empty CONTENT
+message, a trailing SERVER_TOOL, no error field anywhere — for roughly one call in
+four on questions that invoke a server tool.
+
+That arrived here as an answer with no text and no citations, which is exactly what
+a refusal looks like, so the row was labelled **"No answer drafted — insufficient
+evidence."** On a 19-row questionnaire that told the reviewer their documentation
+lacked coverage it actually had, several rows at a time. It is the recipe's own
+mistake in miniature: absence of a _result_ reported as absence of _evidence_.
+
+A response with no text block is now marked `unfinished`, retried once, and if it
+persists the row ends as `status: 'failed'` with `confidence: null` — no verdict,
+because none was reached — and a retry button. A refusal is untouched: that is a
+settled answer, and retrying it would be wrong, which is why the two had to be told
+apart before either could be handled.
+
 ## Deliberately not solved
 
 - **Answer library ACLs.** `lib/answer-library.ts` is a JSON file. An answer library

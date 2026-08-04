@@ -12,7 +12,7 @@ import {
   type ColumnMapping,
 } from './lib/questionnaire.ts';
 import { classify } from './lib/grounding.ts';
-import { askChat } from './lib/chat.ts';
+import { askChat, ChatUnfinishedError } from './lib/chat.ts';
 import * as library from './lib/answer-library.ts';
 import { findRow, log, requireRun, state, type RowState } from './lib/state.ts';
 
@@ -116,9 +116,18 @@ async function handleRun(res: http.ServerResponse): Promise<void> {
       row.reason = verdict.reason;
       row.status = verdict.needsSme ? 'needs-sme' : 'drafted';
     } catch (error) {
-      row.status = 'needs-sme';
-      row.confidence = 'none';
-      row.reason = `Retrieval failed: ${(error as Error).message}`;
+      // A failed call yields no verdict, so it gets none. Leaving confidence at
+      // 'none' would render "No answer drafted — insufficient evidence." in the
+      // grid, which asserts something about the reader's corpus that a call that
+      // never completed cannot support.
+      row.status = 'failed';
+      row.confidence = null;
+      row.answer = '';
+      row.citations = [];
+      row.reason =
+        error instanceof ChatUnfinishedError
+          ? `${error.message} Re-run this row.`
+          : `The call failed: ${(error as Error).message}. This is not a finding about your evidence; re-run this row.`;
     }
     send('progress', { done: index + 1, total: todo.length, row });
   }
@@ -189,19 +198,31 @@ const server = http.createServer(async (req, res) => {
       };
       const run = requireRun();
       const row = findRow(run, rowId);
-      const { answer, citations } = await askChat(
-        row.questionId,
-        row.question,
-        steering,
-      );
-      const verdict = classify(row.question, answer, citations);
-      // From the verdict, not the raw reply: a row routed to a human must not
-      // keep the prose or the citations that were refused.
-      row.answer = verdict.answer;
-      row.citations = verdict.citations;
-      row.confidence = verdict.confidence;
-      row.reason = verdict.reason;
-      row.status = verdict.needsSme ? 'needs-sme' : 'drafted';
+      try {
+        const { answer, citations } = await askChat(
+          row.questionId,
+          row.question,
+          steering,
+        );
+        const verdict = classify(row.question, answer, citations);
+        // From the verdict, not the raw reply: a row routed to a human must not
+        // keep the prose or the citations that were refused.
+        row.answer = verdict.answer;
+        row.citations = verdict.citations;
+        row.confidence = verdict.confidence;
+        row.reason = verdict.reason;
+        row.status = verdict.needsSme ? 'needs-sme' : 'drafted';
+      } catch (error) {
+        // Same reasoning as the batch path: no verdict, so no confidence.
+        row.status = 'failed';
+        row.confidence = null;
+        row.answer = '';
+        row.citations = [];
+        row.reason =
+          error instanceof ChatUnfinishedError
+            ? `${error.message} Re-run this row.`
+            : `The call failed: ${(error as Error).message}. This is not a finding about your evidence; re-run this row.`;
+      }
       json(res, 200, row);
       return;
     }

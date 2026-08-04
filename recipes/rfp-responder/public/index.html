@@ -175,6 +175,10 @@
         background: var(--selected-bg);
         color: #2229a8;
       }
+      .pill.failed {
+        background: #fde8e8;
+        color: #8a1c1c;
+      }
       .pill.pending {
         background: var(--bg);
         color: var(--text-2);
@@ -532,8 +536,11 @@
 
         const pills = el('td', {}, [
           el('span', {
-            class: `pill ${row.confidence ?? 'pending'}`,
-            text: row.confidence ?? 'pending',
+            class: `pill ${row.status === 'failed' ? 'failed' : (row.confidence ?? 'pending')}`,
+            text:
+              row.status === 'failed'
+                ? 'failed'
+                : (row.confidence ?? 'pending'),
           }),
         ]);
         if (row.status === 'accepted') {
@@ -544,6 +551,36 @@
         }
 
         const body = el('td');
+        // Checked before confidence: a call that never completed must not borrow
+        // the "insufficient evidence" wording, which is a claim about the corpus.
+        if (row.status === 'failed') {
+          const retry = el('button', {
+            class: 'ghost tiny',
+            text: 'Retry this row',
+          });
+          retry.addEventListener('click', async () => {
+            retry.disabled = true;
+            retry.textContent = 'Retrying…';
+            const updated = await (
+              await fetch('/api/regenerate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rowId: row.rowId }),
+              })
+            ).json();
+            Object.assign(row, updated);
+            refresh();
+          });
+          body.append(
+            el('div', {
+              class: 'empty',
+              text: 'The call did not complete — no verdict was reached.',
+            }),
+            el('div', { class: 'reason', text: row.reason }),
+            el('div', { class: 'rowacts' }, [retry]),
+          );
+          return el('tr', {}, [qcell, pills, body]);
+        }
         if (row.confidence === 'none') {
           body.append(
             el('div', {

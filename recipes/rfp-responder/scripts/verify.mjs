@@ -453,6 +453,137 @@ async function main() {
     'ACC-03 stays weak even at a threshold of 0.25, because its best source is unapproved',
     probe['ACC-03'].at025 === 'weak',
   );
+
+  // /api/chat can return 200 for a run that never finished. That is a transport
+  // failure, and it must not be reported as a finding about the corpus.
+  console.log('\nUnfinished /api/chat runs are not evidence findings');
+  const shapes = JSON.parse(
+    execFileSync('npx', ['tsx', 'scripts/unfinished-probe.ts'], {
+      cwd: root,
+      encoding: 'utf8',
+      env: { ...process.env, GLEAN_USE_FIXTURE: 'true' },
+    })
+      .trim()
+      .split('\n')
+      .pop(),
+  );
+  check(
+    'a 200 with no text block is marked unfinished',
+    shapes.unfinished.unfinished === true,
+  );
+  check(
+    'an explicit refusal is NOT marked unfinished',
+    shapes.refused.unfinished === false,
+  );
+  check(
+    'a normal answer is NOT marked unfinished',
+    shapes.answered.unfinished === false,
+  );
+  // Why the flag had to exist: on the old fields the two are identical, which is
+  // how an unfinished run came to be shown as "insufficient evidence".
+  check(
+    'unfinished and refused are indistinguishable without the flag',
+    shapes.unfinished.answer === shapes.refused.answer &&
+      shapes.unfinished.citations === shapes.refused.citations,
+  );
+
+  if (useFixture) await checkUnfinishedRun();
+}
+
+/**
+ * Replays the questionnaire with SEC-08 recorded as an unfinished run, and
+ * asserts the row reports a failed call rather than absent evidence. Runs
+ * against a second server so the main fixture's row counts stay untouched.
+ */
+async function checkUnfinishedRun() {
+  const port = PORT + 3;
+  const base = `http://127.0.0.1:${port}`;
+  const child = spawn('npx', ['tsx', 'server.ts'], {
+    cwd: root,
+    env: {
+      ...process.env,
+      PORT: String(port),
+      GLEAN_USE_FIXTURE: 'true',
+      RFP_CHAT_FIXTURES: path.join(root, 'fixtures', 'chat-unfinished.json'),
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+    // Own process group, so the kill below reaches the tsx grandchild. Killing
+    // only `npx` leaves the server holding the port.
+    detached: true,
+  });
+  let stderr = '';
+  child.stderr.on('data', (chunk) => (stderr += chunk));
+
+  try {
+    let up = false;
+    for (let i = 0; i < 60 && !up; i += 1) {
+      try {
+        await fetch(`${base}/api/sample`);
+        up = true;
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    }
+    if (!up) {
+      failures.push('unfinished-run server start');
+      console.log(`  FAIL server did not start\n${stderr}`);
+      return;
+    }
+
+    const sample = await (await fetch(`${base}/api/sample`)).json();
+    await fetch(`${base}/api/parse`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        csv: sample.csv,
+        mapping: {
+          tab: 'tab',
+          questionId: 'question_id',
+          question: 'question',
+        },
+      }),
+    });
+    const runResponse = await fetch(`${base}/api/run`, { method: 'POST' });
+    let rows = [];
+    await readSse(runResponse, (event, data) => {
+      if (event === 'done') rows = data.rows;
+    });
+
+    const sec08 = rows.find((row) => row.questionId === 'SEC-08');
+    check(
+      'SEC-08 reports a failed call, not needs-sme',
+      sec08?.status === 'failed',
+    );
+    // The load-bearing one: 'none' is what renders "insufficient evidence".
+    check(
+      'SEC-08 records no confidence verdict at all',
+      sec08?.confidence === null,
+    );
+    check(
+      'SEC-08 keeps no answer or citations',
+      sec08?.answer === '' && (sec08?.citations ?? []).length === 0,
+    );
+    check(
+      'the reason blames the call, not the corpus',
+      /did not finish/i.test(sec08?.reason ?? '') &&
+        !/insufficient evidence/i.test(sec08?.reason ?? ''),
+    );
+    // The override has to be surgical, or the checks above prove nothing.
+    const sec01 = rows.find((row) => row.questionId === 'SEC-01');
+    check(
+      'unrelated rows still classify normally',
+      sec01?.confidence === 'strong',
+    );
+  } finally {
+    if (child.pid !== undefined) {
+      try {
+        process.kill(-child.pid, 'SIGKILL');
+      } catch {
+        child.kill('SIGKILL');
+      }
+    }
+    fs.rmSync(path.join(root, '.answer-library.json'), { force: true });
+  }
 }
 
 await main();

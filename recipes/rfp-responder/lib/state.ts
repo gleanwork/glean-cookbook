@@ -8,7 +8,11 @@ import type {
   ParsedRow,
 } from './questionnaire.ts';
 
-export type RowStatus = 'pending' | 'drafted' | 'accepted' | 'needs-sme';
+// 'failed' is deliberately not 'needs-sme': routing to a human is a judgment
+// that the evidence is inadequate, and a call that never completed supports no
+// judgment at all.
+export type RowStatus =
+  'pending' | 'drafted' | 'accepted' | 'needs-sme' | 'failed';
 
 export interface RowState extends ParsedRow {
   status: RowStatus;

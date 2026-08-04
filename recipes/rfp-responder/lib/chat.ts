@@ -46,6 +46,29 @@ export interface PlatformChatResponse {
 export interface ChatAnswer {
   answer: string;
   citations: Citation[];
+  /**
+   * True when the response carried no text block at all. /api/chat can return
+   * HTTP 200 for a run that never finished -- an empty CONTENT message, a
+   * trailing SERVER_TOOL, and no error field anywhere -- for roughly one call in
+   * four on questions that invoke a server tool.
+   *
+   * That is a transport failure, not a finding. Without this flag it arrives as
+   * `answer: ''` with no citations, which is indistinguishable from a refusal,
+   * and the row is then labelled "insufficient evidence" -- a claim about the
+   * reader's corpus that this recipe has no basis to make.
+   */
+  unfinished: boolean;
+}
+
+/** A run that returned 200 without ever producing text. Retryable. */
+export class ChatUnfinishedError extends Error {
+  constructor(questionId: string, attempts: number) {
+    super(
+      `/api/chat returned 200 with no answer text for ${questionId} after ${attempts} attempt(s). ` +
+        'The run did not finish. This says nothing about the evidence in your corpus.',
+    );
+    this.name = 'ChatUnfinishedError';
+  }
 }
 
 /**
@@ -101,11 +124,20 @@ export function parsePlatformChatResponse(
     ).values(),
   );
 
+  // No text block at all is an unfinished run, not a refusal. A refusal is a
+  // real verdict and must stay distinguishable from a call that never produced
+  // anything, because the two get shown to the reviewer differently.
+  if (textBlocks.length === 0) {
+    return { answer: '', citations: [], unfinished: true };
+  }
+
   // A model that refuses has produced no answer, so drop any citations with it —
   // otherwise the row looks grounded in the review grid.
-  if (answer.includes(INSUFFICIENT)) return { answer: '', citations: [] };
+  if (answer.includes(INSUFFICIENT)) {
+    return { answer: '', citations: [], unfinished: false };
+  }
 
-  return { answer, citations };
+  return { answer, citations, unfinished: false };
 }
 
 function fixtureDir(): string {
@@ -124,23 +156,33 @@ function requireEnv(name: string): string {
 
 /** Recorded responses keyed by question id, for offline verification. */
 export function loadFixtureResponses(): Record<string, PlatformChatResponse> {
-  const file = path.join(fixtureDir(), 'chat-responses.json');
+  // Overridable so the verification can point at a recorded unfinished run
+  // without disturbing the main fixture's row counts. Only ever read when
+  // GLEAN_USE_FIXTURE is already on, so it is not a production affordance.
+  const file =
+    process.env.RFP_CHAT_FIXTURES ??
+    path.join(fixtureDir(), 'chat-responses.json');
   return JSON.parse(fs.readFileSync(file, 'utf8')) as Record<
     string,
     PlatformChatResponse
   >;
 }
 
+export const MAX_CHAT_ATTEMPTS = 2;
+
 export async function askChat(
   questionId: string,
   question: string,
   steering?: string,
+  attempt = 1,
 ): Promise<ChatAnswer> {
   if (process.env.GLEAN_USE_FIXTURE === 'true') {
     const fixtures = loadFixtureResponses();
     const recorded = fixtures[questionId];
-    if (!recorded) return { answer: '', citations: [] };
-    return parsePlatformChatResponse(recorded);
+    if (!recorded) return { answer: '', citations: [], unfinished: false };
+    const parsed = parsePlatformChatResponse(recorded);
+    if (parsed.unfinished) throw new ChatUnfinishedError(questionId, 1);
+    return parsed;
   }
 
   // GLEAN_SERVER_URL rather than an instance name: deriving the backend as
@@ -169,7 +211,16 @@ export async function askChat(
     throw new Error(`POST /api/chat returned ${response.status}: ${body}`);
   }
 
-  return parsePlatformChatResponse(
+  const parsed = parsePlatformChatResponse(
     (await response.json()) as PlatformChatResponse,
   );
+  if (!parsed.unfinished) return parsed;
+
+  // One retry, because the failure is transient by nature. Retrying a refusal
+  // would be wrong -- that is a settled answer -- which is why the two cases
+  // had to be told apart first.
+  if (attempt < MAX_CHAT_ATTEMPTS) {
+    return askChat(questionId, question, steering, attempt + 1);
+  }
+  throw new ChatUnfinishedError(questionId, attempt);
 }
