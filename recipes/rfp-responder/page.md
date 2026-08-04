@@ -49,9 +49,9 @@ single-user — and makes the guarantee real: content you can't see can't reach 
 customer's document. Empty retrieval produces a refusal, not an answer from the
 model's own knowledge.
 
-The sample corpus demonstrates it. The a customer security response summary is
-restricted to a single group; run as someone outside it and every security row
-collapses to "needs SME" instead of quietly answering from somewhere else.
+Test it on your own content: pick a document restricted to one team, ask the
+question it answers, and run the questionnaire as someone outside that team. Those
+rows collapse to "needs SME" rather than quietly answering from somewhere else.
 
 ## Take it further
 
