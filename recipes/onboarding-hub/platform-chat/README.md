@@ -6,7 +6,7 @@ Gamified onboarding checklist for Alex Kim plus Glean chat via Platform Chat (`P
 
 ```bash
 npm install
-cp .env.example .env   # fill in GLEAN_API_TOKEN and GLEAN_INSTANCE
+cp .env.example .env   # fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL
 npm start
 ```
 

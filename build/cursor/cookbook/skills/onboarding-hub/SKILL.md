@@ -54,7 +54,7 @@ Platform Chat variant — POST /api/chat, you own the UI
    ```
 
 3. **Set credentials**
-   Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE. Set GLEAN_USE_FIXTURE=true for contract-only verification without a live handler.
+   Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Set GLEAN_USE_FIXTURE=true for contract-only verification without a live handler.
 
    ```bash
    cp .env.example .env
