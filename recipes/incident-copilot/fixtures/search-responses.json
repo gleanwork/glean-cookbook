@@ -6,7 +6,7 @@
         "url": "https://portal.sample.internal/services/payments-service",
         "snippets": [
           {
-            "snippet": "payments-service is Sample Corp's core payments processing service, handling checkout authorization, capture, and refunds for all customer-facing storefronts. Tech lead: Priya Natarajan. On-call this week: Marcus Webb. Tier: Tier-0 (customer-impacting outage triggers immediate paging). Language/runtime: Go, deployed on GKE. Dependencies: checkout-service (upstream), ledger-service (downstream), Stripe (external processor). Related docs: the deploy and rollback runbook, and the PAY-2114 incident review. On-call escalation path: page the Engineering on-call rotation, then Priya Natarajan if unresolved after 30 minutes."
+            "snippet": "payments-service is Sample Corp's core payments processing service, handling checkout authorization, capture, and refunds for all customer-facing storefronts. Tech lead: Priya Natarajan. On-call this week: Marcus Webb. Tier: Tier-0 (customer-impacting outage triggers immediate paging). Language/runtime: Go, deployed on GKE. Dependencies: checkout-service (upstream), ledger-service (downstream), Stripe (external processor). Related docs: the deploy and rollback runbook, and the PAY-2114 incident review. On-call escalation path: page the Engineering on-call rotation, then Priya Natarajan if unresolved after 12 minutes."
           }
         ]
       }
@@ -85,7 +85,7 @@
         "url": "https://portal.sample.internal/services/payments-service",
         "snippets": [
           {
-            "snippet": "payments-service is Sample Corp's core payments processing service, handling checkout authorization, capture, and refunds for all customer-facing storefronts. Tech lead: Priya Natarajan. On-call this week: Marcus Webb. Tier: Tier-0 (customer-impacting outage triggers immediate paging). Language/runtime: Go, deployed on GKE. Dependencies: checkout-service (upstream), ledger-service (downstream), Stripe (external processor). Related docs: the deploy and rollback runbook, and the PAY-2114 incident review. On-call escalation path: page the Engineering on-call rotation, then Priya Natarajan if unresolved after 30 minutes."
+            "snippet": "payments-service is Sample Corp's core payments processing service, handling checkout authorization, capture, and refunds for all customer-facing storefronts. Tech lead: Priya Natarajan. On-call this week: Marcus Webb. Tier: Tier-0 (customer-impacting outage triggers immediate paging). Language/runtime: Go, deployed on GKE. Dependencies: checkout-service (upstream), ledger-service (downstream), Stripe (external processor). Related docs: the deploy and rollback runbook, and the PAY-2114 incident review. On-call escalation path: page the Engineering on-call rotation, then Priya Natarajan if unresolved after 12 minutes."
           }
         ]
       }

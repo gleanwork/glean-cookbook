@@ -43,13 +43,29 @@ export class ApprovalError extends Error {
 
 const timers = new Map<string, NodeJS.Timeout>();
 
-export function expiryMs(): number {
-  return Number(process.env.APPROVAL_EXPIRY_MS ?? 30 * 60 * 1000);
+/**
+ * The approval window for an incident, in milliseconds.
+ *
+ * Read from the service catalog, because the window is a property of the service
+ * and not of this process: a checkout service on a 10-minute window and an
+ * internal tool on an hour are the same code path with different catalog entries.
+ *
+ * APPROVAL_EXPIRY_MS overrides it, which exists so verification can drive expiry
+ * without waiting. It used to be the only source, so arm() ignored the catalog
+ * value that registry.ts had gone to the trouble of parsing -- and the fixture
+ * check asserted only that the parse produced 30, which is also the default, so
+ * nothing failed.
+ */
+export function expiryMs(incident?: Incident): number {
+  const override = process.env.APPROVAL_EXPIRY_MS;
+  if (override) return Number(override);
+  const minutes = incident?.service.escalateAfterMinutes;
+  return (minutes && minutes > 0 ? minutes : 30) * 60 * 1000;
 }
 
 export function arm(incident: Incident): void {
   disarm(incident.id);
-  const ms = expiryMs();
+  const ms = expiryMs(incident);
   incident.expiresAt = new Date(Date.now() + ms).toISOString();
   const timer = setTimeout(() => escalate(incident.id), ms);
   // Never hold the process open just to wait for an escalation.
@@ -76,7 +92,7 @@ export function escalate(incidentId: string): void {
   post(incident, {
     kind: 'escalation',
     text:
-      `No approval within ${Math.round(expiryMs() / 60000)} min. Escalated to ` +
+      `No approval within ${Math.round(expiryMs(incident) / 60000)} min. Escalated to ` +
       `${incident.escalatedTo}. The proposed action was NOT executed.`,
   });
   record({

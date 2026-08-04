@@ -26,7 +26,11 @@ export interface ActionInput {
   detail: string;
   /**
    * Demo seam: forces this action to fail so the failure path is observable.
-   * Never read from user input in a real deployment.
+   *
+   * server.ts refuses this from the request body unless INCIDENT_DEMO_MODE=true.
+   * It previously said "never read from user input in a real deployment" while
+   * the approve route read it straight off the body -- a comment is not a
+   * control, so the check is now in code.
    */
   simulateFailure?: string;
 }

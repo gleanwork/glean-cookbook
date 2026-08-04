@@ -26,7 +26,7 @@ Build "On-call copilot with a real approval gate" following https://developers.g
    ```
 
 4. **Set credentials**
-   Fill in GLEAN_INSTANCE and your own GLEAN_API_TOKEN. Optionally set GLEAN_AGENT_ID for the agent-orchestrated path, and INCIDENT_ACTOR to change who the dashboard acts as.
+   Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. Optionally set GLEAN_AGENT_ID for the agent-orchestrated path, and INCIDENT_ACTOR to change who the dashboard acts as.
 
    ```bash
    cp .env.example .env

@@ -20,7 +20,7 @@ npm start                # http://localhost:3000
 Run `verify:fixture` first. It replays recorded responses and asserts the
 governance, so you can watch the guarantees hold before wiring up a token.
 
-For live use, `cp .env.example .env` and set `GLEAN_INSTANCE` plus your own
+For live use, `cp .env.example .env` and set `GLEAN_SERVER_URL` plus your own
 `GLEAN_API_TOKEN` with `SEARCH` and `CHAT`. Add `GLEAN_AGENT_ID` for the
 agent-orchestrated path.
 
@@ -92,7 +92,7 @@ away.
 | Property                                  | How                                                                                                                                                                                |
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Only on-call + service owners may approve | Read from the indexed service catalog. 403 and audited otherwise.                                                                                                                  |
-| Unapproved proposals expire               | Timer → escalate to the catalog's escalation target. **Nothing executes.**                                                                                                         |
+| Unapproved proposals expire               | Timer, on the window from the catalog → escalate to the catalog's target. **Nothing executes.**                                                                                    |
 | Only pre-registered actions run           | The planner names an action _by id_. An unknown id is refused at proposal time, so a card offering an impossible action is never shown.                                            |
 | Mutating actions need a cause             | See above.                                                                                                                                                                         |
 | Everything is audited                     | Requests, approvals, edits, rejections, executions, failures, refusals, escalations — with the actor.                                                                              |
@@ -123,6 +123,11 @@ its prompt says. Try the fixture alarm `PAY-2233`, where the agent proposes
 **This recipe does not authenticate anyone.** The acting user is _asserted_, via
 `INCIDENT_ACTOR` or an `X-Incident-Actor` header, so you can watch the gate refuse
 you without restarting anything.
+
+That header, and `simulateFailure`, are refused unless `INCIDENT_DEMO_MODE=true`.
+Both were documented as demo-only in comments, which is not a control: a reader who
+copies this and skims the comment ships a gate anyone can walk through by setting a
+header. One flag, checked in code, fails closed.
 
 Authorization (who may approve) and authentication (proving you are that person) are
 different problems. This solves the first. A deployment must solve the second before

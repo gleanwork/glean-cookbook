@@ -34,10 +34,43 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * one before trusting the first. Shipping this header as-is would mean anyone can
  * claim to be the on-call engineer.
  */
+/**
+ * Demo affordances, off unless INCIDENT_DEMO_MODE=true.
+ *
+ * Two things here are useful in a demo and dangerous in a deployment: the
+ * x-incident-actor header, which lets a caller claim to be anyone so you can
+ * watch the gate refuse you, and simulateFailure, which forces an action to
+ * report failure. Both were documented as demo-only in prose. Prose is not a
+ * control -- a reader who copies this and skims the comment ships an approval
+ * gate that anyone can walk through by setting a header.
+ *
+ * One flag, checked in code, is a switch they have to find. It costs nothing in
+ * the demo and it fails closed.
+ */
+export function demoMode(): boolean {
+  return process.env.INCIDENT_DEMO_MODE === 'true';
+}
+
 function actorOf(req: http.IncomingMessage): string {
   const asserted = req.headers['x-incident-actor'];
-  if (typeof asserted === 'string' && asserted.length > 0) return asserted;
+  if (demoMode() && typeof asserted === 'string' && asserted.length > 0) {
+    return asserted;
+  }
   return process.env.INCIDENT_ACTOR ?? 'marcus.webb@sample.example.com';
+}
+
+/**
+ * Refuses a demo-only affordance when the flag is unset, rather than ignoring it.
+ * Silently dropping the header would leave a reader thinking the gate had let the
+ * wrong person through.
+ */
+function refuseDemoAffordance(res: http.ServerResponse, what: string): void {
+  json(res, 403, {
+    error:
+      `${what} is a demo affordance and INCIDENT_DEMO_MODE is not set. ` +
+      `Set INCIDENT_DEMO_MODE=true to enable it. It is off by default because it ` +
+      `lets a caller bypass the identity this gate relies on.`,
+  });
 }
 
 const ORCHESTRATORS: Orchestrator[] = [appOrchestrated, gleanAgent];
@@ -165,7 +198,9 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/config') {
       json(res, 200, {
         actor: actorOf(req),
-        expiryMs: expiryMs(),
+        // The default only. The real window is per-service, read from the
+        // catalog when the incident is triaged.
+        defaultExpiryMs: expiryMs(),
         actions: actionCatalog(),
         orchestrators: ORCHESTRATORS.map((orchestrator) => ({
           id: orchestrator.id,
@@ -221,12 +256,24 @@ const server = http.createServer(async (req, res) => {
         detail?: string;
         simulateFailure?: string;
       }>(req);
+      if (body.simulateFailure && !demoMode()) {
+        refuseDemoAffordance(res, 'simulateFailure');
+        return;
+      }
+      if (req.headers['x-incident-actor'] && !demoMode()) {
+        refuseDemoAffordance(res, 'the x-incident-actor header');
+        return;
+      }
       json(res, 200, await approve(body.id, actorOf(req), body));
       return;
     }
 
     if (req.method === 'POST' && url.pathname === '/api/reject') {
       const body = await readBody<{ id: string; why?: string }>(req);
+      if (req.headers['x-incident-actor'] && !demoMode()) {
+        refuseDemoAffordance(res, 'the x-incident-actor header');
+        return;
+      }
       json(
         res,
         200,

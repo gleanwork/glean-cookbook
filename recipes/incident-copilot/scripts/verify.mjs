@@ -56,7 +56,9 @@ function boot(env = {}) {
       PORT: String(PORT),
       GLEAN_USE_FIXTURE: String(useFixture),
       INCIDENT_ACTOR: ONCALL,
-      APPROVAL_EXPIRY_MS: '1800000',
+      // Per-request actors and forced failures are demo affordances now, refused
+      // unless this is set. One scenario below deliberately unsets it.
+      INCIDENT_DEMO_MODE: 'true',
       ...env,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -76,11 +78,11 @@ function shutdown(child) {
   }
 }
 
-async function waitUp() {
+async function waitUp(base = BASE) {
   const deadline = Date.now() + 20_000;
   while (Date.now() < deadline) {
     try {
-      if ((await fetch(`${BASE}/api/config`)).ok) return true;
+      if ((await fetch(`${base}/api/config`)).ok) return true;
     } catch {
       /* wait */
     }
@@ -166,8 +168,19 @@ async function main() {
       inc1.service.techLead === OWNER,
     );
     check(
-      'escalation window read from the catalog (30 min)',
-      inc1.service.escalateAfterMinutes === 30,
+      'escalation window read from the catalog (12 min, not the 30 min default)',
+      inc1.service.escalateAfterMinutes === 12,
+    );
+    // The parse above proves only that a number was read. This proves the number
+    // is the one the timer uses: arm() ignored it for the whole first build, and
+    // the assertion could not fail because the catalog, the default and the test
+    // override were all 30.
+    const windowMin = Math.round(
+      (Date.parse(inc1.expiresAt) - Date.parse(inc1.createdAt)) / 60000,
+    );
+    check(
+      'the approval window actually used is the catalog window, not the default',
+      windowMin === 12,
     );
     check('reached the approval gate', inc1.status === 'awaiting-approval');
     check('an expiry deadline was set', Boolean(inc1.expiresAt));
@@ -468,6 +481,68 @@ async function main() {
 }
 
 await main();
+
+// The demo affordances must be refused when the flag is unset, on a server booted
+// without it. Asserting this on the main server is not possible: everything above
+// depends on per-request actors, so it runs with the flag on.
+async function checkDemoAffordancesAreOff() {
+  const port = PORT + 1;
+  const base = `http://localhost:${port}`;
+  const child = boot({ PORT: String(port), INCIDENT_DEMO_MODE: '' });
+  try {
+    if (!(await waitUp(base))) {
+      check('second server booted for the demo-mode check', false);
+      return;
+    }
+    const { incident } = await (
+      await fetch(`${base}/webhook/pagerduty`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(alarm('pagerduty-alarm.json')),
+      })
+    ).json();
+
+    const spoofed = await fetch(`${base}/api/approve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Incident-Actor': OUTSIDER,
+      },
+      body: JSON.stringify({ id: incident.id }),
+    });
+    check(
+      'the x-incident-actor header is refused when INCIDENT_DEMO_MODE is unset',
+      spoofed.status === 403,
+    );
+    check(
+      'the refusal explains the flag rather than failing opaquely',
+      /INCIDENT_DEMO_MODE/u.test(JSON.stringify(await spoofed.json())),
+    );
+
+    const forced = await fetch(`${base}/api/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: incident.id,
+        simulateFailure: 'draft-fix-pr',
+      }),
+    });
+    check(
+      'simulateFailure is refused when INCIDENT_DEMO_MODE is unset',
+      forced.status === 403,
+    );
+
+    const after = await (await fetch(`${base}/api/incidents`)).json();
+    check(
+      'a refused demo affordance leaves the incident untouched',
+      after.incidents[0].status === 'awaiting-approval',
+    );
+  } finally {
+    shutdown(child);
+  }
+}
+
+await checkDemoAffordancesAreOff();
 
 console.log('');
 if (failures.length > 0) {

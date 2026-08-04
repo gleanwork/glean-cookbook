@@ -38,7 +38,11 @@ function requireEnv(name: string): string {
 }
 
 function backend(): string {
-  return `https://${requireEnv('GLEAN_INSTANCE')}-be.glean.com`;
+  // GLEAN_SERVER_URL rather than an instance name: deriving the backend as
+  // `https://${instance}-be.glean.com` only holds for the default naming and
+  // silently points at nothing when a deployment differs. The dev site docs use
+  // GLEAN_SERVER_URL throughout for the same reason.
+  return requireEnv('GLEAN_SERVER_URL').replace(/\/$/u, '');
 }
 
 function headers(): Record<string, string> {

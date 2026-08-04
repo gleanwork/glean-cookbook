@@ -337,7 +337,8 @@
         state.config = await (await fetch('/api/config')).json();
         const c = state.config;
         $('banner').textContent =
-          `Signed in as ${c.actor}. Approval expiry ${Math.round(c.expiryMs / 60000)} min. ` +
+          `Signed in as ${c.actor}. Default approval expiry ${Math.round(c.defaultExpiryMs / 60000)} min ` +
+          `(per-service, from the catalog). ` +
           (c.fixtureMode
             ? 'Fixture mode — no credentials, no network.'
             : 'Live mode.');

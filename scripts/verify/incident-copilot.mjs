@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 // channel message is created anywhere.
 export const sideEffects = 'read-only';
 
-export const requiredEnv = ['GLEAN_API_TOKEN', 'GLEAN_INSTANCE'];
+export const requiredEnv = ['GLEAN_API_TOKEN', 'GLEAN_SERVER_URL'];
 
 const PORT = 3388;
 const BASE = `http://localhost:${PORT}`;
@@ -60,7 +60,8 @@ export async function setup(context) {
       ...process.env,
       PORT: String(PORT),
       GLEAN_USE_FIXTURE: 'false',
-      APPROVAL_EXPIRY_MS: '1800000',
+      // Per-request actors are a demo affordance now.
+      INCIDENT_DEMO_MODE: 'true',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });

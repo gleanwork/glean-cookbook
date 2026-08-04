@@ -613,7 +613,7 @@
       {
         "title": "Set credentials",
         "command": "cp .env.example .env",
-        "description": "Fill in GLEAN_INSTANCE and your own GLEAN_API_TOKEN. Optionally set GLEAN_AGENT_ID for the agent-orchestrated path, and INCIDENT_ACTOR to change who the dashboard acts as."
+        "description": "Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. Optionally set GLEAN_AGENT_ID for the agent-orchestrated path, and INCIDENT_ACTOR to change who the dashboard acts as."
       },
       { "title": "Run it", "command": "npm start" },
       {
