@@ -92,7 +92,7 @@ function assertFixtureMatchesOpenApi(fixture) {
 
 const CHECKS = [
   {
-    query: 'What should Alex do on day one?',
+    query: 'What should I do on my first day?',
     assert(result) {
       if (result.answer.trim().length === 0) return 'answer was empty';
       if (useFixture && result.citations.length === 0) {
@@ -107,7 +107,7 @@ const CHECKS = [
       if (!useFixture) {
         if (result.answer.trim().length === 0) return 'answer was empty';
         if (result.citations.length === 0) {
-          return 'citations were empty — expected hr-pto-policy';
+          return 'citations were empty — expected a PTO policy citation';
         }
       }
       return null;
