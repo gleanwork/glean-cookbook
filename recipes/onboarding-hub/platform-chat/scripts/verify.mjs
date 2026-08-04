@@ -196,6 +196,37 @@ async function main() {
   try {
     await waitForServer(Date.now() + START_TIMEOUT_MS);
 
+    if (useFixture) {
+      const checklistResponse = await fetch(`${BASE_URL}/api/checklist`);
+      if (!checklistResponse.ok) {
+        throw new Error(`/api/checklist returned ${checklistResponse.status}`);
+      }
+      const checklist = await checklistResponse.json();
+      if (checklist.source !== 'fixture') {
+        throw new Error(
+          `expected checklist.source "fixture", got ${JSON.stringify(checklist.source)}`,
+        );
+      }
+      if (!Array.isArray(checklist.steps) || checklist.steps.length < 1) {
+        throw new Error('fixture checklist.steps must be a non-empty array');
+      }
+      for (const step of checklist.steps) {
+        if (
+          typeof step?.id !== 'string' ||
+          typeof step?.title !== 'string' ||
+          typeof step?.askPrompt !== 'string' ||
+          typeof step?.group !== 'string'
+        ) {
+          throw new Error(
+            `fixture checklist step missing required fields: ${JSON.stringify(step)}`,
+          );
+        }
+      }
+      console.log(
+        `✓ /api/checklist fixture — ${checklist.steps.length} step(s)`,
+      );
+    }
+
     for (const check of CHECKS) {
       if (!useFixture && check.query.includes('PTO')) {
         // live-only check

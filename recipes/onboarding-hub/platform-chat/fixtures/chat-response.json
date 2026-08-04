@@ -10,17 +10,17 @@
       "content": [
         {
           "type": "output_text",
-          "text": "Alex still needs to complete security awareness training (due within 2 weeks of start), benefits enrollment (30 days from start), a 1:1 with Priya Natarajan on 2026-07-24, and the payments-service architecture walkthrough.",
+          "text": "On day one, finish IT setup (laptop, badge, accounts, Slack/email), meet your team, then schedule remaining HR and engineering steps such as security training, benefits enrollment, a manager 1:1, and an architecture walkthrough. Confirm due dates in your company's onboarding docs.",
           "annotations": [
             {
               "type": "citation",
               "sources": [
                 {
                   "type": "document",
-                  "document_id": "HR-ONBOARDING-ALEX-KIM",
-                  "title": "Onboarding Checklist — Alex Kim",
-                  "url": "https://portal.acme.internal/hr/onboarding/alex-kim",
-                  "datasource": "acme_hr"
+                  "document_id": "ONBOARDING-CHECKLIST-SAMPLE",
+                  "title": "Sample onboarding checklist (fixture)",
+                  "url": "https://example.invalid/onboarding/checklist-sample",
+                  "datasource": "fixture"
                 }
               ]
             }

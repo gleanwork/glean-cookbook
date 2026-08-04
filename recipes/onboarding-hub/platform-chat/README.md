@@ -1,16 +1,24 @@
 # Onboarding Hub — Platform Chat path
 
-Gamified onboarding checklist for Alex Kim plus Glean chat via Platform Chat (`POST /api/chat`).
+Checklist + progress + Glean chat via Platform Chat (`POST /api/chat`). Steps are
+server-owned: fixture sample, env/file config, or empty — not a hardcoded named hire.
 
 ## Run
 
 ```bash
 npm install
 cp .env.example .env   # fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL
+# Optional live steps:
+#   GLEAN_ONBOARDING_STEPS_FILE=./steps.example.json
+#   # or GLEAN_ONBOARDING_STEPS_JSON='[...]'
 npm start
 ```
 
 Open http://localhost:3000. The server holds your API token — never expose it in the browser.
+
+- **Fixture sample:** `GLEAN_USE_FIXTURE=true` loads `fixtures/steps.json` + `fixtures/chat-response.json` (labeled contract-only).
+- **Live steps:** set `GLEAN_ONBOARDING_STEPS_FILE` or `GLEAN_ONBOARDING_STEPS_JSON` (see `steps.example.json`).
+- **Empty:** without those env vars, `/api/checklist` returns `{ steps: [], source: "empty" }` and the UI asks you to configure steps.
 
 ## Verify
 

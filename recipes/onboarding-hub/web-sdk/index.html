@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Onboarding Hub — Acme Corp</title>
+    <title>Onboarding Hub</title>
     <style>
       :root {
-        --primary: #0e8c84;
+        --primary: #343ced;
         --text-primary: #1f2024;
         --text-secondary: #565a64;
         --bg-light: #f7f8fa;
@@ -207,9 +207,9 @@
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 64 64"
         role="img"
-        aria-label="Acme Corp"
+        aria-label="Glean"
       >
-        <rect width="64" height="64" rx="18" fill="#0E8C84"></rect>
+        <rect width="64" height="64" rx="18" fill="#343ced"></rect>
         <path
           fill-rule="evenodd"
           fill="#ffffff"
@@ -218,7 +218,7 @@
       </svg>
       <div>
         <h1>Onboarding Hub</h1>
-        <div class="subtitle">Welcome, Alex Kim · Software Engineer</div>
+        <div class="subtitle">Day-one checklist + Glean chat</div>
       </div>
     </header>
     <main class="layout">
@@ -226,16 +226,23 @@
         <div class="progress-row">
           <div class="progress-wrap">
             <div id="progress-ring"></div>
-            <span id="progress-label">56%</span>
+            <span id="progress-label">0%</span>
           </div>
           <div>
             <div>Your onboarding progress</div>
             <div id="milestone-badges"></div>
           </div>
         </div>
-        <h2 id="pending-heading">Still to do · 4</h2>
+        <p id="steps-source" class="subtitle"></p>
+        <p id="empty-checklist" class="subtitle" hidden>
+          Provide your own steps: copy
+          <code>public/steps.example.json</code> to
+          <code>public/steps.json</code>, or open with
+          <code>?fixture=1</code> for a labeled sample checklist.
+        </p>
+        <h2 id="pending-heading">Still to do · 0</h2>
         <ul id="pending-list"></ul>
-        <h2 id="done-heading">Completed · 5</h2>
+        <h2 id="done-heading">Completed · 0</h2>
         <ul id="done-list"></ul>
         <div class="footer-links">
           <button type="button" id="mark-all">Mark everything complete</button>
@@ -244,13 +251,13 @@
         </div>
       </section>
       <section class="card" id="done-panel" hidden>
-        <h2>You're all set, Alex!</h2>
+        <h2>You're all set!</h2>
         <p>
           You've completed every onboarding step. Here are a few places to go
           next:
         </p>
         <div class="done-resources">
-          <a href="#">Engineering portal — payments-service catalog</a>
+          <a href="#">Engineering portal</a>
           <a href="#">HR benefits guide</a>
           <a href="#">IT helpdesk FAQ</a>
           <a href="#">#new-hires Slack channel</a>

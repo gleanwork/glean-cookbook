@@ -35,7 +35,7 @@ Web SDK variant — checklist + renderChat
    ```
 
 5. **Verify**
-   Open the printed local URL. Confirm the checklist renders, click Ask about this on a step, and ask a first-day question for a cited answer.
+   Open the printed local URL (use ?fixture=1 or copy steps.example.json → steps.json). Confirm the checklist renders without a named-hire persona, click Ask about this on a step, and ask a first-day question for a cited answer.
 
 ### Platform Chat
 
@@ -54,7 +54,7 @@ Platform Chat variant — POST /api/chat, you own the UI
    ```
 
 3. **Set credentials**
-   Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Set GLEAN_USE_FIXTURE=true for contract-only verification without a live handler.
+   Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Optionally set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON for your checklist. Set GLEAN_USE_FIXTURE=true for contract-only verification without a live handler.
 
    ```bash
    cp .env.example .env
@@ -67,7 +67,7 @@ Platform Chat variant — POST /api/chat, you own the UI
    ```
 
 5. **Verify**
-   Runs fixture-mode contract verification. For live verification against your instance, set GLEAN_USE_FIXTURE=false and ensure the experimental /api/chat handler is enabled.
+   Runs fixture-mode contract verification (sample checklist + chat response). For live verification against your instance, set GLEAN_USE_FIXTURE=false, provide steps via env, and ensure the experimental /api/chat handler is enabled.
    ```bash
    npm run verify:fixture
    ```

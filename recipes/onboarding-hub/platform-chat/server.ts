@@ -35,10 +35,94 @@ interface PlatformChatResponse {
   output?: PlatformOutputMessage[];
 }
 
+type MilestoneGroup = 'it' | 'hr' | 'team' | 'engineering';
+
+interface OnboardingStep {
+  id: string;
+  title: string;
+  group: MilestoneGroup;
+  initiallyDone: boolean;
+  dueDate?: string;
+  askPrompt: string;
+}
+
+interface ChecklistPayload {
+  steps: OnboardingStep[];
+  source: 'fixture' | 'config' | 'empty';
+}
+
+const GROUPS = new Set<MilestoneGroup>(['it', 'hr', 'team', 'engineering']);
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const publicDir = path.join(__dirname, 'public');
+const fixturesDir = path.join(__dirname, 'fixtures');
+
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
   return value;
+}
+
+function useFixture(): boolean {
+  return process.env.GLEAN_USE_FIXTURE === 'true';
+}
+
+function parseSteps(raw: unknown): OnboardingStep[] {
+  if (!Array.isArray(raw)) return [];
+  const steps: OnboardingStep[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as Record<string, unknown>;
+    if (
+      typeof row.id !== 'string' ||
+      typeof row.title !== 'string' ||
+      typeof row.askPrompt !== 'string' ||
+      typeof row.group !== 'string' ||
+      !GROUPS.has(row.group as MilestoneGroup)
+    ) {
+      continue;
+    }
+    steps.push({
+      id: row.id,
+      title: row.title,
+      group: row.group as MilestoneGroup,
+      initiallyDone: Boolean(row.initiallyDone),
+      dueDate: typeof row.dueDate === 'string' ? row.dueDate : undefined,
+      askPrompt: row.askPrompt,
+    });
+  }
+  return steps;
+}
+
+function loadChecklist(): ChecklistPayload {
+  if (useFixture()) {
+    const fixturePath = path.join(fixturesDir, 'steps.json');
+    return {
+      steps: parseSteps(JSON.parse(fs.readFileSync(fixturePath, 'utf8'))),
+      source: 'fixture',
+    };
+  }
+
+  const inline = process.env.GLEAN_ONBOARDING_STEPS_JSON?.trim();
+  if (inline) {
+    return {
+      steps: parseSteps(JSON.parse(inline)),
+      source: 'config',
+    };
+  }
+
+  const stepsFile = process.env.GLEAN_ONBOARDING_STEPS_FILE?.trim();
+  if (stepsFile) {
+    const resolved = path.isAbsolute(stepsFile)
+      ? stepsFile
+      : path.join(process.cwd(), stepsFile);
+    return {
+      steps: parseSteps(JSON.parse(fs.readFileSync(resolved, 'utf8'))),
+      source: 'config',
+    };
+  }
+
+  return { steps: [], source: 'empty' };
 }
 
 function parsePlatformChatResponse(data: PlatformChatResponse): {
@@ -75,12 +159,8 @@ async function askPlatformChat(input: string): Promise<{
   answer: string;
   citations: Array<{ title: string; url: string }>;
 }> {
-  if (process.env.GLEAN_USE_FIXTURE === 'true') {
-    const fixturePath = path.join(
-      path.dirname(fileURLToPath(import.meta.url)),
-      'fixtures',
-      'chat-response.json',
-    );
+  if (useFixture()) {
+    const fixturePath = path.join(fixturesDir, 'chat-response.json');
     const fixture = JSON.parse(
       fs.readFileSync(fixturePath, 'utf8'),
     ) as PlatformChatResponse;
@@ -110,16 +190,33 @@ async function askPlatformChat(input: string): Promise<{
   }
 
   const data = (await response.json()) as PlatformChatResponse;
-  return parsePlatformChatResponse(data);
+  const parsed = parsePlatformChatResponse(data);
+  if (!parsed.answer.trim()) {
+    throw new Error(
+      'Glean returned no answer text. This happens when a chat run ends while ' +
+        'a server tool is still pending; the request succeeded but the answer ' +
+        'was never produced. Retrying usually works.',
+    );
+  }
+  return parsed;
 }
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const publicDir = path.join(__dirname, 'public');
 
 const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(fs.readFileSync(path.join(publicDir, 'index.html')));
+    return;
+  }
+
+  if (req.method === 'GET' && req.url === '/api/checklist') {
+    try {
+      const payload = loadChecklist();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(payload));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: (error as Error).message }));
+    }
     return;
   }
 
