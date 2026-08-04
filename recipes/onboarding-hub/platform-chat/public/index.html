@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Onboarding Hub — Acme Corp</title>
+    <style>
+      :root {
+        --primary: #0e8c84;
+        --text-primary: #1f2024;
+        --text-secondary: #565a64;
+        --bg-light: #f7f8fa;
+        --border-light: #e7e8ed;
+        --card-bg: #ffffff;
+        --success: #22c55e;
+        --warning-bg: #fff8e5;
+        --warning-border: #ffe0b3;
+        --font:
+          'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: var(--bg-light);
+        color: var(--text-primary);
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 24px;
+        background: #fff;
+        border-bottom: 1px solid var(--border-light);
+      }
+      .mark {
+        width: 28px;
+        height: 28px;
+      }
+      h1 {
+        font-size: 16px;
+        margin: 0;
+      }
+      .subtitle {
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        max-width: 1200px;
+        margin: 24px auto;
+        padding: 0 24px 48px;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 20px;
+      }
+      .progress-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      #progress-ring {
+        --progress: 56;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: conic-gradient(
+          var(--primary) calc(var(--progress) * 1%),
+          #e7e8ed 0
+        );
+        display: grid;
+        place-items: center;
+      }
+      #progress-ring::after {
+        content: '';
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #fff;
+      }
+      #progress-label {
+        position: absolute;
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .progress-wrap {
+        position: relative;
+        display: grid;
+        place-items: center;
+      }
+      .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        margin: 0 6px 6px 0;
+        border-radius: 999px;
+        font-size: 12px;
+        background: #eef0f3;
+        color: var(--text-secondary);
+      }
+      .badge.earned {
+        background: #e6f5f3;
+        color: #0a5f59;
+      }
+      .step {
+        display: flex;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f1f4;
+        list-style: none;
+      }
+      .step.done .step-title {
+        color: var(--text-secondary);
+        text-decoration: line-through;
+      }
+      .check {
+        color: var(--success);
+        font-weight: 700;
+      }
+      .due {
+        font-size: 12px;
+        color: #92670a;
+        background: #fff8e5;
+        padding: 2px 8px;
+        border-radius: 6px;
+        margin-left: 6px;
+      }
+      .step-actions {
+        margin-top: 6px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      button {
+        font-family: inherit;
+        cursor: pointer;
+        border-radius: 8px;
+        border: 1px solid var(--border-light);
+        background: #fff;
+        padding: 6px 12px;
+        font-size: 13px;
+      }
+      .ask-btn {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+      .mark-btn {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+      }
+      ul {
+        margin: 0;
+        padding: 0;
+      }
+      h2 {
+        font-size: 15px;
+        margin: 0 0 12px;
+      }
+      #chat-log {
+        height: 360px;
+        overflow-y: auto;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 12px;
+        background: #fff;
+        margin-bottom: 12px;
+      }
+      .msg {
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 14px;
+        white-space: pre-wrap;
+      }
+      .msg.user {
+        background: #e6f5f3;
+        margin-left: 24px;
+      }
+      .msg.assistant {
+        background: #f7f8fa;
+        margin-right: 24px;
+      }
+      .citations a {
+        display: block;
+        color: var(--primary);
+        font-size: 13px;
+        margin-top: 4px;
+      }
+      .escalate {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 10px;
+        background: var(--warning-bg);
+        border: 1px solid var(--warning-border);
+        font-size: 13px;
+      }
+      .escalate a {
+        color: var(--primary);
+        margin-right: 12px;
+      }
+      #ask-form {
+        display: flex;
+        gap: 8px;
+      }
+      #question {
+        flex: 1;
+        padding: 10px 12px;
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        font-size: 14px;
+      }
+      #ask-submit {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        padding: 10px 16px;
+      }
+      .footer-links {
+        margin-top: 12px;
+        font-size: 13px;
+      }
+      .footer-links button {
+        background: none;
+        border: none;
+        color: var(--primary);
+        padding: 0;
+        text-decoration: underline;
+      }
+      .done-resources a {
+        display: block;
+        margin: 8px 0;
+        color: var(--primary);
+      }
+      .path-note {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <svg
+        class="mark"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 64 64"
+        role="img"
+        aria-label="Acme Corp"
+      >
+        <rect width="64" height="64" rx="18" fill="#0E8C84"></rect>
+        <path
+          fill-rule="evenodd"
+          fill="#ffffff"
+          d="M32 13 L55 52 L9 52 Z M32 29 L43 46 L21 46 Z"
+        ></path>
+      </svg>
+      <div>
+        <h1>Onboarding Hub</h1>
+        <div class="subtitle">Welcome, Alex Kim · Software Engineer</div>
+      </div>
+    </header>
+    <main class="layout">
+      <section class="card" id="checklist-panel">
+        <div class="progress-row">
+          <div class="progress-wrap">
+            <div id="progress-ring"></div>
+            <span id="progress-label">56%</span>
+          </div>
+          <div>
+            <div>Your onboarding progress</div>
+            <div id="milestone-badges"></div>
+          </div>
+        </div>
+        <h2 id="pending-heading">Still to do · 4</h2>
+        <ul id="pending-list"></ul>
+        <h2 id="done-heading">Completed · 5</h2>
+        <ul id="done-list"></ul>
+        <div class="footer-links">
+          <button type="button" id="mark-all">Mark everything complete</button>
+          ·
+          <button type="button" id="reset-demo">Reset demo</button>
+        </div>
+      </section>
+      <section class="card" id="done-panel" hidden>
+        <h2>You're all set, Alex!</h2>
+        <p>
+          You've completed every onboarding step. Here are a few places to go
+          next:
+        </p>
+        <div class="done-resources">
+          <a href="#">Engineering portal — payments-service catalog</a>
+          <a href="#">HR benefits guide</a>
+          <a href="#">IT helpdesk FAQ</a>
+          <a href="#">#new-hires Slack channel</a>
+        </div>
+        <div class="footer-links">
+          <button type="button" id="reset-demo">Reset demo</button>
+        </div>
+      </section>
+      <section class="card" id="chat-panel">
+        <h2>Ask Glean</h2>
+        <div id="chat-log"></div>
+        <div id="escalate" class="escalate" hidden>
+          I couldn't find a confident answer. Try asking in
+          <a href="#">#hr-help</a> or <a href="#">#it-help</a> on Slack.
+        </div>
+        <form id="ask-form">
+          <input
+            id="question"
+            type="text"
+            placeholder="What should Alex do on day one?"
+            autocomplete="off"
+          />
+          <button type="submit" id="ask-submit">Ask</button>
+        </form>
+        <p class="path-note">
+          Path B — Platform Chat <code>POST /api/chat</code> with
+          <code>X-GLEAN-INCLUDE-EXPERIMENTAL=true</code>. Swap to
+          <code>glean.chat.create</code> when the SDK ships.
+        </p>
+      </section>
+    </main>
+    <script type="module">
+      const STEPS = [
+        {
+          id: 'laptop',
+          title: 'Laptop provisioned',
+          group: 'it',
+          initiallyDone: true,
+          askPrompt: 'What should I know about my Acme laptop setup?',
+        },
+        {
+          id: 'badge',
+          title: 'Badge access',
+          group: 'it',
+          initiallyDone: true,
+          askPrompt: 'Where do I pick up or activate my badge?',
+        },
+        {
+          id: 'it-account',
+          title: 'IT account setup',
+          group: 'it',
+          initiallyDone: true,
+          askPrompt: 'How do I finish IT account setup on day one?',
+        },
+        {
+          id: 'slack-email',
+          title: 'Slack and email access',
+          group: 'it',
+          initiallyDone: true,
+          askPrompt: 'How do I get into Slack and email on my first day?',
+        },
+        {
+          id: 'team-intro',
+          title: 'Team introduction meeting',
+          group: 'team',
+          initiallyDone: true,
+          askPrompt: 'Who should I meet on the payments platform team?',
+        },
+        {
+          id: 'security-training',
+          title: 'Security awareness training',
+          group: 'hr',
+          initiallyDone: false,
+          dueDate: '2026-07-20',
+          askPrompt:
+            'What is required for security awareness training and when is it due?',
+        },
+        {
+          id: 'benefits',
+          title: 'Benefits enrollment',
+          group: 'hr',
+          initiallyDone: false,
+          dueDate: '2026-08-05',
+          askPrompt:
+            'How do I enroll in Acme benefits and what is the deadline?',
+        },
+        {
+          id: 'manager-1on1',
+          title: '1:1 with Priya Natarajan',
+          group: 'team',
+          initiallyDone: false,
+          dueDate: '2026-07-24',
+          askPrompt: 'When is my 1:1 with Priya Natarajan scheduled?',
+        },
+        {
+          id: 'architecture-walkthrough',
+          title: 'Payments-service architecture walkthrough',
+          group: 'engineering',
+          initiallyDone: false,
+          askPrompt:
+            'What should I know about the payments-service architecture before the walkthrough?',
+        },
+      ];
+
+      const LABELS = {
+        it: 'IT setup',
+        hr: 'HR',
+        team: 'Team',
+        engineering: 'Engineering',
+      };
+      const STORAGE_KEY = 'acme.onboarding-hub.v1';
+
+      function loadCompleted() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return new Set();
+          return new Set(JSON.parse(raw).completed ?? []);
+        } catch {
+          return new Set();
+        }
+      }
+
+      function saveCompleted(ids) {
+        try {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({ completed: [...ids] }),
+          );
+        } catch {
+          // ignore
+        }
+      }
+
+      const completed = loadCompleted();
+      const chatLog = document.getElementById('chat-log');
+      const escalate = document.getElementById('escalate');
+      const questionInput = document.getElementById('question');
+
+      function isDone(step) {
+        return step.initiallyDone || completed.has(step.id);
+      }
+
+      function progressPercent() {
+        const done = STEPS.filter(isDone).length;
+        return Math.round((done / STEPS.length) * 100);
+      }
+
+      function milestoneStats() {
+        const stats = {
+          it: { done: 0, total: 0 },
+          hr: { done: 0, total: 0 },
+          team: { done: 0, total: 0 },
+          engineering: { done: 0, total: 0 },
+        };
+        for (const step of STEPS) {
+          stats[step.group].total += 1;
+          if (isDone(step)) stats[step.group].done += 1;
+        }
+        return stats;
+      }
+
+      function renderProgress() {
+        const percent = progressPercent();
+        document
+          .getElementById('progress-ring')
+          .style.setProperty('--progress', String(percent));
+        document.getElementById('progress-label').textContent = `${percent}%`;
+        const badges = document.getElementById('milestone-badges');
+        badges.innerHTML = Object.entries(milestoneStats())
+          .map(([group, { done, total }]) => {
+            const earned = done === total && total > 0;
+            return `<span class="badge${earned ? ' earned' : ''}">${LABELS[group]} ${done}/${total}</span>`;
+          })
+          .join('');
+      }
+
+      function stepRow(step) {
+        const done = isDone(step);
+        const due = step.dueDate
+          ? `<span class="due">Due ${step.dueDate}</span>`
+          : '';
+        const askButton = done
+          ? ''
+          : `<button type="button" class="ask-btn" data-ask="${encodeURIComponent(step.askPrompt)}">Ask about this</button>`;
+        const markButton = done
+          ? ''
+          : `<button type="button" class="mark-btn" data-mark="${step.id}">Mark complete</button>`;
+        return `<li class="step${done ? ' done' : ''}">
+          <span class="check">${done ? '✓' : '○'}</span>
+          <div class="step-body">
+            <div class="step-title">${step.title} ${due}</div>
+            <div class="step-actions">${askButton}${markButton}</div>
+          </div>
+        </li>`;
+      }
+
+      function renderChecklist() {
+        const pending = STEPS.filter((s) => !isDone(s));
+        const doneSteps = STEPS.filter(isDone);
+        const allDone = pending.length === 0;
+        document.getElementById('checklist-panel').hidden = allDone;
+        document.getElementById('done-panel').hidden = !allDone;
+        if (allDone) return;
+        document.getElementById('pending-list').innerHTML = pending
+          .map(stepRow)
+          .join('');
+        document.getElementById('done-list').innerHTML = doneSteps
+          .map(stepRow)
+          .join('');
+        document.getElementById('pending-heading').textContent =
+          `Still to do · ${pending.length}`;
+        document.getElementById('done-heading').textContent =
+          `Completed · ${doneSteps.length}`;
+      }
+
+      function appendMessage(role, text, citations = []) {
+        const div = document.createElement('div');
+        div.className = `msg ${role}`;
+        div.textContent = text;
+        if (citations.length) {
+          const cites = document.createElement('div');
+          cites.className = 'citations';
+          cites.innerHTML = citations
+            .map(
+              (c) =>
+                `<a href="${c.url}" target="_blank" rel="noreferrer">${c.title}</a>`,
+            )
+            .join('');
+          div.appendChild(cites);
+        }
+        chatLog.appendChild(div);
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+
+      async function askGlean(question) {
+        appendMessage('user', question);
+        escalate.hidden = true;
+        appendMessage('assistant', 'Asking Glean…');
+        const loading = chatLog.lastChild;
+
+        const response = await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question }),
+        });
+        const data = await response.json();
+        loading.remove();
+
+        if (data.error) {
+          appendMessage('assistant', `Error: ${data.error}`);
+          escalate.hidden = false;
+          return;
+        }
+
+        const answer = (data.answer ?? '').trim();
+        if (!answer || answer.length < 20) {
+          appendMessage(
+            'assistant',
+            "I don't have enough information to answer that confidently.",
+          );
+          escalate.hidden = false;
+          return;
+        }
+
+        appendMessage('assistant', answer, data.citations ?? []);
+      }
+
+      function rerender() {
+        renderProgress();
+        renderChecklist();
+      }
+
+      document.getElementById('ask-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const q = questionInput.value.trim();
+        if (!q) return;
+        questionInput.value = '';
+        askGlean(q);
+      });
+
+      document.body.addEventListener('click', (event) => {
+        const target = event.target;
+        const ask = target.closest('[data-ask]');
+        if (ask?.dataset.ask) {
+          const prompt = decodeURIComponent(ask.dataset.ask);
+          questionInput.value = prompt;
+          askGlean(prompt);
+          document.getElementById('chat-panel').scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+          });
+          return;
+        }
+        const mark = target.closest('[data-mark]');
+        if (mark?.dataset.mark) {
+          completed.add(mark.dataset.mark);
+          saveCompleted(completed);
+          rerender();
+          return;
+        }
+        if (target.id === 'mark-all') {
+          for (const step of STEPS) completed.add(step.id);
+          saveCompleted(completed);
+          rerender();
+        }
+        if (target.id === 'reset-demo') {
+          completed.clear();
+          saveCompleted(completed);
+          chatLog.innerHTML = '';
+          rerender();
+          askGlean('What should Alex do on day one?');
+        }
+      });
+
+      rerender();
+      askGlean('What should Alex do on day one?');
+    </script>
+  </body>
+</html>

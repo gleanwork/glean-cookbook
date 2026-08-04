@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Onboarding Hub — Acme Corp</title>
+    <style>
+      :root {
+        --primary: #0e8c84;
+        --text-primary: #1f2024;
+        --text-secondary: #565a64;
+        --bg-light: #f7f8fa;
+        --border-light: #e7e8ed;
+        --card-bg: #ffffff;
+        --success: #22c55e;
+        --font:
+          'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: var(--bg-light);
+        color: var(--text-primary);
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 24px;
+        background: #fff;
+        border-bottom: 1px solid var(--border-light);
+      }
+      .mark {
+        width: 28px;
+        height: 28px;
+      }
+      h1 {
+        font-size: 16px;
+        margin: 0;
+      }
+      .subtitle {
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        max-width: 1200px;
+        margin: 24px auto;
+        padding: 0 24px 48px;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 20px;
+      }
+      .progress-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      #progress-ring {
+        --progress: 56;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: conic-gradient(
+          var(--primary) calc(var(--progress) * 1%),
+          #e7e8ed 0
+        );
+        display: grid;
+        place-items: center;
+      }
+      #progress-ring::after {
+        content: '';
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #fff;
+      }
+      #progress-label {
+        position: absolute;
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .progress-wrap {
+        position: relative;
+        display: grid;
+        place-items: center;
+      }
+      .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        margin: 0 6px 6px 0;
+        border-radius: 999px;
+        font-size: 12px;
+        background: #eef0f3;
+        color: var(--text-secondary);
+      }
+      .badge.earned {
+        background: #e6f5f3;
+        color: #0a5f59;
+      }
+      .step {
+        display: flex;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f1f4;
+        list-style: none;
+      }
+      .step.done .step-title {
+        color: var(--text-secondary);
+        text-decoration: line-through;
+      }
+      .check {
+        color: var(--success);
+        font-weight: 700;
+      }
+      .due {
+        font-size: 12px;
+        color: #92670a;
+        background: #fff8e5;
+        padding: 2px 8px;
+        border-radius: 6px;
+        margin-left: 6px;
+      }
+      .step-actions {
+        margin-top: 6px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      button {
+        font-family: inherit;
+        cursor: pointer;
+        border-radius: 8px;
+        border: 1px solid var(--border-light);
+        background: #fff;
+        padding: 6px 12px;
+        font-size: 13px;
+      }
+      .ask-btn {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+      .mark-btn {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+      }
+      ul {
+        margin: 0;
+        padding: 0;
+      }
+      h2 {
+        font-size: 15px;
+        margin: 0 0 12px;
+      }
+      #chat {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: 520px;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+      }
+      .footer-links {
+        margin-top: 12px;
+        font-size: 13px;
+      }
+      .footer-links button {
+        background: none;
+        border: none;
+        color: var(--primary);
+        padding: 0;
+        text-decoration: underline;
+      }
+      .done-resources a {
+        display: block;
+        margin: 8px 0;
+        color: var(--primary);
+      }
+      .path-note {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <svg
+        class="mark"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 64 64"
+        role="img"
+        aria-label="Acme Corp"
+      >
+        <rect width="64" height="64" rx="18" fill="#0E8C84"></rect>
+        <path
+          fill-rule="evenodd"
+          fill="#ffffff"
+          d="M32 13 L55 52 L9 52 Z M32 29 L43 46 L21 46 Z"
+        ></path>
+      </svg>
+      <div>
+        <h1>Onboarding Hub</h1>
+        <div class="subtitle">Welcome, Alex Kim · Software Engineer</div>
+      </div>
+    </header>
+    <main class="layout">
+      <section class="card" id="checklist-panel">
+        <div class="progress-row">
+          <div class="progress-wrap">
+            <div id="progress-ring"></div>
+            <span id="progress-label">56%</span>
+          </div>
+          <div>
+            <div>Your onboarding progress</div>
+            <div id="milestone-badges"></div>
+          </div>
+        </div>
+        <h2 id="pending-heading">Still to do · 4</h2>
+        <ul id="pending-list"></ul>
+        <h2 id="done-heading">Completed · 5</h2>
+        <ul id="done-list"></ul>
+        <div class="footer-links">
+          <button type="button" id="mark-all">Mark everything complete</button>
+          ·
+          <button type="button" id="reset-demo">Reset demo</button>
+        </div>
+      </section>
+      <section class="card" id="done-panel" hidden>
+        <h2>You're all set, Alex!</h2>
+        <p>
+          You've completed every onboarding step. Here are a few places to go
+          next:
+        </p>
+        <div class="done-resources">
+          <a href="#">Engineering portal — payments-service catalog</a>
+          <a href="#">HR benefits guide</a>
+          <a href="#">IT helpdesk FAQ</a>
+          <a href="#">#new-hires Slack channel</a>
+        </div>
+        <div class="footer-links">
+          <button type="button" id="reset-demo">Reset demo</button>
+        </div>
+      </section>
+      <section class="card" id="chat-panel">
+        <h2>Ask Glean</h2>
+        <div id="chat"></div>
+        <p class="path-note">
+          Path A — Web SDK <code>renderChat</code> (SSO cookie). Click
+          <strong>Ask about this</strong> on any step to seed a contextual
+          question.
+        </p>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
