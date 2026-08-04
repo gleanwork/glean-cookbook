@@ -127,6 +127,7 @@
   "goDependency": false,
   "featured": true,
   "tags": [
+    "flagship",
     "incident-response",
     "human-in-the-loop",
     "governed-actions",
