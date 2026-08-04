@@ -1,21 +1,25 @@
 # Acceptance map (PACT-450)
 
-Maps each showpiece state on the Globex account page to Path A (`platform-search-chat`) and Path B (`platform-agents`).
+Maps each showpiece state on the account page to Path A (`platform-search-chat`)
+and Path B (`platform-agents`). The account name and every figure come from the
+reader's own instance via `GLEAN_ACCOUNT_NAME` + retrieval — never from a fixed
+demo corpus. Fixture mode uses labeled sample data for contract checks only.
 
-| #   | Showpiece state                        | Path A (Search + Chat)                                               | Path B (Agents)                                                                                             | Demo query / corpus                                                     |
-| --- | -------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| 1   | KPI header (ARR, renewal, risk, owner) | Seeded from Globex corpus facts; labeled demo metadata in UI         | Same seeded KPIs                                                                                            | `sales-globex-account-notes`, `sales-globex-renewal-status`             |
-| 2   | Three source sections                  | Parallel `glean.search.query` for account notes / renewal / security | Same Search tiles (Agents path still uses Search for tiles) **or** tiles from fixtures; synthesis via agent | Three Globex docs                                                       |
-| 3   | Journey summary                        | One `POST /api/chat` with account-framed prompt                      | `glean.agents.createRun` with account-framed USER message                                                   | Customer summary / journey                                              |
-| 4   | Saved prompts                          | Buttons fire Chat with injected "Globex"                             | Buttons fire `createRun` with prompt template                                                               | "Customer summary for Globex"; "What are the renewal risks for Globex?" |
-| 5   | Drill-in follow-up                     | Free-form Chat keeps Globex in prompt framing                        | Free-form `createRun` with same framing                                                                     | "What's the status of the Globex renewal?"                              |
-| 6   | Missing evidence                       | Empty tile → "no recent activity"                                    | Same empty-tile UX; agent missing/unauthorized → explicit error card                                        | Off-corpus or empty search fixture                                      |
-| 7   | Negative facts vs missing              | Low risk from renewal doc is a **fact**, not empty                   | Same                                                                                                        | `sales-globex-renewal-status` ("Risk level: low")                       |
+| #   | Showpiece state                        | Path A (Search + Chat)                                                          | Path B (Agents)                                                                                  | Demo query / note                                     |
+| --- | -------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| 1   | KPI header (ARR, renewal, risk, owner) | Blank/`—` until a retrieved doc supports the field; fixture fills sample values | Same                                                                                             | Live: retrieval only; fixture: sample account         |
+| 2   | Three source sections                  | Parallel `glean.search.query` for notes / renewal / security framed by account  | Same Search tiles (Agents path still uses Search for tiles) **or** fixtures; synthesis via agent | Queries inject `GLEAN_ACCOUNT_NAME`                   |
+| 3   | Journey summary                        | One `POST /api/chat` with account-framed prompt                                 | `glean.agents.createRun` with account-framed USER message                                        | "Give me a customer summary"                          |
+| 4   | Saved prompts                          | Buttons fire Chat with account-framed prompts                                   | Buttons fire `createRun` with the same prompts                                                   | Customer summary; renewal risks; renewal status       |
+| 5   | Drill-in follow-up                     | Free-form Chat keeps account framing                                            | Free-form `createRun` with same framing                                                          | "What's the status of our renewal with that account?" |
+| 6   | Missing evidence                       | Empty tile → "no recent activity"                                               | Same empty-tile UX; agent missing/unauthorized → explicit error card                             | Off-corpus query or empty search                      |
+| 7   | Empty / unfinished synthesis           | HTTP 200 with no `output_text` → error (retry), not a blank success             | Empty GLEAN_AI text → error                                                                      | Matches company-answers live-verify lesson            |
+| 8   | Negative facts vs missing              | A cited "low risk" (or similar) is a **fact**; blank KPI is missing evidence    | Same                                                                                             | Must not invent risk the sources do not support       |
 
 ## Demo queries (registry)
 
-| Query                                    | Expected behavior                                                 | Corpus                        |
-| ---------------------------------------- | ----------------------------------------------------------------- | ----------------------------- |
-| What's the status of the Globex renewal? | Cites renewal date, on-track status, open items                   | `sales-globex-renewal-status` |
-| Customer summary for Globex              | Synthesis citing account notes + renewal                          | notes + renewal               |
-| What are the renewal risks for Globex?   | Cites open items (DPA, procurement); risk stated as low is a fact | `sales-globex-renewal-status` |
+| Query                                               | Expected behavior                                                                        |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| What's the status of our renewal with that account? | Non-empty cited answer about the chosen account; substitute the name when asking         |
+| Give me a customer summary                          | Synthesizes across more than one source with a citation per claim                        |
+| What are the renewal risks?                         | Names risks grounded in citations, or says it has none — must not infer unsupported risk |

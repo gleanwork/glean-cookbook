@@ -26,11 +26,14 @@ interface Tile {
 interface AccountPayload {
   account: {
     name: string;
-    owner: string;
-    arr: string;
-    renewalDate: string;
-    risk: string;
-    seats: string;
+    // Nullable on purpose: on the live path these are only populated when a
+    // retrieved document supports them, and a blank KPI is truthful where an
+    // assumed one is not. The fixture path fills them all in.
+    owner: string | null;
+    arr: string | null;
+    renewalDate: string | null;
+    risk: string | null;
+    seats: string | null;
     kpiNote: string;
   };
   tiles: Tile[];
@@ -56,34 +59,55 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
 const fixturesDir = path.join(__dirname, 'fixtures');
 
-const TILE_QUERIES: Array<{ id: string; label: string; query: string }> = [
-  {
-    id: 'account-notes',
-    label: 'Account notes',
-    query: 'Globex account notes ARR seats contacts',
-  },
-  {
-    id: 'renewal',
-    label: 'Renewal status',
-    query: 'Globex renewal status Q3 2026',
-  },
-  {
-    id: 'security',
-    label: 'Security questionnaire',
-    query: 'Globex security questionnaire',
-  },
-];
+// The account name is the reader's, so the tile queries are built from it. An
+// earlier version searched for a fixed demo account, which returns nothing on any
+// instance but the one it was written against.
+function accountName(): string {
+  return requireEnv('GLEAN_ACCOUNT_NAME');
+}
 
-const SEEDED_ACCOUNT = {
-  name: 'Globex',
-  owner: 'Sam Reyes',
-  arr: '$840,000',
-  renewalDate: '2026-09-30',
-  risk: 'low',
-  seats: '1,200',
-  kpiNote:
-    'Demo KPIs grounded in sales-globex-account-notes + sales-globex-renewal-status',
-};
+function tileQueries(account: string): Array<{
+  id: string;
+  label: string;
+  query: string;
+}> {
+  return [
+    {
+      id: 'account-notes',
+      label: 'Account notes',
+      query: `${account} account notes ARR seats contacts`,
+    },
+    {
+      id: 'renewal',
+      label: 'Renewal status',
+      query: `${account} renewal status`,
+    },
+    {
+      id: 'security',
+      label: 'Security questionnaire',
+      query: `${account} security questionnaire`,
+    },
+  ];
+}
+
+// Only the name is known up front. Every other field stays null unless a
+// retrieved document supports it: an unsourced figure on a page about a named
+// customer is the worst output this app can produce, and a blank field is a
+// truthful one. The fixture path supplies a fully populated account so the layout
+// is still reviewable offline.
+function unpopulatedAccount(account: string) {
+  return {
+    name: account,
+    owner: null,
+    arr: null,
+    renewalDate: null,
+    risk: null,
+    seats: null,
+    kpiNote:
+      'Fields stay blank until a cited document supports them. Populate them from ' +
+      'your own retrieval rather than assuming a shape.',
+  };
+}
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -154,7 +178,7 @@ function createGlean(): Glean {
   process.env.X_GLEAN_INCLUDE_EXPERIMENTAL ??= 'true';
   return new Glean({
     apiToken: requireEnv('GLEAN_API_TOKEN'),
-    instance: requireEnv('GLEAN_INSTANCE'),
+    serverURL: requireEnv('GLEAN_SERVER_URL'),
   });
 }
 
@@ -169,10 +193,10 @@ async function runAgent(question: string): Promise<{
   const agentId = requireEnv('GLEAN_AGENT_ID');
   const glean = createGlean();
   const prompt =
-    `Produce a QBR-ready account brief section for Globex. ` +
-    `Use only Acme sales knowledge. Cite every claim with markdown ` +
-    `links like [Document title](https://portal.acme.internal/...). ` +
-    `Question: ${question}`;
+    `Produce a QBR-ready account brief section for the ${accountName()} ` +
+    `account. Use only this company's own indexed knowledge. Cite every claim ` +
+    `with markdown links to the documents you used. If the sources do not cover ` +
+    `something, say so rather than inferring it. `;
 
   const result = await glean.agents.createRun(
     {
@@ -193,7 +217,14 @@ async function runAgent(question: string): Promise<{
     );
   }
 
-  return parseAgentResponse(result);
+  const parsed = parseAgentResponse(result);
+  if (!parsed.answer.trim()) {
+    throw new Error(
+      'Glean returned no agent answer text. The run may have finished without ' +
+        'a GLEAN_AI message; retrying usually works.',
+    );
+  }
+  return parsed;
 }
 
 async function searchTile(
@@ -230,10 +261,11 @@ async function loadAccount(): Promise<AccountPayload> {
   }
 
   const glean = createGlean();
+  const account = accountName();
   const tiles = await Promise.all(
-    TILE_QUERIES.map((tile) => searchTile(glean, tile)),
+    tileQueries(account).map((tile) => searchTile(glean, tile)),
   );
-  return { account: SEEDED_ACCOUNT, tiles };
+  return { account: unpopulatedAccount(account), tiles };
 }
 
 const server = http.createServer(async (req, res) => {

@@ -52,11 +52,14 @@ interface Tile {
 interface AccountPayload {
   account: {
     name: string;
-    owner: string;
-    arr: string;
-    renewalDate: string;
-    risk: string;
-    seats: string;
+    // Nullable on purpose: on the live path these are only populated when a
+    // retrieved document supports them, and a blank KPI is truthful where an
+    // assumed one is not. The fixture path fills them all in.
+    owner: string | null;
+    arr: string | null;
+    renewalDate: string | null;
+    risk: string | null;
+    seats: string | null;
     kpiNote: string;
   };
   tiles: Tile[];
@@ -66,34 +69,55 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
 const fixturesDir = path.join(__dirname, 'fixtures');
 
-const TILE_QUERIES: Array<{ id: string; label: string; query: string }> = [
-  {
-    id: 'account-notes',
-    label: 'Account notes',
-    query: 'Globex account notes ARR seats contacts',
-  },
-  {
-    id: 'renewal',
-    label: 'Renewal status',
-    query: 'Globex renewal status Q3 2026',
-  },
-  {
-    id: 'security',
-    label: 'Security questionnaire',
-    query: 'Globex security questionnaire',
-  },
-];
+// The account name is the reader's, so the tile queries are built from it. An
+// earlier version searched for a fixed demo account, which returns nothing on any
+// instance but the one it was written against.
+function accountName(): string {
+  return requireEnv('GLEAN_ACCOUNT_NAME');
+}
 
-const SEEDED_ACCOUNT = {
-  name: 'Globex',
-  owner: 'Sam Reyes',
-  arr: '$840,000',
-  renewalDate: '2026-09-30',
-  risk: 'low',
-  seats: '1,200',
-  kpiNote:
-    'Demo KPIs grounded in sales-globex-account-notes + sales-globex-renewal-status',
-};
+function tileQueries(account: string): Array<{
+  id: string;
+  label: string;
+  query: string;
+}> {
+  return [
+    {
+      id: 'account-notes',
+      label: 'Account notes',
+      query: `${account} account notes ARR seats contacts`,
+    },
+    {
+      id: 'renewal',
+      label: 'Renewal status',
+      query: `${account} renewal status`,
+    },
+    {
+      id: 'security',
+      label: 'Security questionnaire',
+      query: `${account} security questionnaire`,
+    },
+  ];
+}
+
+// Only the name is known up front. Every other field stays null unless a
+// retrieved document supports it: an unsourced figure on a page about a named
+// customer is the worst output this app can produce, and a blank field is a
+// truthful one. The fixture path supplies a fully populated account so the layout
+// is still reviewable offline.
+function unpopulatedAccount(account: string) {
+  return {
+    name: account,
+    owner: null,
+    arr: null,
+    renewalDate: null,
+    risk: null,
+    seats: null,
+    kpiNote:
+      'Fields stay blank until a cited document supports them. Populate them from ' +
+      'your own retrieval rather than assuming a shape.',
+  };
+}
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -150,9 +174,8 @@ async function askPlatformChat(input: string): Promise<{
     return parsePlatformChatResponse(loadChatFixture(input));
   }
 
-  const instance = requireEnv('GLEAN_INSTANCE');
+  const backend = requireEnv('GLEAN_SERVER_URL').replace(/\/$/, '');
   const token = requireEnv('GLEAN_API_TOKEN');
-  const backend = `https://${instance}-be.glean.com`;
 
   const response = await fetch(`${backend}/api/chat`, {
     method: 'POST',
@@ -170,7 +193,18 @@ async function askPlatformChat(input: string): Promise<{
   }
 
   const data = (await response.json()) as PlatformChatResponse;
-  return parsePlatformChatResponse(data);
+  const parsed = parsePlatformChatResponse(data);
+  // Platform Chat can return HTTP 200 with the run unfinished (empty
+  // output_text, trailing tool activity, no error field). Treat that as
+  // failure so the UI does not render a blank "success".
+  if (!parsed.answer.trim()) {
+    throw new Error(
+      'Glean returned no answer text. This happens when a chat run ends while ' +
+        'a server tool is still pending; the request succeeded but the answer ' +
+        'was never produced. Retrying usually works.',
+    );
+  }
+  return parsed;
 }
 
 async function searchTile(
@@ -209,21 +243,25 @@ async function loadAccount(): Promise<AccountPayload> {
   process.env.X_GLEAN_INCLUDE_EXPERIMENTAL ??= 'true';
   const glean = new Glean({
     apiToken: requireEnv('GLEAN_API_TOKEN'),
-    instance: requireEnv('GLEAN_INSTANCE'),
+    serverURL: requireEnv('GLEAN_SERVER_URL'),
   });
 
+  const account = accountName();
   const tiles = await Promise.all(
-    TILE_QUERIES.map((tile) => searchTile(glean, tile)),
+    tileQueries(account).map((tile) => searchTile(glean, tile)),
   );
 
-  return { account: SEEDED_ACCOUNT, tiles };
+  return { account: unpopulatedAccount(account), tiles };
 }
 
 function frameAccountPrompt(question: string): string {
+  // Name the account, and nothing else. An earlier version asserted a persona and a
+  // company, which invites the model to answer about them rather than about whatever
+  // the reader's own content says.
   return (
-    `You are helping Sam Reyes prepare for the Globex account. ` +
-    `Answer using only Acme sales knowledge about Globex. ` +
-    `Cite sources. Question: ${question}`
+    `Answer about the ${accountName()} account using only this company's own ` +
+    `indexed knowledge. Cite every claim. If the sources do not cover it, say so ` +
+    `rather than inferring. Question: ${question}`
   );
 }
 
@@ -255,9 +293,10 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: 'question is required' }));
         return;
       }
-      const framed = frameAccountPrompt(question);
+      // Frame lazily: the framing names the account, which is only configured for
+      // live runs, so building it eagerly makes fixture mode require live env.
       const { answer, citations } = await askPlatformChat(
-        useFixture() ? question : framed,
+        useFixture() ? question : frameAccountPrompt(question),
       );
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ answer, citations }));

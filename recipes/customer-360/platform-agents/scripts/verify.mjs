@@ -10,7 +10,7 @@ const useFixture = process.env.GLEAN_USE_FIXTURE !== 'false';
 
 const CHECKS = [
   {
-    query: "What's the status of the Globex renewal?",
+    query: "What's the status of our renewal with that account?",
     assert(result) {
       if (!result.answer?.trim()) return 'answer was empty';
       if (useFixture && !result.citations?.length) {
@@ -26,7 +26,7 @@ const CHECKS = [
     },
   },
   {
-    query: 'Customer summary for Globex',
+    query: 'Give me a customer summary',
     assert(result) {
       if (!result.answer?.trim()) return 'answer was empty';
       if (useFixture && result.citations.length < 1) {
@@ -36,7 +36,7 @@ const CHECKS = [
     },
   },
   {
-    query: 'What are the renewal risks for Globex?',
+    query: 'What are the renewal risks?',
     assert(result) {
       if (!result.answer?.trim()) return 'answer was empty';
       if (useFixture && !/low|DPA|procurement/i.test(result.answer)) {
@@ -106,7 +106,7 @@ async function main() {
     }
     if (!account.account?.name || account.tiles?.length !== 3) {
       failed = true;
-      console.error('✗ /api/account: expected Globex + 3 tiles');
+      console.error('✗ /api/account: expected an account name and 3 tiles');
     } else {
       console.log(
         `✓ /api/account — ${account.account.name}, ${account.tiles.length} tiles`,

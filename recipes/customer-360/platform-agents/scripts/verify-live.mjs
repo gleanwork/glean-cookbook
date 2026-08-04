@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Optional live verification: confirm agent exists/schemas, then createRun.
-// Requires GLEAN_INSTANCE, GLEAN_API_TOKEN, GLEAN_AGENT_ID.
+// Requires GLEAN_SERVER_URL, GLEAN_API_TOKEN, GLEAN_AGENT_ID, GLEAN_ACCOUNT_NAME.
 // Does not start the HTTP server — exercises the SDK contract directly.
 
 import 'dotenv/config';
@@ -20,7 +20,7 @@ async function main() {
   const agentId = requireEnv('GLEAN_AGENT_ID');
   const glean = new Glean({
     apiToken: requireEnv('GLEAN_API_TOKEN'),
-    instance: requireEnv('GLEAN_INSTANCE'),
+    serverURL: requireEnv('GLEAN_SERVER_URL'),
   });
 
   console.log(`Checking agent ${agentId}…`);
@@ -52,7 +52,7 @@ async function main() {
           role: 'USER',
           content: [
             {
-              text: "What's the status of the Globex renewal?",
+              text: "What's the status of our renewal with that account?",
               type: 'text',
             },
           ],

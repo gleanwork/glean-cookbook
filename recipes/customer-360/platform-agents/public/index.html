@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Account Journey — Globex — Acme Corp</title>
+    <title>Account Journey</title>
     <style>
       :root {
         --primary: #0e8c84;
@@ -205,14 +205,14 @@
       <div class="mark" aria-hidden="true">A</div>
       <div>
         <h1>Account Journey</h1>
-        <div class="subtitle">Sam Reyes · Globex</div>
+        <div class="subtitle" data-account-subtitle></div>
       </div>
       <span class="path-badge">Path B · Platform Agents</span>
     </header>
 
     <main>
       <section class="card" id="kpi-card">
-        <h2>Globex</h2>
+        <h2 data-account-name></h2>
         <div class="kpi-grid" id="kpi-grid"></div>
         <p class="kpi-note" id="kpi-note"></p>
       </section>
@@ -222,20 +222,20 @@
       <section class="card">
         <h2>Journey summary</h2>
         <div class="actions">
-          <button type="button" data-prompt="Customer summary for Globex">
+          <button type="button" data-prompt="Give me a customer summary">
             Customer summary
           </button>
           <button
             type="button"
             class="secondary"
-            data-prompt="What are the renewal risks for Globex?"
+            data-prompt="What are the renewal risks?"
           >
             Renewal risks
           </button>
           <button
             type="button"
             class="secondary"
-            data-prompt="What's the status of the Globex renewal?"
+            data-prompt="What's the status of our renewal with that account?"
           >
             Renewal status
           </button>
@@ -246,15 +246,15 @@
       </section>
 
       <section class="card">
-        <h2>Ask about Globex</h2>
+        <h2>Ask about this account</h2>
         <div id="chat-answer"></div>
         <div class="citations" id="chat-citations"></div>
         <div class="chat-row">
           <input
             id="chat-input"
             type="text"
-            placeholder="Ask a follow-up about Globex…"
-            value="What's the status of the Globex renewal?"
+            placeholder="Ask a follow-up about this account…"
+            value="What's the status of our renewal with that account?"
           />
           <button type="button" id="chat-send">Ask</button>
         </div>
@@ -427,11 +427,24 @@
         });
 
       loadAccount()
-        .then(() => runJourney('Customer summary for Globex'))
+        .then(() => runJourney('Customer summary for this account'))
         .catch((error) => {
           document.getElementById('journey-error').hidden = false;
           document.getElementById('journey-error').textContent = error.message;
         });
+
+      // The account name is supplied by the server from GLEAN_ACCOUNT_NAME, so the
+      // page never claims to be about an account it was not pointed at.
+      function renderAccountIdentity(account) {
+        const nameEl = document.querySelector('[data-account-name]');
+        if (nameEl) nameEl.textContent = account.name ?? '';
+        const subtitleEl = document.querySelector('[data-account-subtitle]');
+        if (subtitleEl) {
+          subtitleEl.textContent = [account.owner, account.name]
+            .filter(Boolean)
+            .join(' · ');
+        }
+      }
     </script>
   </body>
 </html>

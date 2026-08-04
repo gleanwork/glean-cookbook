@@ -3,22 +3,27 @@
 **Status:** Locked for implementation.  
 **FYI:** Platform-only surfaces (Search + Chat + Agents). No Client `/rest/api/v1/*`.
 
+The page is built around an account the reader picks (`GLEAN_ACCOUNT_NAME`).
+Every figure on the KPI header comes from retrieval or stays blank — nothing
+hardcodes ARR, seats, renewal date, owner, or risk.
+
 ## Locked decisions
 
-| Field                           | Value                                                                                                      |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `id`                            | `customer-360`                                                                                             |
-| `status` / `category` / `level` | `showcase` / `workflow` / Intermediate                                                                     |
-| Dual impl                       | Path A Platform Search + Chat · Path B Platform Agents                                                     |
-| `surfaces`                      | `["platform-api"]`                                                                                         |
-| `requiredScopes`                | `["SEARCH", "CHAT", "AGENTS"]`                                                                             |
-| `authMethod`                    | `["client-api-oauth-or-token"]`                                                                            |
-| `combines`                      | permissions-aware-rag (Platform Search); onboarding-hub Platform Chat pattern; Platform Agents `createRun` |
-| Demo queries                    | Globex renewal status; Customer summary; Renewal risks                                                     |
-| Brand                           | Acme teal `#0E8C84`, Sam Reyes / Globex                                                                    |
-| Code layout                     | `recipes/customer-360/{platform-search-chat,platform-agents}/`                                             |
-| `goDependency` / `featured`     | both `false`                                                                                               |
-| Pinned SDK                      | `@gleanwork/api-client@0.18.0`                                                                             |
+| Field                           | Value                                                                                                |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `id`                            | `customer-360`                                                                                       |
+| `status` / `category` / `level` | `showcase` / `workflow` / Intermediate                                                               |
+| Dual impl                       | Path A Platform Search + Chat · Path B Platform Agents                                               |
+| `surfaces`                      | `["platform-api"]`                                                                                   |
+| `requiredScopes`                | `["SEARCH", "CHAT", "AGENTS"]`                                                                       |
+| `authMethod`                    | `["client-api-oauth-or-token"]`                                                                      |
+| `combines`                      | permissions-aware-retrieval (Platform Search); onboarding-hub Platform Chat pattern; Platform Agents |
+| Demo queries                    | Renewal status; customer summary; renewal risks (account implicit; substitute the chosen name)       |
+| Brand                           | Glean Blue `#343ced`, real logomark; account supplied via `GLEAN_ACCOUNT_NAME`                       |
+| Code layout                     | `recipes/customer-360/{platform-search-chat,platform-agents}/`                                       |
+| Env                             | `GLEAN_SERVER_URL`, `GLEAN_API_TOKEN`, `GLEAN_ACCOUNT_NAME` (+ `GLEAN_AGENT_ID` for Path B)          |
+| `goDependency` / `featured`     | both `false`                                                                                         |
+| Pinned SDK                      | `@gleanwork/api-client@0.18.0`                                                                       |
 
 ## Contracts (verified against OpenAPI + SDK 0.18.0)
 
@@ -32,7 +37,9 @@
 
 - Request: `{ input, stream: false, store: true }`
 - Response: `output[].content[]` where `type === 'output_text'` → `text` + `annotations[].sources[]` (`title`, `url`)
+- Empty `output_text` after HTTP 200 is treated as failure (unfinished run), not a blank success
 - **Not** Client API `glean.client.chat.create` / fragment parsing
+- Backend URL from `GLEAN_SERVER_URL` (not derived from an instance name)
 
 ### Agents parse path
 
@@ -43,16 +50,15 @@
 ### Security
 
 Tokens and Glean calls stay server-side. Browser only hits local recipe routes.
+No impersonation headers (`X-Glean-ActAs` / `X-Glean-Act-As`).
 
-## Corpus backing
+## Content backing
 
-Existing Globex docs only (no invented Gong/Zendesk sources):
+Live: whatever the reader's instance already knows about `GLEAN_ACCOUNT_NAME`.
 
-- `sales-globex-account-notes` — account overview tile / KPI grounding
-- `sales-globex-renewal-status` — renewal tile + renewal demo queries
-- `sales-globex-security-questionnaire` — security tile
-
-Persona: `sam.reyes@acme.example.com` (Account Executive).
+Fixture-only (`GLEAN_USE_FIXTURE=true`): sample account payloads under each path's
+`fixtures/` directory for contract verification. Those files are not a corpus
+prerequisite and must not be treated as runtime defaults.
 
 ## Non-goals (Extensions only)
 

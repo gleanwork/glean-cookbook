@@ -1,5 +1,5 @@
 {
-  "What's the status of the Globex renewal?": {
+  "What's the status of our renewal with that account?": {
     "id": "chatcmpl-customer-360-renewal",
     "object": "response",
     "status": "completed",
@@ -17,8 +17,8 @@
                 "sources": [
                   {
                     "type": "document",
-                    "title": "Globex — Renewal Status (Q3 2026)",
-                    "url": "https://portal.acme.internal/sales/accounts/globex/renewal-q3-2026"
+                    "title": "Globex \u2014 Renewal Status (Q3 2026)",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/renewal-q3-2026"
                   }
                 ]
               }
@@ -28,7 +28,7 @@
       }
     ]
   },
-  "Customer summary for Globex": {
+  "Give me a customer summary": {
     "id": "chatcmpl-customer-360-summary",
     "object": "response",
     "status": "completed",
@@ -39,20 +39,20 @@
         "content": [
           {
             "type": "output_text",
-            "text": "Globex is Acme's largest account (ARR $840,000, 1,200 seats), owned by Sam Reyes. Renewal is 2026-09-30 and on track at low risk, with a DPA and multi-year quote still open. Security questionnaire responses were accepted in June 2026.",
+            "text": "Globex is Sample Corp's largest account (ARR $840,000, 1,200 seats), owned by Sam Reyes. Renewal is 2026-09-30 and on track at low risk, with a DPA and multi-year quote still open. Security questionnaire responses were accepted in June 2026.",
             "annotations": [
               {
                 "type": "citation",
                 "sources": [
                   {
                     "type": "document",
-                    "title": "Globex — Account Notes",
-                    "url": "https://portal.acme.internal/sales/accounts/globex"
+                    "title": "Globex \u2014 Account Notes",
+                    "url": "https://portal.sample.internal/sales/accounts/globex"
                   },
                   {
                     "type": "document",
-                    "title": "Globex — Renewal Status (Q3 2026)",
-                    "url": "https://portal.acme.internal/sales/accounts/globex/renewal-q3-2026"
+                    "title": "Globex \u2014 Renewal Status (Q3 2026)",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/renewal-q3-2026"
                   }
                 ]
               }
@@ -62,7 +62,7 @@
       }
     ]
   },
-  "What are the renewal risks for Globex?": {
+  "What are the renewal risks?": {
     "id": "chatcmpl-customer-360-risks",
     "object": "response",
     "status": "completed",
@@ -73,15 +73,15 @@
         "content": [
           {
             "type": "output_text",
-            "text": "Overall risk level is low — no competitive evaluation in progress. Watch items: the updated data processing addendum still in legal, and procurement's request for a multi-year discount quote.",
+            "text": "Overall risk level is low \u2014 no competitive evaluation in progress. Watch items: the updated data processing addendum still in legal, and procurement's request for a multi-year discount quote.",
             "annotations": [
               {
                 "type": "citation",
                 "sources": [
                   {
                     "type": "document",
-                    "title": "Globex — Renewal Status (Q3 2026)",
-                    "url": "https://portal.acme.internal/sales/accounts/globex/renewal-q3-2026"
+                    "title": "Globex \u2014 Renewal Status (Q3 2026)",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/renewal-q3-2026"
                   }
                 ]
               }
@@ -102,15 +102,15 @@
         "content": [
           {
             "type": "output_text",
-            "text": "Globex is Acme's largest customer account owned by Sam Reyes, with ARR $840,000 and renewal on 2026-09-30 (on track, low risk).",
+            "text": "Globex is Sample Corp's largest customer account owned by Sam Reyes, with ARR $840,000 and renewal on 2026-09-30 (on track, low risk).",
             "annotations": [
               {
                 "type": "citation",
                 "sources": [
                   {
                     "type": "document",
-                    "title": "Globex — Account Notes",
-                    "url": "https://portal.acme.internal/sales/accounts/globex"
+                    "title": "Globex \u2014 Account Notes",
+                    "url": "https://portal.sample.internal/sales/accounts/globex"
                   }
                 ]
               }

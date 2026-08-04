@@ -1,6 +1,6 @@
 # Customer 360 — Platform Search + Chat path
 
-Sam Reyes's Globex account page: KPI header, three Search tiles, journey
+an account owner's the account you pick account page: KPI header, three Search tiles, journey
 summary via Platform Chat, saved-prompt buttons, and drill-in chat.
 
 ## Setup
@@ -11,7 +11,7 @@ npm install
 ```
 
 Set `GLEAN_USE_FIXTURE=true` for contract-only runs (default in `.env.example`).
-For live mode, fill `GLEAN_INSTANCE` / `GLEAN_API_TOKEN`, set
+For live mode, fill `GLEAN_SERVER_URL` / `GLEAN_API_TOKEN`, set
 `GLEAN_USE_FIXTURE=false`, and ensure experimental Platform Search + Chat are
 enabled on the instance (`X_GLEAN_INCLUDE_EXPERIMENTAL=true`).
 
