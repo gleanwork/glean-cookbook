@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RFP responder</title>
+    <style>
+      :root {
+        --font:
+          'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui,
+          sans-serif;
+        --primary: #343ced;
+        --primary-hover: #131bd4;
+        --selected-bg: #eceefe;
+        --text: #1f2024;
+        --text-2: #565a64;
+        --bg: #f7f8fa;
+        --card: #ffffff;
+        --border: #e7e8ed;
+        --border-dark: #c9cbd2;
+        --success: #22c55e;
+        --warn-fg: #92670a;
+        --warn-bg: #fff8e5;
+        --warn-border: #ffe0b3;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        color: var(--text);
+        background: var(--bg);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      header {
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        padding: 20px 28px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 19px;
+        letter-spacing: -0.01em;
+      }
+      .sub {
+        color: var(--text-2);
+        font-size: 13px;
+      }
+      main {
+        padding: 24px 28px 64px;
+        max-width: 1120px;
+        margin: 0 auto;
+      }
+      section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin-bottom: 18px;
+      }
+      h2 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-2);
+        margin: 0 0 14px;
+        font-weight: 600;
+      }
+      button {
+        font: inherit;
+        font-weight: 500;
+        border-radius: 7px;
+        padding: 8px 14px;
+        border: 1px solid var(--primary);
+        background: var(--primary);
+        color: #fff;
+        cursor: pointer;
+      }
+      button:hover:not(:disabled) {
+        background: var(--primary-hover);
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      button.ghost {
+        background: #fff;
+        color: var(--text);
+        border-color: var(--border-dark);
+      }
+      button.ghost:hover:not(:disabled) {
+        background: var(--bg);
+      }
+      button.tiny {
+        padding: 4px 9px;
+        font-size: 12px;
+      }
+      .stats {
+        display: flex;
+        gap: 26px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .stat .n {
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .stat .l {
+        font-size: 12px;
+        color: var(--text-2);
+      }
+      .bar {
+        height: 6px;
+        background: var(--bg);
+        border-radius: 3px;
+        overflow: hidden;
+        margin: 12px 0 4px;
+      }
+      .bar > i {
+        display: block;
+        height: 100%;
+        background: var(--primary);
+        width: 0;
+        transition: width 0.2s;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th {
+        text-align: left;
+        font-size: 12px;
+        color: var(--text-2);
+        font-weight: 600;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border);
+      }
+      td {
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      .qid {
+        font-family: ui-monospace, SFMono-Regular, monospace;
+        font-size: 12px;
+        color: var(--text-2);
+      }
+      .pill {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+        white-space: nowrap;
+      }
+      .pill.strong {
+        background: #e6f5ec;
+        color: #16794a;
+      }
+      .pill.weak {
+        background: var(--warn-bg);
+        color: var(--warn-fg);
+        border: 1px solid var(--warn-border);
+      }
+      .pill.none {
+        background: #fdeaea;
+        color: #a51c1c;
+      }
+      .pill.accepted {
+        background: var(--selected-bg);
+        color: #2229a8;
+      }
+      .pill.pending {
+        background: var(--bg);
+        color: var(--text-2);
+      }
+      .reason {
+        color: var(--text-2);
+        font-size: 12px;
+        margin-top: 6px;
+      }
+      .answer {
+        width: 100%;
+        min-height: 62px;
+        font: inherit;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        resize: vertical;
+      }
+      .cites {
+        margin: 8px 0 0;
+        padding-left: 16px;
+        font-size: 12px;
+      }
+      .cites a {
+        color: var(--primary);
+      }
+      .rowacts {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      .empty {
+        color: var(--text-2);
+        font-style: italic;
+      }
+      .hint {
+        color: #5b6472;
+        font-size: 0.9rem;
+        max-width: 62ch;
+        margin: 0 0 0.75rem;
+      }
+      .file {
+        display: block;
+        margin-bottom: 0.75rem;
+      }
+      details {
+        margin-bottom: 0.75rem;
+      }
+      details textarea {
+        width: 100%;
+        max-width: 62ch;
+        font-family: ui-monospace, monospace;
+        font-size: 0.85rem;
+        display: block;
+        margin: 0.5rem 0;
+      }
+      button.secondary {
+        background: #fff;
+        color: #343ce0;
+        border: 1px solid #c7cbd4;
+      }
+
+      .note {
+        background: var(--warn-bg);
+        border: 1px solid var(--warn-border);
+        color: var(--warn-fg);
+        border-radius: 7px;
+        padding: 10px 12px;
+        font-size: 13px;
+        margin-bottom: 14px;
+      }
+      .cand {
+        font-size: 12px;
+        color: var(--text-2);
+        padding: 4px 0;
+      }
+      ol.log {
+        font-size: 12px;
+        color: var(--text-2);
+        padding-left: 18px;
+        margin: 0;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>RFP &amp; questionnaire responder</h1>
+      <div class="sub">
+        Grounded, cited draft answers with a human approval gate. Runs as you —
+        no impersonation, so evidence you cannot see never reaches the
+        customer's document.
+      </div>
+    </header>
+    <main>
+      <section id="load-section">
+        <h2>1 · Load questionnaire</h2>
+        <div id="mapping-note" class="note hidden"></div>
+        <p class="hint">
+          Use your own questionnaire — the argument this app makes is about
+          <em>your</em> evidence, and answers drafted from the bundled sample
+          are answers about a company that does not exist.
+        </p>
+        <label class="file">
+          <input id="file" type="file" accept=".csv,text/csv" />
+        </label>
+        <details>
+          <summary>or paste CSV</summary>
+          <textarea
+            id="paste"
+            rows="6"
+            placeholder="tab,question_id,question&#10;Security,SEC-01,Do you hold a current SOC 2 Type II attestation?"
+          ></textarea>
+          <button id="load-paste">Use pasted CSV</button>
+        </details>
+        <button id="load" class="secondary">Or try the bundled sample</button>
+      </section>
+
+      <section id="parse-section" class="hidden">
+        <h2>2 · Parsed &amp; deduplicated</h2>
+        <div class="stats" id="parse-stats"></div>
+        <div id="cands"></div>
+        <button id="run">Confirm and draft answers</button>
+      </section>
+
+      <section id="progress-section" class="hidden">
+        <h2>3 · Drafting</h2>
+        <div class="bar"><i id="bar"></i></div>
+        <div class="sub" id="progress-label"></div>
+      </section>
+
+      <section id="review-section" class="hidden">
+        <h2>4 · Review</h2>
+        <div class="stats" id="review-stats"></div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 22%">Question</th>
+              <th style="width: 10%">Evidence</th>
+              <th>Draft answer</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </section>
+
+      <section id="export-section" class="hidden">
+        <h2>5 · Export</h2>
+        <div id="export-note"></div>
+        <div class="rowacts">
+          <button id="export">Export answered questionnaire</button>
+        </div>
+        <h2 style="margin-top: 20px">Approval log</h2>
+        <ol class="log" id="log"></ol>
+      </section>
+    </main>
+
+    <script type="module">
+      // Safe DOM only: no innerHTML, no string-interpolated markup.
+      const $ = (id) => document.getElementById(id);
+      let csv = '';
+      let rows = [];
+
+      const el = (tag, props = {}, children = []) => {
+        const node = document.createElement(tag);
+        for (const [key, value] of Object.entries(props)) {
+          if (key === 'class') node.className = value;
+          else if (key === 'text') node.textContent = value;
+          else node.setAttribute(key, value);
+        }
+        for (const child of children) node.append(child);
+        return node;
+      };
+
+      const stat = (n, l) =>
+        el('div', { class: 'stat' }, [
+          el('div', { class: 'n', text: String(n) }),
+          el('div', { class: 'l', text: l }),
+        ]);
+
+      /** Only http(s) links are rendered, so a citation URL can't become javascript:. */
+      function safeLink(citation) {
+        let url;
+        try {
+          url = new URL(citation.url);
+        } catch {
+          return el('li', { text: citation.title });
+        }
+        if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+          return el('li', { text: citation.title });
+        }
+        const a = el('a', {
+          href: url.href,
+          target: '_blank',
+          rel: 'noreferrer noopener',
+          text: citation.title,
+        });
+        return el('li', {}, [a]);
+      }
+
+      async function loadCsv(text, sourceName) {
+        csv = text;
+        const parsedCols = (text.split('\n')[0] ?? '')
+          .split(',')
+          .map((column) => column.trim().replace(/^"|"$/gu, ''));
+        $('mapping-note').classList.remove('hidden');
+        $('mapping-note').textContent =
+          'Columns detected: ' +
+          parsedCols.join(', ') +
+          ' — using "question" as the question column and "tab" as the sheet. ' +
+          'Confirm below before any API call runs.';
+        await parseAndRender(sourceName);
+      }
+
+      $('file').addEventListener('change', async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        await loadCsv(await file.text(), file.name);
+      });
+
+      $('load-paste').addEventListener('click', async () => {
+        const text = $('paste').value.trim();
+        if (!text) return;
+        await loadCsv(text, 'pasted.csv');
+      });
+
+      async function parseAndRender(sourceName) {
+        const response = await fetch('/api/parse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            csv,
+            sourceName,
+            mapping: {
+              tab: 'tab',
+              questionId: 'question_id',
+              question: 'question',
+            },
+          }),
+        });
+        if (!response.ok) {
+          // A reader's own file is the likeliest thing to be shaped wrong, so say
+          // what was expected rather than failing blank.
+          $('mapping-note').textContent =
+            'Could not parse that file. Expected a CSV with a "question" column, ' +
+            'optionally "tab" and "question_id". ' +
+            (await response.text());
+          return;
+        }
+        renderParsed(await response.json());
+      }
+
+      $('load').addEventListener('click', async () => {
+        const sample = await (await fetch('/api/sample')).json();
+        await loadCsv(sample.csv, 'sample-security-questionnaire.csv');
+      });
+
+      function renderParsed(parsed) {
+        rows = parsed.rows;
+        $('parse-section').classList.remove('hidden');
+        const stats = $('parse-stats');
+        stats.replaceChildren(
+          stat(parsed.parsed, 'rows parsed'),
+          stat(parsed.tabs.length, 'tabs'),
+          stat(parsed.autoMerged, 'exact duplicates merged'),
+          stat(parsed.unique, 'questions to ask'),
+        );
+        const cands = $('cands');
+        cands.replaceChildren();
+        if (parsed.mergeCandidates.length) {
+          cands.append(
+            el('div', {
+              class: 'note',
+              text: 'Possible repeats, ordered by wording overlap. These are NOT merged automatically — on this questionnaire the highest-scoring pair ("encrypted at rest" vs "encrypted in transit") is two different controls, so a human decides.',
+            }),
+          );
+          for (const c of parsed.mergeCandidates.slice(0, 4)) {
+            const a = rows.find((r) => r.rowId === c.rowId);
+            const b = rows.find((r) => r.rowId === c.candidateRowId);
+            cands.append(
+              el('div', {
+                class: 'cand',
+                text: `${c.similarity.toFixed(2)}  ${a.questionId} "${a.question}"  ~  ${b.questionId} "${b.question}"`,
+              }),
+            );
+          }
+        }
+      }
+
+      $('run').addEventListener('click', () => {
+        $('run').disabled = true;
+        $('progress-section').classList.remove('hidden');
+        const response = fetch('/api/run', { method: 'POST' });
+        streamRun(response);
+      });
+
+      async function streamRun(responsePromise) {
+        const response = await responsePromise;
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const chunks = buffer.split('\n\n');
+          buffer = chunks.pop() ?? '';
+          for (const chunk of chunks) {
+            const event = /event: (.*)/u.exec(chunk)?.[1];
+            const data = JSON.parse(/data: (.*)/su.exec(chunk)?.[1] ?? '{}');
+            if (event === 'start') {
+              $('progress-label').textContent =
+                `0 / ${data.total} questions (${data.skipped} inherited or reused from the answer library)`;
+            } else if (event === 'progress') {
+              $('bar').style.width = `${(data.done / data.total) * 100}%`;
+              $('progress-label').textContent =
+                `${data.done} / ${data.total} questions`;
+            } else if (event === 'done') {
+              rows = data.rows;
+              renderReview();
+            }
+          }
+        }
+      }
+
+      function renderReview() {
+        $('review-section').classList.remove('hidden');
+        $('export-section').classList.remove('hidden');
+        const counts = { strong: 0, weak: 0, none: 0, accepted: 0 };
+        for (const row of rows) {
+          if (row.status === 'accepted') counts.accepted += 1;
+          if (row.confidence) counts[row.confidence] += 1;
+        }
+        $('review-stats').replaceChildren(
+          stat(counts.strong, 'strongly grounded'),
+          stat(counts.weak, 'weak — verify'),
+          stat(counts.none, 'needs SME'),
+          stat(counts.accepted, 'accepted'),
+        );
+
+        const tbody = $('rows');
+        tbody.replaceChildren();
+        for (const row of rows) tbody.append(renderRow(row));
+        renderLog();
+      }
+
+      function renderRow(row) {
+        const qcell = el('td', {}, [
+          el('div', { class: 'qid', text: `${row.tab} · ${row.questionId}` }),
+          el('div', { text: row.question }),
+        ]);
+
+        const pills = el('td', {}, [
+          el('span', {
+            class: `pill ${row.confidence ?? 'pending'}`,
+            text: row.confidence ?? 'pending',
+          }),
+        ]);
+        if (row.status === 'accepted') {
+          pills.append(
+            document.createTextNode(' '),
+            el('span', { class: 'pill accepted', text: 'accepted' }),
+          );
+        }
+
+        const body = el('td');
+        if (row.confidence === 'none') {
+          body.append(
+            el('div', {
+              class: 'empty',
+              text: 'No answer drafted — insufficient evidence.',
+            }),
+            el('div', { class: 'reason', text: row.reason }),
+          );
+          const assignee = el('input', {
+            placeholder: 'SME email',
+            class: 'answer',
+            style: 'min-height:auto;height:32px',
+          });
+          if (row.smeAssignee) assignee.value = row.smeAssignee;
+          const assign = el('button', {
+            class: 'ghost tiny',
+            text: 'Assign to SME',
+          });
+          assign.addEventListener('click', async () => {
+            await fetch('/api/assign-sme', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                rowId: row.rowId,
+                assignee: assignee.value,
+              }),
+            });
+            row.smeAssignee = assignee.value;
+            refresh();
+          });
+          body.append(el('div', { class: 'rowacts' }, [assignee, assign]));
+          return el('tr', {}, [qcell, pills, body]);
+        }
+
+        const textarea = el('textarea', { class: 'answer' });
+        textarea.value = row.answer;
+        body.append(textarea);
+        if (row.citations.length) {
+          body.append(
+            el('ul', { class: 'cites' }, row.citations.map(safeLink)),
+          );
+        }
+        body.append(el('div', { class: 'reason', text: row.reason }));
+
+        const accept = el('button', { class: 'tiny', text: 'Accept' });
+        accept.addEventListener('click', async () => {
+          const response = await fetch('/api/accept', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rowId: row.rowId, answer: textarea.value }),
+          });
+          const data = await response.json();
+          if (data.rows) rows = data.rows;
+          refresh();
+        });
+
+        const steering = el('input', {
+          placeholder:
+            'Steering, e.g. "shorten" or "restrict to the SOC 2 report"',
+          class: 'answer',
+          style: 'min-height:auto;height:32px;flex:1;min-width:220px',
+        });
+        const regen = el('button', { class: 'ghost tiny', text: 'Regenerate' });
+        regen.addEventListener('click', async () => {
+          regen.disabled = true;
+          regen.textContent = 'Regenerating…';
+          const updated = await (
+            await fetch('/api/regenerate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                rowId: row.rowId,
+                steering: steering.value,
+              }),
+            })
+          ).json();
+          Object.assign(row, updated);
+          refresh();
+        });
+
+        body.append(el('div', { class: 'rowacts' }, [accept, steering, regen]));
+        return el('tr', {}, [qcell, pills, body]);
+      }
+
+      function refresh() {
+        renderReview();
+      }
+
+      async function renderLog() {
+        const log = await (await fetch('/api/audit')).json();
+        $('log').replaceChildren(
+          ...log.map((entry) =>
+            el('li', {
+              text: `${entry.at} — ${entry.actor} ${entry.action}${entry.questionId ? ` ${entry.questionId}` : ''}${entry.detail ? ` (${entry.detail})` : ''}`,
+            }),
+          ),
+        );
+      }
+
+      $('export').addEventListener('click', async () => {
+        const probe = await fetch('/api/export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        if (probe.status === 409) {
+          const info = await probe.json();
+          $('export-note').replaceChildren(
+            el('div', {
+              class: 'note',
+              text: `${info.message} Click export again to confirm.`,
+            }),
+          );
+          const confirmed = await fetch('/api/export', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ confirmed: true }),
+          });
+          download(await confirmed.text());
+        } else {
+          download(await probe.text());
+        }
+        renderLog();
+      });
+
+      function download(text) {
+        const url = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
+        const a = el('a', {
+          href: url,
+          download: 'sample-security-questionnaire-answered.csv',
+        });
+        document.body.append(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+    </script>
+  </body>
+</html>
