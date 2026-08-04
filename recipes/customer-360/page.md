@@ -1,4 +1,4 @@
-<RecipeSection label="Problem">
+## Problem
 
 Account executives jump between CRM notes, renewal docs, and security
 packets to prep a single customer conversation. This puts those sources on
@@ -13,31 +13,11 @@ This recipe builds the page two ways on Platform APIs only: Search + Chat
 for an open-ended dashboard, or Agents `createRun` for a prescriptive
 QBR-ready brief.
 
-</RecipeSection>
+## Take it further
 
-<RecipeArchitecture />
-
-<RecipePrereqs />
-
-<RecipeSteps />
-
-<TakeItFurther>
-
-<>
-  Add a portfolio dashboard across a rep's whole book of business, with health
+- Add a portfolio dashboard across a rep's whole book of business, with health
   and renewal countdown tiles per account.
-</>
-
-<>
-  Schedule a weekly headless job that re-runs the account's queries, diffs
+- Schedule a weekly headless job that re-runs the account's queries, diffs
   against the last run, and posts only what changed to Slack.
-</>
-
-<>
-  Wire push-to-CRM / push-to-Slack actions from the journey panel once you have
+- Wire push-to-CRM / push-to-Slack actions from the journey panel once you have
   a governed custom tool.
-</>
-
-</TakeItFurther>
-
-<RecipeDemoQueries />

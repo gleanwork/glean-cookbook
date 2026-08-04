@@ -1,37 +1,17 @@
-<RecipeSection label="Problem">
+## Problem
 
 A chatbot that only answers questions is half an agent. Attach a governed
 Tool and it can act — file a ticket, update a record — but only for people
 who are actually allowed to, with a graceful fallback for everyone else
 instead of a hard failure.
 
-</RecipeSection>
+## Take it further
 
-<RecipeArchitecture />
-
-<RecipePrereqs />
-
-<RecipeSteps />
-
-<TakeItFurther>
-
-<>
-  Add a second governed tool (e.g., escalate to PagerDuty) and let the agent
+- Add a second governed tool (e.g., escalate to PagerDuty) and let the agent
   choose between them based on severity.
-</>
-
-<>
-  Switch to `run_stream()` and parse the SSE text yourself for a live-updating
+- Switch to `run_stream()` and parse the SSE text yourself for a live-updating
   UI.
-</>
-
-<>
-  Combine with
+- Combine with
   [permissions-aware-retrieval](/cookbook/permissions-aware-retrieval)'s
   retrieval pattern if you want the agent's grounding to come from your own
   index instead of Glean's default retrieval.
-</>
-
-</TakeItFurther>
-
-<RecipeDemoQueries />

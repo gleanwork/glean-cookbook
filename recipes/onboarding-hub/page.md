@@ -1,4 +1,4 @@
-<RecipeSection label="Problem">
+## Problem
 
 New hires land on day one with a dozen tasks spread across HR,
 IT, and their team — and no single place to see what's done, what's left, and
@@ -9,25 +9,9 @@ This recipe builds the hub two ways so you can pick the trade-off that fits
 your portal — Web SDK for fastest SSO integration, Platform Chat when you
 need full UI control.
 
-</RecipeSection>
+## Take it further
 
-<RecipeArchitecture />
-
-<RecipePrereqs />
-
-<RecipeSteps />
-
-<TakeItFurther>
-
-<>Wire real HRIS completion events instead of localStorage toggles.</>
-
-<>Add a manager view that shows onboarding progress across the team.</>
-
-<>
-  Scope chat to onboarding-only documents, so a first-week question cannot
+- Wire real HRIS completion events instead of localStorage toggles.
+- Add a manager view that shows onboarding progress across the team.
+- Scope chat to onboarding-only documents, so a first-week question cannot
   wander into unrelated content.
-</>
-
-</TakeItFurther>
-
-<RecipeDemoQueries />

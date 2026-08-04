@@ -1,4 +1,4 @@
-<RecipeSection label="Problem">
+## Problem
 
 A security questionnaire arrives with 200 rows. The answers all exist somewhere —
 in last quarter's SOC 2 report, in a policy doc, in the response you sent a
@@ -14,13 +14,7 @@ Only permitted, approved evidence enters the prompt. Every claim keeps its
 citation. Missing evidence stays unanswered. A person approves before anything
 leaves.
 
-</RecipeSection>
-
-<RecipePrereqs />
-
-<RecipeSteps />
-
-<RecipeSection label="Two things that surprised us">
+## Two things that surprised us
 
 Both look fine in a demo and fail in production, so they're worth carrying into
 anything similar you build.
@@ -48,9 +42,7 @@ inferred: **strong** means an approved source that answers directly, **weak**
 means on-topic-but-internal or approved-but-adjacent, and **none** means no draft
 at all.
 
-</RecipeSection>
-
-<RecipeSection label="Permissions">
+## Permissions
 
 The app runs as you. There's no impersonation and no act-as, which makes it
 single-user — and makes the guarantee real: content you can't see can't reach the
@@ -61,37 +53,17 @@ The sample corpus demonstrates it. The a customer security response summary is
 restricted to a single group; run as someone outside it and every security row
 collapses to "needs SME" instead of quietly answering from somewhere else.
 
-</RecipeSection>
+## Take it further
 
-<TakeItFurther>
-
-<>
-  Add an xlsx and docx reader so real questionnaires can be uploaded directly —
+- Add an xlsx and docx reader so real questionnaires can be uploaded directly —
   the parser here reads CSV to keep the interesting logic legible.
-</>
-
-<>
-  Write answers back into the source document with a custom tool instead of
+- Write answers back into the source document with a custom tool instead of
   exporting, keeping the confirm step and the approval log.
-</>
-
-<>
-  Give the answer library its own access control before sharing it across a
+- Give the answer library its own access control before sharing it across a
   team. It's a cache of retrieved content, so it can leak across the permission
   boundary the rest of the app respects.
-</>
-
-<>
-  Route "needs SME" rows to their owners automatically, and track which ones
+- Route "needs SME" rows to their owners automatically, and track which ones
   came back — the assignment field here is deliberately inert.
-</>
-
-<>
-  Combine with [permissions-aware
+- Combine with [permissions-aware
   retrieval](/cookbook/permissions-aware-retrieval) to see the same refusal
   property in a smaller, single-question app.
-</>
-
-</TakeItFurther>
-
-<RecipeDemoQueries />

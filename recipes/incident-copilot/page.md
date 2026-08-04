@@ -1,4 +1,4 @@
-<RecipeSection label="Problem">
+## Problem
 
 An alarm fires at 3am. Everything the responder needs already exists — the runbook,
 the review of the last time this happened, who owns the service, what it depends on
@@ -11,13 +11,7 @@ person, an expiry that escalates instead of quietly approving itself, an action
 registry the planner cannot talk its way out of, and an audit entry for every
 attempt including the ones that were refused.
 
-</RecipeSection>
-
-<RecipePrereqs />
-
-<RecipeSteps />
-
-<RecipeSection label="Relevance is not evidence">
+## Relevance is not evidence
 
 The obvious way to build "probable cause, ranked by evidence" is to rank retrieved
 documents by relevance and explain the top one. That produces confident wrong root
@@ -57,9 +51,7 @@ rollbacks. So a mutating action requires an evidence-supported cause, and is
 otherwise downgraded to filing a ticket — visibly, in the channel and the audit log.
 You cannot draft a fix for a cause nobody established.
 
-</RecipeSection>
-
-<RecipeSection label="Authorization is not authentication">
+## Authorization is not authentication
 
 The approval gate enforces _who may approve_, read from the indexed service catalog:
 the on-call engineer and the service owners, nobody else. It does **not**
@@ -75,36 +67,16 @@ of these recipes, so the executor is the app's own credential and the gate is an
 app-level policy check. That is a weaker claim than per-person permission
 enforcement, and worth stating plainly rather than implying.
 
-</RecipeSection>
+## Take it further
 
-<TakeItFurther>
-
-<>
-  Persist incidents and the audit log. An audit log you can lose by restarting a
+- Persist incidents and the audit log. An audit log you can lose by restarting a
   process is not an audit log.
-</>
-
-<>
-  Add the rest of the dashboard: response-time rollups, an expiring-soon lane,
+- Add the rest of the dashboard: response-time rollups, an expiring-soon lane,
   and an end-of-shift handoff summary.
-</>
-
-<>
-  Replace the simulated actions with real governed tools, keeping the registry
+- Replace the simulated actions with real governed tools, keeping the registry
   boundary and the approval log exactly where they are.
-</>
-
-<>
-  Write the postmortem draft back into your knowledge base so the next incident
+- Write the postmortem draft back into your knowledge base so the next incident
   retrieves it as a precedent — the loop that makes the evidence rules get
   better over time.
-</>
-
-<>
-  Expose the copilot itself over A2A so another agent can request triage, with
+- Expose the copilot itself over A2A so another agent can request triage, with
   the same gate in front of every action.
-</>
-
-</TakeItFurther>
-
-<RecipeDemoQueries />

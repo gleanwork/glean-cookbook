@@ -1,4 +1,4 @@
-<RecipeSection label="Problem">
+## Problem
 
 Grounding your own LLM app in company content — the pattern usually called
 RAG — normally means standing up a vector DB, mirroring every source system's
@@ -7,31 +7,11 @@ and you leak documents. Glean is already the permission-aware index of your
 company's content, so use its Platform API as the retrieval layer and skip all
 three problems.
 
-</RecipeSection>
+## Take it further
 
-<RecipeArchitecture />
-
-<RecipePrereqs />
-
-<RecipeSteps />
-
-<TakeItFurther>
-
-<>
-  Add a re-ranking pass over snippets before they reach the LLM for
+- Add a re-ranking pass over snippets before they reach the LLM for
   higher-precision citations.
-</>
-
-<>
-  Cache retrieval results per session to cut latency on follow-up questions in
+- Cache retrieval results per session to cut latency on follow-up questions in
   the same conversation.
-</>
-
-<>
-  Swap in [Glean Chat](/cookbook/company-answers) instead of a raw LLM call if
+- Swap in [Glean Chat](/cookbook/company-answers) instead of a raw LLM call if
   you want Glean to also own the generation step.
-</>
-
-</TakeItFurther>
-
-<RecipeDemoQueries />
