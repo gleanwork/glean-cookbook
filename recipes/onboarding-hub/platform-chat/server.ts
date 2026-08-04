@@ -125,6 +125,15 @@ function loadChecklist(): ChecklistPayload {
   return { steps: [], source: 'empty' };
 }
 
+function isSafeHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 function parsePlatformChatResponse(data: PlatformChatResponse): {
   answer: string;
   citations: Array<{ title: string; url: string }>;
@@ -144,7 +153,12 @@ function parsePlatformChatResponse(data: PlatformChatResponse): {
   const citations = Array.from(
     new Map(
       rawCitations
-        .filter((source) => source.title && source.url)
+        .filter(
+          (source) =>
+            source.title &&
+            source.url &&
+            isSafeHttpUrl(source.url as string),
+        )
         .map((source) => [
           source.url as string,
           { title: source.title as string, url: source.url as string },
@@ -180,7 +194,12 @@ function withEscalate(parsed: {
   citations: Array<{ title: string; url: string }>;
   escalate: boolean;
 } {
-  const escalate = !parsed.answer.trim() || parsed.answer.trim().length < 20;
+  // Empty, thin, or uncited answers must escalate — inventing an onboarding
+  // step is worse than routing to HR/IT. Uncited prose is treated the same.
+  const escalate =
+    !parsed.answer.trim() ||
+    parsed.answer.trim().length < 20 ||
+    parsed.citations.length === 0;
   return { ...parsed, escalate };
 }
 
@@ -219,15 +238,9 @@ async function askPlatformChat(input: string): Promise<{
   }
 
   const data = (await response.json()) as PlatformChatResponse;
-  const parsed = parsePlatformChatResponse(data);
-  if (!parsed.answer.trim()) {
-    throw new Error(
-      'Glean returned no answer text. This happens when a chat run ends while ' +
-        'a server tool is still pending; the request succeeded but the answer ' +
-        'was never produced. Retrying usually works.',
-    );
-  }
-  return withEscalate(parsed);
+  // Empty or uncited completed responses escalate rather than 500: the hub's
+  // failure mode for "docs don't cover this" is the escalate affordance.
+  return withEscalate(parsePlatformChatResponse(data));
 }
 
 const server = http.createServer(async (req, res) => {

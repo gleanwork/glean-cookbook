@@ -487,6 +487,16 @@
           `Completed · ${doneSteps.length}`;
       }
 
+      function safeHttpUrl(value) {
+        try {
+          const url = new URL(String(value));
+          if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+          return url.href;
+        } catch {
+          return null;
+        }
+      }
+
       function appendMessage(role, text, citations = []) {
         const div = document.createElement('div');
         div.className = `msg ${role}`;
@@ -494,13 +504,17 @@
         if (citations.length) {
           const cites = document.createElement('div');
           cites.className = 'citations';
-          cites.innerHTML = citations
-            .map(
-              (c) =>
-                `<a href="${escapeHtml(c.url)}" target="_blank" rel="noreferrer">${escapeHtml(c.title)}</a>`,
-            )
-            .join('');
-          div.appendChild(cites);
+          for (const citation of citations) {
+            const href = safeHttpUrl(citation.url);
+            if (!href) continue;
+            const link = document.createElement('a');
+            link.href = href;
+            link.target = '_blank';
+            link.rel = 'noreferrer';
+            link.textContent = citation.title || href;
+            cites.appendChild(link);
+          }
+          if (cites.childNodes.length) div.appendChild(cites);
         }
         chatLog.appendChild(div);
         chatLog.scrollTop = chatLog.scrollHeight;

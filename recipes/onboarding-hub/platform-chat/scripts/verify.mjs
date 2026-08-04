@@ -327,6 +327,36 @@ async function main() {
         console.error(`✗ "${check.query}": ${error.message}`);
       }
     }
+
+    if (useFixture) {
+      const unsafeQuery = 'Regression: unsafe citation URL';
+      try {
+        const result = await askGlean(unsafeQuery);
+        if (result.citations?.length) {
+          failed = true;
+          console.error(
+            `✗ "${unsafeQuery}": javascript: citation must be stripped, got ${JSON.stringify(result.citations)}`,
+          );
+        } else if (!result.escalate) {
+          failed = true;
+          console.error(
+            `✗ "${unsafeQuery}": expected escalate=true when only unsafe citations remain`,
+          );
+        } else if (!result.answer?.trim()) {
+          failed = true;
+          console.error(
+            `✗ "${unsafeQuery}": expected the long fixture answer to remain after stripping citations`,
+          );
+        } else {
+          console.log(
+            `✓ "${unsafeQuery}" — unsafe URL stripped, escalate`,
+          );
+        }
+      } catch (error) {
+        failed = true;
+        console.error(`✗ "${unsafeQuery}": ${error.message}`);
+      }
+    }
   } catch (error) {
     failed = true;
     console.error(`✗ server never became ready: ${error.message}`);

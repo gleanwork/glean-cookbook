@@ -7,7 +7,7 @@ checklist and not content from any reader's instance.
 | File                  | Role                                                                           |
 | --------------------- | ------------------------------------------------------------------------------ |
 | `steps.json`          | Sample checklist for `/api/checklist`                                          |
-| `chat-responses.json` | Query-keyed Platform Chat responses (cited day-one/VPN/PTO + empty off-corpus) |
+| `chat-responses.json` | Query-keyed Platform Chat responses (cited day-one/VPN/PTO + empty off-corpus + unsafe-URL regression) |
 
 Do not treat fixture titles or URLs as live corpus. Live mode uses
 `GLEAN_SERVER_URL` + `GLEAN_API_TOKEN` and the reader's own onboarding docs.

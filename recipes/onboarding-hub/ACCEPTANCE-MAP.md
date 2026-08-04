@@ -11,9 +11,9 @@ onboarding content.
 | 2   | Progress indicator + milestone badges | Progress % = completed/total; badges earn per group                      | Same client-side logic                                                          | Empty checklist → 0%                            |
 | 3   | Per-step **Ask about this**           | `renderChat` re-seeded with `initialMessage` per step                    | `POST /api/chat` with step-specific `input` string                              | Step `askPrompt` from config                    |
 | 4   | Free-form cited chat                  | `renderChat` handles UI + citations (SSO cookie)                         | Parse `output[0].content[0].text` + `annotations[].sources[]`                   | Fixture+live verify: first-day, VPN, PTO        |
-| 5   | No answer found → escalate            | Glean chat surfaces low-confidence; app can show escalate strip          | Empty/short answer → `escalate: true` + UI affordance                           | Fixture+live verify: off-corpus query           |
+| 5   | No answer found → escalate            | Glean chat surfaces low-confidence; app can show escalate strip          | Empty/short/**uncited** → `escalate: true` + UI affordance                      | Fixture+live verify: off-corpus query           |
 | 6   | Done state                            | All steps marked complete → summary panel replaces checklist             | Same client UX                                                                  | Mark all complete or finish pending items       |
-| 7   | Empty / unfinished live chat (Path B) | N/A (Web SDK owns streaming UI)                                          | HTTP 200 with no answer text → error (retry), not a blank success               | Matches company-answers / customer-360 lesson   |
+| 7   | Empty live chat (Path B)              | N/A (Web SDK owns streaming UI)                                          | Empty or uncited completed response → escalate (not a fabricated step)          | Aligns with off-corpus demo query               |
 
 ## Demo queries (registry)
 
