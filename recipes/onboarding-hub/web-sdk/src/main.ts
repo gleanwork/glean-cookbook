@@ -16,6 +16,15 @@ const completed = loadCompletedIds();
 let steps: OnboardingStep[] = [];
 let source: 'fixture' | 'config' | 'empty' = 'empty';
 
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function mountChat(initialMessage?: string): void {
   const container = document.getElementById('chat');
   if (!container) throw new Error('Missing #chat container');
@@ -47,20 +56,22 @@ function renderProgress(): void {
 
 function stepRow(step: OnboardingStep): string {
   const done = isStepDone(step, completed);
+  const title = escapeHtml(step.title);
+  const id = escapeHtml(step.id);
   const due = step.dueDate
-    ? `<span class="due">Due ${step.dueDate}</span>`
+    ? `<span class="due">Due ${escapeHtml(step.dueDate)}</span>`
     : '';
   const askButton = done
     ? ''
     : `<button type="button" class="ask-btn" data-ask="${encodeURIComponent(step.askPrompt)}">Ask about this</button>`;
   const markButton = done
     ? ''
-    : `<button type="button" class="mark-btn" data-mark="${step.id}">Mark complete</button>`;
+    : `<button type="button" class="mark-btn" data-mark="${id}">Mark complete</button>`;
   return `
-    <li class="step${done ? ' done' : ''}" data-step="${step.id}">
+    <li class="step${done ? ' done' : ''}" data-step="${id}">
       <span class="check" aria-hidden="true">${done ? '✓' : '○'}</span>
       <div class="step-body">
-        <div class="step-title">${step.title} ${due}</div>
+        <div class="step-title">${title} ${due}</div>
         <div class="step-actions">${askButton}${markButton}</div>
       </div>
     </li>`;

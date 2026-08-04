@@ -353,6 +353,15 @@
       let STEPS = [];
       let source = 'empty';
 
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
       function loadCompleted() {
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
@@ -420,19 +429,21 @@
 
       function stepRow(step) {
         const done = isDone(step);
+        const title = escapeHtml(step.title);
+        const id = escapeHtml(step.id);
         const due = step.dueDate
-          ? `<span class="due">Due ${step.dueDate}</span>`
+          ? `<span class="due">Due ${escapeHtml(step.dueDate)}</span>`
           : '';
         const askButton = done
           ? ''
           : `<button type="button" class="ask-btn" data-ask="${encodeURIComponent(step.askPrompt)}">Ask about this</button>`;
         const markButton = done
           ? ''
-          : `<button type="button" class="mark-btn" data-mark="${step.id}">Mark complete</button>`;
+          : `<button type="button" class="mark-btn" data-mark="${id}">Mark complete</button>`;
         return `<li class="step${done ? ' done' : ''}">
           <span class="check">${done ? '✓' : '○'}</span>
           <div class="step-body">
-            <div class="step-title">${step.title} ${due}</div>
+            <div class="step-title">${title} ${due}</div>
             <div class="step-actions">${askButton}${markButton}</div>
           </div>
         </li>`;
