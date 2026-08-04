@@ -17,13 +17,13 @@ https://developers.glean.com/cookbook/no-code-it-helpdesk-lovable
 
 ## Reference
 
-This recipe's deliverable is a prompt template, not a runnable project — mirrors no-code-pto-lookup-replit's shape (same Chat API call, same "browser never holds the token" constraint, same citation correction: filter to messageType === 'CONTENT' before joining fragments[].text, and read citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response) with a different tool and persona so the two don't read as duplicates. Lovable's default stack leans on a connected backend/database integration for server-side secrets rather than a plain Node server, so the prompt asks the agent to set that up rather than assuming a fixed mechanism. Both demo queries are answered by existing seeded Acme corpus documents — no corpus changes were needed.
+This recipe's deliverable is a prompt template, not a runnable project — mirrors no-code-pto-lookup-replit's shape (same Chat API call, same "browser never holds the token" constraint, same citation correction: filter to messageType === 'CONTENT' before joining fragments[].text, and read citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response) with a different tool and persona so the two don't read as duplicates. Lovable's default stack leans on a connected backend/database integration for server-side secrets rather than a plain Node server, so the prompt asks the agent to set that up rather than assuming a fixed mechanism. Both demo queries are the kind almost every company's IT documentation answers, so the recipe works against the reader's own instance with no seeding. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.
 
 ## Verify
 
 {{> verify-gate-third-party}}
 
 - **Query:** "Where do I reset my SSO password?"
-  **Expected:** Answer cites the SSO password reset guide.
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
 - **Query:** "How do I request a new laptop?"
-  **Expected:** Answer cites the IT helpdesk FAQ (loaner laptops, same-day, from the IT desk).
+  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

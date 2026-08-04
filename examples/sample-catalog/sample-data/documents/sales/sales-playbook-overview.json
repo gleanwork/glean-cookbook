@@ -1,0 +1,10 @@
+{
+  "id": "sales-playbook-overview",
+  "title": "Sales Playbook — Overview",
+  "department": "Sales",
+  "view_url": "https://portal.sample.internal/sales/playbook",
+  "created_at": "2025-07-01T00:00:00Z",
+  "updated_at": "2026-03-01T00:00:00Z",
+  "permission": { "groups": ["Sample-All-Employees"] },
+  "body": "Sample Corp's sales motion is land-and-expand: an initial single-department pilot (typically 90-150 seats), a 90-day success check-in, then an expansion conversation timed to renewal. Discovery calls focus on the buyer's current tooling and time-to-answer pain points. Security and procurement reviews are handled jointly by Sales and Legal — see the security-questionnaire pattern used for the Globex account as a reference example."
+}

@@ -1,0 +1,10 @@
+{
+  "id": "sales-initech-account-notes",
+  "title": "Initech — Account Notes",
+  "department": "Sales",
+  "view_url": "https://portal.sample.internal/sales/accounts/initech",
+  "created_at": "2025-11-10T00:00:00Z",
+  "updated_at": "2026-06-01T00:00:00Z",
+  "permission": { "groups": ["Sample-Sales"] },
+  "body": "Initech is a mid-market account, owned by Sam Reyes. Current ARR: $185,000. Deployment: 300 licensed seats across two departments. Renewal date: 2027-01-15. Relationship is stable but under-penetrated relative to Initech's total headcount (~2,000) — flagged as an expansion opportunity for the next fiscal year's account planning."
+}

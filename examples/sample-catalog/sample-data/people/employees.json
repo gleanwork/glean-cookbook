@@ -1,0 +1,44 @@
+[
+  {
+    "email": "priya.natarajan@sample.example.com",
+    "first_name": "Priya",
+    "last_name": "Natarajan",
+    "department": "Engineering",
+    "title": "Payments Platform Tech Lead",
+    "start_date": "2022-03-14"
+  },
+  {
+    "email": "marcus.webb@sample.example.com",
+    "first_name": "Marcus",
+    "last_name": "Webb",
+    "department": "Engineering",
+    "title": "Software Engineer",
+    "manager_email": "priya.natarajan@sample.example.com",
+    "start_date": "2023-06-05"
+  },
+  {
+    "email": "dana.okafor@sample.example.com",
+    "first_name": "Dana",
+    "last_name": "Okafor",
+    "department": "HR",
+    "title": "HR Lead",
+    "start_date": "2021-01-11"
+  },
+  {
+    "email": "sam.reyes@sample.example.com",
+    "first_name": "Sam",
+    "last_name": "Reyes",
+    "department": "Sales",
+    "title": "Account Executive",
+    "start_date": "2022-09-19"
+  },
+  {
+    "email": "alex.kim@sample.example.com",
+    "first_name": "Alex",
+    "last_name": "Kim",
+    "department": "Engineering",
+    "title": "Software Engineer",
+    "manager_email": "priya.natarajan@sample.example.com",
+    "start_date": "2026-07-06"
+  }
+]

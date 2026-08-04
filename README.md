@@ -8,8 +8,7 @@ Runnable, copy-paste-able examples of building on the [Glean platform](https://d
 
 ```
 recipes/{id}/       one directory per recipe, self-contained and runnable
-acme-corpus/        the seed dataset every recipe's demo queries resolve against
-brand/              the Acme Corp brand kit shared by every recipe and mock
+brand/              Glean styling assets shared by every recipe demo
 registry.json        the manifest — one entry per recipe, validated in CI
 schemas/            recipe.schema.json, generated from developers.glean.com
 ```
@@ -18,10 +17,11 @@ schemas/            recipe.schema.json, generated from developers.glean.com
 
 Each `recipes/{id}/` directory is a **self-contained, runnable example** — it should work if someone clones just that directory (plus repo-root env var docs) into a fresh project. Conventions:
 
-- **Language subdirectories** where a recipe ships more than one client (e.g. `recipes/permissions-aware-rag/python/`, `recipes/permissions-aware-rag/typescript/`).
+- **Language subdirectories** where a recipe ships more than one client (e.g. `recipes/permissions-aware-retrieval/python/`, `recipes/permissions-aware-retrieval/typescript/`).
 - **A `README.md` per recipe** — the quickstart for someone browsing GitHub directly. Prose lives on the dev site page instead (see below); recipes with no standalone runnable code (e.g. `build-engineering-portal/`, `embed-search-chat/`) still get a directory with a short README explaining why.
 - **No hardcoded credentials, ever.** All recipes read `GLEAN_INSTANCE` and `GLEAN_API_TOKEN` (or the recipe-specific scoped token) from the environment. Include a `.env.example` if the recipe needs more than those two.
-- **Pinned dependencies.** Glean SDKs (`glean-api-client`, `@gleanwork/api-client`, `@gleanwork/web-sdk`, `glean-indexing-sdk`) are pinned to an exact released version — no `^`, `~`, or `latest`. CI (`pinned-deps`) fails a recipe that isn't.
+- **Pinned dependencies.** Glean SDKs (`glean-api-client`, `@gleanwork/api-client`, `@gleanwork/web-sdk`, `glean-indexing-sdk`) are pinned to an exact released version — no `^`, `~`, or `latest`. CI (`pinned-deps`) fails a recipe that isn't: `scripts/check-pinned-deps.mjs` covers `package.json`/`requirements.txt`, and `scripts/check_pinned_deps.py` covers Python recipes that declare dependencies inline, reading the specifiers uv parsed into each `<script>.py.lock` rather than re-implementing PEP 723 in JavaScript.
+- **Locked transitively.** Python recipes using inline dependencies commit a `<script>.py.lock` from `uv lock --script`. An exact direct pin still leaves dependencies-of-dependencies floating; the lock pins the full tree with hashes, so a recipe verified months ago still installs what it was verified with. `recipe-checks` runs `uv lock --check` and installs with `--locked`. Re-run `uv lock --script <script>` after editing inline dependencies.
 
 ### The registry
 
@@ -64,7 +64,7 @@ Every PR runs:
 
 - Open a PR against `main`; one approving review is required.
 - Run `npm run format` and `npm run validate:registry` locally before pushing.
-- If you're building a recipe from a spec handed to you (e.g. a Linear ticket with a validated registry entry attached), the entry is normative — copy it into `registry.json` unchanged, and build the code in `recipes/{id}/` to match what it promises (demo queries must resolve against real data in `acme-corpus/`, `aiPrompt` must actually scaffold what it claims to).
+- If you're building a recipe from a spec handed to you (e.g. a Linear ticket with a validated registry entry attached), the entry is normative — copy it into `registry.json` unchanged, and build the code in `recipes/{id}/` to match what it promises (demo queries must be answerable on a reader's own instance, `aiPrompt` must actually scaffold what it claims to).
 
 ### Verifying a recipe
 
@@ -74,7 +74,7 @@ What "verify" means depends on the recipe's `buildMethod`:
   running the recipe's own literal, checked commands (a `tiged` copy or a real CLI invocation),
   not regenerating code from prose. There's no drift for an LLM to introduce in that part. What
   still needs a real run is the recipe's own `## Verify` step and, where one exists, its `verify`
-  script (e.g. `recipes/acme-answers/chat-api/scripts/verify.mjs`) — against a live Glean instance,
+  script (e.g. `recipes/company-answers/chat-api/scripts/verify.mjs`) — against a live Glean instance,
   with real credentials, asserting the exact behavior `demoQueries[].expectedBehavior` promises.
 - **`integrate`** and **`third-party-build`** recipes still drive off a hand-written `aiPrompt` —
   this is where genuine regeneration-from-prose happens, and where drift (a stale response shape,
@@ -88,6 +88,26 @@ patch; that only ever confirms "the code I'm already looking at still basically 
 the case where the _skill_ is what's wrong, not the reference code. A blind rebuild catches drift
 in either direction. Then run the recipe's demo queries against a real, live Glean instance and
 confirm each one's `expectedBehavior` actually holds — not that the prose still reads correctly.
+
+### The verify gate
+
+`npm run verify:recipe <recipe-id>` is the executable form of a recipe's `## Verify` section. It
+reads the queries from `recipes/<id>/recipe.json`'s `demoQueries` — never restates them — and runs
+each one against a live instance, so adding a query to the registry adds it to verification.
+`expectedBehavior` stays prose for humans; the executable assertion lives in
+`scripts/verify/<id>.mjs`, the only per-recipe part.
+
+It requires real credentials and **fails rather than skipping** when they're absent: a verify run
+that quietly skips reports success for an unverified recipe, which is worse than no gate at all.
+Each module declares the environment it needs, so a run stops with a list of what to set.
+
+Two recipes have no module by design. `buildMethod: 'third-party-build'` means the app is built and
+run by Lovable or Replit, so there is nothing of ours to drive — the driver prints the manual
+checklist (each `demoQuery` with its `expectedBehavior`) for a human to walk instead.
+
+`integrate` recipes ship no code either, so theirs verify the platform behaviour the recipe tells
+readers to build on, not a reader's integration. If those fail, the recipe is pointing people at
+something that doesn't work.
 
 Once you've done that, set `lastVerified` to that date in the recipe's registry entry. Don't wait
 for manual initiative to decide when a recipe is due: `npm run check:freshness` (also runs in CI,
