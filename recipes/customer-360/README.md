@@ -1,0 +1,22 @@
+# customer-360
+
+Customer 360 — one account page built from whatever your instance already
+knows about that customer. KPI header, three source tiles, journey summary,
+saved-prompt buttons, and drill-in chat. Built two ways on **Platform APIs only**:
+
+- **[`platform-search-chat/`](platform-search-chat/)** — parallel `glean.search.query`
+  tiles + Platform Chat (`POST /api/chat`) for synthesis.
+- **[`platform-agents/`](platform-agents/)** — same page UX; journey / saved prompts /
+  follow-ups via `glean.agents.createRun`.
+
+Point both paths at an account with `GLEAN_ACCOUNT_NAME` and a backend with
+`GLEAN_SERVER_URL`. Live figures come from retrieval; unsupported KPI fields stay
+blank. Fixture mode (`GLEAN_USE_FIXTURE=true`) uses sample account data for
+contract checks only.
+
+See the full recipe at
+[developers.glean.com/cookbook/customer-360](https://developers.glean.com/cookbook/customer-360)
+(flag-gated pre-launch) or `docs/cookbook/customer-360.mdx` in
+[glean-developer-site](https://github.com/gleanwork/glean-developer-site).
+
+Spec lock: [`SPEC-LOCK.md`](SPEC-LOCK.md). Acceptance map: [`ACCEPTANCE-MAP.md`](ACCEPTANCE-MAP.md).
