@@ -9,78 +9,6 @@ export interface OnboardingStep {
   askPrompt: string;
 }
 
-/** Seeded from acme-corpus/documents/hr/hr-onboarding-checklist-alex-kim.json */
-export const ONBOARDING_STEPS: OnboardingStep[] = [
-  {
-    id: 'laptop',
-    title: 'Laptop provisioned',
-    group: 'it',
-    initiallyDone: true,
-    askPrompt: 'What should I know about my Acme laptop setup?',
-  },
-  {
-    id: 'badge',
-    title: 'Badge access',
-    group: 'it',
-    initiallyDone: true,
-    askPrompt: 'Where do I pick up or activate my badge?',
-  },
-  {
-    id: 'it-account',
-    title: 'IT account setup',
-    group: 'it',
-    initiallyDone: true,
-    askPrompt: 'How do I finish IT account setup on day one?',
-  },
-  {
-    id: 'slack-email',
-    title: 'Slack and email access',
-    group: 'it',
-    initiallyDone: true,
-    askPrompt: 'How do I get into Slack and email on my first day?',
-  },
-  {
-    id: 'team-intro',
-    title: 'Team introduction meeting',
-    group: 'team',
-    initiallyDone: true,
-    askPrompt: 'Who should I meet on the payments platform team?',
-  },
-  {
-    id: 'security-training',
-    title: 'Security awareness training',
-    group: 'hr',
-    initiallyDone: false,
-    dueDate: '2026-07-20',
-    askPrompt:
-      'What is required for security awareness training and when is it due?',
-  },
-  {
-    id: 'benefits',
-    title: 'Benefits enrollment',
-    group: 'hr',
-    initiallyDone: false,
-    dueDate: '2026-08-05',
-    askPrompt: 'How do I enroll in Acme benefits and what is the deadline?',
-  },
-  {
-    id: 'manager-1on1',
-    title: '1:1 with Priya Natarajan',
-    group: 'team',
-    initiallyDone: false,
-    dueDate: '2026-07-24',
-    askPrompt: 'When is my 1:1 with Priya Natarajan scheduled?',
-  },
-  {
-    id: 'architecture-walkthrough',
-    title: 'Payments-service architecture walkthrough',
-    group: 'engineering',
-    initiallyDone: false,
-    askPrompt:
-      'What should I know about the payments-service architecture before the walkthrough?',
-  },
-];
-
 export const MILESTONE_LABELS: Record<MilestoneGroup, string> = {
   it: 'IT setup',
   hr: 'HR',
@@ -88,7 +16,74 @@ export const MILESTONE_LABELS: Record<MilestoneGroup, string> = {
   engineering: 'Engineering',
 };
 
-export const STORAGE_KEY = 'acme.onboarding-hub.v1';
+export const STORAGE_KEY = 'onboarding-hub.v1';
+
+const GROUPS = new Set<MilestoneGroup>(['it', 'hr', 'team', 'engineering']);
+
+export function parseSteps(raw: unknown): OnboardingStep[] {
+  if (!Array.isArray(raw)) return [];
+  const steps: OnboardingStep[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as Record<string, unknown>;
+    if (
+      typeof row.id !== 'string' ||
+      typeof row.title !== 'string' ||
+      typeof row.askPrompt !== 'string' ||
+      typeof row.group !== 'string' ||
+      !GROUPS.has(row.group as MilestoneGroup)
+    ) {
+      continue;
+    }
+    steps.push({
+      id: row.id,
+      title: row.title,
+      group: row.group as MilestoneGroup,
+      initiallyDone: Boolean(row.initiallyDone),
+      dueDate: typeof row.dueDate === 'string' ? row.dueDate : undefined,
+      askPrompt: row.askPrompt,
+    });
+  }
+  return steps;
+}
+
+/**
+ * Live: GET /steps.json if the reader copied steps.example.json → steps.json.
+ * Fixture/demo: ?fixture=1 (or Vite DEV without steps.json) loads steps.fixture.json.
+ * Otherwise: empty checklist (do not invent a named hire).
+ */
+export async function loadSteps(): Promise<{
+  steps: OnboardingStep[];
+  source: 'fixture' | 'config' | 'empty';
+}> {
+  const wantsFixture =
+    new URLSearchParams(window.location.search).get('fixture') === '1';
+
+  if (wantsFixture) {
+    const response = await fetch('/steps.fixture.json');
+    if (!response.ok) {
+      throw new Error(`Failed to load steps.fixture.json (${response.status})`);
+    }
+    return {
+      steps: parseSteps(await response.json()),
+      source: 'fixture',
+    };
+  }
+
+  try {
+    const response = await fetch('/steps.json');
+    if (response.ok) {
+      return {
+        steps: parseSteps(await response.json()),
+        source: 'config',
+      };
+    }
+  } catch {
+    // missing steps.json is the empty-live path
+  }
+
+  return { steps: [], source: 'empty' };
+}
 
 export function loadCompletedIds(): Set<string> {
   try {

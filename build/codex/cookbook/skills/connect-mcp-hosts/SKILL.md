@@ -31,10 +31,7 @@ Glean MCP server URL: https://{instance}-be.glean.com/mcp/{server-name} (default
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance,
-with real credentials) and confirmed every query below produces its expected behavior. A build
-that runs without errors but fails one of these checks is not done — fix it and re-run before
-reporting success.
+{{> verify-gate}}
 
 - **Query:** "What does our team own?"
   **Expected:** The MCP host's chat returns an answer grounded in your Glean content, with citations, proving the server is connected and authenticated.

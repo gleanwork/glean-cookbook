@@ -1,0 +1,9 @@
+[
+  {
+    "id": "example-step",
+    "title": "Replace this file with your onboarding steps",
+    "group": "hr",
+    "initiallyDone": false,
+    "askPrompt": "What should I do on my first day?"
+  }
+]

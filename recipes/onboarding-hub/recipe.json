@@ -86,7 +86,7 @@
     }
   ],
   "aiPrompt": "Build an Onboarding Hub on Glean following\nhttps://developers.glean.com/cookbook/onboarding-hub\n\n1. Ask me which path: (A) Web SDK or (B) Platform Chat. Build the one\n   I pick.\n2. Build the checklist from MY onboarding content, not a fixed list:\n   retrieve the onboarding docs my instance has and derive the steps\n   from them. Ask me if you can't find any. Do not hardcode a named\n   new hire or a step count.\n3. Completion state in localStorage, with a progress ring and\n   milestone badges grouped by the categories my own docs suggest.\n4. Each step gets an \"Ask about this\" button that seeds a contextual\n   question about that step.\n5. Path A: renderChat in a sized #chat container (SSO cookie, no\n   credential handling). Re-mount with initialMessage when \"Ask about\n   this\" is clicked.\n6. Path B: server-side POST /api/chat with { input, stream: false,\n   store: true } and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Parse\n   output[0].content[0].text plus annotations[].sources[] for\n   citations \u2014 NOT Client API chat.create fragment parsing. The token\n   stays server-side.\n7. When an answer comes back empty or uncited, show the escalation\n   affordance (an IT or HR channel) instead of rendering nothing, and\n   never let the model answer an onboarding question from its own\n   knowledge. A new hire cannot tell an invented process from a real\n   one, which makes fabrication the most damaging failure here.\n8. Style it per the house style below: the real Glean logomark, Glean\n   Blue (#343ced) as the accent.\n9. Verify with the demo queries against my own content.",
-  "llmContext": "Platform Chat (Path B): POST /api/chat, OpenAI Responses-style. Request: { input: string, stream?: boolean, store?: boolean }. Response: output[].content[].text + annotations[].sources[] (document/person/file/custom_entity). Experimental \u2014 requires X_GLEAN_INCLUDE_EXPERIMENTAL=true and backend platform.apiMigratedEndpointsEnabled. Platform scope is CHAT_WRITE (registry uses cookbook-style CHAT). No scoping/inclusion filter fields in OpenAPI \u2014 soft-scope via corpus framing only. Until @gleanwork/api-client ships glean.chat.create, use fetch against /api/chat. Path A: Web SDK renderChat with SSO cookie; all ChatOptions fields optional. Do NOT teach Client API glean.client.chat.create or messageType === 'CONTENT' fragment parsing in this recipe. The checklist and its steps must be derived from the reader's own onboarding content. An earlier draft seeded a named new hire's nine steps from a demo corpus that no longer exists, which made the hub display one fictional person's checklist on every instance. Ask rather than invent, and treat an empty or uncited answer as a state to render -- a new hire cannot distinguish an invented process from a real one.",
+  "llmContext": "Platform Chat (Path B): POST /api/chat, OpenAI Responses-style. Request: { input: string, stream?: boolean, store?: boolean }. Response: output[].content[].text + annotations[].sources[] (document/person/file/custom_entity). Experimental \u2014 requires X_GLEAN_INCLUDE_EXPERIMENTAL=true and backend platform.apiMigratedEndpointsEnabled. Platform scope is CHAT_WRITE (registry uses cookbook-style CHAT). No scoping/inclusion filter fields in OpenAPI \u2014 soft-scope via corpus framing only. Until @gleanwork/api-client ships glean.chat.create, use fetch against /api/chat. Auth is the caller's own OAuth token or API token with CHAT scope -- impersonation/act-as was removed from the cookbook recipes, so the caller's credential is the permission boundary. Path A: Web SDK renderChat with SSO cookie; all ChatOptions fields optional. Do NOT teach Client API glean.client.chat.create or messageType === 'CONTENT' fragment parsing in this recipe. The checklist and its steps must be derived from the reader's own onboarding content. An earlier draft seeded a named new hire's nine steps from a demo corpus that no longer exists, which made the hub display one fictional person's checklist on every instance. Ask rather than invent, and treat an empty or uncited answer as a state to render -- a new hire cannot distinguish an invented process from a real one. Use GLEAN_SERVER_URL rather than deriving the backend from an instance name.",
   "goDependency": false,
   "featured": false,
   "tags": ["dual-implementation", "portal"],
@@ -114,7 +114,7 @@
         },
         {
           "title": "Verify",
-          "description": "Open the printed local URL. Confirm the checklist renders, click Ask about this on a step, and ask a first-day question for a cited answer."
+          "description": "Open the printed local URL (use ?fixture=1 or copy steps.example.json → steps.json). Confirm the checklist renders without a named-hire persona, click Ask about this on a step, and ask a first-day question for a cited answer."
         }
       ]
     },
@@ -132,9 +132,14 @@
           "command": "cd onboarding-hub && npm install"
         },
         {
+          "title": "Watch the contract hold, with no credentials",
+          "command": "npm run verify:fixture",
+          "description": "Replays recorded checklist + chat responses and asserts citations, empty off-corpus escalation, and OpenAPI shape — no token required."
+        },
+        {
           "title": "Set credentials",
           "command": "cp .env.example .env",
-          "description": "Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Set GLEAN_USE_FIXTURE=true for contract-only verification without a live handler."
+          "description": "Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Optionally set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON for your checklist. The app runs as you; there is no act-as."
         },
         {
           "title": "Run it",
@@ -142,8 +147,7 @@
         },
         {
           "title": "Verify",
-          "command": "npm run verify:fixture",
-          "description": "Runs fixture-mode contract verification. For live verification against your instance, set GLEAN_USE_FIXTURE=false and ensure the experimental /api/chat handler is enabled."
+          "description": "Ask the demo queries against your own onboarding docs. Confirm cited answers for first-day / VPN / PTO, and that an unsupported question shows the escalation affordance instead of inventing a step."
         }
       ]
     }

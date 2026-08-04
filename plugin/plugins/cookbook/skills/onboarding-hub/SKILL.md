@@ -35,7 +35,7 @@ Web SDK variant — checklist + renderChat
    ```
 
 5. **Verify**
-   Open the printed local URL. Confirm the checklist renders, click Ask about this on a step, and ask a first-day question for a cited answer.
+   Open the printed local URL (use ?fixture=1 or copy steps.example.json → steps.json). Confirm the checklist renders without a named-hire persona, click Ask about this on a step, and ask a first-day question for a cited answer.
 
 ### Platform Chat
 
@@ -53,28 +53,32 @@ Platform Chat variant — POST /api/chat, you own the UI
    cd onboarding-hub && npm install
    ```
 
-3. **Set credentials**
-   Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Set GLEAN_USE_FIXTURE=true for contract-only verification without a live handler.
+3. **Watch the contract hold, with no credentials**
+   Replays recorded checklist + chat responses and asserts citations, empty off-corpus escalation, and OpenAPI shape — no token required.
+
+   ```bash
+   npm run verify:fixture
+   ```
+
+4. **Set credentials**
+   Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Optionally set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON for your checklist. The app runs as you; there is no act-as.
 
    ```bash
    cp .env.example .env
    ```
 
-4. **Run it**
+5. **Run it**
 
    ```bash
    npm start
    ```
 
-5. **Verify**
-   Runs fixture-mode contract verification. For live verification against your instance, set GLEAN_USE_FIXTURE=false and ensure the experimental /api/chat handler is enabled.
-   ```bash
-   npm run verify:fixture
-   ```
+6. **Verify**
+   Ask the demo queries against your own onboarding docs. Confirm cited answers for first-day / VPN / PTO, and that an unsupported question shows the escalation affordance instead of inventing a step.
 
 ## Reference
 
-Platform Chat (Path B): POST /api/chat, OpenAI Responses-style. Request: { input: string, stream?: boolean, store?: boolean }. Response: output[].content[].text + annotations[].sources[] (document/person/file/custom_entity). Experimental — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true and backend platform.apiMigratedEndpointsEnabled. Platform scope is CHAT_WRITE (registry uses cookbook-style CHAT). No scoping/inclusion filter fields in OpenAPI — soft-scope via corpus framing only. Until @gleanwork/api-client ships glean.chat.create, use fetch against /api/chat. Path A: Web SDK renderChat with SSO cookie; all ChatOptions fields optional. Do NOT teach Client API glean.client.chat.create or messageType === 'CONTENT' fragment parsing in this recipe. The checklist and its steps must be derived from the reader's own onboarding content. An earlier draft seeded a named new hire's nine steps from a demo corpus that no longer exists, which made the hub display one fictional person's checklist on every instance. Ask rather than invent, and treat an empty or uncited answer as a state to render -- a new hire cannot distinguish an invented process from a real one.
+Platform Chat (Path B): POST /api/chat, OpenAI Responses-style. Request: { input: string, stream?: boolean, store?: boolean }. Response: output[].content[].text + annotations[].sources[] (document/person/file/custom_entity). Experimental — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true and backend platform.apiMigratedEndpointsEnabled. Platform scope is CHAT_WRITE (registry uses cookbook-style CHAT). No scoping/inclusion filter fields in OpenAPI — soft-scope via corpus framing only. Until @gleanwork/api-client ships glean.chat.create, use fetch against /api/chat. Auth is the caller's own OAuth token or API token with CHAT scope -- impersonation/act-as was removed from the cookbook recipes, so the caller's credential is the permission boundary. Path A: Web SDK renderChat with SSO cookie; all ChatOptions fields optional. Do NOT teach Client API glean.client.chat.create or messageType === 'CONTENT' fragment parsing in this recipe. The checklist and its steps must be derived from the reader's own onboarding content. An earlier draft seeded a named new hire's nine steps from a demo corpus that no longer exists, which made the hub display one fictional person's checklist on every instance. Ask rather than invent, and treat an empty or uncited answer as a state to render -- a new hire cannot distinguish an invented process from a real one. Use GLEAN_SERVER_URL rather than deriving the backend from an instance name.
 
 ## Authentication
 

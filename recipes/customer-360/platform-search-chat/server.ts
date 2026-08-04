@@ -276,7 +276,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const payload = await loadAccount();
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(payload));
+      res.end(JSON.stringify({ ...payload, fixtureMode: useFixture() }));
     } catch (error) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: (error as Error).message }));

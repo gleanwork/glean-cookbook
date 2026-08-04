@@ -1,8 +1,8 @@
 import { renderChat } from '@gleanwork/web-sdk';
 import {
   loadCompletedIds,
+  loadSteps,
   MILESTONE_LABELS,
-  ONBOARDING_STEPS,
   progressPercent,
   milestoneStats,
   saveCompletedIds,
@@ -10,14 +10,25 @@ import {
   type OnboardingStep,
 } from './checklist';
 
+const DEFAULT_CHAT = 'What should I do on my first day?';
+
 const completed = loadCompletedIds();
-let chatHost: HTMLElement | null = null;
+let steps: OnboardingStep[] = [];
+let source: 'fixture' | 'config' | 'empty' = 'empty';
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
 
 function mountChat(initialMessage?: string): void {
   const container = document.getElementById('chat');
   if (!container) throw new Error('Missing #chat container');
   container.innerHTML = '';
-  chatHost = container;
   renderChat(container, {
     // backend: 'https://{your}-be.glean.com',
     ...(initialMessage ? { initialMessage } : {}),
@@ -25,7 +36,7 @@ function mountChat(initialMessage?: string): void {
 }
 
 function renderProgress(): void {
-  const percent = progressPercent(ONBOARDING_STEPS, completed);
+  const percent = progressPercent(steps, completed);
   const ring = document.getElementById('progress-ring');
   const label = document.getElementById('progress-label');
   if (ring) ring.style.setProperty('--progress', String(percent));
@@ -33,7 +44,7 @@ function renderProgress(): void {
 
   const badges = document.getElementById('milestone-badges');
   if (!badges) return;
-  const stats = milestoneStats(ONBOARDING_STEPS, completed);
+  const stats = milestoneStats(steps, completed);
   badges.innerHTML = (Object.keys(stats) as Array<keyof typeof stats>)
     .map((group) => {
       const { done, total } = stats[group];
@@ -45,37 +56,54 @@ function renderProgress(): void {
 
 function stepRow(step: OnboardingStep): string {
   const done = isStepDone(step, completed);
+  const title = escapeHtml(step.title);
+  const id = escapeHtml(step.id);
   const due = step.dueDate
-    ? `<span class="due">Due ${step.dueDate}</span>`
+    ? `<span class="due">Due ${escapeHtml(step.dueDate)}</span>`
     : '';
   const askButton = done
     ? ''
     : `<button type="button" class="ask-btn" data-ask="${encodeURIComponent(step.askPrompt)}">Ask about this</button>`;
   const markButton = done
     ? ''
-    : `<button type="button" class="mark-btn" data-mark="${step.id}">Mark complete</button>`;
+    : `<button type="button" class="mark-btn" data-mark="${id}">Mark complete</button>`;
   return `
-    <li class="step${done ? ' done' : ''}" data-step="${step.id}">
+    <li class="step${done ? ' done' : ''}" data-step="${id}">
       <span class="check" aria-hidden="true">${done ? '✓' : '○'}</span>
       <div class="step-body">
-        <div class="step-title">${step.title} ${due}</div>
+        <div class="step-title">${title} ${due}</div>
         <div class="step-actions">${askButton}${markButton}</div>
       </div>
     </li>`;
 }
 
 function renderChecklist(): void {
-  const pending = ONBOARDING_STEPS.filter(
-    (step) => !isStepDone(step, completed),
-  );
-  const doneSteps = ONBOARDING_STEPS.filter((step) =>
-    isStepDone(step, completed),
-  );
-  const allDone = pending.length === 0;
-
   const checklist = document.getElementById('checklist-panel');
   const donePanel = document.getElementById('done-panel');
+  const emptyNote = document.getElementById('empty-checklist');
   if (!checklist || !donePanel) return;
+
+  if (emptyNote) {
+    emptyNote.hidden = source !== 'empty';
+  }
+
+  if (steps.length === 0) {
+    checklist.hidden = false;
+    donePanel.hidden = true;
+    const pendingList = document.getElementById('pending-list');
+    const doneList = document.getElementById('done-list');
+    if (pendingList) pendingList.innerHTML = '';
+    if (doneList) doneList.innerHTML = '';
+    const pendingHeading = document.getElementById('pending-heading');
+    const doneHeading = document.getElementById('done-heading');
+    if (pendingHeading) pendingHeading.textContent = 'Still to do · 0';
+    if (doneHeading) doneHeading.textContent = 'Completed · 0';
+    return;
+  }
+
+  const pending = steps.filter((step) => !isStepDone(step, completed));
+  const doneSteps = steps.filter((step) => isStepDone(step, completed));
+  const allDone = pending.length === 0;
 
   if (allDone) {
     checklist.hidden = true;
@@ -126,7 +154,7 @@ function wireEvents(): void {
     }
 
     if (target.id === 'mark-all') {
-      for (const step of ONBOARDING_STEPS) completed.add(step.id);
+      for (const step of steps) completed.add(step.id);
       saveCompletedIds(completed);
       rerender();
       return;
@@ -136,11 +164,32 @@ function wireEvents(): void {
       completed.clear();
       saveCompletedIds(completed);
       rerender();
-      mountChat('What should Alex do on day one?');
+      mountChat(DEFAULT_CHAT);
     }
   });
 }
 
-mountChat('What should Alex do on day one?');
-rerender();
-wireEvents();
+async function boot(): Promise<void> {
+  const loaded = await loadSteps();
+  steps = loaded.steps;
+  source = loaded.source;
+
+  const sourceNote = document.getElementById('steps-source');
+  if (sourceNote) {
+    if (source === 'fixture') {
+      sourceNote.textContent =
+        'Showing fixture sample steps (?fixture=1). Not your instance’s checklist.';
+    } else if (source === 'config') {
+      sourceNote.textContent = 'Loaded steps from /steps.json.';
+    } else {
+      sourceNote.textContent =
+        'No steps configured. Copy public/steps.example.json to public/steps.json, or open with ?fixture=1 for a sample.';
+    }
+  }
+
+  mountChat(DEFAULT_CHAT);
+  rerender();
+  wireEvents();
+}
+
+void boot();

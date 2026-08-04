@@ -19,6 +19,7 @@ hardcodes ARR, seats, renewal date, owner, or risk.
 | `authMethod`                    | `["client-api-oauth-or-token"]`                                                                      |
 | `combines`                      | permissions-aware-retrieval (Platform Search); onboarding-hub Platform Chat pattern; Platform Agents |
 | Demo queries                    | Renewal status; customer summary; renewal risks (account implicit; substitute the chosen name)       |
+| Auth                            | Caller's own credential; **no act-as / impersonation**                                               |
 | Brand                           | Glean Blue `#343ced`, real logomark; account supplied via `GLEAN_ACCOUNT_NAME`                       |
 | Code layout                     | `recipes/customer-360/{platform-search-chat,platform-agents}/`                                       |
 | Env                             | `GLEAN_SERVER_URL`, `GLEAN_API_TOKEN`, `GLEAN_ACCOUNT_NAME` (+ `GLEAN_AGENT_ID` for Path B)          |

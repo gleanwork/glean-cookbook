@@ -1,0 +1,67 @@
+[
+  {
+    "id": "laptop",
+    "title": "Laptop provisioned",
+    "group": "it",
+    "initiallyDone": true,
+    "askPrompt": "What should I know about my laptop setup?"
+  },
+  {
+    "id": "badge",
+    "title": "Badge access",
+    "group": "it",
+    "initiallyDone": true,
+    "askPrompt": "Where do I pick up or activate my badge?"
+  },
+  {
+    "id": "it-account",
+    "title": "IT account setup",
+    "group": "it",
+    "initiallyDone": true,
+    "askPrompt": "How do I finish IT account setup on day one?"
+  },
+  {
+    "id": "slack-email",
+    "title": "Slack and email access",
+    "group": "it",
+    "initiallyDone": true,
+    "askPrompt": "How do I get into Slack and email on my first day?"
+  },
+  {
+    "id": "team-intro",
+    "title": "Team introduction meeting",
+    "group": "team",
+    "initiallyDone": true,
+    "askPrompt": "Who should I meet on my team in the first week?"
+  },
+  {
+    "id": "security-training",
+    "title": "Security awareness training",
+    "group": "hr",
+    "initiallyDone": false,
+    "dueDate": "within 2 weeks of start",
+    "askPrompt": "What is required for security awareness training and when is it due?"
+  },
+  {
+    "id": "benefits",
+    "title": "Benefits enrollment",
+    "group": "hr",
+    "initiallyDone": false,
+    "dueDate": "within 30 days of start",
+    "askPrompt": "How do I enroll in benefits and what is the deadline?"
+  },
+  {
+    "id": "manager-1on1",
+    "title": "1:1 with your manager",
+    "group": "team",
+    "initiallyDone": false,
+    "askPrompt": "When should I schedule my first 1:1 with my manager?"
+  },
+  {
+    "id": "architecture-walkthrough",
+    "title": "Architecture walkthrough",
+    "group": "engineering",
+    "initiallyDone": false,
+    "askPrompt": "What should I know before my team's architecture walkthrough?"
+  }
+]
