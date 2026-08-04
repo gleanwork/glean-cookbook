@@ -1,0 +1,9 @@
+{
+  "id": "PAY-2231",
+  "service": "payments-service",
+  "kind": "canary",
+  "metric": "authorization failure rate",
+  "summary": "Canary alarm during deploy: authorization failure rate rose from 0.2% to 3.8% at 5% rollout",
+  "severity": "Sev2",
+  "firedAt": "2026-08-03T21:40:00Z"
+}

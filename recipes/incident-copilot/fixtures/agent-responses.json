@@ -1,0 +1,41 @@
+{
+  "triage:PAY-2231": {
+    "messages": [
+      {
+        "role": "GLEAN_AI",
+        "content": [
+          {
+            "text": "payments-service canary tripped the authorization failure rate alarm at 5% rollout. PAY-2114 is the closest precedent: a Stripe connection-pool floor sized for full traffic evicted connections on the low-traffic canary pod. Recommend drafting the fix.\naction: draft-fix-pr"
+          }
+        ]
+      }
+    ],
+    "request_id": "22ef4dd9b6f7478f"
+  },
+  "triage:PAY-2232": {
+    "messages": [
+      {
+        "role": "GLEAN_AI",
+        "content": [
+          {
+            "text": "Ledger write queue depth is climbing with no deploy in flight and no matching prior incident. Needs a human to investigate.\naction: file-tracking-ticket"
+          }
+        ]
+      }
+    ],
+    "request_id": "285596ea7563466c"
+  },
+  "triage:PAY-2233": {
+    "messages": [
+      {
+        "role": "GLEAN_AI",
+        "content": [
+          {
+            "text": "Rolling back production immediately is the fastest mitigation.\naction: rollback-production-now"
+          }
+        ]
+      }
+    ],
+    "request_id": "26afef1cf6bf48b9"
+  }
+}

@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Incident copilot</title>
+    <style>
+      :root {
+        --font:
+          'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui,
+          sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+        --primary: #343ced;
+        --primary-hover: #131bd4;
+        --selected: #eceefe;
+        --text: #1f2024;
+        --text-2: #565a64;
+        --bg: #f7f8fa;
+        --card: #fff;
+        --border: #e7e8ed;
+        --border-dark: #c9cbd2;
+        --ok: #16794a;
+        --ok-bg: #e6f5ec;
+        --warn-fg: #92670a;
+        --warn-bg: #fff8e5;
+        --warn-border: #ffe0b3;
+        --bad-fg: #a51c1c;
+        --bad-bg: #fdeaea;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text);
+        background: var(--bg);
+      }
+      header {
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        padding: 18px 26px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        letter-spacing: -0.01em;
+      }
+      .sub {
+        color: var(--text-2);
+        font-size: 13px;
+      }
+      main {
+        padding: 22px 26px 60px;
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+      section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px 18px;
+        margin-bottom: 18px;
+      }
+      h2 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-2);
+        margin: 0 0 12px;
+        font-weight: 600;
+      }
+      button {
+        font: inherit;
+        font-weight: 500;
+        border-radius: 7px;
+        padding: 7px 13px;
+        border: 1px solid var(--primary);
+        background: var(--primary);
+        color: #fff;
+        cursor: pointer;
+      }
+      button:hover:not(:disabled) {
+        background: var(--primary-hover);
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      button.ghost {
+        background: #fff;
+        color: var(--text);
+        border-color: var(--border-dark);
+      }
+      button.ghost:hover:not(:disabled) {
+        background: var(--bg);
+      }
+      button.danger {
+        background: #fff;
+        color: var(--bad-fg);
+        border-color: #f0bcbc;
+      }
+      button.tiny {
+        padding: 4px 9px;
+        font-size: 12px;
+      }
+      select,
+      input,
+      textarea {
+        font: inherit;
+        padding: 6px 9px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        width: 100%;
+      }
+      textarea {
+        min-height: 76px;
+        resize: vertical;
+      }
+      .pill {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+        white-space: nowrap;
+      }
+      .pill.precedent {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .pill.procedure {
+        background: var(--selected);
+        color: #2229a8;
+      }
+      .pill.context {
+        background: var(--bg);
+        color: var(--text-2);
+        border: 1px solid var(--border);
+      }
+      .pill.supported {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .pill.weak {
+        background: var(--warn-bg);
+        color: var(--warn-fg);
+        border: 1px solid var(--warn-border);
+      }
+      .st {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+      }
+      .st-acknowledged,
+      .st-awaiting-approval {
+        background: var(--warn-bg);
+        color: var(--warn-fg);
+      }
+      .st-executed,
+      .st-approved,
+      .st-resolved {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .st-escalated,
+      .st-action-failed,
+      .st-rejected {
+        background: var(--bad-bg);
+        color: var(--bad-fg);
+      }
+      .q {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        cursor: pointer;
+      }
+      .q:hover {
+        background: var(--bg);
+      }
+      .q.sel {
+        border-color: var(--primary);
+        background: var(--selected);
+      }
+      .q .id {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text-2);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        padding: 7px 8px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        font-size: 11px;
+        color: var(--text-2);
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .note {
+        border-radius: 7px;
+        padding: 9px 11px;
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+      .note.warn {
+        background: var(--warn-bg);
+        border: 1px solid var(--warn-border);
+        color: var(--warn-fg);
+      }
+      .note.bad {
+        background: var(--bad-bg);
+        border: 1px solid #f0bcbc;
+        color: var(--bad-fg);
+      }
+      .note.info {
+        background: var(--selected);
+        border: 1px solid #ccd0fb;
+        color: #2229a8;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .log {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--text-2);
+        margin: 0;
+        padding-left: 16px;
+      }
+      .log li {
+        margin-bottom: 3px;
+      }
+      pre {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 11px;
+        overflow: auto;
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+      a {
+        color: var(--primary);
+      }
+      .hidden {
+        display: none;
+      }
+      .muted {
+        color: var(--text-2);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Incident copilot</h1>
+      <div class="sub" id="banner"></div>
+    </header>
+    <main>
+      <section>
+        <h2>Fire an alarm</h2>
+        <div class="row">
+          <select id="orchestrator" style="width: 300px"></select>
+          <button id="fire">PagerDuty webhook → PAY-2231 (canary)</button>
+          <button id="fire-novel" class="ghost">PAY-2232 (no precedent)</button>
+          <button id="reset" class="ghost">Reset</button>
+        </div>
+        <div class="muted" style="margin-top: 8px" id="filter-note"></div>
+      </section>
+
+      <div class="grid">
+        <div>
+          <section>
+            <h2>On-call queue</h2>
+            <div id="queue"><div class="muted">No incidents yet.</div></div>
+          </section>
+        </div>
+        <div id="detail"></div>
+      </div>
+    </main>
+
+    <script type="module">
+      const $ = (id) => document.getElementById(id);
+      let state = { incidents: [], selected: null, config: null };
+
+      const el = (tag, props = {}, kids = []) => {
+        const n = document.createElement(tag);
+        for (const [k, v] of Object.entries(props)) {
+          if (k === 'class') n.className = v;
+          else if (k === 'text') n.textContent = v;
+          else if (k === 'value') n.value = v;
+          else n.setAttribute(k, v);
+        }
+        for (const c of kids) n.append(c);
+        return n;
+      };
+
+      function safeLink(title, url) {
+        let u;
+        try {
+          u = new URL(url);
+        } catch {
+          return el('span', { text: title });
+        }
+        if (u.protocol !== 'https:' && u.protocol !== 'http:')
+          return el('span', { text: title });
+        return el('a', {
+          href: u.href,
+          target: '_blank',
+          rel: 'noreferrer noopener',
+          text: title,
+        });
+      }
+
+      async function boot() {
+        state.config = await (await fetch('/api/config')).json();
+        const c = state.config;
+        $('banner').textContent =
+          `Signed in as ${c.actor}. Default approval expiry ${Math.round(c.defaultExpiryMs / 60000)} min ` +
+          `(per-service, from the catalog). ` +
+          (c.fixtureMode
+            ? 'Fixture mode — no credentials, no network.'
+            : 'Live mode.');
+        $('orchestrator').replaceChildren(
+          ...c.orchestrators.map((o) =>
+            el('option', {
+              value: o.id,
+              text: o.available
+                ? o.label
+                : `${o.label} — unavailable (set GLEAN_AGENT_ID)`,
+              ...(o.available ? {} : { disabled: 'disabled' }),
+            }),
+          ),
+        );
+        $('filter-note').textContent =
+          'Actions available for approval: ' +
+          c.actions.map((a) => a.id).join(', ') +
+          '. Nothing outside that list can execute.';
+        await refresh();
+      }
+
+      async function fire(file) {
+        const alarm = await (await fetch(`/api/sample-alarm${file}`)).json();
+        const o = $('orchestrator').value;
+        const res = await fetch(`/webhook/pagerduty?orchestrator=${o}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(alarm),
+        });
+        const body = await res.json();
+        if (body.filtered) {
+          alert(`Filtered: ${body.reason}`);
+          return;
+        }
+        state.selected = body.incident?.id ?? null;
+        await refresh();
+      }
+
+      $('fire').addEventListener('click', () => fire(''));
+      $('fire-novel').addEventListener('click', async () => {
+        // Second fixture alarm: same service, a failure with no precedent.
+        const alarm = {
+          id: 'PAY-2232',
+          service: 'payments-service',
+          kind: 'saturation',
+          metric: 'ledger write queue depth',
+          summary:
+            'Ledger write queue depth growing unbounded; no deploy in flight',
+          severity: 'Sev2',
+          firedAt: new Date().toISOString(),
+        };
+        const o = $('orchestrator').value;
+        const res = await fetch(`/webhook/pagerduty?orchestrator=${o}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(alarm),
+        });
+        const body = await res.json();
+        state.selected = body.incident?.id ?? null;
+        await refresh();
+      });
+      $('reset').addEventListener('click', async () => {
+        await fetch('/api/reset', { method: 'POST' });
+        state.selected = null;
+        await refresh();
+      });
+
+      async function refresh() {
+        const data = await (await fetch('/api/incidents')).json();
+        state.incidents = data.incidents;
+        state.approvers = data.approvers;
+        renderQueue();
+        renderDetail();
+      }
+
+      function renderQueue() {
+        const q = $('queue');
+        if (state.incidents.length === 0) {
+          q.replaceChildren(
+            el('div', { class: 'muted', text: 'No incidents yet.' }),
+          );
+          return;
+        }
+        q.replaceChildren(
+          ...state.incidents.map((inc) => {
+            const card = el(
+              'div',
+              { class: `q${inc.id === state.selected ? ' sel' : ''}` },
+              [
+                el('div', {
+                  class: 'id',
+                  text: `${inc.id} · ${inc.service.service}`,
+                }),
+                el('div', {
+                  text:
+                    inc.alarm.summary.slice(0, 70) +
+                    (inc.alarm.summary.length > 70 ? '…' : ''),
+                }),
+                el('div', { class: 'row', style: 'margin-top:6px' }, [
+                  el('span', {
+                    class: `st st-${inc.status}`,
+                    text: inc.status,
+                  }),
+                  el('span', {
+                    class: 'muted',
+                    text:
+                      inc.orchestrator === 'agent'
+                        ? 'agent-planned'
+                        : 'app-planned',
+                  }),
+                ]),
+              ],
+            );
+            card.addEventListener('click', () => {
+              state.selected = inc.id;
+              renderQueue();
+              renderDetail();
+            });
+            return card;
+          }),
+        );
+      }
+
+      function renderDetail() {
+        const host = $('detail');
+        const inc = state.incidents.find((i) => i.id === state.selected);
+        if (!inc) {
+          host.replaceChildren();
+          return;
+        }
+        const meta = state.approvers.find((a) => a.id === inc.id);
+        host.replaceChildren(
+          triageCard(inc, meta),
+          evidenceCard(inc),
+          approvalCard(inc, meta),
+          channelCard(inc),
+          auditCard(inc),
+        );
+      }
+
+      function triageCard(inc) {
+        const supported = inc.hypotheses.filter(
+          (h) => h.confidence === 'supported',
+        );
+        const kids = [el('h2', { text: 'Triage card' })];
+
+        if (supported.length === 0) {
+          kids.push(
+            el('div', {
+              class: 'note warn',
+              text:
+                'No probable cause asserted. No past incident matches this alarm signature, ' +
+                'so naming a cause here would be a guess. Runbooks retrieved highly, but a runbook is procedure — it records what to do, not why this broke.',
+            }),
+          );
+        }
+
+        kids.push(
+          el('table', {}, [
+            el('tbody', {}, [
+              tr('Alarm', `${inc.alarm.summary} (${inc.alarm.severity})`),
+              tr(
+                'Service',
+                `${inc.service.service} · ${inc.service.tier} · deps: ${inc.service.dependencies.join(', ')}`,
+              ),
+              tr('On call', inc.service.onCall),
+              tr('Owner', inc.service.techLead),
+              tr(
+                'Planner',
+                inc.orchestrator === 'agent'
+                  ? 'Glean agent (Agent API)'
+                  : 'App-orchestrated',
+              ),
+            ]),
+          ]),
+        );
+
+        if (inc.hypotheses.length > 0) {
+          kids.push(
+            el('h2', {
+              style: 'margin-top:16px',
+              text: 'Probable cause, ranked by evidence',
+            }),
+          );
+          for (const h of inc.hypotheses) {
+            kids.push(
+              el('div', { style: 'margin-bottom:10px' }, [
+                el('div', { class: 'row' }, [
+                  el('span', {
+                    class: `pill ${h.confidence}`,
+                    text: h.confidence,
+                  }),
+                  el('strong', { text: h.cause }),
+                ]),
+                el('div', { class: 'muted', text: h.reason }),
+                el(
+                  'div',
+                  { class: 'muted' },
+                  h.evidence.flatMap((e, i) =>
+                    i === 0
+                      ? [safeLink(e.title, e.url)]
+                      : [
+                          document.createTextNode(', '),
+                          safeLink(e.title, e.url),
+                        ],
+                  ),
+                ),
+              ]),
+            );
+          }
+        }
+        return el('section', {}, kids);
+      }
+
+      function tr(k, v) {
+        return el('tr', {}, [
+          el('th', { style: 'width:120px', text: k }),
+          el('td', { text: v }),
+        ]);
+      }
+
+      function evidenceCard(inc) {
+        return el('section', {}, [
+          el('h2', { text: 'Evidence, by what it can prove' }),
+          el('div', {
+            class: 'muted',
+            style: 'margin-bottom:10px',
+            text: 'precedent = a past incident with a matching signature, the only thing that can support a cause. procedure = a runbook; supports an action, never a cause. context = ownership and topology.',
+          }),
+          el('table', {}, [
+            el('thead', {}, [
+              el('tr', {}, [
+                el('th', { text: 'Role' }),
+                el('th', { text: 'Signature' }),
+                el('th', { text: 'Document' }),
+              ]),
+            ]),
+            el(
+              'tbody',
+              {},
+              inc.evidence
+                .slice()
+                .sort((a, b) => b.signatureMatch - a.signatureMatch)
+                .map((e) =>
+                  el('tr', {}, [
+                    el('td', {}, [
+                      el('span', { class: `pill ${e.role}`, text: e.role }),
+                    ]),
+                    el('td', { text: e.signatureMatch.toFixed(2) }),
+                    el('td', {}, [safeLink(e.title, e.url)]),
+                  ]),
+                ),
+            ),
+          ]),
+        ]);
+      }
+
+      function approvalCard(inc, meta) {
+        const kids = [el('h2', { text: 'Approval gate' })];
+
+        if (!inc.proposed) {
+          kids.push(
+            el('div', {
+              class: 'note bad',
+              text: 'No action was offered. The planner named an action that is not pre-registered, so it was refused and audited rather than shown to you.',
+            }),
+          );
+          return el('section', {}, kids);
+        }
+
+        const action = state.config.actions.find(
+          (a) => a.id === inc.proposed.actionId,
+        );
+        kids.push(
+          el('div', {
+            class: 'note info',
+            text: `${action ? action.label : inc.proposed.actionId} — ${action ? action.effect : 'unregistered'}`,
+          }),
+        );
+
+        if (inc.status === 'awaiting-approval') {
+          kids.push(
+            el('div', {
+              class: 'muted',
+              text: `Expires ${inc.expiresAt}. On expiry this escalates to ${inc.service.escalateTo} and does NOT execute.`,
+            }),
+          );
+        }
+
+        const summary = el('input', { value: inc.proposed.summary });
+        const detail = el('textarea', {}, [
+          document.createTextNode(inc.proposed.detail),
+        ]);
+        const terminal = [
+          'executed',
+          'action-failed',
+          'rejected',
+          'escalated',
+          'resolved',
+        ].includes(inc.status);
+        if (terminal) {
+          summary.setAttribute('disabled', 'disabled');
+          detail.setAttribute('disabled', 'disabled');
+        }
+
+        kids.push(el('div', { style: 'margin:10px 0 6px' }, [summary]));
+        kids.push(detail);
+        if (inc.proposed.basis) {
+          kids.push(
+            el('div', { class: 'muted', style: 'margin-top:6px' }, [
+              document.createTextNode('Licensed by runbook: '),
+              safeLink(inc.proposed.basis.title, inc.proposed.basis.url),
+            ]),
+          );
+        }
+
+        if (!meta?.youMayApprove) {
+          kids.push(
+            el('div', {
+              class: 'note bad',
+              style: 'margin-top:10px',
+              text: `You (${state.config.actor}) may not approve this. Restricted to ${meta ? meta.allowed.join(' or ') : 'the service owners'}. Set INCIDENT_ACTOR to one of them.`,
+            }),
+          );
+        }
+
+        const approve = el('button', {
+          class: 'tiny',
+          text: 'Approve & execute',
+        });
+        const rejectBtn = el('button', { class: 'ghost tiny', text: 'Reject' });
+        const expire = el('button', {
+          class: 'danger tiny',
+          text: 'Force expiry → escalate',
+        });
+        if (terminal || !meta?.youMayApprove) {
+          approve.disabled = true;
+          rejectBtn.disabled = true;
+        }
+        if (inc.status !== 'awaiting-approval') expire.disabled = true;
+
+        approve.addEventListener('click', async () => {
+          const res = await fetch('/api/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: inc.id,
+              summary: summary.value,
+              detail: detail.value,
+            }),
+          });
+          if (!res.ok) alert((await res.json()).error);
+          await refresh();
+        });
+        rejectBtn.addEventListener('click', async () => {
+          const why =
+            prompt('Why are you rejecting this?') ?? 'no reason given';
+          const res = await fetch('/api/reject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: inc.id, why }),
+          });
+          if (!res.ok) alert((await res.json()).error);
+          await refresh();
+        });
+        expire.addEventListener('click', async () => {
+          await fetch('/api/force-expiry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: inc.id }),
+          });
+          await refresh();
+        });
+
+        kids.push(
+          el('div', { class: 'row', style: 'margin-top:12px' }, [
+            approve,
+            rejectBtn,
+            expire,
+          ]),
+        );
+
+        if (inc.executionOutput) {
+          kids.push(
+            el('div', {
+              class: `note ${inc.status === 'action-failed' ? 'bad' : 'info'}`,
+              style: 'margin-top:12px',
+              text: inc.executionOutput,
+            }),
+          );
+        }
+
+        if (
+          ['executed', 'action-failed', 'rejected', 'escalated'].includes(
+            inc.status,
+          )
+        ) {
+          const pm = el('button', {
+            class: 'ghost tiny',
+            text: 'Draft postmortem timeline',
+          });
+          pm.addEventListener('click', async () => {
+            await fetch('/api/postmortem', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: inc.id }),
+            });
+            await refresh();
+          });
+          kids.push(
+            el('div', { class: 'row', style: 'margin-top:10px' }, [pm]),
+          );
+        }
+        if (inc.postmortem) kids.push(el('pre', { text: inc.postmortem }));
+
+        return el('section', {}, kids);
+      }
+
+      function channelCard(inc) {
+        return el('section', {}, [
+          el('h2', { text: '#eng-oncall' }),
+          el(
+            'ul',
+            { class: 'log' },
+            inc.channel.map((p) =>
+              el('li', { text: `${p.at}  [${p.kind}] ${p.text}` }),
+            ),
+          ),
+        ]);
+      }
+
+      function auditCard(inc) {
+        const host = el('section', {}, [el('h2', { text: 'Audit log' })]);
+        fetch(`/api/audit?id=${encodeURIComponent(inc.id)}`)
+          .then((r) => r.json())
+          .then((entries) => {
+            host.append(
+              el(
+                'ul',
+                { class: 'log' },
+                entries.map((e) =>
+                  el('li', {
+                    text: `${e.at}  ${e.actor} ${e.outcome} ${e.action}${e.detail ? ` — ${e.detail}` : ''}`,
+                  }),
+                ),
+              ),
+            );
+          });
+        return host;
+      }
+
+      boot();
+    </script>
+  </body>
+</html>
