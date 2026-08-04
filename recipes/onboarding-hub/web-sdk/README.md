@@ -20,7 +20,7 @@ Open the printed local URL. The Web SDK uses your existing Glean SSO session —
 
 ## Verify
 
-1. Confirm there is no Alex Kim / Acme Corp chrome in the header.
+1. Confirm the real Glean logomark and Glean Blue accent — no Acme / named-hire chrome.
 2. With fixture or `steps.json`, confirm pending/done lists and progress render.
 3. Click **Ask about this** on a pending step — chat opens with that prompt.
 4. Ask **What should I do on my first day?** for a cited answer from your instance.

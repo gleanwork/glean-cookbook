@@ -19,7 +19,12 @@ const useFixture = process.env.GLEAN_USE_FIXTURE !== 'false';
 const RESPONSE_ID_RE =
   /^resp_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
-function assertFixtureMatchesOpenApi(fixture) {
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const DEMO_QUERIES = JSON.parse(
+  fs.readFileSync(path.join(root, 'scripts', 'demo-queries.json'), 'utf8'),
+);
+
+function assertFixtureMatchesOpenApi(fixture, { allowEmpty = false } = {}) {
   const required = [
     'id',
     'object',
@@ -68,7 +73,10 @@ function assertFixtureMatchesOpenApi(fixture) {
     return 'fixture content must be { type: "output_text", text: string }';
   }
   const annotations = block.annotations ?? [];
-  if (!Array.isArray(annotations) || annotations.length < 1) {
+  if (!Array.isArray(annotations)) {
+    return 'fixture annotations must be an array';
+  }
+  if (!allowEmpty && annotations.length < 1) {
     return 'fixture must include at least one citation annotation';
   }
   for (const annotation of annotations) {
@@ -90,6 +98,8 @@ function assertFixtureMatchesOpenApi(fixture) {
   return null;
 }
 
+const OFF_CORPUS = "Ask about a step your docs don't cover";
+
 const CHECKS = [
   {
     query: 'What should I do on my first day?',
@@ -98,17 +108,68 @@ const CHECKS = [
       if (useFixture && result.citations.length === 0) {
         return 'fixture response missing citations';
       }
+      if (result.escalate)
+        return 'expected escalate=false for a cited day-one answer';
+      return null;
+    },
+  },
+  {
+    query: 'How do I set up VPN?',
+    assert(result) {
+      if (useFixture) {
+        if (result.answer.trim().length === 0)
+          return 'fixture VPN answer was empty';
+        if (result.citations.length === 0) {
+          return 'fixture VPN response missing citations';
+        }
+        return null;
+      }
+      if (result.answer.trim().length === 0) return 'answer was empty';
+      if (result.citations.length === 0) {
+        return 'citations were empty — expected a VPN setup citation';
+      }
       return null;
     },
   },
   {
     query: "What's our PTO policy?",
     assert(result) {
-      if (!useFixture) {
-        if (result.answer.trim().length === 0) return 'answer was empty';
+      if (useFixture) {
+        if (result.answer.trim().length === 0)
+          return 'fixture PTO answer was empty';
         if (result.citations.length === 0) {
-          return 'citations were empty — expected a PTO policy citation';
+          return 'fixture PTO response missing citations';
         }
+        return null;
+      }
+      if (result.answer.trim().length === 0) return 'answer was empty';
+      if (result.citations.length === 0) {
+        return 'citations were empty — expected a PTO policy citation';
+      }
+      return null;
+    },
+  },
+  {
+    query: OFF_CORPUS,
+    assert(result) {
+      if (useFixture) {
+        if (result.answer.trim().length > 0) {
+          return 'off-corpus fixture should return an empty answer';
+        }
+        if (result.citations.length > 0) {
+          return 'off-corpus fixture should have no citations';
+        }
+        if (!result.escalate) {
+          return 'expected escalate=true when the answer is empty';
+        }
+        return null;
+      }
+      // Live corpora vary; require the escalation signal when the answer is thin.
+      if (
+        (result.answer.trim().length < 20 || result.citations.length === 0) &&
+        !result.escalate
+      ) {
+        return 'expected escalate=true when live answer is empty/short or uncited';
       }
       return null;
     },
@@ -175,20 +236,36 @@ async function main() {
 
   let failed = false;
 
-  if (useFixture) {
-    const fixturePath = path.join(
-      path.dirname(fileURLToPath(import.meta.url)),
-      '..',
-      'fixtures',
-      'chat-response.json',
+  const checkQueries = CHECKS.map((c) => c.query);
+  if (JSON.stringify(checkQueries) !== JSON.stringify(DEMO_QUERIES)) {
+    console.error(
+      '✗ scripts/demo-queries.json must match verify CHECKS order exactly',
     );
-    const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
-    const shapeError = assertFixtureMatchesOpenApi(fixture);
-    if (shapeError) {
-      console.error(`✗ fixture OpenAPI shape: ${shapeError}`);
-      process.exit(1);
+    console.error(`  demo-queries: ${JSON.stringify(DEMO_QUERIES)}`);
+    console.error(`  CHECKS:       ${JSON.stringify(checkQueries)}`);
+    process.exit(1);
+  }
+
+  if (useFixture) {
+    const fixturePath = path.join(root, 'fixtures', 'chat-responses.json');
+    const recorded = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+    for (const query of DEMO_QUERIES) {
+      const fixture = recorded[query];
+      if (!fixture) {
+        console.error(`✗ fixtures/chat-responses.json missing key: ${query}`);
+        process.exit(1);
+      }
+      const shapeError = assertFixtureMatchesOpenApi(fixture, {
+        allowEmpty: query === OFF_CORPUS,
+      });
+      if (shapeError) {
+        console.error(`✗ fixture OpenAPI shape (${query}): ${shapeError}`);
+        process.exit(1);
+      }
     }
-    console.log('✓ fixture matches ChatCompletedResponse required shape');
+    console.log(
+      `✓ ${DEMO_QUERIES.length} recorded fixtures match ChatCompletedResponse shape`,
+    );
   }
 
   const server = startServer();
@@ -228,9 +305,6 @@ async function main() {
     }
 
     for (const check of CHECKS) {
-      if (!useFixture && check.query.includes('PTO')) {
-        // live-only check
-      }
       try {
         const result = await askGlean(check.query);
         const behaviorError = check.assert(result);
@@ -244,7 +318,8 @@ async function main() {
           console.error(`✗ "${check.query}": ${shapeError}`);
         } else {
           console.log(
-            `✓ "${check.query}" — ${result.citations?.length ?? 0} citation(s)`,
+            `✓ "${check.query}" — ${result.citations?.length ?? 0} citation(s)` +
+              (result.escalate ? ', escalate' : ''),
           );
         }
       } catch (error) {

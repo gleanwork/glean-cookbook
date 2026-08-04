@@ -389,15 +389,19 @@
             "command": "cd customer-360 && npm install"
           },
           {
+            "title": "Try it with no credentials",
+            "command": "npm run verify:fixture",
+            "description": "Runs fixture-mode contract verification for /api/account tiles and the three demo chat queries — no token required."
+          },
+          {
             "title": "Set credentials",
             "command": "cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Set GLEAN_USE_FIXTURE=true for contract-only verification without live Platform handlers."
+            "description": "Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, and GLEAN_ACCOUNT_NAME. The app runs as you; there is no act-as."
           },
           { "title": "Run it", "command": "npm start" },
           {
             "title": "Verify",
-            "command": "npm run verify:fixture",
-            "description": "Runs fixture-mode contract verification for /api/account tiles and the three demo chat queries."
+            "description": "Ask the demo queries against the account you picked. Confirm cited answers and that unsupported KPI fields stay blank."
           }
         ]
       },
@@ -415,15 +419,19 @@
             "command": "cd customer-360 && npm install"
           },
           {
+            "title": "Try it with no credentials",
+            "command": "npm run verify:fixture",
+            "description": "Fixture-first verification of the account page contract — no token or Agent Builder setup required."
+          },
+          {
             "title": "Set credentials",
             "command": "cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, and GLEAN_AGENT_ID (Account Brief agent). Use GLEAN_USE_FIXTURE=true until the agent exists."
+            "description": "Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, GLEAN_ACCOUNT_NAME, and GLEAN_AGENT_ID (Account Brief agent). The app runs as you; there is no act-as."
           },
           { "title": "Run it", "command": "npm start" },
           {
             "title": "Verify",
-            "command": "npm run verify:fixture",
-            "description": "Fixture-first verification. Optional: npm run verify:live checks agents.get / getSchemas before createRun."
+            "description": "Ask the demo queries against your Account Brief agent. Optional: npm run verify:live checks agents.get / getSchemas before createRun."
           }
         ]
       }
@@ -478,7 +486,7 @@
       }
     ],
     "aiPrompt": "Build a Customer 360 account page following\nhttps://developers.glean.com/cookbook/customer-360\n\n1. Ask me which path: (A) Platform Search + Chat or (B) Platform Agents.\n   Build the one I pick. Do NOT use Client API chat.create, client.search.query,\n   or client.agents.run.\n2. Ask me which account to build around and which of my sources cover\n   it. Read every figure from retrieval -- ARR, seat count, renewal\n   date, risk -- and leave a field blank when nothing supports it.\n   Never display a number the sources do not contain.\n3. Path A: parallel glean.search.query for account notes / renewal / security\n   tiles; journey + prompts + follow-ups via server-side POST /api/chat with\n   { input, stream: false, store: true } and X_GLEAN_INCLUDE_EXPERIMENTAL.\n   Parse output_text + annotations[].sources[]. Keep the token server-side.\n4. Path B: same page UX; synthesis via glean.agents.createRun({ messages,\n   stream: false }, GLEAN_AGENT_ID). Fixture-first verify; document Agent\n   Builder Account Brief prereq. Failure UX if agent missing/unauthorized.\n5. Empty tiles read \"no recent activity\", not \"0\". An empty retrieval\n   is a state to render, not a gap to fill. HTTP 200 with no answer\n   text is a failure to retry, not a blank success.\n6. Style it per the house style below: the real Glean logomark, Glean\n   Blue (#343ced) as the accent.\n7. Verify with the demo queries against the account I chose.\n",
-    "llmContext": "Platform-only recipe. Search: glean.search.query -> POST /api/search, results[].title/url/snippets (string[]). Chat: fetch POST /api/chat (until glean.chat.create ships); request {input, stream:false, store:true}; response output[].content[] type=output_text with annotations[].sources[]. Agents: glean.agents.createRun(request, agentId) -> POST /api/agents/{agent_id}/runs; stream:false returns PlatformAgentRunWaitResponse synchronously (no polling); messages use role USER|GLEAN_AI and content[{text,type:text}]. Experimental opt-in via X_GLEAN_INCLUDE_EXPERIMENTAL. Do NOT teach glean.client.chat.create, glean.client.search.query, or glean.client.agents.run. Tokens server-side only. The account and every figure on the page come from the reader's own instance. Nothing may hardcode an account name, owner, ARR, seat count or renewal date: an earlier version returned a fixed demo account on the live path, so the KPI header showed one fictional customer's numbers whatever retrieval returned. Use GLEAN_SERVER_URL rather than deriving the backend from an instance name, and GLEAN_ACCOUNT_NAME for the account.",
+    "llmContext": "Platform-only recipe. Search: glean.search.query -> POST /api/search, results[].title/url/snippets (string[]). Chat: fetch POST /api/chat (until glean.chat.create ships); request {input, stream:false, store:true}; response output[].content[] type=output_text with annotations[].sources[]. Agents: glean.agents.createRun(request, agentId) -> POST /api/agents/{agent_id}/runs; stream:false returns PlatformAgentRunWaitResponse synchronously (no polling); messages use role USER|GLEAN_AI and content[{text,type:text}]. Experimental opt-in via X_GLEAN_INCLUDE_EXPERIMENTAL. Do NOT teach glean.client.chat.create, glean.client.search.query, or glean.client.agents.run. Auth is the caller's own token; impersonation/act-as was removed from the cookbook recipes. Tokens server-side only. The account and every figure on the page come from the reader's own instance. Nothing may hardcode an account name, owner, ARR, seat count or renewal date: an earlier version returned a fixed demo account on the live path, so the KPI header showed one fictional customer's numbers whatever retrieval returned. Use GLEAN_SERVER_URL rather than deriving the backend from an instance name, and GLEAN_ACCOUNT_NAME for the account. Fixtures under each path's fixtures/ directory are self-contained contract samples — this recipe does not depend on examples/sample-catalog.",
     "goDependency": false,
     "featured": false,
     "tags": ["dual-implementation", "sales", "platform-api"]
@@ -962,7 +970,7 @@
       }
     ],
     "aiPrompt": "Build an Onboarding Hub on Glean following\nhttps://developers.glean.com/cookbook/onboarding-hub\n\n1. Ask me which path: (A) Web SDK or (B) Platform Chat. Build the one\n   I pick.\n2. Build the checklist from MY onboarding content, not a fixed list:\n   retrieve the onboarding docs my instance has and derive the steps\n   from them. Ask me if you can't find any. Do not hardcode a named\n   new hire or a step count.\n3. Completion state in localStorage, with a progress ring and\n   milestone badges grouped by the categories my own docs suggest.\n4. Each step gets an \"Ask about this\" button that seeds a contextual\n   question about that step.\n5. Path A: renderChat in a sized #chat container (SSO cookie, no\n   credential handling). Re-mount with initialMessage when \"Ask about\n   this\" is clicked.\n6. Path B: server-side POST /api/chat with { input, stream: false,\n   store: true } and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Parse\n   output[0].content[0].text plus annotations[].sources[] for\n   citations — NOT Client API chat.create fragment parsing. The token\n   stays server-side.\n7. When an answer comes back empty or uncited, show the escalation\n   affordance (an IT or HR channel) instead of rendering nothing, and\n   never let the model answer an onboarding question from its own\n   knowledge. A new hire cannot tell an invented process from a real\n   one, which makes fabrication the most damaging failure here.\n8. Style it per the house style below: the real Glean logomark, Glean\n   Blue (#343ced) as the accent.\n9. Verify with the demo queries against my own content.",
-    "llmContext": "Platform Chat (Path B): POST /api/chat, OpenAI Responses-style. Request: { input: string, stream?: boolean, store?: boolean }. Response: output[].content[].text + annotations[].sources[] (document/person/file/custom_entity). Experimental — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true and backend platform.apiMigratedEndpointsEnabled. Platform scope is CHAT_WRITE (registry uses cookbook-style CHAT). No scoping/inclusion filter fields in OpenAPI — soft-scope via corpus framing only. Until @gleanwork/api-client ships glean.chat.create, use fetch against /api/chat. Path A: Web SDK renderChat with SSO cookie; all ChatOptions fields optional. Do NOT teach Client API glean.client.chat.create or messageType === 'CONTENT' fragment parsing in this recipe. The checklist and its steps must be derived from the reader's own onboarding content. An earlier draft seeded a named new hire's nine steps from a demo corpus that no longer exists, which made the hub display one fictional person's checklist on every instance. Ask rather than invent, and treat an empty or uncited answer as a state to render -- a new hire cannot distinguish an invented process from a real one.",
+    "llmContext": "Platform Chat (Path B): POST /api/chat, OpenAI Responses-style. Request: { input: string, stream?: boolean, store?: boolean }. Response: output[].content[].text + annotations[].sources[] (document/person/file/custom_entity). Experimental — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true and backend platform.apiMigratedEndpointsEnabled. Platform scope is CHAT_WRITE (registry uses cookbook-style CHAT). No scoping/inclusion filter fields in OpenAPI — soft-scope via corpus framing only. Until @gleanwork/api-client ships glean.chat.create, use fetch against /api/chat. Auth is the caller's own OAuth token or API token with CHAT scope -- impersonation/act-as was removed from the cookbook recipes, so the caller's credential is the permission boundary. Path A: Web SDK renderChat with SSO cookie; all ChatOptions fields optional. Do NOT teach Client API glean.client.chat.create or messageType === 'CONTENT' fragment parsing in this recipe. The checklist and its steps must be derived from the reader's own onboarding content. An earlier draft seeded a named new hire's nine steps from a demo corpus that no longer exists, which made the hub display one fictional person's checklist on every instance. Ask rather than invent, and treat an empty or uncited answer as a state to render -- a new hire cannot distinguish an invented process from a real one. Use GLEAN_SERVER_URL rather than deriving the backend from an instance name.",
     "goDependency": false,
     "featured": false,
     "tags": ["dual-implementation", "portal"],
@@ -1005,15 +1013,19 @@
             "command": "cd onboarding-hub && npm install"
           },
           {
+            "title": "Watch the contract hold, with no credentials",
+            "command": "npm run verify:fixture",
+            "description": "Replays recorded checklist + chat responses and asserts citations, empty off-corpus escalation, and OpenAPI shape — no token required."
+          },
+          {
             "title": "Set credentials",
             "command": "cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Optionally set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON for your checklist. Set GLEAN_USE_FIXTURE=true for contract-only verification without a live handler."
+            "description": "Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Optionally set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON for your checklist. The app runs as you; there is no act-as."
           },
           { "title": "Run it", "command": "npm start" },
           {
             "title": "Verify",
-            "command": "npm run verify:fixture",
-            "description": "Runs fixture-mode contract verification (sample checklist + chat response). For live verification against your instance, set GLEAN_USE_FIXTURE=false, provide steps via env, and ensure the experimental /api/chat handler is enabled."
+            "description": "Ask the demo queries against your own onboarding docs. Confirm cited answers for first-day / VPN / PTO, and that an unsupported question shows the escalation affordance instead of inventing a step."
           }
         ]
       }

@@ -1,8 +1,9 @@
 # Customer 360 — Platform Agents path
 
-Same the account you pick account page UX as Path A, but journey summary, saved prompts, and
-follow-ups run through **Platform Agents** (`glean.agents.createRun` →
-`POST /api/agents/{agent_id}/runs` with `stream: false`).
+Same account-page UX as Path A, but journey summary, saved prompts, and follow-ups
+run through **Platform Agents** (`glean.agents.createRun` →
+`POST /api/agents/{agent_id}/runs` with `stream: false`). The app runs as you;
+there is no act-as / impersonation.
 
 Tiles still use Platform Search (or fixtures) so the page stays a Customer 360,
 not a blank agent chat.
@@ -19,17 +20,19 @@ not a blank agent chat.
 
 Expected input: conversational `messages` with a USER text block (not a form
 `input` object). If your agent is form-triggered, adapt `server.ts` to pass
-`input: { account: "the account you pick", question }` instead.
+`input: { account: "<name>", question }` instead.
 
 ## Setup
 
 ```bash
-cp .env.example .env
 npm install
+npm run verify:fixture   # contract check, no credentials
+cp .env.example .env
 ```
 
 Fixture mode (`GLEAN_USE_FIXTURE=true`) is the default verification path because
-Agent Builder setup is external.
+Agent Builder setup is external. The UI banner labels fixture sample data as
+contract-only.
 
 ## Run
 

@@ -155,22 +155,51 @@ function parsePlatformChatResponse(data: PlatformChatResponse): {
   return { answer, citations };
 }
 
+function loadFixtureChatResponse(input: string): PlatformChatResponse {
+  const fixturePath = path.join(fixturesDir, 'chat-responses.json');
+  const recorded = JSON.parse(fs.readFileSync(fixturePath, 'utf8')) as Record<
+    string,
+    PlatformChatResponse
+  >;
+  const exact = recorded[input];
+  if (exact) return exact;
+  const fallback = recorded['What should I do on my first day?'];
+  if (!fallback) {
+    throw new Error(
+      'fixtures/chat-responses.json is missing the day-one entry',
+    );
+  }
+  return fallback;
+}
+
+function withEscalate(parsed: {
+  answer: string;
+  citations: Array<{ title: string; url: string }>;
+}): {
+  answer: string;
+  citations: Array<{ title: string; url: string }>;
+  escalate: boolean;
+} {
+  const escalate = !parsed.answer.trim() || parsed.answer.trim().length < 20;
+  return { ...parsed, escalate };
+}
+
 async function askPlatformChat(input: string): Promise<{
   answer: string;
   citations: Array<{ title: string; url: string }>;
+  escalate: boolean;
 }> {
   if (useFixture()) {
-    const fixturePath = path.join(fixturesDir, 'chat-response.json');
-    const fixture = JSON.parse(
-      fs.readFileSync(fixturePath, 'utf8'),
-    ) as PlatformChatResponse;
-    return parsePlatformChatResponse(fixture);
+    return withEscalate(
+      parsePlatformChatResponse(loadFixtureChatResponse(input)),
+    );
   }
 
   // GLEAN_SERVER_URL rather than an instance name: deriving the backend as
   // `https://${instance}-be.glean.com` only holds for the default naming, and
   // silently points at nothing when a deployment differs. The docs use
   // GLEAN_SERVER_URL throughout for the same reason.
+  // Auth is the caller's own token — no act-as / impersonation.
   const backend = requireEnv('GLEAN_SERVER_URL').replace(/\/$/, '');
   const token = requireEnv('GLEAN_API_TOKEN');
 
@@ -198,7 +227,7 @@ async function askPlatformChat(input: string): Promise<{
         'was never produced. Retrying usually works.',
     );
   }
-  return parsed;
+  return withEscalate(parsed);
 }
 
 const server = http.createServer(async (req, res) => {
@@ -223,9 +252,9 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/ask') {
     try {
       const body = await readJsonBody(req);
-      const { answer, citations } = await askPlatformChat(body.question);
+      const result = await askPlatformChat(body.question);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ answer, citations }));
+      res.end(JSON.stringify(result));
     } catch (error) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: (error as Error).message }));

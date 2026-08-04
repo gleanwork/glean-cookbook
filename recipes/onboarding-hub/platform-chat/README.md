@@ -2,12 +2,14 @@
 
 Checklist + progress + Glean chat via Platform Chat (`POST /api/chat`). Steps are
 server-owned: fixture sample, env/file config, or empty — not a hardcoded named hire.
+The app runs as you; there is no act-as / impersonation.
 
 ## Run
 
 ```bash
 npm install
-cp .env.example .env   # fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL
+npm run verify:fixture   # contract check, no credentials
+cp .env.example .env     # fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL
 # Optional live steps:
 #   GLEAN_ONBOARDING_STEPS_FILE=./steps.example.json
 #   # or GLEAN_ONBOARDING_STEPS_JSON='[...]'
@@ -16,7 +18,7 @@ npm start
 
 Open http://localhost:3000. The server holds your API token — never expose it in the browser.
 
-- **Fixture sample:** `GLEAN_USE_FIXTURE=true` loads `fixtures/steps.json` + `fixtures/chat-response.json` (labeled contract-only).
+- **Fixture sample:** `GLEAN_USE_FIXTURE=true` loads `fixtures/steps.json` + `fixtures/chat-responses.json` (labeled contract-only).
 - **Live steps:** set `GLEAN_ONBOARDING_STEPS_FILE` or `GLEAN_ONBOARDING_STEPS_JSON` (see `steps.example.json`).
 - **Empty:** without those env vars, `/api/checklist` returns `{ steps: [], source: "empty" }` and the UI asks you to configure steps.
 
@@ -44,8 +46,9 @@ Aligned with `scio/openapi/public/platform/chat.yaml` (`ChatCreateRequest` / `Ch
 - Citations: `annotations[].type == "citation"` → `sources[]` (`document` sources use `document_id` and/or `url`, plus optional `title`)
 - Header: `X-GLEAN-INCLUDE-EXPERIMENTAL=true`
 - Platform scope: `CHAT` (see registry `requiredScopes` / `llmContext`)
+- Auth: caller credential only (`GLEAN_SERVER_URL` + `GLEAN_API_TOKEN`); no act-as
 
-`fixtures/chat-response.json` is a complete sample of that response. `npm run verify:fixture` asserts the fixture shape before exercising the parser.
+`fixtures/chat-responses.json` is a query-keyed map of sample responses (cited day-one/VPN/PTO plus an empty off-corpus entry). `npm run verify:fixture` asserts each shape before exercising the parser.
 
 When `@gleanwork/api-client` ships `glean.chat.create`, swap the `fetch` call in `server.ts` for the generated SDK method — the response parsing stays the same.
 
