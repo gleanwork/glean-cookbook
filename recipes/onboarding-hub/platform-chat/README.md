@@ -22,7 +22,9 @@ Open http://localhost:3000. The server holds your API token — never expose it 
 
 ## Verify
 
-Requires credentials and a working experimental `/api/chat` handler:
+Requires credentials (from `.env` or the shell — same as `npm start`) and a
+working experimental `/api/chat` handler. Stop `npm start` first (Ctrl-C); verify
+starts its own server on the same port.
 
 ```bash
 npm run verify

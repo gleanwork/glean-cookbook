@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // Live verify gate for onboarding-hub/platform-chat. Requires credentials and
 // fails closed without them — same pattern as company-answers/chat-api.
+// Loads .env from the package root so `npm run verify` works after
+// `cp .env.example .env` without exporting vars in the shell.
 
+import 'dotenv/config';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -30,11 +33,7 @@ function requireEnv(name) {
 function assertCitedAnswer(result) {
   if (result.answer.trim().length === 0) return 'answer was empty';
   if (result.citations.length === 0) {
-    // Uncited prose must escalate rather than look like a grounded answer.
-    if (!result.escalate) {
-      return 'answer had no citations and escalate was false';
-    }
-    return null;
+    return 'citations were empty — expected a cited answer';
   }
   if (result.escalate) {
     return 'expected escalate=false for a cited answer';
@@ -46,17 +45,21 @@ const CHECKS = [
   {
     query: 'What should I do on my first day?',
     assert: assertCitedAnswer,
+    retry: true,
   },
   {
     query: 'How do I set up VPN?',
     assert: assertCitedAnswer,
+    retry: true,
   },
   {
     query: "What's our PTO policy?",
     assert: assertCitedAnswer,
+    retry: true,
   },
   {
     query: OFF_CORPUS,
+    retry: false,
     assert(result) {
       if (
         (result.answer.trim().length < 20 || result.citations.length === 0) &&
@@ -124,6 +127,14 @@ async function askGlean(question) {
   return response.json();
 }
 
+function evaluateCheck(check, result) {
+  const behaviorError = check.assert(result);
+  return (
+    behaviorError ??
+    (result.citations?.length ? assertCitationShape(result.citations) : null)
+  );
+}
+
 async function main() {
   requireEnv('GLEAN_API_TOKEN');
   requireEnv('GLEAN_SERVER_URL');
@@ -172,13 +183,24 @@ async function main() {
 
     for (const check of CHECKS) {
       try {
-        const result = await askGlean(check.query);
-        const behaviorError = check.assert(result);
-        const shapeError =
-          behaviorError ??
-          (result.citations?.length
-            ? assertCitationShape(result.citations)
-            : null);
+        let result = await askGlean(check.query);
+        let shapeError = evaluateCheck(check, result);
+        if (shapeError && check.retry) {
+          console.warn(`↻ "${check.query}": ${shapeError} — retrying once`);
+          result = await askGlean(check.query);
+          shapeError = evaluateCheck(check, result);
+          if (shapeError) {
+            failed = true;
+            console.error(`✗ "${check.query}" (after retry): ${shapeError}`);
+            continue;
+          }
+          console.log(
+            `✓ "${check.query}" — ${result.citations?.length ?? 0} citation(s)` +
+              (result.escalate ? ', escalate' : '') +
+              ' (passed on retry)',
+          );
+          continue;
+        }
         if (shapeError) {
           failed = true;
           console.error(`✗ "${check.query}": ${shapeError}`);

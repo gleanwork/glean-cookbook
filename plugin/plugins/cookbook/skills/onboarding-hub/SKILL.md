@@ -61,13 +61,14 @@ Platform Chat variant — POST /api/chat, you own the UI
    ```
 
 4. **Run it**
+   Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance.
 
    ```bash
    npm start
    ```
 
 5. **Verify**
-   Ask the demo queries against your own onboarding docs. Confirm cited answers for first-day / VPN / PTO, and that an unsupported question shows the escalation affordance instead of inventing a step.
+   Loads credentials from .env (same as npm start), runs the demo queries against your own onboarding docs, and asserts cited answers for first-day / VPN / PTO plus escalation for an unsupported question. Do not report this recipe as done until this passes.
    ```bash
    npm run verify
    ```

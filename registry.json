@@ -393,11 +393,15 @@
             "command": "cp .env.example .env",
             "description": "Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, and GLEAN_ACCOUNT_NAME. The app runs as you; there is no act-as."
           },
-          { "title": "Run it", "command": "npm start" },
+          {
+            "title": "Run it",
+            "command": "npm start",
+            "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
+          },
           {
             "title": "Verify",
             "command": "npm run verify",
-            "description": "Ask the demo queries against the account you picked. Confirm cited answers and that unsupported KPI fields stay blank."
+            "description": "Loads credentials from .env (same as npm start), runs the demo queries against the account you picked, and asserts cited answers with blank unsupported KPI fields. Do not report this recipe as done until this passes."
           }
         ]
       },
@@ -419,11 +423,15 @@
             "command": "cp .env.example .env",
             "description": "Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, GLEAN_ACCOUNT_NAME, and GLEAN_AGENT_ID (Account Brief agent). The app runs as you; there is no act-as."
           },
-          { "title": "Run it", "command": "npm start" },
+          {
+            "title": "Run it",
+            "command": "npm start",
+            "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
+          },
           {
             "title": "Verify",
             "command": "npm run verify",
-            "description": "Ask the demo queries against your Account Brief agent. Confirm cited answers and failure UX if the agent is missing or unauthorized."
+            "description": "Loads credentials from .env (same as npm start), runs the demo queries against your Account Brief agent, and asserts cited answers (or an explicit failure if the agent is missing or unauthorized). Do not report this recipe as done until this passes."
           }
         ]
       }
@@ -1010,11 +1018,15 @@
             "command": "cp .env.example .env",
             "description": "Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON for your checklist. The app runs as you; there is no act-as."
           },
-          { "title": "Run it", "command": "npm start" },
+          {
+            "title": "Run it",
+            "command": "npm start",
+            "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
+          },
           {
             "title": "Verify",
             "command": "npm run verify",
-            "description": "Ask the demo queries against your own onboarding docs. Confirm cited answers for first-day / VPN / PTO, and that an unsupported question shows the escalation affordance instead of inventing a step."
+            "description": "Loads credentials from .env (same as npm start), runs the demo queries against your own onboarding docs, and asserts cited answers for first-day / VPN / PTO plus escalation for an unsupported question. Do not report this recipe as done until this passes."
           }
         ]
       }

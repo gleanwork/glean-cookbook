@@ -224,10 +224,11 @@ async function boot(): Promise<void> {
   const sourceNote = document.getElementById('steps-source');
   if (sourceNote) {
     if (source === 'config') {
-      sourceNote.textContent = 'Loaded steps from /steps.json.';
+      sourceNote.hidden = true;
+      sourceNote.textContent = '';
     } else {
-      sourceNote.textContent =
-        'No steps configured. Copy public/steps.example.json to public/steps.json.';
+      sourceNote.hidden = false;
+      sourceNote.textContent = 'No walkthrough steps are available.';
     }
   }
 

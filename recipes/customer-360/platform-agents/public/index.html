@@ -219,7 +219,6 @@
         <h1>Account Journey</h1>
         <div class="subtitle" data-account-subtitle></div>
       </div>
-      <span class="path-badge">Path B · Platform Agents</span>
     </header>
     <main>
       <section class="card" id="kpi-card">
@@ -363,6 +362,10 @@
         }
       }
 
+      function formatApiError(data) {
+        return [data.error, data.hint].filter(Boolean).join(' — ');
+      }
+
       async function postChat(question) {
         const response = await fetch('/api/brief', {
           method: 'POST',
@@ -370,14 +373,16 @@
           body: JSON.stringify({ question }),
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || response.statusText);
+        if (!response.ok)
+          throw new Error(formatApiError(data) || response.statusText);
         return data;
       }
 
       async function loadAccount() {
         const response = await fetch('/api/account');
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || response.statusText);
+        if (!response.ok)
+          throw new Error(formatApiError(data) || response.statusText);
 
         renderAccountIdentity(data.account);
         renderKpis(document.getElementById('kpi-grid'), data.account);

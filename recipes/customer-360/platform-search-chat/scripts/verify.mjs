@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 // Live verify for customer-360/platform-search-chat. Requires credentials.
+// Loads .env from the package root so `npm run verify` works after
+// `cp .env.example .env` without exporting vars in the shell.
 
+import 'dotenv/config';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

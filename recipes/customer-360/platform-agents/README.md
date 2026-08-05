@@ -40,9 +40,12 @@ npm start
 
 ## Verify
 
+Credentials come from `.env` or the shell (same as `npm start`). Stop `npm start`
+first (Ctrl-C); verify starts its own server on the same port.
+
 ```bash
 npm run verify
 ```
 
-Requires credentials and a reachable Account Brief agent. Missing or unauthorized
-agents fail with an explicit error.
+Requires a reachable Account Brief agent. Missing or unauthorized agents fail
+with an explicit error.

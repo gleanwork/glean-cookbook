@@ -100,9 +100,7 @@ function unpopulatedAccount(account: string) {
     renewalDate: null,
     risk: null,
     seats: null,
-    kpiNote:
-      'Fields stay blank until a cited document supports them. Populate them from ' +
-      'your own retrieval rather than assuming a shape.',
+    kpiNote: 'Fields stay blank until a cited document supports them.',
   };
 }
 
@@ -257,8 +255,14 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(payload));
     } catch (error) {
+      console.error('Account load failed:', (error as Error).message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: (error as Error).message }));
+      res.end(
+        JSON.stringify({
+          error: 'Could not load the account.',
+          hint: 'Check credentials and that experimental Platform search is enabled.',
+        }),
+      );
     }
     return;
   }
@@ -277,19 +281,27 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ answer, citations }));
     } catch (error) {
       const message = (error as Error).message;
-      const status =
-        /Missing required environment variable: GLEAN_AGENT_ID|404|403|unauthorized|not found/i.test(
+      const missingAgent =
+        /Missing required environment variable: GLEAN_AGENT_ID|404|not found/i.test(
           message,
-        )
-          ? 502
-          : 500;
+        );
+      const unauthorized = /403|insufficient_permissions|unauthorized/i.test(
+        message,
+      );
+      const status = missingAgent || unauthorized ? 502 : 500;
+      console.error('Account brief failed:', message);
       res.writeHead(status, { 'Content-Type': 'application/json' });
       res.end(
         JSON.stringify({
-          error: message,
-          hint:
-            status === 502
-              ? 'Set GLEAN_AGENT_ID to an Account Brief agent you can access.'
+          error: missingAgent
+            ? 'Account Brief agent is missing or unavailable.'
+            : unauthorized
+              ? 'Not authorized to run this agent.'
+              : 'Could not generate the account brief.',
+          hint: missingAgent
+            ? 'Set GLEAN_AGENT_ID to an Account Brief agent you can access.'
+            : unauthorized
+              ? 'Token needs SEARCH + AGENTS scopes.'
               : undefined,
         }),
       );

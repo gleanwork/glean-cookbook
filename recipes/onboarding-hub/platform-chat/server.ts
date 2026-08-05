@@ -195,7 +195,10 @@ async function askPlatformChat(input: string): Promise<{
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`POST /api/chat returned ${response.status}: ${body}`);
+    console.error(`POST /api/chat returned ${response.status}: ${body}`);
+    throw new Error(
+      `Chat request failed (${response.status}). Check credentials and that experimental Platform Chat is enabled.`,
+    );
   }
 
   const data = (await response.json()) as PlatformChatResponse;
@@ -230,8 +233,15 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
     } catch (error) {
+      const message = (error as Error).message;
+      console.error('Ask failed:', message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: (error as Error).message }));
+      res.end(
+        JSON.stringify({
+          error: 'Could not answer that question.',
+          hint: 'Check credentials and that experimental Platform Chat is enabled.',
+        }),
+      );
     }
     return;
   }
