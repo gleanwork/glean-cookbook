@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * Generates one plugin skill per recipe from ../../registry.json, plus the
- * recipe list embedded in the browse-cookbook skill. Regenerated on every
- * registry change so neither can drift from the single source of truth
- * (PACT-458) — same philosophy as glean-developer-site's `pnpm snippets:check`.
+ * Generates one plugin skill per recipe from ../../registry.json, plus the two
+ * places that embed a list of every recipe: the browse-cookbook skill and the
+ * repo README's recipe table. Regenerated on every registry change so none of
+ * them can drift from the single source of truth (PACT-458) — same philosophy
+ * as glean-developer-site's `pnpm snippets:check`.
  *
  * Each recipe gets skills/{id}/SKILL.md. A skill folder named {id} inside a
  * plugin named "cookbook" becomes the slash command `/cookbook:{id}` —
@@ -37,6 +38,12 @@ const pluginRoot = path.resolve(import.meta.dirname, '..');
 const registryFile = path.join(repoRoot, 'registry.json');
 const skillsDir = path.join(pluginRoot, 'plugins', 'cookbook', 'skills');
 const browseSkillFile = path.join(skillsDir, 'browse-cookbook', 'SKILL.md');
+const readmeFile = path.join(repoRoot, 'README.md');
+
+// Both the browse-cookbook skill and the README carry a generated list of every
+// recipe, in different shapes, fenced by the same marker pair.
+const START_MARKER = '<!-- pluginpack-generated:recipes:start -->';
+const END_MARKER = '<!-- pluginpack-generated:recipes:end -->';
 
 // Hand-authored skills that live alongside the generated per-recipe ones —
 // never touched by the stale-id sweep in main().
@@ -257,6 +264,56 @@ function renderSkillRecipeList(registry) {
     .join('\n');
 }
 
+/** Escapes a Markdown table cell — a bare `|` would start a new column. */
+function escapeCell(value) {
+  return String(value).replace(/\|/g, '\\|');
+}
+
+/**
+ * The README's recipe table. `title` carries the tagline already (they read as
+ * "Company Answers: a cited Q&A page on your own content"), so the row shows it
+ * rather than `description` — descriptions run to 240 characters and make the
+ * table unscannable. Full write-ups are a click away on the dev site.
+ */
+function renderReadmeRecipeTable(registry) {
+  return [
+    '| Recipe | Level | Time | Build it |',
+    '| --- | --- | --- | --- |',
+    ...registry.map((r) =>
+      [
+        '',
+        `**${escapeCell(r.title)}**`,
+        escapeCell(r.level),
+        escapeCell(r.timeEstimate),
+        `\`/cookbook:${r.id}\``,
+        '',
+      ].join(' | '),
+    ),
+  ].join('\n');
+}
+
+/**
+ * Replaces the content between the generated-block markers, leaving everything
+ * outside them untouched, so each file's hand-written prose survives a
+ * regeneration.
+ */
+function spliceMarkedBlock(existing, relPath, rendered) {
+  const startIdx = existing.indexOf(START_MARKER);
+  const endIdx = existing.indexOf(END_MARKER);
+  if (startIdx === -1 || endIdx === -1) {
+    throw new Error(
+      `${relPath}: missing ${START_MARKER}/${END_MARKER} markers`,
+    );
+  }
+  return (
+    existing.slice(0, startIdx + START_MARKER.length) +
+    '\n' +
+    rendered +
+    '\n' +
+    existing.slice(endIdx)
+  );
+}
+
 function loadRegistry() {
   const registry = JSON.parse(fs.readFileSync(registryFile, 'utf8'));
   if (!Array.isArray(registry)) {
@@ -285,24 +342,27 @@ function main() {
     ]),
   );
 
-  const existingBrowseSkill = fs.existsSync(browseSkillFile)
-    ? fs.readFileSync(browseSkillFile, 'utf8')
-    : '';
-  const startMarker = '<!-- pluginpack-generated:recipes:start -->';
-  const endMarker = '<!-- pluginpack-generated:recipes:end -->';
-  const startIdx = existingBrowseSkill.indexOf(startMarker);
-  const endIdx = existingBrowseSkill.indexOf(endMarker);
-  if (startIdx === -1 || endIdx === -1) {
-    throw new Error(
-      `${path.relative(repoRoot, browseSkillFile)}: missing ${startMarker}/${endMarker} markers`,
-    );
-  }
-  const desiredBrowseSkill =
-    existingBrowseSkill.slice(0, startIdx + startMarker.length) +
-    '\n' +
-    renderSkillRecipeList(registry) +
-    '\n' +
-    existingBrowseSkill.slice(endIdx);
+  // Files that embed a generated recipe list inside marker fences, as
+  // path -> desired full content. Their prose outside the markers is
+  // hand-written and preserved.
+  const markerFiles = new Map(
+    [
+      [browseSkillFile, renderSkillRecipeList(registry)],
+      [readmeFile, renderReadmeRecipeTable(registry)],
+    ].map(([filePath, rendered]) => {
+      const existing = fs.existsSync(filePath)
+        ? fs.readFileSync(filePath, 'utf8')
+        : '';
+      return [
+        filePath,
+        spliceMarkedBlock(
+          existing,
+          path.relative(repoRoot, filePath),
+          rendered,
+        ),
+      ];
+    }),
+  );
 
   // Existing recipe-skill directories today (anything under skillsDir other
   // than the hand-authored ones above) — used to detect stale ids removed
@@ -321,7 +381,13 @@ function main() {
       snapshot.set(filePath, fs.readFileSync(filePath, 'utf8'));
     }
   }
-  snapshot.set(browseSkillFile, existingBrowseSkill);
+  // Read before any writes below, so this is the pre-run state.
+  for (const filePath of markerFiles.keys()) {
+    snapshot.set(
+      filePath,
+      fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '',
+    );
+  }
 
   const staleIds = existingRecipeIds.filter(
     (id) => !desiredSkills.has(path.join(skillsDir, id, 'SKILL.md')),
@@ -336,8 +402,10 @@ function main() {
     fs.writeFileSync(filePath, desired);
     writtenPaths.push(filePath);
   }
-  fs.writeFileSync(browseSkillFile, desiredBrowseSkill);
-  writtenPaths.push(browseSkillFile);
+  for (const [filePath, desired] of markerFiles) {
+    fs.writeFileSync(filePath, desired);
+    writtenPaths.push(filePath);
+  }
 
   formatWithPrettier(writtenPaths);
 
@@ -348,7 +416,7 @@ function main() {
     const before = snapshot.get(filePath);
     const after = fs.readFileSync(filePath, 'utf8');
     if (before !== after) {
-      mismatches.push(`${path.relative(pluginRoot, filePath)}: out of date`);
+      mismatches.push(`${path.relative(repoRoot, filePath)}: out of date`);
     }
   }
 
@@ -374,17 +442,19 @@ function main() {
     }
 
     if (mismatches.length > 0) {
-      console.error(`Generated skill content is stale (${mismatches.length}):`);
+      console.error(`Generated content is stale (${mismatches.length}):`);
       for (const m of mismatches) console.error(`  - ${m}`);
-      console.error('Run `npm run generate:commands` and commit the result.');
+      console.error(
+        'Run `npm run build` from the repo root and commit the result.',
+      );
       process.exit(1);
     }
-    console.log('Generated skills are up to date.');
+    console.log('Generated skills and recipe lists are up to date.');
     return;
   }
 
   console.log(
-    `Generated ${desiredSkills.size} recipe skill(s) and updated the browse-cookbook skill.`,
+    `Generated ${desiredSkills.size} recipe skill(s), and refreshed the recipe list in the browse-cookbook skill and README.`,
   );
 }
 
