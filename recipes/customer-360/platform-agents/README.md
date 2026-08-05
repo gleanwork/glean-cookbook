@@ -5,10 +5,10 @@ run through **Platform Agents** (`glean.agents.createRun` →
 `POST /api/agents/{agent_id}/runs` with `stream: false`). The app runs as you;
 there is no act-as / impersonation.
 
-Tiles still use Platform Search (or fixtures) so the page stays a Customer 360,
-not a blank agent chat.
+Tiles still use Platform Search so the page stays a Customer 360, not a blank
+agent chat.
 
-## Prerequisites (live mode)
+## Prerequisites
 
 1. Create an **Account Brief** agent in Agent Builder with template sections
    (Overview, Renewal, Risks, Security) and retrieval on your company sales docs.
@@ -26,13 +26,11 @@ Expected input: conversational `messages` with a USER text block (not a form
 
 ```bash
 npm install
-npm run verify:fixture   # contract check, no credentials
 cp .env.example .env
 ```
 
-Fixture mode (`GLEAN_USE_FIXTURE=true`) is the default verification path because
-Agent Builder setup is external. The UI banner labels fixture sample data as
-contract-only.
+Fill `GLEAN_SERVER_URL` / `GLEAN_API_TOKEN` / `GLEAN_ACCOUNT_NAME` /
+`GLEAN_AGENT_ID`.
 
 ## Run
 
@@ -43,14 +41,8 @@ npm start
 ## Verify
 
 ```bash
-npm run verify:fixture
+npm run verify
 ```
 
-Optional live check (requires credentials + `GLEAN_AGENT_ID`):
-
-```bash
-npm run verify:live
-```
-
-`verify:live` calls `glean.agents.get` / `getSchemas` before `createRun` and
-fails clearly if the agent is missing or unauthorized.
+Requires credentials and a reachable Account Brief agent. Missing or unauthorized
+agents fail with an explicit error.

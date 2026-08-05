@@ -26,9 +26,8 @@ interface Tile {
 interface AccountPayload {
   account: {
     name: string;
-    // Nullable on purpose: on the live path these are only populated when a
-    // retrieved document supports them, and a blank KPI is truthful where an
-    // assumed one is not. The fixture path fills them all in.
+    // Nullable on purpose: these are only populated when a retrieved document
+    // supports them, and a blank KPI is truthful where an assumed one is not.
     owner: string | null;
     arr: string | null;
     renewalDate: string | null;
@@ -57,7 +56,6 @@ interface AgentWaitResponse {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
-const fixturesDir = path.join(__dirname, 'fixtures');
 
 // The account name is the reader's, so the tile queries are built from it. An
 // earlier version searched for a fixed demo account, which returns nothing on any
@@ -93,8 +91,7 @@ function tileQueries(account: string): Array<{
 // Only the name is known up front. Every other field stays null unless a
 // retrieved document supports it: an unsourced figure on a page about a named
 // customer is the worst output this app can produce, and a blank field is a
-// truthful one. The fixture path supplies a fully populated account so the layout
-// is still reviewable offline.
+// truthful one.
 function unpopulatedAccount(account: string) {
   return {
     name: account,
@@ -113,10 +110,6 @@ function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
   return value;
-}
-
-function useFixture(): boolean {
-  return process.env.GLEAN_USE_FIXTURE === 'true';
 }
 
 function isHttpUrl(url: string): boolean {
@@ -167,13 +160,6 @@ function parseAgentResponse(data: AgentWaitResponse): {
   return { answer: text, citations };
 }
 
-function loadAgentFixture(input: string): AgentWaitResponse {
-  const all = JSON.parse(
-    fs.readFileSync(path.join(fixturesDir, 'agent-responses.json'), 'utf8'),
-  ) as Record<string, AgentWaitResponse>;
-  return all[input] ?? all._default;
-}
-
 function createGlean(): Glean {
   process.env.X_GLEAN_INCLUDE_EXPERIMENTAL ??= 'true';
   return new Glean({
@@ -186,17 +172,13 @@ async function runAgent(question: string): Promise<{
   answer: string;
   citations: Array<{ title: string; url: string }>;
 }> {
-  if (useFixture()) {
-    return parseAgentResponse(loadAgentFixture(question));
-  }
-
   const agentId = requireEnv('GLEAN_AGENT_ID');
   const glean = createGlean();
   const prompt =
     `Produce a QBR-ready account brief section for the ${accountName()} ` +
     `account. Use only this company's own indexed knowledge. Cite every claim ` +
     `with markdown links to the documents you used. If the sources do not cover ` +
-    `something, say so rather than inferring it. `;
+    `something, say so rather than inferring it. Question: ${question}`;
 
   const result = await glean.agents.createRun(
     {
@@ -254,12 +236,6 @@ async function searchTile(
 }
 
 async function loadAccount(): Promise<AccountPayload> {
-  if (useFixture()) {
-    return JSON.parse(
-      fs.readFileSync(path.join(fixturesDir, 'account.json'), 'utf8'),
-    ) as AccountPayload;
-  }
-
   const glean = createGlean();
   const account = accountName();
   const tiles = await Promise.all(
@@ -279,7 +255,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const payload = await loadAccount();
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ...payload, fixtureMode: useFixture() }));
+      res.end(JSON.stringify(payload));
     } catch (error) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: (error as Error).message }));
@@ -313,7 +289,7 @@ const server = http.createServer(async (req, res) => {
           error: message,
           hint:
             status === 502
-              ? 'Set GLEAN_AGENT_ID to an Account Brief agent you can access, or use GLEAN_USE_FIXTURE=true.'
+              ? 'Set GLEAN_AGENT_ID to an Account Brief agent you can access.'
               : undefined,
         }),
       );

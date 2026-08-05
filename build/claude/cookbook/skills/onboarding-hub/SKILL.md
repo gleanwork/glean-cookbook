@@ -35,7 +35,7 @@ Web SDK variant — checklist + renderChat
    ```
 
 5. **Verify**
-   Open the printed local URL (use ?fixture=1 or copy steps.example.json → steps.json). Confirm the checklist renders without a named-hire persona, click Ask about this on a step, and ask a first-day question for a cited answer.
+   Open the printed local URL (copy steps.example.json → steps.json). Confirm the checklist renders without a named-hire persona, click Ask about this on a step, and ask a first-day question for a cited answer.
 
 ### Platform Chat
 
@@ -53,28 +53,24 @@ Platform Chat variant — POST /api/chat, you own the UI
    cd onboarding-hub && npm install
    ```
 
-3. **Watch the contract hold, with no credentials**
-   Replays recorded checklist + chat responses and asserts citations, empty off-corpus escalation, and OpenAPI shape — no token required.
-
-   ```bash
-   npm run verify:fixture
-   ```
-
-4. **Set credentials**
-   Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Optionally set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON for your checklist. The app runs as you; there is no act-as.
+3. **Set credentials**
+   Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON for your checklist. The app runs as you; there is no act-as.
 
    ```bash
    cp .env.example .env
    ```
 
-5. **Run it**
+4. **Run it**
 
    ```bash
    npm start
    ```
 
-6. **Verify**
+5. **Verify**
    Ask the demo queries against your own onboarding docs. Confirm cited answers for first-day / VPN / PTO, and that an unsupported question shows the escalation affordance instead of inventing a step.
+   ```bash
+   npm run verify
+   ```
 
 ## Reference
 

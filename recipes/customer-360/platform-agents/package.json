@@ -7,8 +7,6 @@
   "scripts": {
     "start": "tsx server.ts",
     "verify": "node scripts/verify.mjs",
-    "verify:fixture": "GLEAN_USE_FIXTURE=true node scripts/verify.mjs",
-    "verify:live": "GLEAN_USE_FIXTURE=false node scripts/verify-live.mjs",
     "lint": "eslint ."
   },
   "dependencies": {

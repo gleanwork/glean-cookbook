@@ -11,9 +11,7 @@ saved-prompt buttons, and drill-in chat. Built two ways on **Platform APIs only*
 
 Point both paths at an account with `GLEAN_ACCOUNT_NAME` and a backend with
 `GLEAN_SERVER_URL`. Live figures come from retrieval; unsupported KPI fields stay
-blank. Fixture mode (`GLEAN_USE_FIXTURE=true`) uses sample account data for
-contract checks only — the UI banners that clearly. Auth is the caller's own
-credential; there is no act-as.
+blank. Auth is the caller's own credential; there is no act-as.
 
 See the full recipe at
 [developers.glean.com/cookbook/customer-360](https://developers.glean.com/cookbook/customer-360)

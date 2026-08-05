@@ -52,9 +52,8 @@ interface Tile {
 interface AccountPayload {
   account: {
     name: string;
-    // Nullable on purpose: on the live path these are only populated when a
-    // retrieved document supports them, and a blank KPI is truthful where an
-    // assumed one is not. The fixture path fills them all in.
+    // Nullable on purpose: these are only populated when a retrieved document
+    // supports them, and a blank KPI is truthful where an assumed one is not.
     owner: string | null;
     arr: string | null;
     renewalDate: string | null;
@@ -67,7 +66,6 @@ interface AccountPayload {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
-const fixturesDir = path.join(__dirname, 'fixtures');
 
 // The account name is the reader's, so the tile queries are built from it. An
 // earlier version searched for a fixed demo account, which returns nothing on any
@@ -103,8 +101,7 @@ function tileQueries(account: string): Array<{
 // Only the name is known up front. Every other field stays null unless a
 // retrieved document supports it: an unsourced figure on a page about a named
 // customer is the worst output this app can produce, and a blank field is a
-// truthful one. The fixture path supplies a fully populated account so the layout
-// is still reviewable offline.
+// truthful one.
 function unpopulatedAccount(account: string) {
   return {
     name: account,
@@ -123,10 +120,6 @@ function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
   return value;
-}
-
-function useFixture(): boolean {
-  return process.env.GLEAN_USE_FIXTURE === 'true';
 }
 
 function parsePlatformChatResponse(data: PlatformChatResponse): {
@@ -159,21 +152,10 @@ function parsePlatformChatResponse(data: PlatformChatResponse): {
   return { answer, citations };
 }
 
-function loadChatFixture(input: string): PlatformChatResponse {
-  const all = JSON.parse(
-    fs.readFileSync(path.join(fixturesDir, 'chat-responses.json'), 'utf8'),
-  ) as Record<string, PlatformChatResponse>;
-  return all[input] ?? all._default;
-}
-
 async function askPlatformChat(input: string): Promise<{
   answer: string;
   citations: Array<{ title: string; url: string }>;
 }> {
-  if (useFixture()) {
-    return parsePlatformChatResponse(loadChatFixture(input));
-  }
-
   const backend = requireEnv('GLEAN_SERVER_URL').replace(/\/$/, '');
   const token = requireEnv('GLEAN_API_TOKEN');
 
@@ -234,12 +216,6 @@ async function searchTile(
 }
 
 async function loadAccount(): Promise<AccountPayload> {
-  if (useFixture()) {
-    return JSON.parse(
-      fs.readFileSync(path.join(fixturesDir, 'account.json'), 'utf8'),
-    ) as AccountPayload;
-  }
-
   process.env.X_GLEAN_INCLUDE_EXPERIMENTAL ??= 'true';
   const glean = new Glean({
     apiToken: requireEnv('GLEAN_API_TOKEN'),
@@ -276,7 +252,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const payload = await loadAccount();
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ...payload, fixtureMode: useFixture() }));
+      res.end(JSON.stringify(payload));
     } catch (error) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: (error as Error).message }));
@@ -293,10 +269,8 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: 'question is required' }));
         return;
       }
-      // Frame lazily: the framing names the account, which is only configured for
-      // live runs, so building it eagerly makes fixture mode require live env.
       const { answer, citations } = await askPlatformChat(
-        useFixture() ? question : frameAccountPrompt(question),
+        frameAccountPrompt(question),
       );
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ answer, citations }));

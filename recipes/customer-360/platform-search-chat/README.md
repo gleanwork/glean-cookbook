@@ -8,14 +8,12 @@ as you; there is no act-as / impersonation.
 
 ```bash
 npm install
-npm run verify:fixture   # contract check, no credentials
 cp .env.example .env
 ```
 
-Set `GLEAN_USE_FIXTURE=true` for contract-only runs (default in `.env.example`).
-For live mode, fill `GLEAN_SERVER_URL` / `GLEAN_API_TOKEN` / `GLEAN_ACCOUNT_NAME`,
-set `GLEAN_USE_FIXTURE=false`, and ensure experimental Platform Search + Chat are
-enabled on the instance (`X_GLEAN_INCLUDE_EXPERIMENTAL=true`).
+Fill `GLEAN_SERVER_URL` / `GLEAN_API_TOKEN` / `GLEAN_ACCOUNT_NAME`, and ensure
+experimental Platform Search + Chat are enabled on the instance
+(`X_GLEAN_INCLUDE_EXPERIMENTAL=true`).
 
 ## Run
 
@@ -23,13 +21,12 @@ enabled on the instance (`X_GLEAN_INCLUDE_EXPERIMENTAL=true`).
 npm start
 ```
 
-Open http://localhost:3000. Fixture mode shows a banner that the sample account
-is contract-only — not your instance’s content.
+Open http://localhost:3000.
 
 ## Verify
 
 ```bash
-npm run verify:fixture
+npm run verify
 ```
 
 ## Contracts

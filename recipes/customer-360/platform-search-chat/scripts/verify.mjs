@@ -1,26 +1,22 @@
 #!/usr/bin/env node
-// Fixture-first verify for customer-360/platform-search-chat.
+// Live verify for customer-360/platform-search-chat. Requires credentials.
 
 import { spawn } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const PORT = Number(process.env.PORT ?? 3000);
 const BASE_URL = `http://localhost:${PORT}`;
 const START_TIMEOUT_MS = 20_000;
-const useFixture = process.env.GLEAN_USE_FIXTURE !== 'false';
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const CHAT_CHECKS = [
   {
     query: "What's the status of our renewal with that account?",
     assert(result) {
       if (!result.answer?.trim()) return 'answer was empty';
-      if (useFixture && !result.citations?.length) {
-        return 'fixture response missing citations';
-      }
-      if (
-        useFixture &&
-        !result.citations.some((c) => c.url.includes('renewal'))
-      ) {
-        return 'expected renewal citation';
+      if (!result.citations?.length) {
+        return 'answer had no citations — the recipe promises cited answers';
       }
       return null;
     },
@@ -29,8 +25,8 @@ const CHAT_CHECKS = [
     query: 'Give me a customer summary',
     assert(result) {
       if (!result.answer?.trim()) return 'answer was empty';
-      if (useFixture && result.citations.length < 1) {
-        return 'expected at least one citation';
+      if (!result.citations?.length) {
+        return 'answer had no citations — the recipe promises cited answers';
       }
       return null;
     },
@@ -39,13 +35,22 @@ const CHAT_CHECKS = [
     query: 'What are the renewal risks?',
     assert(result) {
       if (!result.answer?.trim()) return 'answer was empty';
-      if (useFixture && !/low|DPA|procurement/i.test(result.answer)) {
-        return 'expected risk facts from renewal doc';
+      if (!result.citations?.length) {
+        return 'answer had no citations — the recipe promises cited answers';
       }
       return null;
     },
   },
 ];
+
+function requireEnv(name) {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    console.error(`Missing required environment variable: ${name}`);
+    process.exit(1);
+  }
+  return value;
+}
 
 function assertCitationShape(citations) {
   for (const citation of citations) {
@@ -61,11 +66,14 @@ function assertCitationShape(citations) {
 }
 
 function startServer() {
-  const child = spawn('npm', ['start'], {
+  // Prefer local tsx binary: `npx`/`npm start` under Socket Firewall can
+  // break outbound fetch from the child process.
+  const tsx = path.join(root, 'node_modules', '.bin', 'tsx');
+  const child = spawn(tsx, ['server.ts'], {
+    cwd: root,
     stdio: ['ignore', 'pipe', 'inherit'],
     env: {
       ...process.env,
-      GLEAN_USE_FIXTURE: useFixture ? 'true' : 'false',
       X_GLEAN_INCLUDE_EXPERIMENTAL: 'true',
     },
   });
@@ -87,11 +95,11 @@ async function waitForServer(deadline) {
 }
 
 async function main() {
-  console.log(
-    useFixture
-      ? 'Running verify in fixture mode (GLEAN_USE_FIXTURE=true)'
-      : 'Running verify against live Platform Search + Chat',
-  );
+  requireEnv('GLEAN_API_TOKEN');
+  requireEnv('GLEAN_SERVER_URL');
+  requireEnv('GLEAN_ACCOUNT_NAME');
+
+  console.log('Running verify against live Platform Search + Chat');
 
   const server = startServer();
   let failed = false;
@@ -107,9 +115,6 @@ async function main() {
     if (!account.account?.name || account.tiles?.length !== 3) {
       failed = true;
       console.error('✗ /api/account: expected an account name and 3 tiles');
-    } else if (useFixture && account.tiles.some((t) => !t.results?.length)) {
-      failed = true;
-      console.error('✗ /api/account: fixture tiles missing results');
     } else {
       console.log(
         `✓ /api/account — ${account.account.name}, ${account.tiles.length} tiles`,
@@ -129,10 +134,7 @@ async function main() {
         }
         const behaviorError = check.assert(result);
         const shapeError =
-          behaviorError ??
-          (result.citations?.length
-            ? assertCitationShape(result.citations)
-            : null);
+          behaviorError ?? assertCitationShape(result.citations);
         if (shapeError) {
           failed = true;
           console.error(`✗ "${check.query}": ${shapeError}`);

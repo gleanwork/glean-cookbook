@@ -293,8 +293,7 @@
         <p id="empty-checklist" class="subtitle" hidden>
           Provide your own steps via
           <code>GLEAN_ONBOARDING_STEPS_FILE</code> or
-          <code>GLEAN_ONBOARDING_STEPS_JSON</code>, or set
-          <code>GLEAN_USE_FIXTURE=true</code> for a labeled sample checklist.
+          <code>GLEAN_ONBOARDING_STEPS_JSON</code>.
         </p>
         <h2 id="pending-heading">Still to do · 0</h2>
         <ul id="pending-list"></ul>
@@ -612,15 +611,12 @@
 
         const sourceNote = document.getElementById('steps-source');
         if (sourceNote) {
-          if (source === 'fixture') {
-            sourceNote.textContent =
-              'Showing fixture sample steps (GLEAN_USE_FIXTURE=true). Not your instance’s checklist.';
-          } else if (source === 'config') {
+          if (source === 'config') {
             sourceNote.textContent =
               'Loaded steps from GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON.';
           } else {
             sourceNote.textContent =
-              'No steps configured. Set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON, or enable fixture mode.';
+              'No steps configured. Set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON.';
           }
         }
 

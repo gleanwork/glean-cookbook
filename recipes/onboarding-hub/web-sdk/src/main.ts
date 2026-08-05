@@ -14,7 +14,7 @@ const DEFAULT_CHAT = 'What should I do on my first day?';
 
 const completed = loadCompletedIds();
 let steps: OnboardingStep[] = [];
-let source: 'fixture' | 'config' | 'empty' = 'empty';
+let source: 'config' | 'empty' = 'empty';
 
 function escapeHtml(value: string): string {
   return value
@@ -176,14 +176,11 @@ async function boot(): Promise<void> {
 
   const sourceNote = document.getElementById('steps-source');
   if (sourceNote) {
-    if (source === 'fixture') {
-      sourceNote.textContent =
-        'Showing fixture sample steps (?fixture=1). Not your instance’s checklist.';
-    } else if (source === 'config') {
+    if (source === 'config') {
       sourceNote.textContent = 'Loaded steps from /steps.json.';
     } else {
       sourceNote.textContent =
-        'No steps configured. Copy public/steps.example.json to public/steps.json, or open with ?fixture=1 for a sample.';
+        'No steps configured. Copy public/steps.example.json to public/steps.json.';
     }
   }
 
