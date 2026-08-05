@@ -26,9 +26,8 @@ rather than extended. Two design findings below changed the build materially.
 | Fiction                         | Sample Corp responding to a Globex questionnaire                                         |
 
 **Brand:** Glean's own branding. The Acme brand kit and `brand/FICTION.md` were retired in
-`5263757`; `brand/` is styling tokens only. Do **not** copy the `Acme teal #0E8C84` /
-`@acme.example.com` values from `customer-360/SPEC-LOCK.md` — that file predates the change.
-Corpus domain is `sample.example.com`.
+`5263757`; `brand/` is styling tokens only. Do **not** reintroduce the retired `Acme teal #0E8C84`
+or `@acme.example.com` values. Corpus domain is `sample.example.com`.
 
 ## Auth model — DECIDED (impersonation is gone)
 
