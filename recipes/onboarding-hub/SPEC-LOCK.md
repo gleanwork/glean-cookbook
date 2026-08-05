@@ -17,7 +17,7 @@
 | Demo queries                    | First day, VPN, PTO, off-corpus escalation                                                                         |
 | Brand                           | Glean Blue `#343ced` + real Glean logomark; no named-hire / Acme Corp chrome                                       |
 | Auth                            | Caller's own credential; **no act-as / impersonation**                                                             |
-| Checklist source                | Fixture sample **or** reader config (`steps.json` / `GLEAN_ONBOARDING_STEPS_*`); never invent a hire list          |
+| Checklist source                | Reader config (`steps.json` / `GLEAN_ONBOARDING_STEPS_*`); never invent a hire list                                |
 | Code layout                     | `recipes/onboarding-hub/{web-sdk,platform-chat}/`                                                                  |
 | `goDependency` / `featured`     | both `false`                                                                                                       |
 
@@ -28,16 +28,16 @@
 - Experimental: `X-GLEAN-INCLUDE-EXPERIMENTAL=true`
 - Platform scope: `CHAT` (see `llmContext` / registry)
 - Auth: `GLEAN_SERVER_URL` + caller's `GLEAN_API_TOKEN` — no `X-Glean-ActAs`
-- Checklist: `GET /api/checklist` — fixture vs `GLEAN_ONBOARDING_STEPS_FILE` / `GLEAN_ONBOARDING_STEPS_JSON`
+- Checklist: `GET /api/checklist` — `GLEAN_ONBOARDING_STEPS_FILE` / `GLEAN_ONBOARDING_STEPS_JSON`
 - **Not** Client API `glean.client.chat.create`
 
 ## Content backing
 
 - Live: the reader's own indexed onboarding / HR / IT docs
-- Fixture: `fixtures/steps.json` + `fixtures/chat-responses.json` (contract-only; labeled sample)
+- Verify: `npm run verify` against live `/api/chat` (credentials required)
 
 ## Non-blocking
 
 - Auto-deriving checklist steps from Search/Chat (explicitly out of scope)
-- Handler/SDK GA (cookbook teaches OpenAPI contract; fixtures OK)
+- Handler/SDK GA (cookbook teaches OpenAPI contract)
 - `featured` band placement

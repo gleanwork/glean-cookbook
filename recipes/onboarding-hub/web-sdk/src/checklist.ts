@@ -49,27 +49,12 @@ export function parseSteps(raw: unknown): OnboardingStep[] {
 
 /**
  * Live: GET /steps.json if the reader copied steps.example.json → steps.json.
- * Fixture/demo: ?fixture=1 (or Vite DEV without steps.json) loads steps.fixture.json.
  * Otherwise: empty checklist (do not invent a named hire).
  */
 export async function loadSteps(): Promise<{
   steps: OnboardingStep[];
-  source: 'fixture' | 'config' | 'empty';
+  source: 'config' | 'empty';
 }> {
-  const wantsFixture =
-    new URLSearchParams(window.location.search).get('fixture') === '1';
-
-  if (wantsFixture) {
-    const response = await fetch('/steps.fixture.json');
-    if (!response.ok) {
-      throw new Error(`Failed to load steps.fixture.json (${response.status})`);
-    }
-    return {
-      steps: parseSteps(await response.json()),
-      source: 'fixture',
-    };
-  }
-
   try {
     const response = await fetch('/steps.json');
     if (response.ok) {

@@ -46,18 +46,6 @@
         color: var(--text-secondary);
         font-size: 13px;
       }
-      .fixture-banner {
-        display: none;
-        margin: 0;
-        padding: 10px 24px;
-        background: var(--warning-bg);
-        border-bottom: 1px solid var(--border-light);
-        color: var(--text-secondary);
-        font-size: 13px;
-      }
-      .fixture-banner.visible {
-        display: block;
-      }
       .path-badge {
         margin-left: auto;
         font-size: 12px;
@@ -233,12 +221,6 @@
       </div>
       <span class="path-badge">Path B · Platform Agents</span>
     </header>
-    <p id="fixture-banner" class="fixture-banner">
-      Fixture sample account (contract-only) — not your instance’s content. Set
-      <code>GLEAN_USE_FIXTURE=false</code> and
-      <code>GLEAN_ACCOUNT_NAME</code> for live data.
-    </p>
-
     <main>
       <section class="card" id="kpi-card">
         <h2 data-account-name></h2>
@@ -396,9 +378,6 @@
         const response = await fetch('/api/account');
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || response.statusText);
-
-        const banner = document.getElementById('fixture-banner');
-        if (banner && data.fixtureMode) banner.classList.add('visible');
 
         renderAccountIdentity(data.account);
         renderKpis(document.getElementById('kpi-grid'), data.account);

@@ -3,12 +3,12 @@
 Maps each showpiece state on the account page to Path A (`platform-search-chat`)
 and Path B (`platform-agents`). The account name and every figure come from the
 reader's own instance via `GLEAN_ACCOUNT_NAME` + retrieval — never from a fixed
-demo corpus. Fixture mode uses labeled sample data for contract checks only.
+demo corpus.
 
 | #   | Showpiece state                        | Path A (Search + Chat)                                                          | Path B (Agents)                                                                                  | Demo query / note                                     |
 | --- | -------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
-| 1   | KPI header (ARR, renewal, risk, owner) | Blank/`—` until a retrieved doc supports the field; fixture fills sample values | Same                                                                                             | Live: retrieval only; fixture: sample account         |
-| 2   | Three source sections                  | Parallel `glean.search.query` for notes / renewal / security framed by account  | Same Search tiles (Agents path still uses Search for tiles) **or** fixtures; synthesis via agent | Queries inject `GLEAN_ACCOUNT_NAME`                   |
+| 1   | KPI header (ARR, renewal, risk, owner) | Blank/`—` until a retrieved doc supports the field                              | Same                                                                                             | Live: retrieval only                                  |
+| 2   | Three source sections                  | Parallel `glean.search.query` for notes / renewal / security framed by account  | Same Search tiles (Agents path still uses Search for tiles); synthesis via agent                 | Queries inject `GLEAN_ACCOUNT_NAME`                   |
 | 3   | Journey summary                        | One `POST /api/chat` with account-framed prompt                                 | `glean.agents.createRun` with account-framed USER message                                        | "Give me a customer summary"                          |
 | 4   | Saved prompts                          | Buttons fire Chat with account-framed prompts                                   | Buttons fire `createRun` with the same prompts                                                   | Customer summary; renewal risks; renewal status       |
 | 5   | Drill-in follow-up                     | Free-form Chat keeps account framing                                            | Free-form `createRun` with same framing                                                          | "What's the status of our renewal with that account?" |

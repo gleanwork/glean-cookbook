@@ -56,10 +56,7 @@ No impersonation headers (`X-Glean-ActAs` / `X-Glean-Act-As`).
 ## Content backing
 
 Live: whatever the reader's instance already knows about `GLEAN_ACCOUNT_NAME`.
-
-Fixture-only (`GLEAN_USE_FIXTURE=true`): sample account payloads under each path's
-`fixtures/` directory for contract verification. Those files are not a corpus
-prerequisite and must not be treated as runtime defaults.
+Verify: `npm run verify` against live Platform APIs (credentials required).
 
 ## Non-goals (Extensions only)
 
@@ -72,4 +69,4 @@ prerequisite and must not be treated as runtime defaults.
 
 - Account Brief agent created in Agent Builder (template-driven QBR sections)
 - `GLEAN_AGENT_ID` server-only env
-- Fixture-first verify by default; optional live script checks agent existence/schema before `createRun`
+- Live verify requires the agent; missing/unauthorized → explicit failure UX

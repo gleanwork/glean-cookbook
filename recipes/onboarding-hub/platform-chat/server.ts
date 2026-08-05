@@ -6,8 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 // Path B (Platform Chat): you own the UI; the server calls POST /api/chat.
 // Verified against the OpenAPI contract in scio/openapi/public/platform/chat.yaml.
-// The handler may still be a stub on some instances — set GLEAN_USE_FIXTURE=true
-// for contract-only verification, or call live with X_GLEAN_INCLUDE_EXPERIMENTAL.
+// Requires X_GLEAN_INCLUDE_EXPERIMENTAL and a live Platform Chat handler.
 
 interface PlatformSource {
   type?: string;
@@ -48,23 +47,18 @@ interface OnboardingStep {
 
 interface ChecklistPayload {
   steps: OnboardingStep[];
-  source: 'fixture' | 'config' | 'empty';
+  source: 'config' | 'empty';
 }
 
 const GROUPS = new Set<MilestoneGroup>(['it', 'hr', 'team', 'engineering']);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
-const fixturesDir = path.join(__dirname, 'fixtures');
 
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
   return value;
-}
-
-function useFixture(): boolean {
-  return process.env.GLEAN_USE_FIXTURE === 'true';
 }
 
 function parseSteps(raw: unknown): OnboardingStep[] {
@@ -95,14 +89,6 @@ function parseSteps(raw: unknown): OnboardingStep[] {
 }
 
 function loadChecklist(): ChecklistPayload {
-  if (useFixture()) {
-    const fixturePath = path.join(fixturesDir, 'steps.json');
-    return {
-      steps: parseSteps(JSON.parse(fs.readFileSync(fixturePath, 'utf8'))),
-      source: 'fixture',
-    };
-  }
-
   const inline = process.env.GLEAN_ONBOARDING_STEPS_JSON?.trim();
   if (inline) {
     return {
@@ -167,23 +153,6 @@ function parsePlatformChatResponse(data: PlatformChatResponse): {
   return { answer, citations };
 }
 
-function loadFixtureChatResponse(input: string): PlatformChatResponse {
-  const fixturePath = path.join(fixturesDir, 'chat-responses.json');
-  const recorded = JSON.parse(fs.readFileSync(fixturePath, 'utf8')) as Record<
-    string,
-    PlatformChatResponse
-  >;
-  const exact = recorded[input];
-  if (exact) return exact;
-  const fallback = recorded['What should I do on my first day?'];
-  if (!fallback) {
-    throw new Error(
-      'fixtures/chat-responses.json is missing the day-one entry',
-    );
-  }
-  return fallback;
-}
-
 function withEscalate(parsed: {
   answer: string;
   citations: Array<{ title: string; url: string }>;
@@ -206,12 +175,6 @@ async function askPlatformChat(input: string): Promise<{
   citations: Array<{ title: string; url: string }>;
   escalate: boolean;
 }> {
-  if (useFixture()) {
-    return withEscalate(
-      parsePlatformChatResponse(loadFixtureChatResponse(input)),
-    );
-  }
-
   // GLEAN_SERVER_URL rather than an instance name: deriving the backend as
   // `https://${instance}-be.glean.com` only holds for the default naming, and
   // silently points at nothing when a deployment differs. The docs use

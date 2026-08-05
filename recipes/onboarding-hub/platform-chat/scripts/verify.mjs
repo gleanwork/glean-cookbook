@@ -1,11 +1,6 @@
 #!/usr/bin/env node
-// Verify gate for onboarding-hub/platform-chat. Runs in fixture mode by default
-// (GLEAN_USE_FIXTURE=true) so CI can validate the OpenAPI response parser without
-// a live /api/chat handler. Set GLEAN_USE_FIXTURE=false with real credentials for
-// live verification against your instance.
-//
-// Fixture shape is checked against ChatCompletedResponse in
-// scio/openapi/public/platform/chat.yaml (required fields + nested citation path).
+// Live verify gate for onboarding-hub/platform-chat. Requires credentials and
+// fails closed without them — same pattern as company-answers/chat-api.
 
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -15,156 +10,54 @@ import { fileURLToPath } from 'node:url';
 const PORT = Number(process.env.PORT ?? 3000);
 const BASE_URL = `http://localhost:${PORT}`;
 const START_TIMEOUT_MS = 15_000;
-const useFixture = process.env.GLEAN_USE_FIXTURE !== 'false';
-const RESPONSE_ID_RE =
-  /^resp_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEMO_QUERIES = JSON.parse(
   fs.readFileSync(path.join(root, 'scripts', 'demo-queries.json'), 'utf8'),
 );
 
-function assertFixtureMatchesOpenApi(fixture, { allowEmpty = false } = {}) {
-  const required = [
-    'id',
-    'object',
-    'created_at',
-    'status',
-    'output',
-    'store',
-    'request_id',
-  ];
-  for (const key of required) {
-    if (!(key in fixture)) return `fixture missing required field: ${key}`;
+const OFF_CORPUS = "Ask about a step your docs don't cover";
+
+function requireEnv(name) {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    console.error(`Missing required environment variable: ${name}`);
+    process.exit(1);
   }
-  if (fixture.object !== 'response') {
-    return `fixture.object must be "response", got ${JSON.stringify(fixture.object)}`;
-  }
-  if (fixture.status !== 'completed') {
-    return `fixture.status must be "completed", got ${JSON.stringify(fixture.status)}`;
-  }
-  if (typeof fixture.store !== 'boolean') {
-    return 'fixture.store must be a boolean';
-  }
-  if (typeof fixture.request_id !== 'string' || fixture.request_id.length < 1) {
-    return 'fixture.request_id must be a non-empty string';
-  }
-  if (
-    typeof fixture.created_at !== 'string' ||
-    Number.isNaN(Date.parse(fixture.created_at))
-  ) {
-    return 'fixture.created_at must be an RFC 3339 timestamp';
-  }
-  if (!RESPONSE_ID_RE.test(fixture.id)) {
-    return `fixture.id must match resp_<uuid4>, got ${JSON.stringify(fixture.id)}`;
-  }
-  if (!Array.isArray(fixture.output) || fixture.output.length !== 1) {
-    return 'fixture.output must be an array of length 1';
-  }
-  const message = fixture.output[0];
-  if (message?.type !== 'message' || message?.role !== 'assistant') {
-    return 'fixture.output[0] must be { type: "message", role: "assistant" }';
-  }
-  if (!Array.isArray(message.content) || message.content.length !== 1) {
-    return 'fixture.output[0].content must be an array of length 1';
-  }
-  const block = message.content[0];
-  if (block?.type !== 'output_text' || typeof block.text !== 'string') {
-    return 'fixture content must be { type: "output_text", text: string }';
-  }
-  const annotations = block.annotations ?? [];
-  if (!Array.isArray(annotations)) {
-    return 'fixture annotations must be an array';
-  }
-  if (!allowEmpty && annotations.length < 1) {
-    return 'fixture must include at least one citation annotation';
-  }
-  for (const annotation of annotations) {
-    if (annotation?.type !== 'citation') {
-      return 'fixture annotation.type must be "citation"';
+  return value;
+}
+
+function assertCitedAnswer(result) {
+  if (result.answer.trim().length === 0) return 'answer was empty';
+  if (result.citations.length === 0) {
+    // Uncited prose must escalate rather than look like a grounded answer.
+    if (!result.escalate) {
+      return 'answer had no citations and escalate was false';
     }
-    if (!Array.isArray(annotation.sources) || annotation.sources.length < 1) {
-      return 'fixture citation.sources must be a non-empty array';
-    }
-    for (const source of annotation.sources) {
-      if (source?.type !== 'document') {
-        return 'fixture demo citation source.type must be "document"';
-      }
-      if (!source.document_id && !source.url) {
-        return 'document source requires document_id or url';
-      }
-    }
+    return null;
+  }
+  if (result.escalate) {
+    return 'expected escalate=false for a cited answer';
   }
   return null;
 }
 
-const OFF_CORPUS = "Ask about a step your docs don't cover";
-
 const CHECKS = [
   {
     query: 'What should I do on my first day?',
-    assert(result) {
-      if (result.answer.trim().length === 0) return 'answer was empty';
-      if (useFixture && result.citations.length === 0) {
-        return 'fixture response missing citations';
-      }
-      if (result.escalate)
-        return 'expected escalate=false for a cited day-one answer';
-      return null;
-    },
+    assert: assertCitedAnswer,
   },
   {
     query: 'How do I set up VPN?',
-    assert(result) {
-      if (useFixture) {
-        if (result.answer.trim().length === 0)
-          return 'fixture VPN answer was empty';
-        if (result.citations.length === 0) {
-          return 'fixture VPN response missing citations';
-        }
-        return null;
-      }
-      if (result.answer.trim().length === 0) return 'answer was empty';
-      if (result.citations.length === 0) {
-        return 'citations were empty — expected a VPN setup citation';
-      }
-      return null;
-    },
+    assert: assertCitedAnswer,
   },
   {
     query: "What's our PTO policy?",
-    assert(result) {
-      if (useFixture) {
-        if (result.answer.trim().length === 0)
-          return 'fixture PTO answer was empty';
-        if (result.citations.length === 0) {
-          return 'fixture PTO response missing citations';
-        }
-        return null;
-      }
-      if (result.answer.trim().length === 0) return 'answer was empty';
-      if (result.citations.length === 0) {
-        return 'citations were empty — expected a PTO policy citation';
-      }
-      return null;
-    },
+    assert: assertCitedAnswer,
   },
   {
     query: OFF_CORPUS,
     assert(result) {
-      if (useFixture) {
-        if (result.answer.trim().length > 0) {
-          return 'off-corpus fixture should return an empty answer';
-        }
-        if (result.citations.length > 0) {
-          return 'off-corpus fixture should have no citations';
-        }
-        if (!result.escalate) {
-          return 'expected escalate=true when the answer is empty';
-        }
-        return null;
-      }
-      // Live corpora vary; require the escalation signal when the answer is thin.
       if (
         (result.answer.trim().length < 20 || result.citations.length === 0) &&
         !result.escalate
@@ -190,11 +83,15 @@ function assertCitationShape(citations) {
 }
 
 function startServer() {
-  const child = spawn('npm', ['start'], {
+  // Prefer local tsx binary: `npx`/`npm start` under Socket Firewall can
+  // break outbound fetch from the child process.
+  const tsx = path.join(root, 'node_modules', '.bin', 'tsx');
+  const child = spawn(tsx, ['server.ts'], {
+    cwd: root,
     stdio: ['ignore', 'pipe', 'inherit'],
     env: {
       ...process.env,
-      GLEAN_USE_FIXTURE: useFixture ? 'true' : 'false',
+      X_GLEAN_INCLUDE_EXPERIMENTAL: 'true',
     },
   });
   child.stdout.on('data', (chunk) => process.stdout.write(chunk));
@@ -228,13 +125,19 @@ async function askGlean(question) {
 }
 
 async function main() {
-  console.log(
-    useFixture
-      ? 'Running verify in fixture mode (GLEAN_USE_FIXTURE=true)'
-      : 'Running verify against live POST /api/chat',
-  );
+  requireEnv('GLEAN_API_TOKEN');
+  requireEnv('GLEAN_SERVER_URL');
+  if (
+    !process.env.GLEAN_ONBOARDING_STEPS_JSON?.trim() &&
+    !process.env.GLEAN_ONBOARDING_STEPS_FILE?.trim()
+  ) {
+    console.error(
+      'Set GLEAN_ONBOARDING_STEPS_JSON or GLEAN_ONBOARDING_STEPS_FILE so verify can load a checklist.',
+    );
+    process.exit(1);
+  }
 
-  let failed = false;
+  console.log('Running verify against live POST /api/chat');
 
   const checkQueries = CHECKS.map((c) => c.query);
   if (JSON.stringify(checkQueries) !== JSON.stringify(DEMO_QUERIES)) {
@@ -246,63 +149,26 @@ async function main() {
     process.exit(1);
   }
 
-  if (useFixture) {
-    const fixturePath = path.join(root, 'fixtures', 'chat-responses.json');
-    const recorded = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
-    for (const query of DEMO_QUERIES) {
-      const fixture = recorded[query];
-      if (!fixture) {
-        console.error(`✗ fixtures/chat-responses.json missing key: ${query}`);
-        process.exit(1);
-      }
-      const shapeError = assertFixtureMatchesOpenApi(fixture, {
-        allowEmpty: query === OFF_CORPUS,
-      });
-      if (shapeError) {
-        console.error(`✗ fixture OpenAPI shape (${query}): ${shapeError}`);
-        process.exit(1);
-      }
-    }
-    console.log(
-      `✓ ${DEMO_QUERIES.length} recorded fixtures match ChatCompletedResponse shape`,
-    );
-  }
-
   const server = startServer();
+  let failed = false;
 
   try {
     await waitForServer(Date.now() + START_TIMEOUT_MS);
 
-    if (useFixture) {
-      const checklistResponse = await fetch(`${BASE_URL}/api/checklist`);
-      if (!checklistResponse.ok) {
-        throw new Error(`/api/checklist returned ${checklistResponse.status}`);
-      }
-      const checklist = await checklistResponse.json();
-      if (checklist.source !== 'fixture') {
-        throw new Error(
-          `expected checklist.source "fixture", got ${JSON.stringify(checklist.source)}`,
-        );
-      }
-      if (!Array.isArray(checklist.steps) || checklist.steps.length < 1) {
-        throw new Error('fixture checklist.steps must be a non-empty array');
-      }
-      for (const step of checklist.steps) {
-        if (
-          typeof step?.id !== 'string' ||
-          typeof step?.title !== 'string' ||
-          typeof step?.askPrompt !== 'string' ||
-          typeof step?.group !== 'string'
-        ) {
-          throw new Error(
-            `fixture checklist step missing required fields: ${JSON.stringify(step)}`,
-          );
-        }
-      }
-      console.log(
-        `✓ /api/checklist fixture — ${checklist.steps.length} step(s)`,
+    const checklistResponse = await fetch(`${BASE_URL}/api/checklist`);
+    if (!checklistResponse.ok) {
+      throw new Error(`/api/checklist returned ${checklistResponse.status}`);
+    }
+    const checklist = await checklistResponse.json();
+    if (checklist.source !== 'config') {
+      throw new Error(
+        `expected checklist.source "config", got ${JSON.stringify(checklist.source)}`,
       );
     }
+    if (!Array.isArray(checklist.steps) || checklist.steps.length < 1) {
+      throw new Error('checklist.steps must be a non-empty array');
+    }
+    console.log(`✓ /api/checklist — ${checklist.steps.length} step(s)`);
 
     for (const check of CHECKS) {
       try {
@@ -325,34 +191,6 @@ async function main() {
       } catch (error) {
         failed = true;
         console.error(`✗ "${check.query}": ${error.message}`);
-      }
-    }
-
-    if (useFixture) {
-      const unsafeQuery = 'Regression: unsafe citation URL';
-      try {
-        const result = await askGlean(unsafeQuery);
-        if (result.citations?.length) {
-          failed = true;
-          console.error(
-            `✗ "${unsafeQuery}": javascript: citation must be stripped, got ${JSON.stringify(result.citations)}`,
-          );
-        } else if (!result.escalate) {
-          failed = true;
-          console.error(
-            `✗ "${unsafeQuery}": expected escalate=true when only unsafe citations remain`,
-          );
-        } else if (!result.answer?.trim()) {
-          failed = true;
-          console.error(
-            `✗ "${unsafeQuery}": expected the long fixture answer to remain after stripping citations`,
-          );
-        } else {
-          console.log(`✓ "${unsafeQuery}" — unsafe URL stripped, escalate`);
-        }
-      } catch (error) {
-        failed = true;
-        console.error(`✗ "${unsafeQuery}": ${error.message}`);
       }
     }
   } catch (error) {

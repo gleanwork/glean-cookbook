@@ -1,16 +1,15 @@
 # Onboarding Hub — Platform Chat path
 
 Checklist + progress + Glean chat via Platform Chat (`POST /api/chat`). Steps are
-server-owned: fixture sample, env/file config, or empty — not a hardcoded named hire.
+server-owned via env/file config, or empty — not a hardcoded named hire.
 The app runs as you; there is no act-as / impersonation.
 
 ## Run
 
 ```bash
 npm install
-npm run verify:fixture   # contract check, no credentials
 cp .env.example .env     # fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL
-# Optional live steps:
+# Required for a non-empty checklist:
 #   GLEAN_ONBOARDING_STEPS_FILE=./steps.example.json
 #   # or GLEAN_ONBOARDING_STEPS_JSON='[...]'
 npm start
@@ -18,22 +17,15 @@ npm start
 
 Open http://localhost:3000. The server holds your API token — never expose it in the browser.
 
-- **Fixture sample:** `GLEAN_USE_FIXTURE=true` loads `fixtures/steps.json` + `fixtures/chat-responses.json` (labeled contract-only).
 - **Live steps:** set `GLEAN_ONBOARDING_STEPS_FILE` or `GLEAN_ONBOARDING_STEPS_JSON` (see `steps.example.json`).
 - **Empty:** without those env vars, `/api/checklist` returns `{ steps: [], source: "empty" }` and the UI asks you to configure steps.
 
 ## Verify
 
-**Fixture mode** (no live handler required — validates the OpenAPI response parser):
+Requires credentials and a working experimental `/api/chat` handler:
 
 ```bash
-npm run verify:fixture
-```
-
-**Live mode** (requires a working experimental `/api/chat` handler on your instance):
-
-```bash
-GLEAN_USE_FIXTURE=false npm run verify
+npm run verify
 ```
 
 ## Platform Chat contract
@@ -47,8 +39,6 @@ Aligned with `scio/openapi/public/platform/chat.yaml` (`ChatCreateRequest` / `Ch
 - Header: `X-GLEAN-INCLUDE-EXPERIMENTAL=true`
 - Platform scope: `CHAT` (see registry `requiredScopes` / `llmContext`)
 - Auth: caller credential only (`GLEAN_SERVER_URL` + `GLEAN_API_TOKEN`); no act-as
-
-`fixtures/chat-responses.json` is a query-keyed map of sample responses (cited day-one/VPN/PTO plus an empty off-corpus entry). `npm run verify:fixture` asserts each shape before exercising the parser.
 
 When `@gleanwork/api-client` ships `glean.chat.create`, swap the `fetch` call in `server.ts` for the generated SDK method — the response parsing stays the same.
 
