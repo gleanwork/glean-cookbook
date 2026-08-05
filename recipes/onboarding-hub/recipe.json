@@ -3,10 +3,7 @@
   "title": "Onboarding Hub: a day-one checklist grounded in your own docs",
   "description": "A guided first-week hub for new hires: a checklist with progress, and every step able to answer itself from your own onboarding content.",
   "sidebarLabel": "Onboarding Hub",
-  "surfaces": [
-    "web-sdk",
-    "platform-api"
-  ],
+  "surfaces": ["web-sdk", "platform-api"],
   "status": "showcase",
   "category": "portal",
   "level": "Intermediate",
@@ -16,17 +13,10 @@
   },
   "timeEstimate": "~45 min",
   "icon": "layout-outlined",
-  "requiredScopes": [
-    "CHAT"
-  ],
-  "authMethod": [
-    "web-sdk-cookie",
-    "client-api-oauth-or-token"
-  ],
+  "requiredScopes": ["CHAT"],
+  "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
   "buildMethod": "scaffold",
-  "languages": [
-    "typescript"
-  ],
+  "languages": ["typescript"],
   "prerequisites": [
     "A Glean instance with your onboarding content indexed",
     "For the Platform Chat path: a token with the CHAT scope, plus X_GLEAN_INCLUDE_EXPERIMENTAL=true",
@@ -99,10 +89,7 @@
   "llmContext": "Platform Chat (Path B): POST /api/chat, OpenAI Responses-style. Request: { input: string, stream?: boolean, store?: boolean }. Response: output[].content[].text + annotations[].sources[] (document/person/file/custom_entity). Experimental \u2014 requires X_GLEAN_INCLUDE_EXPERIMENTAL=true and backend platform.apiMigratedEndpointsEnabled. Platform scope is CHAT_WRITE (registry uses cookbook-style CHAT). No scoping/inclusion filter fields in OpenAPI \u2014 soft-scope via corpus framing only. Until @gleanwork/api-client ships glean.chat.create, use fetch against /api/chat. Auth is the caller's own OAuth token or API token with CHAT scope -- impersonation/act-as was removed from the cookbook recipes, so the caller's credential is the permission boundary. Path A: Web SDK renderChat with SSO cookie; all ChatOptions fields optional. Do NOT teach Client API glean.client.chat.create or messageType === 'CONTENT' fragment parsing in this recipe. The checklist and its steps must be derived from the reader's own onboarding content. An earlier draft seeded a named new hire's nine steps from a demo corpus that no longer exists, which made the hub display one fictional person's checklist on every instance. Ask rather than invent, and treat an empty or uncited answer as a state to render -- a new hire cannot distinguish an invented process from a real one. Use GLEAN_SERVER_URL rather than deriving the backend from an instance name.",
   "goDependency": false,
   "featured": false,
-  "tags": [
-    "dual-implementation",
-    "portal"
-  ],
+  "tags": ["dual-implementation", "portal"],
   "codeAssets": [
     {
       "repoPath": "recipes/onboarding-hub/web-sdk",

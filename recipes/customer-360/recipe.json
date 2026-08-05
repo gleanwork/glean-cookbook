@@ -3,9 +3,7 @@
   "title": "Customer 360: an account page built from your own content",
   "description": "One page per account \u2014 status, risks, and a drill-in chat \u2014 assembled from whatever your instance already knows about that customer. No CRM export, no separate index.",
   "sidebarLabel": "Customer 360",
-  "surfaces": [
-    "platform-api"
-  ],
+  "surfaces": ["platform-api"],
   "status": "showcase",
   "category": "workflow",
   "level": "Intermediate",
@@ -15,18 +13,10 @@
   },
   "timeEstimate": "~1 hr",
   "icon": "layout-outlined",
-  "requiredScopes": [
-    "SEARCH",
-    "CHAT",
-    "AGENTS"
-  ],
-  "authMethod": [
-    "client-api-oauth-or-token"
-  ],
+  "requiredScopes": ["SEARCH", "CHAT", "AGENTS"],
+  "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",
-  "languages": [
-    "typescript"
-  ],
+  "languages": ["typescript"],
   "prerequisites": [
     "Path A: a Glean API token with SEARCH and CHAT scopes",
     "Path B: a Glean API token with SEARCH and AGENTS scopes (tiles still use Platform Search)",
@@ -162,9 +152,5 @@
   "llmContext": "Platform-only recipe. Search: glean.search.query -> POST /api/search, results[].title/url/snippets (string[]). Chat: fetch POST /api/chat (until glean.chat.create ships); request {input, stream:false, store:true}; response output[].content[] type=output_text with annotations[].sources[]. Agents: glean.agents.createRun(request, agentId) -> POST /api/agents/{agent_id}/runs; stream:false returns PlatformAgentRunWaitResponse synchronously (no polling); messages use role USER|GLEAN_AI and content[{text,type:text}]. Experimental opt-in via X_GLEAN_INCLUDE_EXPERIMENTAL. Do NOT teach glean.client.chat.create, glean.client.search.query, or glean.client.agents.run. Auth is the caller's own token; impersonation/act-as was removed from the cookbook recipes. Tokens server-side only. The account and every figure on the page come from the reader's own instance. Nothing may hardcode an account name, owner, ARR, seat count or renewal date: an earlier version returned a fixed demo account on the live path, so the KPI header showed one fictional customer's numbers whatever retrieval returned. Use GLEAN_SERVER_URL rather than deriving the backend from an instance name, and GLEAN_ACCOUNT_NAME for the account. This recipe does not depend on examples/sample-catalog.",
   "goDependency": false,
   "featured": false,
-  "tags": [
-    "dual-implementation",
-    "sales",
-    "platform-api"
-  ]
+  "tags": ["dual-implementation", "sales", "platform-api"]
 }

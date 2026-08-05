@@ -9,13 +9,13 @@ const execFileAsync = promisify(execFile);
 
 export const sideEffects = 'read-only';
 
-export const requiredEnv = [
-  'GLEAN_API_TOKEN',
-  'GLEAN_SERVER_URL',
-];
+export const requiredEnv = ['GLEAN_API_TOKEN', 'GLEAN_SERVER_URL'];
 
 export async function setup(context) {
-  const cwd = path.join(context.repoRoot, 'recipes/onboarding-hub/platform-chat');
+  const cwd = path.join(
+    context.repoRoot,
+    'recipes/onboarding-hub/platform-chat',
+  );
   try {
     const { stdout } = await execFileAsync('node', ['scripts/verify.mjs'], {
       cwd,
