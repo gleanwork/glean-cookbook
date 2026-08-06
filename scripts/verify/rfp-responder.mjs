@@ -234,7 +234,9 @@ export async function run(query, _context) {
     if (contract) return contract;
     const refusals = rows.filter((row) => row.confidence === 'none').length;
     if (refusals === 0) {
-      return 'every row was answerable, so the refusal path went unexercised — run as a user without access to the restricted questionnaire summary to see it';
+      return {
+        skip: 'every row was answerable by this account, so the narrower-access refusal path went unexercised — it needs a second user without access to the restricted questionnaire summary',
+      };
     }
     return null;
   }

@@ -9,7 +9,14 @@ const execFileAsync = promisify(execFile);
 
 export const sideEffects = 'read-only';
 
-export const requiredEnv = ['GLEAN_API_TOKEN', 'GLEAN_SERVER_URL'];
+// The checklist is reader-supplied by design -- this recipe never invents one --
+// so verify needs one too. Declared here rather than discovered mid-run, which
+// reported four failed demo queries when the real answer was "set this".
+export const requiredEnv = [
+  'GLEAN_API_TOKEN',
+  'GLEAN_SERVER_URL',
+  ['GLEAN_ONBOARDING_STEPS_JSON', 'GLEAN_ONBOARDING_STEPS_FILE'],
+];
 
 export async function setup(context) {
   const cwd = path.join(
