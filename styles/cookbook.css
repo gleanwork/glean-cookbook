@@ -328,7 +328,11 @@ header {
 }
 
 /* ============================================================
- * Callouts: .note (attention) and .empty (nothing to show)
+ * Callouts
+ *
+ * `.note` alone is the attention/warning tone, since that is what almost every
+ * use of it is; `.note-info`, `.note-danger` and `.note-success` re-tone it.
+ * `.empty` is the quieter "nothing to show here" box.
  * ============================================================ */
 
 .note {
