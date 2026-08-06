@@ -33,13 +33,14 @@ Path A — parallel Platform Search tiles + Platform Chat synthesis
    ```
 
 4. **Run it**
+   Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance.
 
    ```bash
    npm start
    ```
 
 5. **Verify**
-   Ask the demo queries against the account you picked. Confirm cited answers and that unsupported KPI fields stay blank.
+   Loads credentials from .env (same as npm start), runs the demo queries against the account you picked, and asserts cited answers with blank unsupported KPI fields. Do not report this recipe as done until this passes.
    ```bash
    npm run verify
    ```
@@ -68,13 +69,14 @@ Path B — Platform Agents createRun for prescriptive account briefs
    ```
 
 4. **Run it**
+   Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance.
 
    ```bash
    npm start
    ```
 
 5. **Verify**
-   Ask the demo queries against your Account Brief agent. Confirm cited answers and failure UX if the agent is missing or unauthorized.
+   Loads credentials from .env (same as npm start), runs the demo queries against your Account Brief agent, and asserts cited answers (or an explicit failure if the agent is missing or unauthorized). Do not report this recipe as done until this passes.
    ```bash
    npm run verify
    ```

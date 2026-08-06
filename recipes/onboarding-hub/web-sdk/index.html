@@ -222,11 +222,6 @@
         margin: 8px 0;
         color: var(--primary);
       }
-      .path-note {
-        font-size: 12px;
-        color: var(--text-secondary);
-        margin-top: 8px;
-      }
       @media (max-width: 900px) {
         body {
           height: auto;
@@ -292,9 +287,7 @@
         </div>
         <p id="steps-source" class="subtitle"></p>
         <p id="empty-checklist" class="subtitle" hidden>
-          Provide your own steps: copy
-          <code>public/steps.example.json</code> to
-          <code>public/steps.json</code>.
+          No walkthrough steps are available.
         </p>
         <div class="steps-scroll">
           <h2 id="pending-heading">Still to do · 0</h2>
@@ -313,9 +306,7 @@
         <p>You've completed every onboarding step.</p>
         <div class="done-resources" id="done-resources"></div>
         <p id="done-resources-empty" class="subtitle" hidden>
-          Point new hires somewhere next: copy
-          <code>public/resources.example.json</code> to
-          <code>public/resources.json</code>.
+          No additional resources are available.
         </p>
         <div class="footer-links">
           <button type="button" data-reset>Reset demo</button>
@@ -324,11 +315,6 @@
       <section class="card" id="chat-panel">
         <h2>Ask Glean</h2>
         <div id="chat"></div>
-        <p class="path-note">
-          Path A — Web SDK <code>renderChat</code> (SSO cookie). Click
-          <strong>Ask about this</strong> on any step to seed a contextual
-          question.
-        </p>
       </section>
     </main>
     <script type="module" src="/src/main.ts"></script>

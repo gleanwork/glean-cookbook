@@ -138,12 +138,13 @@
         },
         {
           "title": "Run it",
-          "command": "npm start"
+          "command": "npm start",
+          "description": "Leaves the server running so you can try it yourself at http://localhost:3000 \u2014 stop it (Ctrl-C) before the verify step below, which starts its own instance."
         },
         {
           "title": "Verify",
           "command": "npm run verify",
-          "description": "Ask the demo queries against your own onboarding docs. Confirm cited answers for first-day / VPN / PTO, and that an unsupported question shows the escalation affordance instead of inventing a step."
+          "description": "Loads credentials from .env (same as npm start), runs the demo queries against your own onboarding docs, and asserts cited answers for first-day / VPN / PTO plus escalation for an unsupported question. Do not report this recipe as done until this passes."
         }
       ]
     }

@@ -25,6 +25,9 @@ Open http://localhost:3000.
 
 ## Verify
 
+Credentials come from `.env` or the shell (same as `npm start`). Stop `npm start`
+first (Ctrl-C); verify starts its own server on the same port.
+
 ```bash
 npm run verify
 ```

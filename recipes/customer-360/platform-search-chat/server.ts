@@ -110,9 +110,7 @@ function unpopulatedAccount(account: string) {
     renewalDate: null,
     risk: null,
     seats: null,
-    kpiNote:
-      'Fields stay blank until a cited document supports them. Populate them from ' +
-      'your own retrieval rather than assuming a shape.',
+    kpiNote: 'Fields stay blank until a cited document supports them.',
   };
 }
 
@@ -171,7 +169,10 @@ async function askPlatformChat(input: string): Promise<{
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`POST /api/chat returned ${response.status}: ${body}`);
+    console.error(`POST /api/chat returned ${response.status}: ${body}`);
+    throw new Error(
+      `Chat request failed (${response.status}). Check credentials and that experimental Platform Chat is enabled.`,
+    );
   }
 
   const data = (await response.json()) as PlatformChatResponse;
@@ -254,8 +255,14 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(payload));
     } catch (error) {
+      console.error('Account load failed:', (error as Error).message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: (error as Error).message }));
+      res.end(
+        JSON.stringify({
+          error: 'Could not load the account.',
+          hint: 'Check credentials and that experimental Platform search is enabled.',
+        }),
+      );
     }
     return;
   }
@@ -275,8 +282,17 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ answer, citations }));
     } catch (error) {
+      const message = (error as Error).message;
+      console.error('Account chat failed:', message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: (error as Error).message }));
+      res.end(
+        JSON.stringify({
+          error: 'Could not answer that question.',
+          hint: message.startsWith('Glean returned no answer text')
+            ? 'Retrying usually works when a chat run ends before the answer is produced.'
+            : 'Check credentials and that experimental Platform Chat is enabled.',
+        }),
+      );
     }
     return;
   }

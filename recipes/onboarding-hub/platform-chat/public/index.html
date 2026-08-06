@@ -244,11 +244,6 @@
         margin: 8px 0;
         color: var(--primary);
       }
-      .path-note {
-        font-size: 12px;
-        color: var(--text-secondary);
-        margin-top: 8px;
-      }
     </style>
   </head>
   <body>
@@ -291,9 +286,7 @@
         </div>
         <p id="steps-source" class="subtitle"></p>
         <p id="empty-checklist" class="subtitle" hidden>
-          Provide your own steps via
-          <code>GLEAN_ONBOARDING_STEPS_FILE</code> or
-          <code>GLEAN_ONBOARDING_STEPS_JSON</code>.
+          No walkthrough steps are available.
         </p>
         <h2 id="pending-heading">Still to do · 0</h2>
         <ul id="pending-list"></ul>
@@ -337,11 +330,6 @@
           />
           <button type="submit" id="ask-submit">Ask</button>
         </form>
-        <p class="path-note">
-          Path B — Platform Chat <code>POST /api/chat</code> with
-          <code>X-GLEAN-INCLUDE-EXPERIMENTAL=true</code>. Swap to
-          <code>glean.chat.create</code> when the SDK ships.
-        </p>
       </section>
     </main>
     <script type="module">
@@ -535,7 +523,8 @@
         loading.remove();
 
         if (data.error) {
-          appendMessage('assistant', `Error: ${data.error}`);
+          const message = [data.error, data.hint].filter(Boolean).join(' — ');
+          appendMessage('assistant', `Error: ${message}`);
           escalate.hidden = false;
           return;
         }
@@ -602,21 +591,30 @@
 
       async function boot() {
         const response = await fetch('/api/checklist');
-        if (!response.ok) {
-          throw new Error(`Failed to load checklist (${response.status})`);
+        const payload = await response.json().catch(() => ({}));
+        const sourceNote = document.getElementById('steps-source');
+
+        if (!response.ok || payload.error) {
+          const message =
+            [payload.error, payload.hint].filter(Boolean).join(' — ') ||
+            `Failed to load checklist (${response.status})`;
+          if (sourceNote) {
+            sourceNote.hidden = false;
+            sourceNote.textContent = message;
+          }
+          return;
         }
-        const payload = await response.json();
+
         STEPS = Array.isArray(payload.steps) ? payload.steps : [];
         source = payload.source ?? 'empty';
 
-        const sourceNote = document.getElementById('steps-source');
         if (sourceNote) {
           if (source === 'config') {
-            sourceNote.textContent =
-              'Loaded steps from GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON.';
+            sourceNote.hidden = true;
+            sourceNote.textContent = '';
           } else {
-            sourceNote.textContent =
-              'No steps configured. Set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON.';
+            sourceNote.hidden = false;
+            sourceNote.textContent = 'No walkthrough steps are available.';
           }
         }
 
