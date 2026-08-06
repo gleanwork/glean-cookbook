@@ -220,8 +220,14 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(payload));
     } catch (error) {
+      console.error('Checklist load failed:', (error as Error).message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: (error as Error).message }));
+      res.end(
+        JSON.stringify({
+          error: 'Could not load the onboarding checklist.',
+          hint: 'Check GLEAN_ONBOARDING_STEPS_JSON / GLEAN_ONBOARDING_STEPS_FILE for valid JSON.',
+        }),
+      );
     }
     return;
   }

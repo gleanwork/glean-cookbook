@@ -596,14 +596,23 @@
 
       async function boot() {
         const response = await fetch('/api/checklist');
-        if (!response.ok) {
-          throw new Error(`Failed to load checklist (${response.status})`);
+        const payload = await response.json().catch(() => ({}));
+        const sourceNote = document.getElementById('steps-source');
+
+        if (!response.ok || payload.error) {
+          const message =
+            [payload.error, payload.hint].filter(Boolean).join(' — ') ||
+            `Failed to load checklist (${response.status})`;
+          if (sourceNote) {
+            sourceNote.hidden = false;
+            sourceNote.textContent = message;
+          }
+          return;
         }
-        const payload = await response.json();
+
         STEPS = Array.isArray(payload.steps) ? payload.steps : [];
         source = payload.source ?? 'empty';
 
-        const sourceNote = document.getElementById('steps-source');
         if (sourceNote) {
           if (source === 'config') {
             sourceNote.hidden = true;

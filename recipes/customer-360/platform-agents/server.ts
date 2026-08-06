@@ -285,8 +285,10 @@ const server = http.createServer(async (req, res) => {
         /Missing required environment variable: GLEAN_AGENT_ID|404|not found/i.test(
           message,
         );
-      const unauthorized = /403|insufficient_permissions|unauthorized/i.test(
-        message,
+      const unauthorized =
+        /401|403|insufficient_permissions|unauthorized/i.test(message);
+      const emptyAnswer = message.startsWith(
+        'Glean returned no agent answer text',
       );
       const status = missingAgent || unauthorized ? 502 : 500;
       console.error('Account brief failed:', message);
@@ -302,7 +304,9 @@ const server = http.createServer(async (req, res) => {
             ? 'Set GLEAN_AGENT_ID to an Account Brief agent you can access.'
             : unauthorized
               ? 'Token needs SEARCH + AGENTS scopes.'
-              : undefined,
+              : emptyAnswer
+                ? 'Retrying usually works when a run finishes without an answer.'
+                : 'Check credentials, GLEAN_AGENT_ID, and that the agent is available.',
         }),
       );
     }

@@ -290,7 +290,7 @@ const server = http.createServer(async (req, res) => {
           error: 'Could not answer that question.',
           hint: message.startsWith('Glean returned no answer text')
             ? 'Retrying usually works when a chat run ends before the answer is produced.'
-            : undefined,
+            : 'Check credentials and that experimental Platform Chat is enabled.',
         }),
       );
     }
