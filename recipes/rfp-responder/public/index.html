@@ -4,219 +4,87 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>RFP responder</title>
+    <link rel="stylesheet" href="/glean-cookbook.css" />
     <style>
-      :root {
-        --font:
-          'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui,
-          sans-serif;
-        --primary: #343ced;
-        --primary-hover: #131bd4;
-        --selected-bg: #eceefe;
-        --text: #1f2024;
-        --text-2: #565a64;
-        --bg: #f7f8fa;
-        --card: #ffffff;
-        --border: #e7e8ed;
-        --border-dark: #c9cbd2;
-        --success: #22c55e;
-        --warn-fg: #92670a;
-        --warn-bg: #fff8e5;
-        --warn-border: #ffe0b3;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        font-family: var(--font);
-        color: var(--text);
-        background: var(--bg);
-        font-size: 14px;
-        line-height: 1.5;
-      }
-      header {
-        background: var(--card);
-        border-bottom: 1px solid var(--border);
-        padding: 20px 28px;
-      }
+      /* Recipe-specific only. Everything else comes from the shared stylesheet. */
       h1 {
-        margin: 0 0 4px;
         font-size: 19px;
         letter-spacing: -0.01em;
+        margin: 0 0 4px;
       }
-      .sub {
-        color: var(--text-2);
-        font-size: 13px;
+      /* Evidence strength and per-row status are this recipe's vocabulary, but
+         they take shared tokens so the same states read the same way elsewhere. */
+      .pill.strong {
+        background: var(--gdt-success-bg);
+        color: var(--gdt-success-fg);
       }
-      main {
-        padding: 24px 28px 64px;
-        max-width: 1120px;
-        margin: 0 auto;
+      .pill.weak {
+        background: var(--gdt-warning-bg);
+        color: var(--gdt-warning-fg);
+        border: 1px solid var(--gdt-warning-border);
       }
-      section {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 18px 20px;
-        margin-bottom: 18px;
+      .pill.none,
+      .pill.failed {
+        background: var(--gdt-danger-bg);
+        color: var(--gdt-danger-fg);
       }
-      h2 {
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--text-2);
-        margin: 0 0 14px;
-        font-weight: 600;
+      .pill.accepted {
+        background: var(--gdt-selected-bg);
+        color: var(--gdt-info-fg);
       }
-      button {
-        font: inherit;
-        font-weight: 500;
-        border-radius: 7px;
-        padding: 8px 14px;
-        border: 1px solid var(--primary);
-        background: var(--primary);
-        color: #fff;
-        cursor: pointer;
+      .pill.pending {
+        background: var(--gdt-bg-light);
+        color: var(--gdt-text-secondary);
+        border: 1px solid var(--gdt-border-light);
       }
-      button:hover:not(:disabled) {
-        background: var(--primary-hover);
-      }
-      button:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-      }
-      button.ghost {
-        background: #fff;
-        color: var(--text);
-        border-color: var(--border-dark);
-      }
-      button.ghost:hover:not(:disabled) {
-        background: var(--bg);
-      }
-      button.tiny {
-        padding: 4px 9px;
-        font-size: 12px;
-      }
-      .stats {
-        display: flex;
-        gap: 26px;
-        flex-wrap: wrap;
-        margin-bottom: 14px;
-      }
-      .stat .n {
-        font-size: 22px;
-        font-weight: 600;
-      }
-      .stat .l {
-        font-size: 12px;
-        color: var(--text-2);
-      }
+      /* Drafting progress */
       .bar {
         height: 6px;
-        background: var(--bg);
-        border-radius: 3px;
+        background: var(--gdt-bg-mid);
+        border-radius: var(--glean-border-radius-sm);
         overflow: hidden;
         margin: 12px 0 4px;
       }
       .bar > i {
         display: block;
         height: 100%;
-        background: var(--primary);
         width: 0;
+        background: var(--gdt-primary);
         transition: width 0.2s;
       }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th {
-        text-align: left;
-        font-size: 12px;
-        color: var(--text-2);
-        font-weight: 600;
-        padding: 8px 10px;
-        border-bottom: 1px solid var(--border);
-      }
+      /* Review table: roomier cells than the shared default, and the per-row
+         answer editor. */
       td {
         padding: 12px 10px;
-        border-bottom: 1px solid var(--border);
-        vertical-align: top;
       }
-      tr:last-child td {
-        border-bottom: none;
-      }
-      .qid {
-        font-family: ui-monospace, SFMono-Regular, monospace;
-        font-size: 12px;
-        color: var(--text-2);
-      }
-      .pill {
-        display: inline-block;
-        font-size: 11px;
-        font-weight: 600;
-        padding: 2px 8px;
-        border-radius: 20px;
-        white-space: nowrap;
-      }
-      .pill.strong {
-        background: #e6f5ec;
-        color: #16794a;
-      }
-      .pill.weak {
-        background: var(--warn-bg);
-        color: var(--warn-fg);
-        border: 1px solid var(--warn-border);
-      }
-      .pill.none {
-        background: #fdeaea;
-        color: #a51c1c;
-      }
-      .pill.accepted {
-        background: var(--selected-bg);
-        color: #2229a8;
-      }
-      .pill.failed {
-        background: #fde8e8;
-        color: #8a1c1c;
-      }
-      .pill.pending {
-        background: var(--bg);
-        color: var(--text-2);
+      .answer {
+        min-height: 62px;
       }
       .reason {
-        color: var(--text-2);
+        color: var(--gdt-text-secondary);
         font-size: 12px;
         margin-top: 6px;
       }
-      .answer {
-        width: 100%;
-        min-height: 62px;
-        font: inherit;
-        padding: 8px 10px;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        resize: vertical;
+      .no-answer {
+        color: var(--gdt-text-secondary);
+        font-style: italic;
       }
       .cites {
         margin: 8px 0 0;
         padding-left: 16px;
         font-size: 12px;
       }
-      .cites a {
-        color: var(--primary);
-      }
       .rowacts {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
         margin-top: 8px;
       }
-      .empty {
-        color: var(--text-2);
-        font-style: italic;
+      .cand {
+        font-size: 12px;
+        color: var(--gdt-text-secondary);
+        padding: 4px 0;
       }
+      /* Upload step */
       .hint {
-        color: #5b6472;
+        color: var(--gdt-text-secondary);
         font-size: 0.9rem;
         max-width: 62ch;
         margin: 0 0 0.75rem;
@@ -229,56 +97,25 @@
         margin-bottom: 0.75rem;
       }
       details textarea {
-        width: 100%;
         max-width: 62ch;
-        font-family: ui-monospace, monospace;
+        font-family: var(--font-jetbrains-mono);
         font-size: 0.85rem;
-        display: block;
         margin: 0.5rem 0;
-      }
-      button.secondary {
-        background: #fff;
-        color: #343ce0;
-        border: 1px solid #c7cbd4;
-      }
-
-      .note {
-        background: var(--warn-bg);
-        border: 1px solid var(--warn-border);
-        color: var(--warn-fg);
-        border-radius: 7px;
-        padding: 10px 12px;
-        font-size: 13px;
-        margin-bottom: 14px;
-      }
-      .cand {
-        font-size: 12px;
-        color: var(--text-2);
-        padding: 4px 0;
-      }
-      ol.log {
-        font-size: 12px;
-        color: var(--text-2);
-        padding-left: 18px;
-        margin: 0;
-      }
-      .hidden {
-        display: none;
       }
     </style>
   </head>
   <body>
     <header>
       <h1>RFP &amp; questionnaire responder</h1>
-      <div class="sub">
+      <div class="subtitle">
         Grounded, cited draft answers with a human approval gate. Runs as you —
         no impersonation, so evidence you cannot see never reaches the
         customer's document.
       </div>
     </header>
-    <main>
-      <section id="load-section">
-        <h2>1 · Load questionnaire</h2>
+    <main class="layout">
+      <section id="load-section" class="card">
+        <h2 class="section-label">1 · Load questionnaire</h2>
         <div id="mapping-note" class="note hidden"></div>
         <p class="hint">
           Use your own questionnaire — the argument this app makes is about
@@ -295,27 +132,29 @@
             rows="6"
             placeholder="tab,question_id,question&#10;Security,SEC-01,Do you hold a current SOC 2 Type II attestation?"
           ></textarea>
-          <button id="load-paste">Use pasted CSV</button>
+          <button id="load-paste" class="btn-primary">Use pasted CSV</button>
         </details>
-        <button id="load" class="secondary">Or try the bundled sample</button>
+        <button id="load" class="btn-secondary">
+          Or try the bundled sample
+        </button>
       </section>
 
-      <section id="parse-section" class="hidden">
-        <h2>2 · Parsed &amp; deduplicated</h2>
-        <div class="stats" id="parse-stats"></div>
+      <section id="parse-section" class="card hidden">
+        <h2 class="section-label">2 · Parsed &amp; deduplicated</h2>
+        <div class="kpi-grid" id="parse-stats"></div>
         <div id="cands"></div>
-        <button id="run">Confirm and draft answers</button>
+        <button id="run" class="btn-primary">Confirm and draft answers</button>
       </section>
 
-      <section id="progress-section" class="hidden">
-        <h2>3 · Drafting</h2>
+      <section id="progress-section" class="card hidden">
+        <h2 class="section-label">3 · Drafting</h2>
         <div class="bar"><i id="bar"></i></div>
-        <div class="sub" id="progress-label"></div>
+        <div class="subtitle" id="progress-label"></div>
       </section>
 
-      <section id="review-section" class="hidden">
-        <h2>4 · Review</h2>
-        <div class="stats" id="review-stats"></div>
+      <section id="review-section" class="card hidden">
+        <h2 class="section-label">4 · Review</h2>
+        <div class="kpi-grid" id="review-stats"></div>
         <table>
           <thead>
             <tr>
@@ -328,13 +167,15 @@
         </table>
       </section>
 
-      <section id="export-section" class="hidden">
-        <h2>5 · Export</h2>
+      <section id="export-section" class="card hidden">
+        <h2 class="section-label">5 · Export</h2>
         <div id="export-note"></div>
         <div class="rowacts">
-          <button id="export">Export answered questionnaire</button>
+          <button id="export" class="btn-primary">
+            Export answered questionnaire
+          </button>
         </div>
-        <h2 style="margin-top: 20px">Approval log</h2>
+        <h2 class="section-label" style="margin-top: 20px">Approval log</h2>
         <ol class="log" id="log"></ol>
       </section>
     </main>
@@ -357,9 +198,9 @@
       };
 
       const stat = (n, l) =>
-        el('div', { class: 'stat' }, [
-          el('div', { class: 'n', text: String(n) }),
-          el('div', { class: 'l', text: l }),
+        el('div', { class: 'kpi' }, [
+          el('div', { class: 'kpi-value', text: String(n) }),
+          el('div', { class: 'kpi-label', text: l }),
         ]);
 
       /** Only http(s) links are rendered, so a citation URL can't become javascript:. */
@@ -530,7 +371,10 @@
 
       function renderRow(row) {
         const qcell = el('td', {}, [
-          el('div', { class: 'qid', text: `${row.tab} · ${row.questionId}` }),
+          el('div', {
+            class: 'font-mono muted',
+            text: `${row.tab} · ${row.questionId}`,
+          }),
           el('div', { text: row.question }),
         ]);
 
@@ -555,7 +399,7 @@
         // the "insufficient evidence" wording, which is a claim about the corpus.
         if (row.status === 'failed') {
           const retry = el('button', {
-            class: 'ghost tiny',
+            class: 'btn-sm',
             text: 'Retry this row',
           });
           retry.addEventListener('click', async () => {
@@ -573,7 +417,7 @@
           });
           body.append(
             el('div', {
-              class: 'empty',
+              class: 'no-answer',
               text: 'The call did not complete — no verdict was reached.',
             }),
             el('div', { class: 'reason', text: row.reason }),
@@ -584,7 +428,7 @@
         if (row.confidence === 'none') {
           body.append(
             el('div', {
-              class: 'empty',
+              class: 'no-answer',
               text: 'No answer drafted — insufficient evidence.',
             }),
             el('div', { class: 'reason', text: row.reason }),
@@ -596,7 +440,7 @@
           });
           if (row.smeAssignee) assignee.value = row.smeAssignee;
           const assign = el('button', {
-            class: 'ghost tiny',
+            class: 'btn-sm',
             text: 'Assign to SME',
           });
           assign.addEventListener('click', async () => {
@@ -625,7 +469,10 @@
         }
         body.append(el('div', { class: 'reason', text: row.reason }));
 
-        const accept = el('button', { class: 'tiny', text: 'Accept' });
+        const accept = el('button', {
+          class: 'btn-primary btn-sm',
+          text: 'Accept',
+        });
         accept.addEventListener('click', async () => {
           const response = await fetch('/api/accept', {
             method: 'POST',
@@ -643,7 +490,7 @@
           class: 'answer',
           style: 'min-height:auto;height:32px;flex:1;min-width:220px',
         });
-        const regen = el('button', { class: 'ghost tiny', text: 'Regenerate' });
+        const regen = el('button', { class: 'btn-sm', text: 'Regenerate' });
         regen.addEventListener('click', async () => {
           regen.disabled = true;
           regen.textContent = 'Regenerating…';

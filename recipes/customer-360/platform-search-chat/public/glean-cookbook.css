@@ -121,6 +121,23 @@
  */
 
 /* ============================================================
+ * Cookbook-owned tokens
+ *
+ * The dev site's --gdt-* set has a warning trio but no danger pair and no
+ * success background, which recipe status pills need. These sit alongside the
+ * synced tokens rather than in styles/tokens.css, because they are ours: they
+ * are not in the dev site and sync will not overwrite them.
+ * ============================================================ */
+
+:root {
+  --gdt-success-fg: #16794a;
+  --gdt-success-bg: #e6f5ec;
+  --gdt-danger-fg: #a51c1c;
+  --gdt-danger-bg: #fdeaea;
+  --gdt-danger-border: #f0bcbc;
+}
+
+/* ============================================================
  * Base
  * ============================================================ */
 
@@ -161,6 +178,17 @@ h3 {
 
 a {
   color: var(--gdt-primary);
+}
+
+/* Small uppercase section label, for step- or panel-titled layouts. Use on an
+ * h2/h3 in place of the default heading size. */
+.section-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: var(--gdt-text-secondary);
+  margin: 0 0 12px;
 }
 
 code,
@@ -361,13 +389,25 @@ header {
 }
 
 .pill-success {
-  background: var(--gdt-cat-index-bg);
-  color: var(--gdt-cat-index-fg);
+  background: var(--gdt-success-bg);
+  color: var(--gdt-success-fg);
 }
 
 .pill-warning {
   background: var(--gdt-warning-bg);
   color: var(--gdt-warning-fg);
+  border: 1px solid var(--gdt-warning-border);
+}
+
+.pill-danger {
+  background: var(--gdt-danger-bg);
+  color: var(--gdt-danger-fg);
+}
+
+.pill-neutral {
+  background: var(--gdt-bg-light);
+  color: var(--gdt-text-secondary);
+  border: 1px solid var(--gdt-border-light);
 }
 
 .cat-search {
@@ -413,6 +453,18 @@ header {
   border-color: var(--gdt-border-light);
   background: var(--gdt-selected-bg);
   color: var(--gdt-info-fg);
+}
+
+.note-danger {
+  border-color: var(--gdt-danger-border);
+  background: var(--gdt-danger-bg);
+  color: var(--gdt-danger-fg);
+}
+
+.note-success {
+  border-color: var(--gdt-success-bg);
+  background: var(--gdt-success-bg);
+  color: var(--gdt-success-fg);
 }
 
 .empty {
@@ -475,6 +527,16 @@ button:disabled {
   text-decoration: underline;
 }
 
+.btn-danger {
+  border-color: var(--gdt-danger-border);
+  color: var(--gdt-danger-fg);
+}
+
+.btn-sm {
+  padding: 4px 9px;
+  font-size: 12px;
+}
+
 .actions,
 .footer-links {
   display: flex;
@@ -486,6 +548,84 @@ button:disabled {
 .footer-links {
   margin-top: 12px;
   font-size: 13px;
+}
+
+/* ============================================================
+ * Form controls
+ * ============================================================ */
+
+input,
+select,
+textarea {
+  font: inherit;
+  width: 100%;
+  padding: 6px 9px;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: var(--glean-border-radius-sm);
+  background: var(--gdt-card-bg);
+  color: var(--gdt-text-primary);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--gdt-primary);
+  outline-offset: -1px;
+}
+
+textarea {
+  min-height: 76px;
+  resize: vertical;
+}
+
+/* ============================================================
+ * Tables, logs, preformatted output
+ * ============================================================ */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--gdt-border-light);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--gdt-text-secondary);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+pre {
+  background: var(--gdt-bg-light);
+  border: 1px solid var(--gdt-border-light);
+  border-radius: var(--glean-border-radius-md);
+  padding: 11px;
+  overflow: auto;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+.log {
+  font-family: var(--font-jetbrains-mono);
+  font-size: 11.5px;
+  color: var(--gdt-text-secondary);
+  margin: 0;
+  padding-left: 16px;
+}
+
+.log li {
+  margin-bottom: 3px;
 }
 
 /* ============================================================
@@ -586,11 +726,6 @@ button:disabled {
   align-self: flex-start;
   background: var(--gdt-bg-light);
   border: 1px solid var(--gdt-hairline);
-}
-
-.q {
-  color: var(--gdt-text-secondary);
-  font-size: 13px;
 }
 
 /* Web SDK containers need a resolved height; the SDK renders its own UI inside,
@@ -698,6 +833,16 @@ button:disabled {
 
 .text-secondary {
   color: var(--gdt-text-secondary);
+}
+
+/* Small secondary text -- the "hint" or "muted" line recipes put under a control. */
+.muted {
+  color: var(--gdt-text-secondary);
+  font-size: 12px;
+}
+
+.hidden {
+  display: none;
 }
 
 .visually-hidden {

@@ -183,6 +183,16 @@ async function handleWebhook(
   return { status: 200, body: { incident, notes: outcome.notes } };
 }
 
+/**
+ * Shared cookbook styling, generated into public/ by scripts/build-styles.mjs.
+ * Whitelisted by name rather than serving the directory: nothing joins a path
+ * from request input, so there is no traversal to reason about.
+ */
+const SHARED_ASSETS: Record<string, string> = {
+  '/glean-cookbook.css': 'text/css; charset=utf-8',
+  '/glean-logomark.svg': 'image/svg+xml',
+};
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', 'http://localhost');
   try {
@@ -192,6 +202,14 @@ const server = http.createServer(async (req, res) => {
     ) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(fs.readFileSync(path.join(__dirname, 'public', 'index.html')));
+      return;
+    }
+
+    if (req.method === 'GET' && SHARED_ASSETS[url.pathname]) {
+      res.writeHead(200, { 'Content-Type': SHARED_ASSETS[url.pathname] });
+      res.end(
+        fs.readFileSync(path.join(__dirname, 'public', url.pathname.slice(1))),
+      );
       return;
     }
 
