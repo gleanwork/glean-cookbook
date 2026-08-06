@@ -20,6 +20,45 @@ export const STORAGE_KEY = 'onboarding-hub.v1';
 
 const GROUPS = new Set<MilestoneGroup>(['it', 'hr', 'team', 'engineering']);
 
+export interface OnboardingResource {
+  title: string;
+  url: string;
+}
+
+function isSafeLinkUrl(value: string): boolean {
+  if (value.startsWith('//')) return false;
+  if (value.startsWith('/')) return true;
+  try {
+    const { protocol } = new URL(value);
+    return protocol === 'https:' || protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+export function parseResources(raw: unknown): OnboardingResource[] {
+  if (!Array.isArray(raw)) return [];
+  const resources: OnboardingResource[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as Record<string, unknown>;
+    if (typeof row.title !== 'string' || typeof row.url !== 'string') continue;
+    if (row.title.trim() === '' || !isSafeLinkUrl(row.url)) continue;
+    resources.push({ title: row.title, url: row.url });
+  }
+  return resources;
+}
+
+export async function loadResources(): Promise<OnboardingResource[]> {
+  try {
+    const response = await fetch('/resources.json');
+    if (response.ok) return parseResources(await response.json());
+  } catch {
+    // missing resources.json is the unconfigured path
+  }
+  return [];
+}
+
 export function parseSteps(raw: unknown): OnboardingStep[] {
   if (!Array.isArray(raw)) return [];
   const steps: OnboardingStep[] = [];
@@ -120,4 +159,26 @@ export function milestoneStats(
     if (isStepDone(step, completed)) stats[step.group].done += 1;
   }
   return stats;
+}
+
+export const GENERIC_PROMPT = 'What should I do on my first day?';
+
+export function buildContextPrompt(
+  steps: OnboardingStep[],
+  completed: Set<string>,
+): string {
+  if (steps.length === 0) return GENERIC_PROMPT;
+
+  const pending = steps.filter((step) => !isStepDone(step, completed));
+  if (pending.length === 0) {
+    return 'I have finished every step on my onboarding checklist. What should I focus on next?';
+  }
+
+  return [
+    'I am a new hire working through my onboarding checklist. These are the steps I still have to complete:',
+    '',
+    pending.map((step, index) => `${index + 1}. ${step.title}`).join('\n'),
+    '',
+    'Which of these should I prioritize on my first day, and are any of them blockers for the others?',
+  ].join('\n');
 }

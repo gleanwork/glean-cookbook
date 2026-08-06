@@ -1,19 +1,22 @@
 import { renderChat } from '@gleanwork/web-sdk';
+import type { ChatHandle, WebSdkChatEvent } from '@gleanwork/web-sdk';
 import {
+  buildContextPrompt,
   loadCompletedIds,
+  loadResources,
   loadSteps,
   MILESTONE_LABELS,
   progressPercent,
   milestoneStats,
   saveCompletedIds,
   isStepDone,
+  type OnboardingResource,
   type OnboardingStep,
 } from './checklist';
 
-const DEFAULT_CHAT = 'What should I do on my first day?';
-
 const completed = loadCompletedIds();
 let steps: OnboardingStep[] = [];
+let resources: OnboardingResource[] = [];
 let source: 'config' | 'empty' = 'empty';
 
 function escapeHtml(value: string): string {
@@ -25,14 +28,39 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
-function mountChat(initialMessage?: string): void {
+let currentChatId: string | undefined;
+let chatHandle: ChatHandle | undefined;
+
+function rememberChatId(event: WebSdkChatEvent): void {
+  if (event.name === 'chat:location_update' && event.id)
+    currentChatId = event.id;
+  if (event.name === 'chat:id_update' && event.chatId) {
+    currentChatId = event.chatId;
+  }
+}
+
+function mountChat(
+  initialMessage?: string,
+  { continueConversation = false } = {},
+): void {
   const container = document.getElementById('chat');
   if (!container) throw new Error('Missing #chat container');
+
+  chatHandle?.off('chat:location_update', rememberChatId);
+  chatHandle?.off('chat:id_update', rememberChatId);
+
+  const resumeId = continueConversation ? currentChatId : undefined;
+  if (!continueConversation) currentChatId = undefined;
+
   container.innerHTML = '';
-  renderChat(container, {
+  chatHandle = renderChat(container, {
     // backend: 'https://{your}-be.glean.com',
+    ...(resumeId ? { chatId: resumeId } : {}),
     ...(initialMessage ? { initialMessage } : {}),
   });
+
+  chatHandle.on('chat:location_update', rememberChatId);
+  chatHandle.on('chat:id_update', rememberChatId);
 }
 
 function renderProgress(): void {
@@ -75,6 +103,20 @@ function stepRow(step: OnboardingStep): string {
         <div class="step-actions">${askButton}${markButton}</div>
       </div>
     </li>`;
+}
+
+function renderDoneResources(): void {
+  const list = document.getElementById('done-resources');
+  const emptyNote = document.getElementById('done-resources-empty');
+  if (!list || !emptyNote) return;
+
+  list.innerHTML = resources
+    .map(
+      (resource) =>
+        `<a href="${escapeHtml(resource.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(resource.title)}</a>`,
+    )
+    .join('');
+  emptyNote.hidden = resources.length > 0;
 }
 
 function renderChecklist(): void {
@@ -129,6 +171,7 @@ function renderChecklist(): void {
 function rerender(): void {
   renderProgress();
   renderChecklist();
+  renderDoneResources();
 }
 
 function wireEvents(): void {
@@ -137,7 +180,7 @@ function wireEvents(): void {
     const ask = target.closest<HTMLButtonElement>('[data-ask]');
     if (ask?.dataset.ask) {
       const prompt = decodeURIComponent(ask.dataset.ask);
-      mountChat(prompt);
+      mountChat(prompt, { continueConversation: true });
       document.getElementById('chat-panel')?.scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',
@@ -153,26 +196,30 @@ function wireEvents(): void {
       return;
     }
 
-    if (target.id === 'mark-all') {
+    if (target.closest('#mark-all')) {
       for (const step of steps) completed.add(step.id);
       saveCompletedIds(completed);
       rerender();
       return;
     }
 
-    if (target.id === 'reset-demo') {
+    if (target.closest('[data-reset]')) {
       completed.clear();
       saveCompletedIds(completed);
       rerender();
-      mountChat(DEFAULT_CHAT);
+      mountChat(buildContextPrompt(steps, completed));
     }
   });
 }
 
 async function boot(): Promise<void> {
-  const loaded = await loadSteps();
+  const [loaded, loadedResources] = await Promise.all([
+    loadSteps(),
+    loadResources(),
+  ]);
   steps = loaded.steps;
   source = loaded.source;
+  resources = loadedResources;
 
   const sourceNote = document.getElementById('steps-source');
   if (sourceNote) {
@@ -184,7 +231,7 @@ async function boot(): Promise<void> {
     }
   }
 
-  mountChat(DEFAULT_CHAT);
+  mountChat(buildContextPrompt(steps, completed));
   rerender();
   wireEvents();
 }

@@ -24,6 +24,10 @@
         font-family: var(--font);
         background: var(--bg-light);
         color: var(--text-primary);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
       }
       header {
         display: flex;
@@ -32,6 +36,7 @@
         padding: 16px 24px;
         background: #fff;
         border-bottom: 1px solid var(--border-light);
+        flex: 0 0 auto;
       }
       .mark {
         width: 28px;
@@ -48,21 +53,28 @@
       .layout {
         display: grid;
         grid-template-columns: 1fr 1fr;
+        grid-template-rows: minmax(0, 1fr);
+        grid-auto-rows: minmax(0, 1fr);
         gap: 24px;
+        width: 100%;
         max-width: 1200px;
         margin: 24px auto;
-        padding: 0 24px 48px;
-      }
-      @media (max-width: 900px) {
-        .layout {
-          grid-template-columns: 1fr;
-        }
+        padding: 0 24px 24px;
+        flex: 1 1 auto;
+        min-height: 0;
       }
       .card {
         background: var(--card-bg);
         border: 1px solid var(--border-light);
         border-radius: 12px;
         padding: 20px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+      }
+      [hidden] {
+        display: none !important;
       }
       .progress-row {
         display: flex;
@@ -167,11 +179,28 @@
         font-size: 15px;
         margin: 0 0 12px;
       }
+      .steps-scroll {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+      }
+      .steps-scroll h2 {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: var(--card-bg);
+        padding: 4px 0;
+        margin: 0 0 8px;
+      }
+      #done-panel {
+        overflow-y: auto;
+      }
       #chat {
         position: relative;
         display: block;
         width: 100%;
-        height: 520px;
+        flex: 1 1 auto;
+        min-height: 240px;
         border: 1px solid var(--border-light);
         border-radius: 12px;
         overflow: hidden;
@@ -197,6 +226,29 @@
         font-size: 12px;
         color: var(--text-secondary);
         margin-top: 8px;
+      }
+      @media (max-width: 900px) {
+        body {
+          height: auto;
+          overflow: visible;
+        }
+        .layout {
+          grid-template-columns: 1fr;
+          grid-template-rows: none;
+          grid-auto-rows: auto;
+        }
+        .card,
+        .steps-scroll,
+        #done-panel {
+          overflow: visible;
+        }
+        .steps-scroll h2 {
+          position: static;
+        }
+        #chat {
+          flex: 0 0 auto;
+          height: 480px;
+        }
       }
     </style>
   </head>
@@ -244,30 +296,29 @@
           <code>public/steps.example.json</code> to
           <code>public/steps.json</code>.
         </p>
-        <h2 id="pending-heading">Still to do · 0</h2>
-        <ul id="pending-list"></ul>
-        <h2 id="done-heading">Completed · 0</h2>
-        <ul id="done-list"></ul>
+        <div class="steps-scroll">
+          <h2 id="pending-heading">Still to do · 0</h2>
+          <ul id="pending-list"></ul>
+          <h2 id="done-heading">Completed · 0</h2>
+          <ul id="done-list"></ul>
+        </div>
         <div class="footer-links">
           <button type="button" id="mark-all">Mark everything complete</button>
           ·
-          <button type="button" id="reset-demo">Reset demo</button>
+          <button type="button" data-reset>Reset demo</button>
         </div>
       </section>
       <section class="card" id="done-panel" hidden>
         <h2>You're all set!</h2>
-        <p>
-          You've completed every onboarding step. Here are a few places to go
-          next:
+        <p>You've completed every onboarding step.</p>
+        <div class="done-resources" id="done-resources"></div>
+        <p id="done-resources-empty" class="subtitle" hidden>
+          Point new hires somewhere next: copy
+          <code>public/resources.example.json</code> to
+          <code>public/resources.json</code>.
         </p>
-        <div class="done-resources">
-          <a href="#">Engineering portal</a>
-          <a href="#">HR benefits guide</a>
-          <a href="#">IT helpdesk FAQ</a>
-          <a href="#">#new-hires Slack channel</a>
-        </div>
         <div class="footer-links">
-          <button type="button" id="reset-demo">Reset demo</button>
+          <button type="button" data-reset>Reset demo</button>
         </div>
       </section>
       <section class="card" id="chat-panel">
