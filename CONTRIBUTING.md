@@ -126,6 +126,53 @@ It does **not** detect a recipe whose `aiPrompt`/`llmContext` changed without a 
 bump. If you edit either field, reset `lastVerified` to `unset` (or schedule the re-run yourself)
 rather than relying on the freshness report to notice for you.
 
+## Styling a recipe UI
+
+Don't hand-roll CSS. Every recipe that renders a UI links one shared stylesheet:
+
+```html
+<link rel="stylesheet" href="/glean-cookbook.css" />
+```
+
+It carries the design tokens, a base reset, the grid/spacing utilities, and the primitives recipes
+actually use — `.card`, `.pill`/`.badge`, `.note`, `.empty`, `.hit`, `.citations`, `.step`,
+`.chat-row`/`.msg`, `.kpi`, `.frame` (the browser chrome the dev site wraps demos in), and the
+`.layout*` shell. Compose those; add an inline `<style>` block only for something genuinely specific
+to one recipe, and reach for a token (`var(--gdt-*)`, `var(--glean-border-radius-*)`) rather than a
+literal when you do.
+
+Two sources, both at the repo root:
+
+| File                  | Owner                                               |
+| --------------------- | --------------------------------------------------- |
+| `styles/cookbook.css` | **Authored.** Edit this.                            |
+| `styles/tokens.css`   | **Generated** by `npm run sync:tokens`. Never edit. |
+
+`npm run build:styles` concatenates them into `recipes/*/public/glean-cookbook.css` and copies the
+logomark alongside. Those copies are committed — a recipe is scaffolded one directory at a time with
+`tiged`, so a file at the repo root would never reach it, and most recipes have no bundler to import
+one. CI fails if a copy is stale.
+
+Primitives are presentational and carry no copy. What an empty state _says_ is a per-recipe decision;
+how it _looks_ is not.
+
+### Keeping tokens matched to the developer site
+
+The design tokens are the dev site's, not ours: `styles/tokens.css` is generated from the `--gdt-*`
+block in [glean-developer-site](https://github.com/gleanwork/glean-developer-site)'s
+`src/css/custom.css`, plus the radius/shadow scales from its theme package. That's what makes a recipe
+and the Cookbook page describing it look like one product.
+
+```bash
+npm run sync:tokens                       # expects ../glean-developer-site
+npm run sync:tokens -- --site <path>      # or GLEAN_DEVELOPER_SITE=<path>
+npm run sync:tokens -- --check            # report drift without writing
+```
+
+This is a deliberate manual sync, not a CI check — the dev site isn't available in CI. Re-run it when
+the brand changes. It fails loudly rather than guessing if the dev site introduces a token it can't
+resolve, so a failure means read the message, not work around it.
+
 ## CI
 
 Every PR runs:
@@ -138,7 +185,8 @@ Every PR runs:
 4. **`format-check`** — Prettier formatting.
 5. **`plugin-build`** — the plugin builds and validates for every target (Claude Code, Cursor,
    Codex), its generated skills and the README recipe table are checked against `registry.json` for
-   drift, and the committed output under `build/` is checked against a fresh render.
+   drift, the committed output under `build/` is checked against a fresh render, and each recipe's
+   copy of the shared stylesheet is checked against `styles/`.
 6. **`harness-tests`** — `npm test`, covering the verify harness's OAuth state validation and PKCE
    derivation.
 7. **`snippets-check`** — recipe prose and the code it embeds stay in sync.

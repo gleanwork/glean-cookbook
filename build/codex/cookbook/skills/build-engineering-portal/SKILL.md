@@ -110,10 +110,48 @@ Ask me which language to build in before starting: Python, TypeScript.
 
 This recipe renders a Web SDK UI. Apply the cookbook's shared conventions below.
 
-Primary accent: `#343ced` (Glean Blue), hover `#131bd4`. These recipes demo Glean, so a demo
-app should look like Glean rather than like an unrelated third party.
+Recipes demo Glean, so a demo app should look like Glean — and like the Cookbook page that
+describes it. Don't hand-roll a palette or a component set.
 
-Use the real Glean logomark, not a colored `<div>`/`<span>` or a recreated shape:
+**If you scaffolded a cookbook recipe** (`npx tiged …`), the shared stylesheet came with it. Link it
+and compose from it:
+
+```html
+<link rel="stylesheet" href="/glean-cookbook.css" />
+```
+
+It provides design tokens, a base reset, grid/spacing utilities, and these primitives:
+
+| Use for             | Classes                                                                                               |
+| ------------------- | ----------------------------------------------------------------------------------------------------- |
+| Page shell          | `.layout` + `.layout-2col`, `.card`, `.subtitle`, `header`, `.mark`                                   |
+| Full-height columns | `.layout-fill`, `.scroll-region` (each card scrolls its own content)                                  |
+| Browser chrome      | `.frame`, `.frame-header`, `.frame-dot-{red,yellow,green}`, `.frame-url`, `.frame-body`               |
+| Badges              | `.pill`, `.badge`, `.pill-selected`, `.pill-warning`, `.cat-{search,index,mcp,workflow,agent,portal}` |
+| Callouts            | `.note`, `.note-info`, `.empty`                                                                       |
+| Buttons             | `.btn-primary`, `.btn-secondary`, `.btn-link`, `.actions`, `.footer-links`                            |
+| Results             | `.hit`, `.hit-title`, `.hit-meta`, `.citations`                                                       |
+| Checklists          | `.step`, `.step-check`, `.step-actions`, `.step-due`                                                  |
+| Chat transcript     | `.chat-row`, `.msg`, `.msg-user`, `.msg-assistant`, `.q`                                              |
+| Web SDK container   | `.sdk-embed` (gives the widget a resolved height)                                                     |
+| Metrics             | `.kpi-grid`, `.kpi`, `.kpi-value`, `.kpi-label`                                                       |
+
+Add an inline `<style>` block only for something genuinely specific to this app, and use a token
+(`var(--gdt-*)`, `var(--glean-border-radius-*)`, `var(--glean-shadow-*)`) rather than a literal value.
+The primitives carry no copy — you choose the wording, the stylesheet only decides how it looks.
+
+**If you're building from scratch** (no scaffold to copy), take the tokens from the same source rather
+than inventing values — they're the developer site's:
+
+```
+https://raw.githubusercontent.com/gleanwork/glean-cookbook/main/styles/tokens.css
+```
+
+The accent is Glean Blue `#343ced`, hover `#131bd4`. Load Inter, or the page silently falls back to
+system fonts and stops matching the docs.
+
+Use the real Glean logomark, not a colored `<div>`/`<span>` or a recreated shape. Scaffolded recipes
+already have it at `public/glean-logomark.svg`; otherwise inline this:
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" role="img" aria-label="Glean">
@@ -123,17 +161,13 @@ Use the real Glean logomark, not a colored `<div>`/`<span>` or a recreated shape
 </svg>
 ```
 
-Inline the `<svg>` directly, or save it as `logo.svg` and reference it — don't recreate the mark
-from a text description. The canonical copy is `brand/glean-logomark.svg` in the
-`gleanwork/glean-cookbook` repo, with full colour and type tokens in `brand/tokens.json`; the SVG
-above is a complete, self-contained substitute.
-
 If you'd rather the demo carry your own company's identity, swap in your logo and accent colour —
 nothing about the recipe depends on these particular values.
 
-**Web SDK components need none of this.** `renderChat`/`renderSearchBox`/`renderSearchResults`
-render Glean's own UI, which already picks up whatever logo and colours your admin configured in
-Glean. Style the surrounding page; leave the embedded component alone.
+**Web SDK components need none of this.** `renderChat`/`renderSearchBox`/`renderSearchResults` render
+Glean's own UI, which already picks up whatever logo and colours your admin configured in Glean. Style
+the surrounding page; give the container a resolved height with `.sdk-embed`; leave the embedded
+component alone.
 
 `renderChat`/`renderSearchBox`/`renderSearchResults` need an explicit-sized container
 (`position: relative`, `display: block`, a real `width`, a real `height`) or the widget won't

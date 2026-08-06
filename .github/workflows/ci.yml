@@ -88,6 +88,13 @@ jobs:
           cache-dependency-path: plugin/package-lock.json
       - working-directory: plugin
         run: npm ci
+      # Each recipe carries a committed copy of the shared stylesheet, because
+      # `tiged` scaffolds one directory at a time and most recipes have no
+      # bundler to import a shared one. Dependency-free, so no root npm ci.
+      # The token sync against glean-developer-site stays manual -- that repo
+      # isn't available here.
+      - name: Check shared recipe styles are not stale
+        run: node scripts/build-styles.mjs --check
       - name: Check generated commands/skill are not stale
         working-directory: plugin
         run: npm run generate:commands -- --check
