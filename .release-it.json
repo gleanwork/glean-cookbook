@@ -1,0 +1,35 @@
+{
+  "$schema": "https://unpkg.com/release-it/schema/release-it.json",
+  "git": {
+    "commitMessage": "chore: release v${version}",
+    "tagName": "v${version}"
+  },
+  "github": {
+    "release": true
+  },
+  "npm": false,
+  "hooks": {
+    "after:bump": "npm run build:plugin"
+  },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "preset": {
+        "name": "conventionalcommits"
+      },
+      "infile": "CHANGELOG.md"
+    },
+    "@release-it/bumper": {
+      "in": "plugin/package.json",
+      "out": [
+        {
+          "file": "plugin/package.json",
+          "path": "version"
+        },
+        {
+          "file": "plugin/package-lock.json",
+          "path": ["version", "packages..version"]
+        }
+      ]
+    }
+  }
+}

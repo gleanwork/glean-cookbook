@@ -13,16 +13,20 @@
     "check:freshness": "node scripts/check-recipe-freshness.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "release": "release-it",
     "snippets:check": "md-code check && node scripts/check-prompt-snippets.mjs",
     "snippets:sync": "md-code sync",
     "test": "node --test \"scripts/**/*.test.mjs\"",
     "verify:login": "node scripts/verify-login.mjs"
   },
   "devDependencies": {
+    "@release-it/bumper": "^8.0.0",
+    "@release-it/conventional-changelog": "^12.0.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "markdown-code": "^1.2.0",
-    "prettier": "^3.4.2"
+    "prettier": "^3.4.2",
+    "release-it": "^21.0.1"
   },
   "engines": {
     "node": ">=20"
