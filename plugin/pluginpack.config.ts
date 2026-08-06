@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { defineConfig } from '@gleanwork/pluginpack';
 
 // Skills (not commands/) are the current recommendation for both Claude
@@ -26,8 +28,12 @@ import { defineConfig } from '@gleanwork/pluginpack';
 // Fields the host reads off the marketplace entry. Without `version` it falls
 // back to the git commit SHA, which would make every recipe edit — this repo's
 // most common change — register as a new plugin version.
+const { version } = JSON.parse(
+  readFileSync(new URL('package.json', import.meta.url), 'utf8'),
+) as { version: string };
+
 const ENTRY_METADATA = {
-  version: '0.1.0',
+  version,
   author: { name: 'Glean' },
   homepage: 'https://developers.glean.com/cookbook',
   repository: 'https://github.com/gleanwork/glean-cookbook',
@@ -49,7 +55,7 @@ const codexEntry = {
 export default defineConfig({
   source: { partials: 'partials' },
   name: 'glean-cookbook',
-  version: '0.1.0',
+  version,
   metadata: {
     description:
       'Build Glean cookbook recipes hands-free from Claude Code, Cursor, or Codex.',

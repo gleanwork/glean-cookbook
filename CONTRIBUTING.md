@@ -142,3 +142,34 @@ Every PR runs:
 6. **`harness-tests`** — `npm test`, covering the verify harness's OAuth state validation and PKCE
    derivation.
 7. **`snippets-check`** — recipe prose and the code it embeds stay in sync.
+
+## Releasing the plugin
+
+```bash
+npm run release
+```
+
+That's [release-it](https://github.com/release-it/release-it), configured in `.release-it.json`. It
+picks the next version from the conventional-commit subjects since the last `v*` tag, writes
+`CHANGELOG.md`, commits as `chore: release v{version}`, tags, and pushes.
+
+The version it bumps is **`plugin/package.json`**, not the root `package.json` — the root package is
+private and stays at `0.0.0`, because what gets released here is the plugin, not an npm package
+(hence `npm: false`; nothing is published to a registry). `@release-it/bumper` reads the current
+version from that file via its `in` option and writes the bumped one back, along with
+`plugin/package-lock.json` so `npm ci` in `plugin/` doesn't see a version mismatch.
+
+Everything else carrying a version is generated from there and needs no entry in the bumper config:
+`plugin/pluginpack.config.ts` reads `version` out of `plugin/package.json`, so the `after:bump` hook
+running `npm run build:plugin` is what propagates it into the three committed marketplace manifests
+(`.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`) and each emitted
+`build/*/cookbook/*/plugin.json`. release-it stages tracked modifications before committing, so those
+land in the release commit. Skip the rebuild and CI's `pluginpack diff` guard fails on the next PR
+with manifests a version behind.
+
+Don't reintroduce a literal version in `pluginpack.config.ts`: it would take precedence over the
+bumped one and every release would rebuild the manifests back to the hardcoded value.
+
+For release-it to create the GitHub Release itself, export a `GITHUB_TOKEN` with `repo` scope.
+Without one it still commits, tags and pushes, then prints a pre-filled "new release" URL to finish
+by hand.
