@@ -154,15 +154,27 @@ if (
 
 // Each module declares the environment its recipe genuinely needs, so the run
 // stops with a list of what to set instead of failing mid-query on an
-// undefined token.
-const missing = (mod.requiredEnv ?? []).filter((name) => !process.env[name]);
+// undefined token. An entry may be an array of alternatives, for a recipe that
+// accepts either of two variables -- listing both as separate entries would
+// demand both.
+const missing = (mod.requiredEnv ?? [])
+  .map((entry) =>
+    Array.isArray(entry)
+      ? entry.some((name) => process.env[name])
+        ? null
+        : entry.join(' or ')
+      : process.env[entry]
+        ? null
+        : entry,
+  )
+  .filter(Boolean);
 if (missing.length > 0) {
   fail(
     `${recipeId} needs environment that isn't set:\n` +
       missing.map((n) => `  ${n}`).join('\n') +
       `\n\nThis gate verifies against a live Glean instance; there is no ` +
       `offline mode, because a skipped check reads as a pass.` +
-      (missing.includes('GLEAN_INSTANCE')
+      (missing.some((n) => n.includes('GLEAN_INSTANCE'))
         ? ''
         : `\n\nFor a Client API credential you can also sign in once:\n  ` +
           `${loginCommand(recipe)}`),
@@ -179,13 +191,21 @@ if (typeof mod.setup === 'function') {
 }
 
 let failed = 0;
+const skipped = [];
 try {
   for (const { query, expectedBehavior } of queries) {
     try {
-      // A module returns null/undefined on success, or a string explaining
-      // precisely which promised behavior did not hold.
+      // A module returns null/undefined on success, a string explaining
+      // precisely which promised behavior did not hold, or { skip: reason } for
+      // a check this environment genuinely cannot exercise (a second user, an
+      // agent id you don't have). Skips are never silent: a run that skipped
+      // anything says so in the summary, because reporting a partial run as a
+      // pass is how an unverified recipe ends up with a lastVerified date.
       const problem = await mod.run(query, context);
-      if (problem) {
+      if (problem && typeof problem === 'object' && problem.skip) {
+        skipped.push({ query, reason: problem.skip });
+        console.log(`skip "${query}"\n      ${problem.skip}`);
+      } else if (problem) {
         failed += 1;
         console.error(`FAIL "${query}"\n      ${problem}`);
         console.error(`      expected: ${expectedBehavior}`);
@@ -213,4 +233,17 @@ if (failed > 0) {
   );
   process.exit(1);
 }
-console.log(`\nAll ${queries.length} demo queries passed for ${recipeId}.`);
+
+if (skipped.length > 0) {
+  console.log(
+    `\n${queries.length - skipped.length} of ${queries.length} demo queries passed for ${recipeId}; ${skipped.length} skipped:`,
+  );
+  for (const { query, reason } of skipped) {
+    console.log(`  - "${query}": ${reason}`);
+  }
+  console.log(
+    `\nThis is a PARTIAL verification. Do not set lastVerified from it without\nexercising the skipped checks another way.`,
+  );
+} else {
+  console.log(`\nAll ${queries.length} demo queries passed for ${recipeId}.`);
+}

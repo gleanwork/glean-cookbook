@@ -89,10 +89,13 @@ export async function search(query: string): Promise<SearchHit[]> {
     return parseSearch(all[query] ?? {});
   }
 
+  // `query` only: /api/search rejects unknown properties outright, and it has no
+  // page-size parameter -- pageSize, maxResults and limit all return
+  // 400 invalid_request. It returns 10 results, which is what this needs anyway.
   const response = await fetch(`${backend()}/api/search`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ query, pageSize: 10 }),
+    body: JSON.stringify({ query }),
   });
   if (!response.ok) {
     throw new Error(

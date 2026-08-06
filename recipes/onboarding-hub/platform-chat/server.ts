@@ -4,34 +4,34 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Path B (Platform Chat): you own the UI; the server calls POST /api/chat.
-// Verified against the OpenAPI contract in scio/openapi/public/platform/chat.yaml.
-// Requires X_GLEAN_INCLUDE_EXPERIMENTAL and a live Platform Chat handler.
+// Path B: you own the UI; the server calls Glean's chat API and renders the
+// answer plus its citations itself.
+//
+// This calls the Client API, POST /rest/api/v1/chat. The Platform equivalent
+// (POST /api/chat, OpenAI Responses-style) is the eventual target and is what
+// the recipe's SPEC-LOCK describes, but it currently returns 404
+// resource_not_found -- it is gated behind a backend flag that is not on yet.
+// Shipping against it meant this recipe could not run at all. Swap back when
+// /api/chat is generally available; the parsing is the only part that changes.
 
-interface PlatformSource {
-  type?: string;
+interface ChatCitationDocument {
   title?: string;
   url?: string;
 }
 
-interface PlatformAnnotation {
-  type?: string;
-  sources?: PlatformSource[];
-}
-
-interface PlatformContentBlock {
-  type?: string;
+interface ChatFragment {
   text?: string;
-  annotations?: PlatformAnnotation[];
+  citation?: { sourceDocument?: ChatCitationDocument };
 }
 
-interface PlatformOutputMessage {
-  type?: string;
-  content?: PlatformContentBlock[];
+interface ChatMessage {
+  author?: string;
+  messageType?: string;
+  fragments?: ChatFragment[];
 }
 
-interface PlatformChatResponse {
-  output?: PlatformOutputMessage[];
+interface ChatResponse {
+  messages?: ChatMessage[];
 }
 
 type MilestoneGroup = 'it' | 'hr' | 'team' | 'engineering';
@@ -120,22 +120,31 @@ function isSafeHttpUrl(value: string): boolean {
   }
 }
 
-function parsePlatformChatResponse(data: PlatformChatResponse): {
+function parsePlatformChatResponse(data: ChatResponse): {
   answer: string;
   citations: Array<{ title: string; url: string }>;
 } {
-  const blocks = data.output?.flatMap((message) => message.content ?? []) ?? [];
-  const textBlocks = blocks.filter((block) => block.type === 'output_text');
-  const answer = textBlocks
-    .map((block) => block.text ?? '')
-    .join('\n')
+  // The answer is the CONTENT messages from GLEAN_AI. The UPDATE messages are
+  // progress narration ("Searching company knowledge") and must not be treated
+  // as the answer. A trailing empty CONTENT message is normal, so take the text
+  // of all of them rather than the last one.
+  const fragments = (data.messages ?? [])
+    .filter(
+      (message) =>
+        message.messageType === 'CONTENT' && message.author === 'GLEAN_AI',
+    )
+    .flatMap((message) => message.fragments ?? []);
+
+  const answer = fragments
+    .map((fragment) => fragment.text ?? '')
+    .join('')
     .trim();
 
-  const rawCitations = textBlocks.flatMap(
-    (block) =>
-      block.annotations?.flatMap((annotation) => annotation.sources ?? []) ??
-      [],
-  );
+  // Citations hang off individual fragments, not off the message.
+  const rawCitations = fragments
+    .map((fragment) => fragment.citation?.sourceDocument)
+    .filter((document): document is ChatCitationDocument => Boolean(document));
+
   const citations = Array.from(
     new Map(
       rawCitations
@@ -183,25 +192,28 @@ async function askPlatformChat(input: string): Promise<{
   const backend = requireEnv('GLEAN_SERVER_URL').replace(/\/$/, '');
   const token = requireEnv('GLEAN_API_TOKEN');
 
-  const response = await fetch(`${backend}/api/chat`, {
+  const response = await fetch(`${backend}/rest/api/v1/chat`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
-      'X-GLEAN-INCLUDE-EXPERIMENTAL': 'true',
     },
-    body: JSON.stringify({ input, stream: false, store: true }),
+    body: JSON.stringify({
+      messages: [{ author: 'USER', fragments: [{ text: input }] }],
+    }),
   });
 
   if (!response.ok) {
     const body = await response.text();
-    console.error(`POST /api/chat returned ${response.status}: ${body}`);
+    console.error(
+      `POST /rest/api/v1/chat returned ${response.status}: ${body}`,
+    );
     throw new Error(
-      `Chat request failed (${response.status}). Check credentials and that experimental Platform Chat is enabled.`,
+      `Chat request failed (${response.status}). Check that your token carries the CHAT scope.`,
     );
   }
 
-  const data = (await response.json()) as PlatformChatResponse;
+  const data = (await response.json()) as ChatResponse;
   // Empty or uncited completed responses escalate rather than 500: the hub's
   // failure mode for "docs don't cover this" is the escalate affordance.
   return withEscalate(parsePlatformChatResponse(data));

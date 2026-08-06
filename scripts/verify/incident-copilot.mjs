@@ -183,12 +183,28 @@ function scenarioFor(query) {
   return SCENARIOS[index];
 }
 
+/**
+ * Why no incident came back. The webhook answers with `filtered`, `refused` or
+ * `error` depending on what stopped it; reading only one of them reports
+ * `undefined`, which is what hid a 400 from /api/search behind a message that
+ * read like a thin corpus.
+ */
+function noIncident(body) {
+  if (body.error)
+    return `no incident was created — the server failed: ${body.error}`;
+  if (body.filtered)
+    return `no incident was created — the alarm was filtered: ${body.reason}`;
+  if (body.refused) return `no incident was created — refused: ${body.refused}`;
+  return `no incident was created, and the server gave no reason: ${JSON.stringify(body).slice(0, 300)}`;
+}
+
 export async function run(query, _context) {
   const scenario = scenarioFor(query);
 
   if (scenario === 'matching-precedent') {
-    const { incident, refused } = await fire(ALARM);
-    if (!incident) return `no incident was created (refused: ${refused})`;
+    const body = await fire(ALARM);
+    const { incident } = body;
+    if (!incident) return noIncident(body);
     if (incident.channel[0]?.kind !== 'ack') {
       return 'the copilot did not acknowledge before triaging';
     }
@@ -206,8 +222,9 @@ export async function run(query, _context) {
   }
 
   if (scenario === 'no-precedent') {
-    const { incident } = await fire(NOVEL);
-    if (!incident) return 'no incident was created';
+    const body = await fire(NOVEL);
+    const { incident } = body;
+    if (!incident) return noIncident(body);
     // Corpus-independent: whatever was retrieved, an unsupported cause must not
     // produce a mutating action, and no cause may cite a runbook.
     const contract = checkContract(incident);
@@ -216,8 +233,9 @@ export async function run(query, _context) {
   }
 
   if (scenario === 'unauthorized-approver') {
-    const { incident } = await fire(ALARM);
-    if (!incident) return 'no incident was created';
+    const body = await fire(ALARM);
+    const { incident } = body;
+    if (!incident) return noIncident(body);
     const refused = await post('/api/approve', { id: incident.id }, OUTSIDER);
     if (refused.status !== 403) {
       return `an unauthorized actor got ${refused.status}, expected 403`;
@@ -240,8 +258,9 @@ export async function run(query, _context) {
   }
 
   if (scenario === 'expiry') {
-    const { incident } = await fire(ALARM);
-    if (!incident) return 'no incident was created';
+    const body = await fire(ALARM);
+    const { incident } = body;
+    if (!incident) return noIncident(body);
     const expired = await (
       await post('/api/force-expiry', { id: incident.id })
     ).json();
@@ -265,7 +284,9 @@ export async function run(query, _context) {
 
   if (scenario === 'unregistered-action') {
     if (!process.env.GLEAN_AGENT_ID) {
-      return 'set GLEAN_AGENT_ID to verify the agent-orchestrated path';
+      return {
+        skip: 'no GLEAN_AGENT_ID, so the agent-orchestrated path cannot be exercised',
+      };
     }
     const { incident, refused } = await fire(ALARM, 'agent');
     // Either the agent named a registered action (card offered) or it did not
