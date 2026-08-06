@@ -5,9 +5,11 @@
   "description": "Runnable recipes for building on the Glean platform.",
   "type": "module",
   "scripts": {
-    "build": "npm run build:registry && npm run build:plugin",
+    "build": "npm run build:registry && npm run build:styles && npm run build:plugin",
     "build:registry": "node scripts/build-registry.mjs",
+    "build:styles": "node scripts/build-styles.mjs",
     "build:plugin": "npm --prefix plugin run build",
+    "sync:tokens": "node scripts/sync-brand-tokens.mjs",
     "validate:registry": "node scripts/validate-registry.mjs",
     "verify:recipe": "node scripts/verify-recipe.mjs",
     "check:freshness": "node scripts/check-recipe-freshness.mjs",
