@@ -8,6 +8,7 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
+    "configure": "node scripts/glean-auth.mjs configure --config-file .env.local --backend-variable VITE_GLEAN_BACKEND",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",

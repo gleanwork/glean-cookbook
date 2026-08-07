@@ -6,9 +6,7 @@ disable-model-invocation: true
 
 ## Before you start
 
-- Required API scopes (for paths that use API credentials): `SEARCH`, `CHAT`, `AGENTS`
-- Path A: a Glean API token with SEARCH and CHAT scopes
-- Path B: a Glean API token with SEARCH and AGENTS scopes (tiles still use Platform Search)
+- A work email for tenant discovery and OAuth sign-in; a scoped Glean API token is the fallback
 - X_GLEAN_INCLUDE_EXPERIMENTAL=true for Platform Search and Agents
 - Path B: an Account Brief agent in Agent Builder; set GLEAN_AGENT_ID server-side
 - Node 20+
@@ -23,6 +21,13 @@ Build "Customer 360: an account page built from your own content" following http
 
 Path A — parallel Platform Search tiles + Client Chat synthesis
 
+Ask these before running commands:
+
+- What is your work email? It is used once to discover your Glean tenant.
+- Which account should the page use?
+
+Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+
 1. **Scaffold the project**
 
    ```bash
@@ -36,28 +41,36 @@ Path A — parallel Platform Search tiles + Client Chat synthesis
    ```
 
 3. **Set credentials**
-   Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, and GLEAN_ACCOUNT_NAME. The app runs as you; there is no act-as.
+   The shipped command discovers the tenant and completes OAuth, with a scoped API token fallback. Set GLEAN_ACCOUNT_NAME in the resulting ignored .env to the account the user supplied. Do not search for a different account.
 
    ```bash
-   cd customer-360 && cp .env.example .env
+   cd customer-360 && npm run login -- --email "<work-email>"
    ```
 
-4. **Run it**
-   Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance.
+4. **Verify**
+   Allow 1–3 minutes. It starts its own server, runs the demo queries against the supplied account, and asserts cited answers with blank unsupported KPI fields.
 
-   ```bash
-   cd customer-360 && npm start
-   ```
-
-5. **Verify**
-   Loads credentials from .env (same as npm start), runs the demo queries against the account you picked, and asserts cited answers with blank unsupported KPI fields. Do not report this recipe as done until this passes.
    ```bash
    cd customer-360 && npm run verify
+   ```
+
+5. **Run it**
+   Leave the verified app running at http://localhost:3000 and give that URL to the user.
+   ```bash
+   cd customer-360 && npm start
    ```
 
 ### Platform Agents
 
 Path B — Platform Agents createRun for prescriptive account briefs
+
+Ask these before running commands:
+
+- What is your work email? It is used once to discover your Glean tenant.
+- Which account should the page use?
+- What is the ID of your Account Brief agent?
+
+Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
 
 1. **Scaffold the project**
 
@@ -72,40 +85,21 @@ Path B — Platform Agents createRun for prescriptive account briefs
    ```
 
 3. **Set credentials**
-   Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, GLEAN_ACCOUNT_NAME, and GLEAN_AGENT_ID (Account Brief agent). The app runs as you; there is no act-as.
+   The shipped command discovers the tenant and completes OAuth, with a scoped API token fallback. Set GLEAN_ACCOUNT_NAME and GLEAN_AGENT_ID in the resulting ignored .env from the answers already supplied.
 
    ```bash
-   cd customer-360 && cp .env.example .env
+   cd customer-360 && npm run login -- --email "<work-email>"
    ```
 
-4. **Run it**
-   Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance.
+4. **Verify**
+   Allow 1–3 minutes. It starts its own server and verifies the supplied account and Account Brief agent before the app is left running.
 
-   ```bash
-   cd customer-360 && npm start
-   ```
-
-5. **Verify**
-   Loads credentials from .env (same as npm start), runs the demo queries against your Account Brief agent, and asserts cited answers (or an explicit failure if the agent is missing or unauthorized). Do not report this recipe as done until this passes.
    ```bash
    cd customer-360 && npm run verify
    ```
 
-## Reference
-
-Use Platform Search for tiles, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. Client Chat answers are CONTENT messages from GLEAN_AI; citations are fragment.citation.sourceDocument. Set saveChat:false for verification and keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME and leave owner, ARR, seats, renewal date, and risk blank unless retrieved documents support them. Use GLEAN_SERVER_URL directly.
-
-## Authentication
-
-{{> auth-client-api}}
-
-## Verify
-
-{{> verify-gate}}
-
-- **Query:** "What's the status of our renewal with that account?"
-  **Expected:** Returns a non-empty answer citing real documents about the account you built the page around. Substitute the name when you ask — there is no fixed query text for a page built around whichever account you pick.
-- **Query:** "Give me a customer summary"
-  **Expected:** Synthesizes across more than one source with a citation per claim, rather than restating a single document.
-- **Query:** "What are the renewal risks?"
-  **Expected:** Either names risks grounded in cited content, or says it has none to report. It must not infer risk the sources don't support, and the KPI header must leave unsupported fields blank rather than showing a figure no document contains.
+5. **Run it**
+   Leave the verified app running at http://localhost:3000 and give that URL to the user.
+   ```bash
+   cd customer-360 && npm start
+   ```

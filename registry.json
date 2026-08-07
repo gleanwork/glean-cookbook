@@ -14,11 +14,43 @@
     "requiredScopes": ["AGENTS"],
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
+    "execution": {
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email? It is used once to discover your Glean tenant."
+        },
+        {
+          "id": "agent-id",
+          "prompt": "What is the ID of the published agent to invoke?"
+        },
+        {
+          "id": "question",
+          "prompt": "What question is that agent expected to answer from your content?"
+        }
+      ],
+      "auth": [
+        {
+          "kind": "oauth-with-token-fallback",
+          "scopes": ["AGENTS"],
+          "setupCommand": "cd a2a-client && node scripts/glean-auth.mjs login --scopes agents --email \"<work-email>\"",
+          "configFile": ".env",
+          "backendVariable": "GLEAN_SERVER_URL",
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "automated",
+        "command": "cd a2a-client && uv run main.py",
+        "expectedDuration": "about 1 minute after sign-in",
+        "startsOwnServer": false
+      }
+    },
     "languages": ["python"],
     "prerequisites": [
       "A published auto agent with a chat-message trigger (text input only)",
       "Its agent id, from the Agent Builder URL or agents/search",
-      "An OAuth access token or Glean API token with the AGENTS scope",
+      "A work email for tenant discovery and OAuth sign-in; an AGENTS-scoped API token is the fallback",
       "uv (a2a-sdk is pinned < 1.0 — see below)"
     ],
     "demoQueries": [
@@ -37,21 +69,25 @@
     "steps": [
       {
         "title": "Scaffold the project",
-        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client"
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client",
+        "kind": "scaffold"
       },
       {
         "title": "Set credentials",
-        "command": "cd a2a-client && cp .env.example .env",
-        "description": "Fill in GLEAN_INSTANCE, GLEAN_API_TOKEN, and GLEAN_AGENT_ID. Use an OAuth access token or Glean API token with the AGENTS scope."
+        "command": "cd a2a-client && node scripts/glean-auth.mjs login --scopes agents --email \"<work-email>\"",
+        "description": "Use the shipped login flow, then set GLEAN_AGENT_ID and GLEAN_DEMO_QUERY from the answers already supplied. Never implement authentication.",
+        "kind": "authenticate"
       },
       {
         "title": "Run it",
         "command": "cd a2a-client && uv run main.py",
-        "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step."
+        "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.",
+        "kind": "run"
       },
       {
         "title": "Verify",
-        "description": "Confirm a real answer to \"Who owns the payments service?\", a follow-up reusing the same context_id to prove multi-turn, and a streaming response — all three paths this recipe exercises."
+        "description": "Use the question supplied up front. Confirm a real answer, a follow-up reusing the same context_id to prove multi-turn, and a streaming response — all three paths this recipe exercises.",
+        "kind": "verify-live"
       }
     ],
     "scaffoldActions": [],
@@ -74,13 +110,39 @@
     "level": "Intermediate",
     "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~30 min",
-    "requiredScopes": ["SEARCH", "CHAT"],
-    "authMethod": [
-      "indexing-token",
-      "web-sdk-cookie",
-      "client-api-oauth-or-token"
-    ],
+    "requiredScopes": [],
+    "authMethod": ["indexing-token", "web-sdk-cookie"],
     "buildMethod": "integrate",
+    "execution": {
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email? It is used once to discover your Glean tenant."
+        },
+        {
+          "id": "datasource",
+          "prompt": "Which custom datasource should receive the service catalog?"
+        },
+        {
+          "id": "catalog",
+          "prompt": "Where is the service catalog data to index?"
+        }
+      ],
+      "auth": [
+        {
+          "kind": "indexing-token",
+          "scopes": ["INDEXING"],
+          "credentialVariable": "GLEAN_INDEXING_TOKEN"
+        },
+        { "kind": "browser-cookie", "scopes": [] }
+      ],
+      "verification": {
+        "kind": "user-browser",
+        "expectedDuration": "5–15 minutes after indexing because this is a composed integration",
+        "startsOwnServer": false
+      },
+      "run": { "userBrowser": true }
+    },
     "languages": ["python", "typescript"],
     "prerequisites": [
       "A Glean instance where you can add a custom datasource",
@@ -146,8 +208,8 @@
         "icon": "layout-outlined"
       }
     ],
-    "aiPrompt": "Build the \"Engineering portal with Glean\" flagship recipe from\nhttps://developers.glean.com/cookbook/build-engineering-portal\n\nIt composes two building blocks:\n1. Index the portal's service catalog into Glean with the open-source\n   indexing SDK (follow\n   https://developers.glean.com/api-info/indexing/getting-started/overview).\n2. Embed Glean search and chat into the portal UI with the Web SDK (see\n   https://developers.glean.com/cookbook/embed-search-chat — same\n   container sizing and initialMessage guidance applies here).\n\nStyle the portal shell itself per the house style below (real logomark,\nteal accent) so the catalog UI and the embedded search/chat feel like one\ncohesive app, not two mismatched pieces bolted together.\n\nAsk me for: my Glean instance/backend domain, an Indexing API token, and\nmy Glean web app domain. See Verify below for what a correct build must do.",
-    "llmContext": "Index the service catalog with an Indexing API token, then embed permission-aware search and chat with SEARCH and CHAT access. Keep credentials server-side. Join only non-empty CONTENT fragments, collect citations from fragment.citation.sourceDocument, and treat an empty completed response as a retryable failure.",
+    "aiPrompt": "Build the \"Engineering portal with Glean\" flagship recipe from\nhttps://developers.glean.com/cookbook/build-engineering-portal\n\nResolve my backend from the work email already supplied with the cookbook resolver. Index the supplied service catalog into the named datasource with the open-source indexing SDK, keeping the Indexing API token server-side. Then embed Glean search and chat with Web SDK cookie SSO. Style the portal shell per the house style below, run it, and give me the URL to open in my normal signed-in browser. See Verify below for the required checks.",
+    "llmContext": "Index the service catalog with a server-side Indexing API token. Embed search and chat with Web SDK cookie SSO, then have the user verify it in their normal signed-in browser.",
     "goDependency": false,
     "featured": false,
     "tags": ["portal"],
@@ -171,8 +233,7 @@
     "languages": ["typescript"],
     "prerequisites": [
       "A Glean instance with content indexed",
-      "An OAuth access token or Glean API token with the CHAT scope",
-      "For the Web SDK path: your tenant backend URL and an existing Glean session in your normal browser",
+      "For the Web SDK path: an existing Glean session in your normal browser",
       "Node 20.19+ or 22.12+"
     ],
     "demoQueries": [
@@ -190,28 +251,64 @@
         "repoPath": "recipes/company-answers/web-sdk",
         "language": "typescript",
         "description": "Web SDK variant — renderChat in a page",
+        "execution": {
+          "questions": [
+            {
+              "id": "email",
+              "prompt": "What is your work email? It is used once to discover your Glean tenant."
+            },
+            {
+              "id": "topic",
+              "prompt": "What topic do you know exists in your Glean content?"
+            }
+          ],
+          "auth": [
+            {
+              "kind": "browser-cookie",
+              "scopes": [],
+              "setupCommand": "cd company-answers && npm run configure -- --email \"<work-email>\"",
+              "configFile": ".env.local",
+              "backendVariable": "VITE_GLEAN_BACKEND"
+            }
+          ],
+          "verification": {
+            "kind": "user-browser",
+            "expectedDuration": "about 1 minute",
+            "startsOwnServer": false
+          },
+          "run": {
+            "command": "cd company-answers && npm run dev",
+            "url": "the Local URL printed by Vite",
+            "userBrowser": true
+          }
+        },
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers",
+            "kind": "scaffold"
           },
           {
             "title": "Install dependencies",
-            "command": "cd company-answers && npm install"
+            "command": "cd company-answers && npm install",
+            "kind": "install"
           },
           {
             "title": "Configure the tenant",
-            "command": "cd company-answers && cp .env.example .env.local",
-            "description": "Set VITE_GLEAN_BACKEND to the tenant's HTTPS backend origin. Optionally set VITE_GLEAN_INITIAL_MESSAGE to a question about content the user knows exists."
+            "command": "cd company-answers && npm run configure -- --email \"<work-email>\"",
+            "description": "Enter the user's work email when prompted. The shipped discovery command writes VITE_GLEAN_BACKEND to .env.local. Set VITE_GLEAN_INITIAL_MESSAGE to the topic they supplied.",
+            "kind": "configure"
           },
           {
             "title": "Run it",
             "command": "cd company-answers && npm run dev",
-            "description": "Keep Vite running, report its exact Local URL, and wait for the user to open it in their normal signed-in browser. Never open or automate the URL yourself."
+            "description": "Keep Vite running, report its exact Local URL, and wait for the user to open it in their normal signed-in browser. Never open or automate the URL yourself.",
+            "kind": "run"
           },
           {
             "title": "Verify",
-            "description": "Give the user the exact printed local URL to open in their normal signed-in browser. Ask them to try a topic they know exists in their Glean instance and confirm a real, cited answer renders inside Glean's chat UI."
+            "description": "Give the user the exact printed local URL to open in their normal signed-in browser. Ask them to try a topic they know exists in their Glean instance and confirm a real, cited answer renders inside Glean's chat UI.",
+            "kind": "verify-live"
           }
         ]
       },
@@ -219,29 +316,67 @@
         "repoPath": "recipes/company-answers/chat-api",
         "language": "typescript",
         "description": "Chat API variant — one chat.create call, citations rendered",
+        "execution": {
+          "questions": [
+            {
+              "id": "email",
+              "prompt": "What is your work email? It is used once to discover your Glean tenant."
+            },
+            {
+              "id": "topic",
+              "prompt": "What topic do you know exists in your Glean content?"
+            }
+          ],
+          "auth": [
+            {
+              "kind": "oauth-with-token-fallback",
+              "scopes": ["CHAT"],
+              "setupCommand": "cd company-answers && npm run login -- --email \"<work-email>\"",
+              "configFile": ".env",
+              "backendVariable": "GLEAN_SERVER_URL",
+              "credentialVariable": "GLEAN_API_TOKEN"
+            }
+          ],
+          "verification": {
+            "kind": "automated",
+            "command": "cd company-answers && npm run verify",
+            "expectedDuration": "1–3 minutes",
+            "startsOwnServer": true
+          },
+          "run": {
+            "command": "cd company-answers && npm start",
+            "url": "http://localhost:3000",
+            "userBrowser": true
+          }
+        },
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers",
+            "kind": "scaffold"
           },
           {
             "title": "Install dependencies",
-            "command": "cd company-answers && npm install"
+            "command": "cd company-answers && npm install",
+            "kind": "install"
           },
           {
             "title": "Set credentials",
-            "command": "cd company-answers && cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — the Authentication section below covers how to get a token."
-          },
-          {
-            "title": "Run it",
-            "command": "cd company-answers && npm start",
-            "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the deterministic verify step below, which starts its own instance."
+            "command": "cd company-answers && npm run login -- --email \"<work-email>\"",
+            "description": "The shipped command discovers the tenant from the user's work email, signs them in with OAuth, and writes the backend plus short-lived access token to ignored .env. Set GLEAN_DEMO_QUERY to the supplied topic. If tenant OAuth is unavailable, enter a CHAT-scoped API token as the fallback.",
+            "kind": "authenticate"
           },
           {
             "title": "Verify",
             "command": "cd company-answers && npm run verify",
-            "description": "Starts the server and checks the example PTO queries for a non-empty answer with deduplicated citations. Run this when the instance contains PTO content; otherwise use the running app with a topic the user knows exists and check the same response shape."
+            "description": "Takes about 1–3 minutes. It starts its own server and checks the configured topic for a non-empty answer with deduplicated citations.",
+            "kind": "verify-live"
+          },
+          {
+            "title": "Run it",
+            "command": "cd company-answers && npm start",
+            "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
+            "kind": "run"
           }
         ]
       }
@@ -249,7 +384,8 @@
     "steps": [
       {
         "title": "Pick a path",
-        "description": "Path A (Web SDK) renders Glean's own chat UI for you — fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend — you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer."
+        "description": "Path A (Web SDK) renders Glean's own chat UI for you — fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend — you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer.",
+        "kind": "choose"
       }
     ],
     "scaffoldActions": [],
@@ -296,6 +432,34 @@
     "requiredScopes": ["MCP"],
     "authMethod": ["custom"],
     "buildMethod": "scaffold",
+    "execution": {
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email? It is used once to discover your Glean tenant."
+        },
+        {
+          "id": "host",
+          "prompt": "Which installed MCP host should be configured?"
+        },
+        {
+          "id": "topic",
+          "prompt": "What topic do you know exists in your Glean content for verification?"
+        }
+      ],
+      "auth": [
+        {
+          "kind": "host-managed",
+          "scopes": [],
+          "setupCommand": "npx -y @gleanwork/configure-mcp-server remote --url <resolved-backend>/mcp/default --client <host>"
+        }
+      ],
+      "verification": {
+        "kind": "user-browser",
+        "expectedDuration": "about 1 minute after host restart",
+        "startsOwnServer": false
+      }
+    },
     "prerequisites": [
       "Glean MCP server enabled for your deployment (admin toggle)",
       "At least one MCP host installed (Claude Code, Cursor, or Claude Desktop)"
@@ -314,25 +478,30 @@
     "steps": [
       {
         "title": "Detect installed hosts",
-        "description": "Check for Claude Code, Cursor, and Claude Desktop on this machine."
+        "description": "Check for supported hosts, then ask which one the user wants configured. Do not configure every detected host by default.",
+        "kind": "choose"
       },
       {
         "title": "Resolve your Glean backend",
         "command": "node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"",
-        "description": "Ask for the user's work email. Locate the installed cookbook plugin root from this skill, run its bundled resolver, and copy the returned backend value. The MCP server URL is <resolved-backend>/mcp/default."
+        "description": "Ask for the user's work email. Locate the installed cookbook plugin root from this skill, run its bundled resolver, and copy the returned backend value. The MCP server URL is <resolved-backend>/mcp/default.",
+        "kind": "configure"
       },
       {
-        "title": "Configure each detected host",
+        "title": "Configure the selected host",
         "command": "npx -y @gleanwork/configure-mcp-server remote --url <resolved-backend>/mcp/default --client <host>",
-        "description": "--client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token."
+        "description": "--client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token.",
+        "kind": "authenticate"
       },
       {
         "title": "Restart the host app",
-        "description": "Cursor and Claude Code pick up the new server on restart; Claude Desktop needs the hammer icon to confirm Glean tools are available."
+        "description": "Cursor and Claude Code pick up the new server on restart; Claude Desktop needs the hammer icon to confirm Glean tools are available.",
+        "kind": "run"
       },
       {
         "title": "Verify",
-        "description": "Per host, ask \"Who's on call for payments-service?\" and confirm a real, Glean-cited answer."
+        "description": "Per host, ask \"Who's on call for payments-service?\" and confirm a real, Glean-cited answer.",
+        "kind": "verify-live"
       }
     ],
     "scaffoldActions": [],
@@ -360,8 +529,7 @@
     "buildMethod": "scaffold",
     "languages": ["typescript"],
     "prerequisites": [
-      "Path A: a Glean API token with SEARCH and CHAT scopes",
-      "Path B: a Glean API token with SEARCH and AGENTS scopes (tiles still use Platform Search)",
+      "A work email for tenant discovery and OAuth sign-in; a scoped Glean API token is the fallback",
       "X_GLEAN_INCLUDE_EXPERIMENTAL=true for Platform Search and Agents",
       "Path B: an Account Brief agent in Agent Builder; set GLEAN_AGENT_ID server-side",
       "Node 20+",
@@ -386,29 +554,64 @@
         "repoPath": "recipes/customer-360/platform-search-chat",
         "language": "typescript",
         "description": "Path A — parallel Platform Search tiles + Client Chat synthesis",
+        "execution": {
+          "questions": [
+            {
+              "id": "email",
+              "prompt": "What is your work email? It is used once to discover your Glean tenant."
+            },
+            { "id": "account", "prompt": "Which account should the page use?" }
+          ],
+          "auth": [
+            {
+              "kind": "oauth-with-token-fallback",
+              "scopes": ["SEARCH", "CHAT"],
+              "setupCommand": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+              "configFile": ".env",
+              "backendVariable": "GLEAN_SERVER_URL",
+              "credentialVariable": "GLEAN_API_TOKEN"
+            }
+          ],
+          "verification": {
+            "kind": "automated",
+            "command": "cd customer-360 && npm run verify",
+            "expectedDuration": "1–3 minutes",
+            "startsOwnServer": true
+          },
+          "run": {
+            "command": "cd customer-360 && npm start",
+            "url": "http://localhost:3000",
+            "userBrowser": true
+          }
+        },
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-search-chat customer-360"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-search-chat customer-360",
+            "kind": "scaffold"
           },
           {
             "title": "Install dependencies",
-            "command": "cd customer-360 && npm install"
+            "command": "cd customer-360 && npm install",
+            "kind": "install"
           },
           {
             "title": "Set credentials",
-            "command": "cd customer-360 && cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, and GLEAN_ACCOUNT_NAME. The app runs as you; there is no act-as."
-          },
-          {
-            "title": "Run it",
-            "command": "cd customer-360 && npm start",
-            "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
+            "command": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+            "description": "The shipped command discovers the tenant and completes OAuth, with a scoped API token fallback. Set GLEAN_ACCOUNT_NAME in the resulting ignored .env to the account the user supplied. Do not search for a different account.",
+            "kind": "authenticate"
           },
           {
             "title": "Verify",
             "command": "cd customer-360 && npm run verify",
-            "description": "Loads credentials from .env (same as npm start), runs the demo queries against the account you picked, and asserts cited answers with blank unsupported KPI fields. Do not report this recipe as done until this passes."
+            "description": "Allow 1–3 minutes. It starts its own server, runs the demo queries against the supplied account, and asserts cited answers with blank unsupported KPI fields.",
+            "kind": "verify-live"
+          },
+          {
+            "title": "Run it",
+            "command": "cd customer-360 && npm start",
+            "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
+            "kind": "run"
           }
         ]
       },
@@ -416,29 +619,68 @@
         "repoPath": "recipes/customer-360/platform-agents",
         "language": "typescript",
         "description": "Path B — Platform Agents createRun for prescriptive account briefs",
+        "execution": {
+          "questions": [
+            {
+              "id": "email",
+              "prompt": "What is your work email? It is used once to discover your Glean tenant."
+            },
+            { "id": "account", "prompt": "Which account should the page use?" },
+            {
+              "id": "agent-id",
+              "prompt": "What is the ID of your Account Brief agent?"
+            }
+          ],
+          "auth": [
+            {
+              "kind": "oauth-with-token-fallback",
+              "scopes": ["SEARCH", "AGENTS"],
+              "setupCommand": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+              "configFile": ".env",
+              "backendVariable": "GLEAN_SERVER_URL",
+              "credentialVariable": "GLEAN_API_TOKEN"
+            }
+          ],
+          "verification": {
+            "kind": "automated",
+            "command": "cd customer-360 && npm run verify",
+            "expectedDuration": "1–3 minutes",
+            "startsOwnServer": true
+          },
+          "run": {
+            "command": "cd customer-360 && npm start",
+            "url": "http://localhost:3000",
+            "userBrowser": true
+          }
+        },
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-agents customer-360"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-agents customer-360",
+            "kind": "scaffold"
           },
           {
             "title": "Install dependencies",
-            "command": "cd customer-360 && npm install"
+            "command": "cd customer-360 && npm install",
+            "kind": "install"
           },
           {
             "title": "Set credentials",
-            "command": "cd customer-360 && cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, GLEAN_ACCOUNT_NAME, and GLEAN_AGENT_ID (Account Brief agent). The app runs as you; there is no act-as."
-          },
-          {
-            "title": "Run it",
-            "command": "cd customer-360 && npm start",
-            "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
+            "command": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+            "description": "The shipped command discovers the tenant and completes OAuth, with a scoped API token fallback. Set GLEAN_ACCOUNT_NAME and GLEAN_AGENT_ID in the resulting ignored .env from the answers already supplied.",
+            "kind": "authenticate"
           },
           {
             "title": "Verify",
             "command": "cd customer-360 && npm run verify",
-            "description": "Loads credentials from .env (same as npm start), runs the demo queries against your Account Brief agent, and asserts cited answers (or an explicit failure if the agent is missing or unauthorized). Do not report this recipe as done until this passes."
+            "description": "Allow 1–3 minutes. It starts its own server and verifies the supplied account and Account Brief agent before the app is left running.",
+            "kind": "verify-live"
+          },
+          {
+            "title": "Run it",
+            "command": "cd customer-360 && npm start",
+            "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
+            "kind": "run"
           }
         ]
       }
@@ -446,7 +688,8 @@
     "steps": [
       {
         "title": "Pick a path",
-        "description": "Path A combines parallel Platform Search tiles with Client Chat synthesis. Path B keeps the same page UX but uses a template Account Brief agent."
+        "description": "Path A combines parallel Platform Search tiles with Client Chat synthesis. Path B keeps the same page UX but uses a template Account Brief agent.",
+        "kind": "choose"
       }
     ],
     "scaffoldActions": [],
@@ -492,7 +735,7 @@
         "emphasized": true
       }
     ],
-    "aiPrompt": "Build a Customer 360 account page following https://developers.glean.com/cookbook/customer-360. Ask whether to use (A) Platform Search plus Client Chat or (B) Platform Agents, then build that path. Ask for the account name and source locations. Retrieve every displayed account fact; leave unsupported fields blank. Path A uses parallel Platform Search queries and server-side POST /rest/api/v1/chat with saveChat:false, CONTENT-message parsing, and fragment citations. Path B uses glean.agents.createRun with GLEAN_AGENT_ID. Keep credentials server-side, render empty retrieval honestly, and verify the demo queries against the chosen account.",
+    "aiPrompt": "Build a Customer 360 account page following https://developers.glean.com/cookbook/customer-360. Ask whether to use (A) Platform Search plus Client Chat or (B) Platform Agents, then ask for the account name and the selected path's required configuration. Do not research another account unless the user explicitly asks for help; if they do, run one bounded search and offer at most three choices. Retrieve every displayed account fact and leave unsupported fields blank. Use the scaffold's shipped login command rather than implementing authentication. Verify before leaving the app running.",
     "llmContext": "Use Platform Search for tiles, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. Client Chat answers are CONTENT messages from GLEAN_AI; citations are fragment.citation.sourceDocument. Set saveChat:false for verification and keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME and leave owner, ARR, seats, renewal date, and risk blank unless retrieved documents support them. Use GLEAN_SERVER_URL directly.",
     "goDependency": false,
     "featured": false,
@@ -511,14 +754,32 @@
     "timeEstimate": "~15 min (minimal)",
     "icon": "deep-research",
     "requiredScopes": ["SEARCH", "CHAT"],
-    "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
+    "authMethod": ["web-sdk-cookie"],
     "buildMethod": "integrate",
+    "execution": {
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email? It is used once to discover your Glean tenant."
+        },
+        {
+          "id": "topic",
+          "prompt": "What topic do you know exists in your Glean content?"
+        }
+      ],
+      "auth": [{ "kind": "browser-cookie", "scopes": [] }],
+      "verification": {
+        "kind": "user-browser",
+        "expectedDuration": "about 1 minute after the integration builds",
+        "startsOwnServer": false
+      },
+      "run": { "userBrowser": true }
+    },
     "languages": ["typescript", "javascript"],
     "prerequisites": [
       "A Glean instance with content indexed",
       "Your Glean web app domain (typically app.glean.com — see admin/about-glean)",
-      "A frontend app or page where you can install an npm package (or add a script tag) and a container element",
-      "For token auth only: an admin API key from the Token Management page"
+      "A frontend app or page where you can install an npm package (or add a script tag) and a container element"
     ],
     "demoQueries": [
       {
@@ -559,7 +820,7 @@
         "emphasized": true
       }
     ],
-    "aiPrompt": "Embed Glean search and chat in my internal web app using the Glean Web\nSDK, following the recipe at\nhttps://developers.glean.com/cookbook/embed-search-chat\n\nSteps:\n1. Ask me for my Glean backend URL (https://{instance}-be.glean.com).\n2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no\n   build toolchain, fall back to the script tag from my Glean app domain:\n   <script defer src=\"https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js\"></script>\n   — the same methods appear on window.GleanWebSDK.)\n3. Add a search box and results container, then:\n   import { renderSearchBox, renderSearchResults } from \"@gleanwork/web-sdk\";\n   renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>\n     renderSearchResults(resultsElement, { query }) });\n4. Add a chat container: position: relative, display: block, width: 100%,\n   height: 480px. Ask me for a topic I know exists in my Glean instance,\n   then pass that question as initialMessage so the user-mediated check is\n   relevant to my tenant.\n5. Default SSO auth needs no extra configuration. If I ask for\n   server-to-server auth instead, follow\n   https://developers.glean.com/libraries/web-sdk/authentication/server-to-server\n   and keep the API key strictly server-side.\n\nSee Verify below for what a correct build must do.",
+    "aiPrompt": "Embed Glean search and chat in my internal web app using the Glean Web\nSDK, following the recipe at\nhttps://developers.glean.com/cookbook/embed-search-chat\n\nSteps:\n1. Resolve my Glean backend from the work email already supplied by running the cookbook plugin's resolve-backend.mjs script.\n2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no\n   build toolchain, fall back to the script tag from my Glean app domain:\n   <script defer src=\"https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js\"></script>\n   — the same methods appear on window.GleanWebSDK.)\n3. Add a search box and results container, then:\n   import { renderSearchBox, renderSearchResults } from \"@gleanwork/web-sdk\";\n   renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>\n     renderSearchResults(resultsElement, { query }) });\n4. Add a chat container: position: relative, display: block, width: 100%,\n   height: 480px. Use the topic already supplied as initialMessage so the user-mediated check is relevant to my tenant.\n5. Default SSO auth needs no extra configuration. If I ask for\n   server-to-server auth instead, follow\n   https://developers.glean.com/libraries/web-sdk/authentication/server-to-server\n   and keep the API key strictly server-side.\n\nSee Verify below for what a correct build must do.",
     "llmContext": "Use @gleanwork/web-sdk named exports renderSearchBox, renderSearchResults, and renderChat; the script-tag build exposes the same methods on window.GleanWebSDK. Set backend explicitly. Prefer the user's Glean SSO session; token auth must be minted by a backend and never exposed in browser code. Results remain permission-filtered for the signed-in user. Give every embedded widget an explicitly sized container.",
     "goDependency": false,
     "featured": true,
@@ -581,10 +842,47 @@
     "requiredScopes": ["SEARCH", "CHAT", "AGENTS"],
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
+    "execution": {
+      "questions": [
+        {
+          "id": "mode",
+          "prompt": "Do you want the instant fixture demo or a live tenant run?"
+        },
+        {
+          "id": "service",
+          "prompt": "For a live run, which service has a catalog entry, runbook, and past incident in Glean?"
+        },
+        {
+          "id": "orchestrator",
+          "prompt": "For a live run, use direct Search + Chat or an existing Glean agent?"
+        },
+        { "id": "email", "prompt": "For a live run, what is your work email?" }
+      ],
+      "auth": [
+        {
+          "kind": "oauth-with-token-fallback",
+          "scopes": ["SEARCH", "CHAT"],
+          "setupCommand": "cd incident-copilot && npm run login -- --email \"<work-email>\"",
+          "configFile": ".env",
+          "backendVariable": "GLEAN_SERVER_URL",
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "user-browser",
+        "expectedDuration": "under 1 minute for fixtures; 1–3 minutes live",
+        "startsOwnServer": false
+      },
+      "run": {
+        "command": "cd incident-copilot && npm start",
+        "url": "http://localhost:3000",
+        "userBrowser": true
+      }
+    },
     "languages": ["typescript"],
     "prerequisites": [
       "A Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review",
-      "Your own OAuth access token or Glean API token with SEARCH and CHAT scopes (add AGENTS for the agent-orchestrated path)",
+      "A work email for tenant discovery and OAuth sign-in; a scoped API token is the fallback",
       "X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)",
       "Node 20+"
     ],
@@ -614,26 +912,35 @@
     "steps": [
       {
         "title": "Scaffold the project",
-        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot"
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot",
+        "kind": "scaffold"
       },
       {
         "title": "Install dependencies",
-        "command": "cd incident-copilot && npm install"
+        "command": "cd incident-copilot && npm install",
+        "kind": "install"
       },
       {
         "title": "Watch the governance hold, with no credentials",
         "command": "cd incident-copilot && npm run verify:fixture",
-        "description": "Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited."
+        "description": "Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited.",
+        "kind": "verify-fixture"
       },
       {
         "title": "Set credentials",
-        "command": "cd incident-copilot && cp .env.example .env",
-        "description": "Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. Optionally set GLEAN_AGENT_ID for the agent-orchestrated path, and INCIDENT_ACTOR to change who the dashboard acts as."
+        "command": "cd incident-copilot && npm run login -- --email \"<work-email>\"",
+        "description": "Only for a live run. Use npm run login for direct Search + Chat, or npm run login:agent when the user selected an existing Glean agent. Set WATCHED_SERVICES to the service already supplied and GLEAN_AGENT_ID only for the agent path.",
+        "kind": "authenticate"
       },
-      { "title": "Run it", "command": "cd incident-copilot && npm start" },
+      {
+        "title": "Run it",
+        "command": "cd incident-copilot && npm start",
+        "kind": "run"
+      },
       {
         "title": "Verify",
-        "description": "Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything."
+        "description": "Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything.",
+        "kind": "verify-live"
       }
     ],
     "combines": [
@@ -719,11 +1026,38 @@
     "requiredScopes": ["AGENTS", "TOOLS"],
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
+    "execution": {
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email for tenant discovery and the tool allow-list?"
+        },
+        {
+          "id": "agent-id",
+          "prompt": "After creating the agent, what is its agent ID?"
+        }
+      ],
+      "auth": [
+        {
+          "kind": "oauth-with-token-fallback",
+          "scopes": ["AGENTS"],
+          "setupCommand": "cd multi-step-agent/invoke-agent && node scripts/glean-auth.mjs login --scopes agents --email \"<work-email>\"",
+          "configFile": ".env",
+          "backendVariable": "GLEAN_SERVER_URL",
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "manual-admin",
+        "expectedDuration": "15–30 minutes because tool registration is an admin step",
+        "startsOwnServer": false
+      }
+    },
     "languages": ["python"],
     "prerequisites": [
       "Agent builder access in your Glean instance",
       "Permission to register a custom tool (or admin help)",
-      "A Glean token with AGENTS scope for API invocation",
+      "A work email for tenant discovery and OAuth sign-in; an AGENTS-scoped API token is the fallback",
       "uv and cloudflared installed locally",
       "Your own email, to put on (and take off) the tool server's allow-list between the two runs"
     ],
@@ -748,44 +1082,53 @@
     "steps": [
       {
         "title": "Scaffold the project",
-        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/multi-step-agent multi-step-agent"
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/multi-step-agent multi-step-agent",
+        "kind": "scaffold"
       },
       {
         "title": "Set the tool server's allow-list",
         "command": "(cd multi-step-agent/tool-server && cp .env.example .env)",
-        "description": "Set AUTHORIZED_EMAILS to your own email for the first run. You'll remove it for the second run to see the denied branch — changing the allow-list is how both governance paths get demonstrated, since the agent always runs as you. The server refuses to start on an empty allow-list, since that denies everyone and makes the permitted branch unobservable."
+        "description": "Set AUTHORIZED_EMAILS to your own email for the first run. You'll remove it for the second run to see the denied branch — changing the allow-list is how both governance paths get demonstrated, since the agent always runs as you. The server refuses to start on an empty allow-list, since that denies everyone and makes the permitted branch unobservable.",
+        "kind": "configure"
       },
       {
         "title": "Run the tool server",
         "command": "(cd multi-step-agent/tool-server && uv run server.py)",
-        "description": "Listens on port 8080. Keep this running in its own terminal — the agent calls it over HTTP once registered."
+        "description": "Listens on port 8080. Keep this running in its own terminal — the agent calls it over HTTP once registered.",
+        "kind": "run"
       },
       {
         "title": "Expose the demo tool over HTTPS",
         "command": "cloudflared tunnel --url http://localhost:8080",
-        "description": "Keep this running in a second terminal. Copy the printed https://<random>.trycloudflare.com origin into tool-server/openapi.yaml as servers[0].url, with no path. Confirm that <origin>/file_incident_ticket returns the expected 403 for a denied email. This public demo route accepts a spoofable identity header and only creates fake in-memory tickets; authenticate requests from Glean before connecting a real write action."
+        "description": "Keep this running in a second terminal. Copy the printed https://<random>.trycloudflare.com origin into tool-server/openapi.yaml as servers[0].url, with no path. Confirm that <origin>/file_incident_ticket returns the expected 403 for a denied email. This public demo route accepts a spoofable identity header and only creates fake in-memory tickets; authenticate requests from Glean before connecting a real write action.",
+        "kind": "manual"
       },
       {
         "title": "Register the tool",
-        "description": "Manual, UI-only step. After replacing the OpenAPI placeholder with the tunnel origin, use Admin > Platform > Tools > Add and upload multi-step-agent/tool-server/openapi.yaml. The operation URL must be <origin>/file_incident_ticket."
+        "description": "Manual, UI-only step. After replacing the OpenAPI placeholder with the tunnel origin, use Admin > Platform > Tools > Add and upload multi-step-agent/tool-server/openapi.yaml. The operation URL must be <origin>/file_incident_ticket.",
+        "kind": "manual"
       },
       {
         "title": "Create the agent",
-        "description": "Manual, UI-only step. In Agent Builder: paste the recipe's instructions, turn retrieval on, attach the tool you just registered. Copy the agent's ID for the next step."
+        "description": "Manual, UI-only step. In Agent Builder: paste the recipe's instructions, turn retrieval on, attach the tool you just registered. Copy the agent's ID for the next step.",
+        "kind": "manual"
       },
       {
         "title": "Set credentials",
-        "command": "(cd multi-step-agent/invoke-agent && cp .env.example .env)",
-        "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and GLEAN_AGENT_ID (the ID from the previous step)."
+        "command": "(cd multi-step-agent/invoke-agent && node scripts/glean-auth.mjs login --scopes agents --email \"<work-email>\")",
+        "description": "Use the shipped login flow, then set GLEAN_AGENT_ID from the agent created above. Never implement authentication.",
+        "kind": "authenticate"
       },
       {
         "title": "Run it",
         "command": "(cd multi-step-agent/invoke-agent && uv run main.py)",
-        "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step."
+        "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.",
+        "kind": "run"
       },
       {
         "title": "Verify",
-        "description": "With your email on the allow-list, confirm the ticket actually gets filed. Then restart the tool server without it and confirm the agent produces a read-only fallback summary instead of a hard failure."
+        "description": "With your email on the allow-list, confirm the ticket actually gets filed. Then restart the tool server without it and confirm the agent produces a read-only fallback summary instead of a hard failure.",
+        "kind": "verify-live"
       }
     ],
     "scaffoldActions": [],
@@ -828,6 +1171,30 @@
     "requiredScopes": ["CHAT"],
     "authMethod": ["custom"],
     "buildMethod": "third-party-build",
+    "execution": {
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email? It is used once to discover your Glean tenant."
+        },
+        {
+          "id": "topic",
+          "prompt": "What IT topic do you know exists in your Glean content?"
+        }
+      ],
+      "auth": [
+        {
+          "kind": "hosted-secret",
+          "scopes": ["CHAT"],
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "third-party",
+        "expectedDuration": "user-mediated after Lovable finishes building",
+        "startsOwnServer": false
+      }
+    },
     "prerequisites": [
       "A Lovable account",
       "A Glean API token with the CHAT scope (kept as a Lovable backend secret; every request uses this one token owner's access)",
@@ -851,7 +1218,7 @@
       }
     ],
     "scaffoldActions": [],
-    "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt. It is one service identity, so keep this prototype private;\n   multi-user deployment requires per-user Glean OAuth.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
+    "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt. It is one service identity, so keep this prototype private;\n   multi-user deployment requires per-user Glean OAuth.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
     "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations.",
     "goDependency": false,
     "featured": false,
@@ -872,6 +1239,30 @@
     "requiredScopes": ["CHAT"],
     "authMethod": ["custom"],
     "buildMethod": "third-party-build",
+    "execution": {
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email? It is used once to discover your Glean tenant."
+        },
+        {
+          "id": "topic",
+          "prompt": "What HR topic do you know exists in your Glean content?"
+        }
+      ],
+      "auth": [
+        {
+          "kind": "hosted-secret",
+          "scopes": ["CHAT"],
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "third-party",
+        "expectedDuration": "user-mediated after Replit finishes building",
+        "startsOwnServer": false
+      }
+    },
     "prerequisites": [
       "A Replit account with Agent access",
       "A Glean API token with the CHAT scope (kept in Replit Secrets; every request uses this one token owner's access)",
@@ -895,7 +1286,7 @@
       }
     ],
     "scaffoldActions": [],
-    "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Generate the Replit prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt. It is one service identity, so keep this prototype\n   private; multi-user deployment requires per-user Glean OAuth.\n3. After Replit builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
+    "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt. It is one service identity, so keep this prototype\n   private; multi-user deployment requires per-user Glean OAuth.\n3. After Replit builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
     "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token server-side, call glean.client.chat.create with USER message fragments, read CONTENT text and fragment.citation.sourceDocument citations, and show cited answers or an explicit no-answer state.",
     "goDependency": false,
     "featured": false,
@@ -919,8 +1310,7 @@
     "languages": ["typescript"],
     "prerequisites": [
       "A Glean instance with your onboarding content indexed",
-      "For the Client Chat path: a token with the CHAT scope",
-      "For the Web SDK path: your tenant backend URL and an existing Glean session in your normal browser",
+      "For the Web SDK path: an existing Glean session in your normal browser",
       "Node 20.19+ or 22.12+"
     ],
     "demoQueries": [
@@ -945,7 +1335,8 @@
     "steps": [
       {
         "title": "Pick a path",
-        "description": "Path A embeds Glean's chat UI with the Web SDK. Path B calls Client Chat from your backend and renders the response in your own UI."
+        "description": "Path A embeds Glean's chat UI with the Web SDK. Path B calls Client Chat from your backend and renders the response in your own UI.",
+        "kind": "choose"
       }
     ],
     "scaffoldActions": [],
@@ -995,28 +1386,64 @@
         "repoPath": "recipes/onboarding-hub/web-sdk",
         "language": "typescript",
         "description": "Web SDK variant — checklist + renderChat",
+        "execution": {
+          "questions": [
+            {
+              "id": "email",
+              "prompt": "What is your work email? It is used once to discover your Glean tenant."
+            },
+            {
+              "id": "steps",
+              "prompt": "What onboarding steps should appear in the checklist?"
+            }
+          ],
+          "auth": [
+            {
+              "kind": "browser-cookie",
+              "scopes": [],
+              "setupCommand": "cd onboarding-hub && npm run configure -- --email \"<work-email>\"",
+              "configFile": ".env.local",
+              "backendVariable": "VITE_GLEAN_BACKEND"
+            }
+          ],
+          "verification": {
+            "kind": "user-browser",
+            "expectedDuration": "about 1 minute",
+            "startsOwnServer": false
+          },
+          "run": {
+            "command": "cd onboarding-hub && npm run dev",
+            "url": "the Local URL printed by Vite",
+            "userBrowser": true
+          }
+        },
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/web-sdk onboarding-hub"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/web-sdk onboarding-hub",
+            "kind": "scaffold"
           },
           {
             "title": "Install dependencies",
-            "command": "cd onboarding-hub && npm install"
+            "command": "cd onboarding-hub && npm install",
+            "kind": "install"
           },
           {
             "title": "Configure the backend and checklist",
-            "command": "cd onboarding-hub && cp .env.example .env.local && cp public/steps.example.json public/steps.json",
-            "description": "Before running, set VITE_GLEAN_BACKEND in .env.local to the tenant's HTTPS backend origin and customize public/steps.json with the user's real onboarding steps. Keep every id unique. The included generic multi-step example is runnable but should be tailored."
+            "command": "cd onboarding-hub && npm run configure -- --email \"<work-email>\" && cp public/steps.example.json public/steps.json",
+            "description": "Enter the user's work email when prompted; tenant discovery writes VITE_GLEAN_BACKEND to .env.local. Replace public/steps.json with the onboarding steps the user supplied and keep every id unique.",
+            "kind": "configure"
           },
           {
             "title": "Run it",
             "command": "cd onboarding-hub && npm run dev",
-            "description": "Start Vite and leave it running. Report the exact Local URL printed by Vite. Never open the URL yourself and never use browser automation. Wait for the user to open it in their normal browser where they are already signed in to Glean and tell you it is ready."
+            "description": "Start Vite and leave it running. Report the exact Local URL printed by Vite. Never open the URL yourself and never use browser automation. Wait for the user to open it in their normal browser where they are already signed in to Glean and tell you it is ready.",
+            "kind": "run"
           },
           {
             "title": "Verify",
-            "description": "After the user confirms the app is open in their normal signed-in browser, ask them to confirm the configured checklist renders. Have them click Ask about this and verify a cited first-day answer. Do not open or drive their browser."
+            "description": "After the user confirms the app is open in their normal signed-in browser, ask them to confirm the configured checklist renders. Have them click Ask about this and verify a cited first-day answer. Do not open or drive their browser.",
+            "kind": "verify-live"
           }
         ]
       },
@@ -1024,29 +1451,67 @@
         "repoPath": "recipes/onboarding-hub/platform-chat",
         "language": "typescript",
         "description": "Client Chat variant — server-side API call, custom UI",
+        "execution": {
+          "questions": [
+            {
+              "id": "email",
+              "prompt": "What is your work email? It is used once to discover your Glean tenant."
+            },
+            {
+              "id": "steps",
+              "prompt": "What onboarding steps should appear in the checklist?"
+            }
+          ],
+          "auth": [
+            {
+              "kind": "oauth-with-token-fallback",
+              "scopes": ["CHAT"],
+              "setupCommand": "cd onboarding-hub && npm run login -- --email \"<work-email>\"",
+              "configFile": ".env",
+              "backendVariable": "GLEAN_SERVER_URL",
+              "credentialVariable": "GLEAN_API_TOKEN"
+            }
+          ],
+          "verification": {
+            "kind": "automated",
+            "command": "cd onboarding-hub && npm run verify",
+            "expectedDuration": "1–3 minutes",
+            "startsOwnServer": true
+          },
+          "run": {
+            "command": "cd onboarding-hub && npm start",
+            "url": "http://localhost:3000",
+            "userBrowser": true
+          }
+        },
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/platform-chat onboarding-hub"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/platform-chat onboarding-hub",
+            "kind": "scaffold"
           },
           {
             "title": "Install dependencies",
-            "command": "cd onboarding-hub && npm install"
+            "command": "cd onboarding-hub && npm install",
+            "kind": "install"
           },
           {
             "title": "Set credentials",
-            "command": "cd onboarding-hub && cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Customize the included steps.example.json, point GLEAN_ONBOARDING_STEPS_FILE at another file, or set GLEAN_ONBOARDING_STEPS_JSON. The app runs as the token owner; there is no act-as."
-          },
-          {
-            "title": "Run it",
-            "command": "cd onboarding-hub && npm start",
-            "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
+            "command": "cd onboarding-hub && npm run login -- --email \"<work-email>\"",
+            "description": "The shipped command discovers the tenant and completes OAuth, with a CHAT-scoped API token fallback. Configure the supplied onboarding steps in ignored .env or a local steps file. The app runs as the signed-in user; there is no act-as.",
+            "kind": "authenticate"
           },
           {
             "title": "Verify",
             "command": "cd onboarding-hub && npm run verify",
-            "description": "Loads credentials from .env (same as npm start), runs the demo queries against your own onboarding docs, and asserts cited answers for first-day / VPN / PTO plus escalation for an unsupported question. Do not report this recipe as done until this passes."
+            "description": "Allow 1–3 minutes. It starts its own server and checks the configured onboarding topics for cited answers plus unsupported-question escalation.",
+            "kind": "verify-live"
+          },
+          {
+            "title": "Run it",
+            "command": "cd onboarding-hub && npm start",
+            "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
+            "kind": "run"
           }
         ]
       }
@@ -1069,7 +1534,7 @@
     "buildMethod": "scaffold",
     "languages": ["python", "typescript"],
     "prerequisites": [
-      "An OAuth access token or Glean API token with the SEARCH scope (your own — no global/admin token needed)",
+      "A work email for tenant discovery and OAuth sign-in; a SEARCH-scoped API token is the fallback",
       "X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)",
       "An LLM API key (any provider; example uses Claude)",
       "uv (for the Python path) or Node 20+"
@@ -1090,24 +1555,65 @@
         "repoPath": "recipes/permissions-aware-retrieval/python",
         "language": "python",
         "description": "Platform API search.query → snippets → LLM with citations",
+        "execution": {
+          "questions": [
+            {
+              "id": "email",
+              "prompt": "What is your work email? It is used once to discover your Glean tenant."
+            },
+            {
+              "id": "allowed-topic",
+              "prompt": "What topic can you access and expect Glean to answer?"
+            },
+            {
+              "id": "denied-topic",
+              "prompt": "What topic should your account not be able to access?"
+            }
+          ],
+          "auth": [
+            {
+              "kind": "oauth-with-token-fallback",
+              "scopes": ["SEARCH"],
+              "setupCommand": "cd permissions-aware-retrieval && node scripts/glean-auth.mjs login --scopes search --email \"<work-email>\"",
+              "configFile": ".env",
+              "backendVariable": "GLEAN_SERVER_URL",
+              "credentialVariable": "GLEAN_API_TOKEN"
+            },
+            {
+              "kind": "external-api-key",
+              "scopes": [],
+              "configFile": ".env",
+              "credentialVariable": "ANTHROPIC_API_KEY"
+            }
+          ],
+          "verification": {
+            "kind": "automated",
+            "expectedDuration": "about 1 minute after sign-in",
+            "startsOwnServer": false
+          }
+        },
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval",
+            "kind": "scaffold"
           },
           {
             "title": "Set credentials",
-            "command": "cd permissions-aware-retrieval && cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY. This variant loads .env automatically."
+            "command": "cd permissions-aware-retrieval && node scripts/glean-auth.mjs login --scopes search --email \"<work-email>\"",
+            "description": "Use the shipped login flow. Then have the user enter ANTHROPIC_API_KEY in ignored .env without exposing it in chat or command output.",
+            "kind": "authenticate"
           },
           {
             "title": "Run it",
-            "command": "cd permissions-aware-retrieval && uv run main.py \"What's our PTO policy?\"",
-            "description": "Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run — there's no requirements.txt, venv, or activate step."
+            "command": "cd permissions-aware-retrieval && uv run main.py \"<allowed-topic>\"",
+            "description": "Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run — there's no requirements.txt, venv, or activate step.",
+            "kind": "run"
           },
           {
             "title": "Verify",
-            "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge."
+            "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge.",
+            "kind": "verify-live"
           }
         ]
       },
@@ -1115,27 +1621,69 @@
         "repoPath": "recipes/permissions-aware-retrieval/typescript",
         "language": "typescript",
         "description": "Same flow in TypeScript",
+        "execution": {
+          "questions": [
+            {
+              "id": "email",
+              "prompt": "What is your work email? It is used once to discover your Glean tenant."
+            },
+            {
+              "id": "allowed-topic",
+              "prompt": "What topic can you access and expect Glean to answer?"
+            },
+            {
+              "id": "denied-topic",
+              "prompt": "What topic should your account not be able to access?"
+            }
+          ],
+          "auth": [
+            {
+              "kind": "oauth-with-token-fallback",
+              "scopes": ["SEARCH"],
+              "setupCommand": "cd permissions-aware-retrieval && npm run login -- --email \"<work-email>\"",
+              "configFile": ".env",
+              "backendVariable": "GLEAN_SERVER_URL",
+              "credentialVariable": "GLEAN_API_TOKEN"
+            },
+            {
+              "kind": "external-api-key",
+              "scopes": [],
+              "configFile": ".env",
+              "credentialVariable": "ANTHROPIC_API_KEY"
+            }
+          ],
+          "verification": {
+            "kind": "automated",
+            "expectedDuration": "about 1 minute after sign-in",
+            "startsOwnServer": false
+          }
+        },
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval",
+            "kind": "scaffold"
           },
           {
             "title": "Install dependencies",
-            "command": "cd permissions-aware-retrieval && npm install"
+            "command": "cd permissions-aware-retrieval && npm install",
+            "kind": "install"
           },
           {
             "title": "Set credentials",
-            "command": "cd permissions-aware-retrieval && cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY — loaded automatically via dotenv in this variant."
+            "command": "cd permissions-aware-retrieval && npm run login -- --email \"<work-email>\"",
+            "description": "Use the shipped login flow. Then have the user enter ANTHROPIC_API_KEY in ignored .env without exposing it in chat or command output.",
+            "kind": "authenticate"
           },
           {
             "title": "Run it",
-            "command": "cd permissions-aware-retrieval && npm start -- \"What's our PTO policy?\""
+            "command": "cd permissions-aware-retrieval && npm start -- \"<allowed-topic>\"",
+            "kind": "run"
           },
           {
             "title": "Verify",
-            "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge."
+            "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge.",
+            "kind": "verify-live"
           }
         ]
       }
@@ -1143,7 +1691,8 @@
     "steps": [
       {
         "title": "Pick a language",
-        "description": "Both variants implement the same flow — pick whichever fits your app's stack."
+        "description": "Both variants implement the same flow — pick whichever fits your app's stack.",
+        "kind": "choose"
       }
     ],
     "scaffoldActions": [],
@@ -1186,10 +1735,43 @@
     "requiredScopes": ["CHAT"],
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
+    "execution": {
+      "questions": [
+        {
+          "id": "mode",
+          "prompt": "Do you want the instant fixture demo or a live tenant run?"
+        },
+        {
+          "id": "approved-sources",
+          "prompt": "For a live run, which Glean URL prefixes are approved sources for external answers?"
+        },
+        { "id": "email", "prompt": "For a live run, what is your work email?" }
+      ],
+      "auth": [
+        {
+          "kind": "oauth-with-token-fallback",
+          "scopes": ["CHAT"],
+          "setupCommand": "cd rfp-responder && npm run login -- --email \"<work-email>\"",
+          "configFile": ".env",
+          "backendVariable": "GLEAN_SERVER_URL",
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "user-browser",
+        "expectedDuration": "under 1 minute for fixtures; 1–3 minutes live",
+        "startsOwnServer": false
+      },
+      "run": {
+        "command": "cd rfp-responder && npm start",
+        "url": "http://localhost:3000",
+        "userBrowser": true
+      }
+    },
     "languages": ["typescript"],
     "prerequisites": [
       "A Glean instance with your company content indexed",
-      "Your own OAuth access token or Glean API token with the CHAT scope (no admin or global token — the app runs as you)",
+      "A work email for tenant discovery and OAuth sign-in; a CHAT-scoped API token is the fallback",
       "Node 20+"
     ],
     "demoQueries": [
@@ -1214,26 +1796,35 @@
     "steps": [
       {
         "title": "Scaffold the project",
-        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder"
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder",
+        "kind": "scaffold"
       },
       {
         "title": "Install dependencies",
-        "command": "cd rfp-responder && npm install"
+        "command": "cd rfp-responder && npm install",
+        "kind": "install"
       },
       {
         "title": "Try it with no credentials",
         "command": "cd rfp-responder && npm run verify:fixture",
-        "description": "Runs the whole flow against recorded responses and asserts the failure contract: no ungrounded row carries an answer, every answered row carries a citation, and export is gated on approval."
+        "description": "Runs the whole flow against recorded responses and asserts the failure contract: no ungrounded row carries an answer, every answered row carries a citation, and export is gated on approval.",
+        "kind": "verify-fixture"
       },
       {
         "title": "Set credentials",
-        "command": "cd rfp-responder && cp .env.example .env",
-        "description": "Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. The app runs as you; there is no act-as."
+        "command": "cd rfp-responder && npm run login -- --email \"<work-email>\"",
+        "description": "Only for a live run. Use the shipped login flow, then configure the approved source prefixes supplied up front. The app runs as the signed-in user; there is no act-as.",
+        "kind": "authenticate"
       },
-      { "title": "Run it", "command": "cd rfp-responder && npm start" },
+      {
+        "title": "Run it",
+        "command": "cd rfp-responder && npm start",
+        "kind": "run"
+      },
       {
         "title": "Verify",
-        "description": "Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered."
+        "description": "Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered.",
+        "kind": "verify-live"
       }
     ],
     "combines": [

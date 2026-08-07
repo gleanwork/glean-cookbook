@@ -26,26 +26,20 @@ Expected input: conversational `messages` with a USER text block (not a form
 
 ```bash
 npm install
-cp .env.example .env
+npm run login
 ```
 
-Fill `GLEAN_SERVER_URL` / `GLEAN_API_TOKEN` / `GLEAN_ACCOUNT_NAME` /
-`GLEAN_AGENT_ID`.
+The login command discovers your tenant and uses OAuth. Set `GLEAN_ACCOUNT_NAME` and
+`GLEAN_AGENT_ID` in the generated `.env`.
 
-## Run
+## Verify, then run
 
 ```bash
+npm run verify
 npm start
 ```
 
 ## Verify
-
-Credentials come from `.env` or the shell (same as `npm start`). Stop `npm start`
-first (Ctrl-C); verify starts its own server on the same port.
-
-```bash
-npm run verify
-```
 
 Requires a reachable Account Brief agent. Missing or unauthorized agents fail
 with an explicit error.

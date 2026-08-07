@@ -6,14 +6,19 @@ disable-model-invocation: true
 
 ## Before you start
 
-- Required API scopes (for paths that use API credentials): `MCP`
 - Glean MCP server enabled for your deployment (admin toggle)
 - At least one MCP host installed (Claude Code, Cursor, or Claude Desktop)
 
 Build "Connect Glean MCP to your AI tools" following https://developers.glean.com/cookbook/connect-mcp-hosts
 
+Ask these before running commands:
+
+- What is your work email? It is used once to discover your Glean tenant.
+- Which installed MCP host should be configured?
+- What topic do you know exists in your Glean content for verification?
+
 1. **Detect installed hosts**
-   Check for Claude Code, Cursor, and Claude Desktop on this machine.
+   Check for supported hosts, then ask which one the user wants configured. Do not configure every detected host by default.
 
 2. **Resolve your Glean backend**
    Ask for the user's work email. Locate the installed cookbook plugin root from this skill, run its bundled resolver, and copy the returned backend value. The MCP server URL is <resolved-backend>/mcp/default.
@@ -22,7 +27,7 @@ Build "Connect Glean MCP to your AI tools" following https://developers.glean.co
    node <cookbook-plugin-root>/scripts/resolve-backend.mjs "<work-email>"
    ```
 
-3. **Configure each detected host**
+3. **Configure the selected host**
    --client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token.
 
    ```bash
@@ -34,21 +39,3 @@ Build "Connect Glean MCP to your AI tools" following https://developers.glean.co
 
 5. **Verify**
    Per host, ask "Who's on call for payments-service?" and confirm a real, Glean-cited answer.
-
-## Reference
-
-Use https://{instance}-be.glean.com/mcp/{server-name}; the default server name is default. Configure hosts with npx -y @gleanwork/configure-mcp-server remote --url <url> --client <host>. OAuth with Dynamic Client Registration is the default. Claude Code and Cursor connect over HTTP; Claude Desktop uses the CLI-managed mcp-remote bridge. Supply --token only when the host cannot use OAuth.
-
-## Verify
-
-Treat the queries below as acceptance scenarios, not as assumptions about what every Glean instance
-contains. For a live check, ask the user for an equivalent topic they know exists in their instance
-and confirm the same response properties: grounding, citations, permission filtering, and explicit
-no-answer behavior where applicable. Use fixture or automated checks for corpus-independent
-behavior. Do not claim a live check passed when the required content, credentials, user session, or
-user confirmation was unavailable.
-
-- **Query:** "What does our team own?"
-  **Expected:** The MCP host's chat returns an answer grounded in your Glean content, with citations, proving the server is connected and authenticated.
-- **Query:** "Summarize our most recent incident review"
-  **Expected:** The host returns a cited summary grounded in your own content — not a fabricated one. If it answers without citations, the MCP server is not actually being consulted.

@@ -18,8 +18,7 @@
   "buildMethod": "scaffold",
   "languages": ["typescript"],
   "prerequisites": [
-    "Path A: a Glean API token with SEARCH and CHAT scopes",
-    "Path B: a Glean API token with SEARCH and AGENTS scopes (tiles still use Platform Search)",
+    "A work email for tenant discovery and OAuth sign-in; a scoped Glean API token is the fallback",
     "X_GLEAN_INCLUDE_EXPERIMENTAL=true for Platform Search and Agents",
     "Path B: an Account Brief agent in Agent Builder; set GLEAN_AGENT_ID server-side",
     "Node 20+",
@@ -44,29 +43,67 @@
       "repoPath": "recipes/customer-360/platform-search-chat",
       "language": "typescript",
       "description": "Path A — parallel Platform Search tiles + Client Chat synthesis",
+      "execution": {
+        "questions": [
+          {
+            "id": "email",
+            "prompt": "What is your work email? It is used once to discover your Glean tenant."
+          },
+          {
+            "id": "account",
+            "prompt": "Which account should the page use?"
+          }
+        ],
+        "auth": [
+          {
+            "kind": "oauth-with-token-fallback",
+            "scopes": ["SEARCH", "CHAT"],
+            "setupCommand": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+            "configFile": ".env",
+            "backendVariable": "GLEAN_SERVER_URL",
+            "credentialVariable": "GLEAN_API_TOKEN"
+          }
+        ],
+        "verification": {
+          "kind": "automated",
+          "command": "cd customer-360 && npm run verify",
+          "expectedDuration": "1–3 minutes",
+          "startsOwnServer": true
+        },
+        "run": {
+          "command": "cd customer-360 && npm start",
+          "url": "http://localhost:3000",
+          "userBrowser": true
+        }
+      },
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-search-chat customer-360"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-search-chat customer-360",
+          "kind": "scaffold"
         },
         {
           "title": "Install dependencies",
-          "command": "cd customer-360 && npm install"
+          "command": "cd customer-360 && npm install",
+          "kind": "install"
         },
         {
           "title": "Set credentials",
-          "command": "cd customer-360 && cp .env.example .env",
-          "description": "Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, and GLEAN_ACCOUNT_NAME. The app runs as you; there is no act-as."
-        },
-        {
-          "title": "Run it",
-          "command": "cd customer-360 && npm start",
-          "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
+          "command": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+          "description": "The shipped command discovers the tenant and completes OAuth, with a scoped API token fallback. Set GLEAN_ACCOUNT_NAME in the resulting ignored .env to the account the user supplied. Do not search for a different account.",
+          "kind": "authenticate"
         },
         {
           "title": "Verify",
           "command": "cd customer-360 && npm run verify",
-          "description": "Loads credentials from .env (same as npm start), runs the demo queries against the account you picked, and asserts cited answers with blank unsupported KPI fields. Do not report this recipe as done until this passes."
+          "description": "Allow 1–3 minutes. It starts its own server, runs the demo queries against the supplied account, and asserts cited answers with blank unsupported KPI fields.",
+          "kind": "verify-live"
+        },
+        {
+          "title": "Run it",
+          "command": "cd customer-360 && npm start",
+          "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
+          "kind": "run"
         }
       ]
     },
@@ -74,29 +111,71 @@
       "repoPath": "recipes/customer-360/platform-agents",
       "language": "typescript",
       "description": "Path B — Platform Agents createRun for prescriptive account briefs",
+      "execution": {
+        "questions": [
+          {
+            "id": "email",
+            "prompt": "What is your work email? It is used once to discover your Glean tenant."
+          },
+          {
+            "id": "account",
+            "prompt": "Which account should the page use?"
+          },
+          {
+            "id": "agent-id",
+            "prompt": "What is the ID of your Account Brief agent?"
+          }
+        ],
+        "auth": [
+          {
+            "kind": "oauth-with-token-fallback",
+            "scopes": ["SEARCH", "AGENTS"],
+            "setupCommand": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+            "configFile": ".env",
+            "backendVariable": "GLEAN_SERVER_URL",
+            "credentialVariable": "GLEAN_API_TOKEN"
+          }
+        ],
+        "verification": {
+          "kind": "automated",
+          "command": "cd customer-360 && npm run verify",
+          "expectedDuration": "1–3 minutes",
+          "startsOwnServer": true
+        },
+        "run": {
+          "command": "cd customer-360 && npm start",
+          "url": "http://localhost:3000",
+          "userBrowser": true
+        }
+      },
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-agents customer-360"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-agents customer-360",
+          "kind": "scaffold"
         },
         {
           "title": "Install dependencies",
-          "command": "cd customer-360 && npm install"
+          "command": "cd customer-360 && npm install",
+          "kind": "install"
         },
         {
           "title": "Set credentials",
-          "command": "cd customer-360 && cp .env.example .env",
-          "description": "Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, GLEAN_ACCOUNT_NAME, and GLEAN_AGENT_ID (Account Brief agent). The app runs as you; there is no act-as."
-        },
-        {
-          "title": "Run it",
-          "command": "cd customer-360 && npm start",
-          "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
+          "command": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+          "description": "The shipped command discovers the tenant and completes OAuth, with a scoped API token fallback. Set GLEAN_ACCOUNT_NAME and GLEAN_AGENT_ID in the resulting ignored .env from the answers already supplied.",
+          "kind": "authenticate"
         },
         {
           "title": "Verify",
           "command": "cd customer-360 && npm run verify",
-          "description": "Loads credentials from .env (same as npm start), runs the demo queries against your Account Brief agent, and asserts cited answers (or an explicit failure if the agent is missing or unauthorized). Do not report this recipe as done until this passes."
+          "description": "Allow 1–3 minutes. It starts its own server and verifies the supplied account and Account Brief agent before the app is left running.",
+          "kind": "verify-live"
+        },
+        {
+          "title": "Run it",
+          "command": "cd customer-360 && npm start",
+          "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
+          "kind": "run"
         }
       ]
     }
@@ -104,7 +183,8 @@
   "steps": [
     {
       "title": "Pick a path",
-      "description": "Path A combines parallel Platform Search tiles with Client Chat synthesis. Path B keeps the same page UX but uses a template Account Brief agent."
+      "description": "Path A combines parallel Platform Search tiles with Client Chat synthesis. Path B keeps the same page UX but uses a template Account Brief agent.",
+      "kind": "choose"
     }
   ],
   "scaffoldActions": [],
@@ -150,7 +230,7 @@
       "emphasized": true
     }
   ],
-  "aiPrompt": "Build a Customer 360 account page following https://developers.glean.com/cookbook/customer-360. Ask whether to use (A) Platform Search plus Client Chat or (B) Platform Agents, then build that path. Ask for the account name and source locations. Retrieve every displayed account fact; leave unsupported fields blank. Path A uses parallel Platform Search queries and server-side POST /rest/api/v1/chat with saveChat:false, CONTENT-message parsing, and fragment citations. Path B uses glean.agents.createRun with GLEAN_AGENT_ID. Keep credentials server-side, render empty retrieval honestly, and verify the demo queries against the chosen account.",
+  "aiPrompt": "Build a Customer 360 account page following https://developers.glean.com/cookbook/customer-360. Ask whether to use (A) Platform Search plus Client Chat or (B) Platform Agents, then ask for the account name and the selected path's required configuration. Do not research another account unless the user explicitly asks for help; if they do, run one bounded search and offer at most three choices. Retrieve every displayed account fact and leave unsupported fields blank. Use the scaffold's shipped login command rather than implementing authentication. Verify before leaving the app running.",
   "llmContext": "Use Platform Search for tiles, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. Client Chat answers are CONTENT messages from GLEAN_AI; citations are fragment.citation.sourceDocument. Set saveChat:false for verification and keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME and leave owner, ARR, seats, renewal date, and risk blank unless retrieved documents support them. Use GLEAN_SERVER_URL directly.",
   "goDependency": false,
   "featured": false,

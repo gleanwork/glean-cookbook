@@ -16,10 +16,46 @@
   "requiredScopes": ["CHAT"],
   "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",
+  "execution": {
+    "questions": [
+      {
+        "id": "mode",
+        "prompt": "Do you want the instant fixture demo or a live tenant run?"
+      },
+      {
+        "id": "approved-sources",
+        "prompt": "For a live run, which Glean URL prefixes are approved sources for external answers?"
+      },
+      {
+        "id": "email",
+        "prompt": "For a live run, what is your work email?"
+      }
+    ],
+    "auth": [
+      {
+        "kind": "oauth-with-token-fallback",
+        "scopes": ["CHAT"],
+        "setupCommand": "cd rfp-responder && npm run login -- --email \"<work-email>\"",
+        "configFile": ".env",
+        "backendVariable": "GLEAN_SERVER_URL",
+        "credentialVariable": "GLEAN_API_TOKEN"
+      }
+    ],
+    "verification": {
+      "kind": "user-browser",
+      "expectedDuration": "under 1 minute for fixtures; 1–3 minutes live",
+      "startsOwnServer": false
+    },
+    "run": {
+      "command": "cd rfp-responder && npm start",
+      "url": "http://localhost:3000",
+      "userBrowser": true
+    }
+  },
   "languages": ["typescript"],
   "prerequisites": [
     "A Glean instance with your company content indexed",
-    "Your own OAuth access token or Glean API token with the CHAT scope (no admin or global token — the app runs as you)",
+    "A work email for tenant discovery and OAuth sign-in; a CHAT-scoped API token is the fallback",
     "Node 20+"
   ],
   "demoQueries": [
@@ -44,29 +80,35 @@
   "steps": [
     {
       "title": "Scaffold the project",
-      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder"
+      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder",
+      "kind": "scaffold"
     },
     {
       "title": "Install dependencies",
-      "command": "cd rfp-responder && npm install"
+      "command": "cd rfp-responder && npm install",
+      "kind": "install"
     },
     {
       "title": "Try it with no credentials",
       "command": "cd rfp-responder && npm run verify:fixture",
-      "description": "Runs the whole flow against recorded responses and asserts the failure contract: no ungrounded row carries an answer, every answered row carries a citation, and export is gated on approval."
+      "description": "Runs the whole flow against recorded responses and asserts the failure contract: no ungrounded row carries an answer, every answered row carries a citation, and export is gated on approval.",
+      "kind": "verify-fixture"
     },
     {
       "title": "Set credentials",
-      "command": "cd rfp-responder && cp .env.example .env",
-      "description": "Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. The app runs as you; there is no act-as."
+      "command": "cd rfp-responder && npm run login -- --email \"<work-email>\"",
+      "description": "Only for a live run. Use the shipped login flow, then configure the approved source prefixes supplied up front. The app runs as the signed-in user; there is no act-as.",
+      "kind": "authenticate"
     },
     {
       "title": "Run it",
-      "command": "cd rfp-responder && npm start"
+      "command": "cd rfp-responder && npm start",
+      "kind": "run"
     },
     {
       "title": "Verify",
-      "description": "Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered."
+      "description": "Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered.",
+      "kind": "verify-live"
     }
   ],
   "combines": [

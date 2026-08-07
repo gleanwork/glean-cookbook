@@ -15,6 +15,34 @@
   "requiredScopes": ["MCP"],
   "authMethod": ["custom"],
   "buildMethod": "scaffold",
+  "execution": {
+    "questions": [
+      {
+        "id": "email",
+        "prompt": "What is your work email? It is used once to discover your Glean tenant."
+      },
+      {
+        "id": "host",
+        "prompt": "Which installed MCP host should be configured?"
+      },
+      {
+        "id": "topic",
+        "prompt": "What topic do you know exists in your Glean content for verification?"
+      }
+    ],
+    "auth": [
+      {
+        "kind": "host-managed",
+        "scopes": [],
+        "setupCommand": "npx -y @gleanwork/configure-mcp-server remote --url <resolved-backend>/mcp/default --client <host>"
+      }
+    ],
+    "verification": {
+      "kind": "user-browser",
+      "expectedDuration": "about 1 minute after host restart",
+      "startsOwnServer": false
+    }
+  },
   "prerequisites": [
     "Glean MCP server enabled for your deployment (admin toggle)",
     "At least one MCP host installed (Claude Code, Cursor, or Claude Desktop)"
@@ -33,25 +61,30 @@
   "steps": [
     {
       "title": "Detect installed hosts",
-      "description": "Check for Claude Code, Cursor, and Claude Desktop on this machine."
+      "description": "Check for supported hosts, then ask which one the user wants configured. Do not configure every detected host by default.",
+      "kind": "choose"
     },
     {
       "title": "Resolve your Glean backend",
       "command": "node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"",
-      "description": "Ask for the user's work email. Locate the installed cookbook plugin root from this skill, run its bundled resolver, and copy the returned backend value. The MCP server URL is <resolved-backend>/mcp/default."
+      "description": "Ask for the user's work email. Locate the installed cookbook plugin root from this skill, run its bundled resolver, and copy the returned backend value. The MCP server URL is <resolved-backend>/mcp/default.",
+      "kind": "configure"
     },
     {
-      "title": "Configure each detected host",
+      "title": "Configure the selected host",
       "command": "npx -y @gleanwork/configure-mcp-server remote --url <resolved-backend>/mcp/default --client <host>",
-      "description": "--client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token."
+      "description": "--client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token.",
+      "kind": "authenticate"
     },
     {
       "title": "Restart the host app",
-      "description": "Cursor and Claude Code pick up the new server on restart; Claude Desktop needs the hammer icon to confirm Glean tools are available."
+      "description": "Cursor and Claude Code pick up the new server on restart; Claude Desktop needs the hammer icon to confirm Glean tools are available.",
+      "kind": "run"
     },
     {
       "title": "Verify",
-      "description": "Per host, ask \"Who's on call for payments-service?\" and confirm a real, Glean-cited answer."
+      "description": "Per host, ask \"Who's on call for payments-service?\" and confirm a real, Glean-cited answer.",
+      "kind": "verify-live"
     }
   ],
   "scaffoldActions": [],

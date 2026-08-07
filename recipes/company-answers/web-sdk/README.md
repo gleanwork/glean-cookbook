@@ -6,12 +6,11 @@ Path A of the [Company Answers](https://developers.glean.com/cookbook/company-an
 
 ```bash
 npm install
-cp .env.example .env.local
+npm run configure
 ```
 
-Set `VITE_GLEAN_BACKEND` to your tenant's HTTPS backend origin, such as
-`https://example-be.glean.com`. Optionally set `VITE_GLEAN_INITIAL_MESSAGE` to a question about
-content you know exists in your tenant.
+The configure command discovers your tenant from your work email and writes `.env.local`. Set
+`VITE_GLEAN_INITIAL_MESSAGE` to a question about content you know exists in your tenant.
 
 ## Run
 

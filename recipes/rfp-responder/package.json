@@ -5,6 +5,7 @@
   "description": "RFP & questionnaire responder — grounded, cited draft answers with a human approval gate.",
   "type": "module",
   "scripts": {
+    "login": "node scripts/glean-auth.mjs login --scopes chat",
     "start": "tsx server.ts",
     "verify": "node scripts/verify.mjs",
     "verify:fixture": "GLEAN_USE_FIXTURE=true node scripts/verify.mjs",

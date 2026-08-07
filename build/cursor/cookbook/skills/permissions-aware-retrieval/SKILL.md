@@ -6,8 +6,7 @@ disable-model-invocation: true
 
 ## Before you start
 
-- Required API scopes (for paths that use API credentials): `SEARCH`
-- An OAuth access token or Glean API token with the SEARCH scope (your own — no global/admin token needed)
+- A work email for tenant discovery and OAuth sign-in; a SEARCH-scoped API token is the fallback
 - X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)
 - An LLM API key (any provider; example uses Claude)
 - uv (for the Python path) or Node 20+
@@ -21,6 +20,14 @@ Build "Ground your own LLM app in Glean" following https://developers.glean.com/
 
 Platform API search.query → snippets → LLM with citations
 
+Ask these before running commands:
+
+- What is your work email? It is used once to discover your Glean tenant.
+- What topic can you access and expect Glean to answer?
+- What topic should your account not be able to access?
+
+Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+
 1. **Scaffold the project**
 
    ```bash
@@ -28,17 +35,17 @@ Platform API search.query → snippets → LLM with citations
    ```
 
 2. **Set credentials**
-   Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY. This variant loads .env automatically.
+   Use the shipped login flow. Then have the user enter ANTHROPIC_API_KEY in ignored .env without exposing it in chat or command output.
 
    ```bash
-   cd permissions-aware-retrieval && cp .env.example .env
+   cd permissions-aware-retrieval && node scripts/glean-auth.mjs login --scopes search --email "<work-email>"
    ```
 
 3. **Run it**
    Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run — there's no requirements.txt, venv, or activate step.
 
    ```bash
-   cd permissions-aware-retrieval && uv run main.py "What's our PTO policy?"
+   cd permissions-aware-retrieval && uv run main.py "<allowed-topic>"
    ```
 
 4. **Verify**
@@ -47,6 +54,14 @@ Platform API search.query → snippets → LLM with citations
 ### TypeScript
 
 Same flow in TypeScript
+
+Ask these before running commands:
+
+- What is your work email? It is used once to discover your Glean tenant.
+- What topic can you access and expect Glean to answer?
+- What topic should your account not be able to access?
+
+Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
 
 1. **Scaffold the project**
 
@@ -61,58 +76,21 @@ Same flow in TypeScript
    ```
 
 3. **Set credentials**
-   Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY — loaded automatically via dotenv in this variant.
+   Use the shipped login flow. Then have the user enter ANTHROPIC_API_KEY in ignored .env without exposing it in chat or command output.
 
    ```bash
-   cd permissions-aware-retrieval && cp .env.example .env
+   cd permissions-aware-retrieval && npm run login -- --email "<work-email>"
    ```
 
 4. **Run it**
 
    ```bash
-   cd permissions-aware-retrieval && npm start -- "What's our PTO policy?"
+   cd permissions-aware-retrieval && npm start -- "<allowed-topic>"
    ```
 
 5. **Verify**
    Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge.
 
-## Reference
-
-Use Platform Search glean.search.query with query, page_size, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Results expose title, url, and snippets as strings. The caller's OAuth credential is the permission boundary; send no impersonation header. Pass only retrieved, ACL-filtered content to the model, include source links, and refuse to answer when retrieval is empty.
-
-## Authentication
-
-Use the first available credential path:
-
-1. **Glean OAuth:** ask for the user's work email and run:
-   ```bash
-   node <plugin-root>/scripts/resolve-backend.mjs <work-email>
-   ```
-   If `oauthAvailable` is true, register a public client through the returned backend's Dynamic
-   Client Registration endpoint and use authorization code + PKCE. Reuse the client id and refresh
-   token.
-2. **External IdP OAuth:** if Glean OAuth is unavailable, ask whether the user's administrator has
-   configured Okta, Azure AD, Google, or another IdP for Glean Client API access. Use that sign-in
-   flow when available.
-3. **Glean API token:** otherwise request a token carrying the scopes declared by the recipe.
-
-Do not use client credentials for an end-user Client API integration. Keep access and refresh tokens
-server-side.
-
 ## Language
 
 Ask me which language to build in before starting: Python, TypeScript.
-
-## Verify
-
-Treat the queries below as acceptance scenarios, not as assumptions about what every Glean instance
-contains. For a live check, ask the user for an equivalent topic they know exists in their instance
-and confirm the same response properties: grounding, citations, permission filtering, and explicit
-no-answer behavior where applicable. Use fixture or automated checks for corpus-independent
-behavior. Do not claim a live check passed when the required content, credentials, user session, or
-user confirmation was unavailable.
-
-- **Query:** "What's our PTO policy?"
-  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
-- **Query:** "Ask for something you personally don't have access to (another team's compensation review, an HR case file)"
-  **Expected:** Retrieval returns nothing, so the app must say it has no information rather than answering from the model's own knowledge. This is the property that matters: your credential is the permission boundary, and an empty retrieval must produce a refusal, not a confident fabrication.

@@ -17,9 +17,14 @@ const START_TIMEOUT_MS = 15_000;
 // the ones the recipe documents. They were hardcoded once and drifted: this
 // script went on asking about a demo corpus long after the recipe stopped using
 // one. Regenerate with `npm run build:registry` in the cookbook repo.
-const QUERIES = JSON.parse(
-  fs.readFileSync(path.join(import.meta.dirname, 'demo-queries.json'), 'utf8'),
-);
+const QUERIES = process.env.GLEAN_DEMO_QUERY?.trim()
+  ? [process.env.GLEAN_DEMO_QUERY.trim()]
+  : JSON.parse(
+      fs.readFileSync(
+        path.join(import.meta.dirname, 'demo-queries.json'),
+        'utf8',
+      ),
+    );
 
 /**
  * What every query must produce. The recipe's promise is a grounded answer, so

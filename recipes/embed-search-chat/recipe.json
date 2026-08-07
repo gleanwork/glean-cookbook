@@ -14,14 +14,39 @@
   "timeEstimate": "~15 min (minimal)",
   "icon": "deep-research",
   "requiredScopes": ["SEARCH", "CHAT"],
-  "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
+  "authMethod": ["web-sdk-cookie"],
   "buildMethod": "integrate",
+  "execution": {
+    "questions": [
+      {
+        "id": "email",
+        "prompt": "What is your work email? It is used once to discover your Glean tenant."
+      },
+      {
+        "id": "topic",
+        "prompt": "What topic do you know exists in your Glean content?"
+      }
+    ],
+    "auth": [
+      {
+        "kind": "browser-cookie",
+        "scopes": []
+      }
+    ],
+    "verification": {
+      "kind": "user-browser",
+      "expectedDuration": "about 1 minute after the integration builds",
+      "startsOwnServer": false
+    },
+    "run": {
+      "userBrowser": true
+    }
+  },
   "languages": ["typescript", "javascript"],
   "prerequisites": [
     "A Glean instance with content indexed",
     "Your Glean web app domain (typically app.glean.com — see admin/about-glean)",
-    "A frontend app or page where you can install an npm package (or add a script tag) and a container element",
-    "For token auth only: an admin API key from the Token Management page"
+    "A frontend app or page where you can install an npm package (or add a script tag) and a container element"
   ],
   "demoQueries": [
     {
@@ -62,7 +87,7 @@
       "emphasized": true
     }
   ],
-  "aiPrompt": "Embed Glean search and chat in my internal web app using the Glean Web\nSDK, following the recipe at\nhttps://developers.glean.com/cookbook/embed-search-chat\n\nSteps:\n1. Ask me for my Glean backend URL (https://{instance}-be.glean.com).\n2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no\n   build toolchain, fall back to the script tag from my Glean app domain:\n   <script defer src=\"https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js\"></script>\n   — the same methods appear on window.GleanWebSDK.)\n3. Add a search box and results container, then:\n   import { renderSearchBox, renderSearchResults } from \"@gleanwork/web-sdk\";\n   renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>\n     renderSearchResults(resultsElement, { query }) });\n4. Add a chat container: position: relative, display: block, width: 100%,\n   height: 480px. Ask me for a topic I know exists in my Glean instance,\n   then pass that question as initialMessage so the user-mediated check is\n   relevant to my tenant.\n5. Default SSO auth needs no extra configuration. If I ask for\n   server-to-server auth instead, follow\n   https://developers.glean.com/libraries/web-sdk/authentication/server-to-server\n   and keep the API key strictly server-side.\n\nSee Verify below for what a correct build must do.",
+  "aiPrompt": "Embed Glean search and chat in my internal web app using the Glean Web\nSDK, following the recipe at\nhttps://developers.glean.com/cookbook/embed-search-chat\n\nSteps:\n1. Resolve my Glean backend from the work email already supplied by running the cookbook plugin's resolve-backend.mjs script.\n2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no\n   build toolchain, fall back to the script tag from my Glean app domain:\n   <script defer src=\"https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js\"></script>\n   — the same methods appear on window.GleanWebSDK.)\n3. Add a search box and results container, then:\n   import { renderSearchBox, renderSearchResults } from \"@gleanwork/web-sdk\";\n   renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>\n     renderSearchResults(resultsElement, { query }) });\n4. Add a chat container: position: relative, display: block, width: 100%,\n   height: 480px. Use the topic already supplied as initialMessage so the user-mediated check is relevant to my tenant.\n5. Default SSO auth needs no extra configuration. If I ask for\n   server-to-server auth instead, follow\n   https://developers.glean.com/libraries/web-sdk/authentication/server-to-server\n   and keep the API key strictly server-side.\n\nSee Verify below for what a correct build must do.",
   "llmContext": "Use @gleanwork/web-sdk named exports renderSearchBox, renderSearchResults, and renderChat; the script-tag build exposes the same methods on window.GleanWebSDK. Set backend explicitly. Prefer the user's Glean SSO session; token auth must be minted by a backend and never exposed in browser code. Results remain permission-filtered for the signed-in user. Give every embedded widget an explicitly sized container.",
   "goDependency": false,
   "featured": true,

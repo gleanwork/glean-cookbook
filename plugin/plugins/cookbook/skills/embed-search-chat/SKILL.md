@@ -10,7 +10,13 @@ disable-model-invocation: true
 - A Glean instance with content indexed
 - Your Glean web app domain (typically app.glean.com — see admin/about-glean)
 - A frontend app or page where you can install an npm package (or add a script tag) and a container element
-- For token auth only: an admin API key from the Token Management page
+
+Ask these before running commands:
+
+- What is your work email? It is used once to discover your Glean tenant.
+- What topic do you know exists in your Glean content?
+
+Cookie SSO requires the user's normal signed-in browser. Never open or automate the app yourself.
 
 Embed Glean search and chat in my internal web app using the Glean Web
 SDK, following the recipe at
@@ -18,7 +24,7 @@ https://developers.glean.com/cookbook/embed-search-chat
 
 Steps:
 
-1. Ask me for my Glean backend URL (https://{instance}-be.glean.com).
+1. Resolve my Glean backend from the work email already supplied by running the cookbook plugin's resolve-backend.mjs script.
 2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no
    build toolchain, fall back to the script tag from my Glean app domain:
    <script defer src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"></script>
@@ -28,9 +34,7 @@ Steps:
    renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>
    renderSearchResults(resultsElement, { query }) });
 4. Add a chat container: position: relative, display: block, width: 100%,
-   height: 480px. Ask me for a topic I know exists in my Glean instance,
-   then pass that question as initialMessage so the user-mediated check is
-   relevant to my tenant.
+   height: 480px. Use the topic already supplied as initialMessage so the user-mediated check is relevant to my tenant.
 5. Default SSO auth needs no extra configuration. If I ask for
    server-to-server auth instead, follow
    https://developers.glean.com/libraries/web-sdk/authentication/server-to-server
@@ -48,15 +52,7 @@ Use @gleanwork/web-sdk named exports renderSearchBox, renderSearchResults, and r
 
 ## Authentication
 
-This recipe offers a path choice. Apply the block matching the path the user picks:
-
-### `web-sdk-cookie`
-
 {{> auth-web-sdk-cookie}}
-
-### `client-api-oauth-or-token`
-
-{{> auth-client-api}}
 
 ## Language
 

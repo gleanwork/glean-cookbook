@@ -16,10 +16,50 @@
   "requiredScopes": ["SEARCH", "CHAT", "AGENTS"],
   "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",
+  "execution": {
+    "questions": [
+      {
+        "id": "mode",
+        "prompt": "Do you want the instant fixture demo or a live tenant run?"
+      },
+      {
+        "id": "service",
+        "prompt": "For a live run, which service has a catalog entry, runbook, and past incident in Glean?"
+      },
+      {
+        "id": "orchestrator",
+        "prompt": "For a live run, use direct Search + Chat or an existing Glean agent?"
+      },
+      {
+        "id": "email",
+        "prompt": "For a live run, what is your work email?"
+      }
+    ],
+    "auth": [
+      {
+        "kind": "oauth-with-token-fallback",
+        "scopes": ["SEARCH", "CHAT"],
+        "setupCommand": "cd incident-copilot && npm run login -- --email \"<work-email>\"",
+        "configFile": ".env",
+        "backendVariable": "GLEAN_SERVER_URL",
+        "credentialVariable": "GLEAN_API_TOKEN"
+      }
+    ],
+    "verification": {
+      "kind": "user-browser",
+      "expectedDuration": "under 1 minute for fixtures; 1–3 minutes live",
+      "startsOwnServer": false
+    },
+    "run": {
+      "command": "cd incident-copilot && npm start",
+      "url": "http://localhost:3000",
+      "userBrowser": true
+    }
+  },
   "languages": ["typescript"],
   "prerequisites": [
     "A Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review",
-    "Your own OAuth access token or Glean API token with SEARCH and CHAT scopes (add AGENTS for the agent-orchestrated path)",
+    "A work email for tenant discovery and OAuth sign-in; a scoped API token is the fallback",
     "X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)",
     "Node 20+"
   ],
@@ -49,29 +89,35 @@
   "steps": [
     {
       "title": "Scaffold the project",
-      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot"
+      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot",
+      "kind": "scaffold"
     },
     {
       "title": "Install dependencies",
-      "command": "cd incident-copilot && npm install"
+      "command": "cd incident-copilot && npm install",
+      "kind": "install"
     },
     {
       "title": "Watch the governance hold, with no credentials",
       "command": "cd incident-copilot && npm run verify:fixture",
-      "description": "Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited."
+      "description": "Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited.",
+      "kind": "verify-fixture"
     },
     {
       "title": "Set credentials",
-      "command": "cd incident-copilot && cp .env.example .env",
-      "description": "Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. Optionally set GLEAN_AGENT_ID for the agent-orchestrated path, and INCIDENT_ACTOR to change who the dashboard acts as."
+      "command": "cd incident-copilot && npm run login -- --email \"<work-email>\"",
+      "description": "Only for a live run. Use npm run login for direct Search + Chat, or npm run login:agent when the user selected an existing Glean agent. Set WATCHED_SERVICES to the service already supplied and GLEAN_AGENT_ID only for the agent path.",
+      "kind": "authenticate"
     },
     {
       "title": "Run it",
-      "command": "cd incident-copilot && npm start"
+      "command": "cd incident-copilot && npm start",
+      "kind": "run"
     },
     {
       "title": "Verify",
-      "description": "Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything."
+      "description": "Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything.",
+      "kind": "verify-live"
     }
   ],
   "combines": [

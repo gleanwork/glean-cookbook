@@ -16,6 +16,30 @@
   "requiredScopes": ["CHAT"],
   "authMethod": ["custom"],
   "buildMethod": "third-party-build",
+  "execution": {
+    "questions": [
+      {
+        "id": "email",
+        "prompt": "What is your work email? It is used once to discover your Glean tenant."
+      },
+      {
+        "id": "topic",
+        "prompt": "What HR topic do you know exists in your Glean content?"
+      }
+    ],
+    "auth": [
+      {
+        "kind": "hosted-secret",
+        "scopes": ["CHAT"],
+        "credentialVariable": "GLEAN_API_TOKEN"
+      }
+    ],
+    "verification": {
+      "kind": "third-party",
+      "expectedDuration": "user-mediated after Replit finishes building",
+      "startsOwnServer": false
+    }
+  },
   "prerequisites": [
     "A Replit account with Agent access",
     "A Glean API token with the CHAT scope (kept in Replit Secrets; every request uses this one token owner's access)",
@@ -39,7 +63,7 @@
     }
   ],
   "scaffoldActions": [],
-  "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Generate the Replit prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt. It is one service identity, so keep this prototype\n   private; multi-user deployment requires per-user Glean OAuth.\n3. After Replit builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
+  "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt. It is one service identity, so keep this prototype\n   private; multi-user deployment requires per-user Glean OAuth.\n3. After Replit builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
   "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token server-side, call glean.client.chat.create with USER message fragments, read CONTENT text and fragment.citation.sourceDocument citations, and show cited answers or an explicit no-answer state.",
   "goDependency": false,
   "featured": false,

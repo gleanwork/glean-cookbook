@@ -5,6 +5,7 @@
     ".agents/plugins/marketplace.json",
     "build/codex/cookbook/.codex-plugin/plugin.json",
     "build/codex/cookbook/.mcp.json",
+    "build/codex/cookbook/scripts/glean-auth.mjs",
     "build/codex/cookbook/scripts/resolve-backend.mjs",
     "build/codex/cookbook/scripts/scaffold-recipe.mjs",
     "build/codex/cookbook/skills/a2a-client/SKILL.md",

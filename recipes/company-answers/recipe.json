@@ -19,8 +19,7 @@
   "languages": ["typescript"],
   "prerequisites": [
     "A Glean instance with content indexed",
-    "An OAuth access token or Glean API token with the CHAT scope",
-    "For the Web SDK path: your tenant backend URL and an existing Glean session in your normal browser",
+    "For the Web SDK path: an existing Glean session in your normal browser",
     "Node 20.19+ or 22.12+"
   ],
   "demoQueries": [
@@ -38,28 +37,64 @@
       "repoPath": "recipes/company-answers/web-sdk",
       "language": "typescript",
       "description": "Web SDK variant — renderChat in a page",
+      "execution": {
+        "questions": [
+          {
+            "id": "email",
+            "prompt": "What is your work email? It is used once to discover your Glean tenant."
+          },
+          {
+            "id": "topic",
+            "prompt": "What topic do you know exists in your Glean content?"
+          }
+        ],
+        "auth": [
+          {
+            "kind": "browser-cookie",
+            "scopes": [],
+            "setupCommand": "cd company-answers && npm run configure -- --email \"<work-email>\"",
+            "configFile": ".env.local",
+            "backendVariable": "VITE_GLEAN_BACKEND"
+          }
+        ],
+        "verification": {
+          "kind": "user-browser",
+          "expectedDuration": "about 1 minute",
+          "startsOwnServer": false
+        },
+        "run": {
+          "command": "cd company-answers && npm run dev",
+          "url": "the Local URL printed by Vite",
+          "userBrowser": true
+        }
+      },
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers",
+          "kind": "scaffold"
         },
         {
           "title": "Install dependencies",
-          "command": "cd company-answers && npm install"
+          "command": "cd company-answers && npm install",
+          "kind": "install"
         },
         {
           "title": "Configure the tenant",
-          "command": "cd company-answers && cp .env.example .env.local",
-          "description": "Set VITE_GLEAN_BACKEND to the tenant's HTTPS backend origin. Optionally set VITE_GLEAN_INITIAL_MESSAGE to a question about content the user knows exists."
+          "command": "cd company-answers && npm run configure -- --email \"<work-email>\"",
+          "description": "Enter the user's work email when prompted. The shipped discovery command writes VITE_GLEAN_BACKEND to .env.local. Set VITE_GLEAN_INITIAL_MESSAGE to the topic they supplied.",
+          "kind": "configure"
         },
         {
           "title": "Run it",
           "command": "cd company-answers && npm run dev",
-          "description": "Keep Vite running, report its exact Local URL, and wait for the user to open it in their normal signed-in browser. Never open or automate the URL yourself."
+          "description": "Keep Vite running, report its exact Local URL, and wait for the user to open it in their normal signed-in browser. Never open or automate the URL yourself.",
+          "kind": "run"
         },
         {
           "title": "Verify",
-          "description": "Give the user the exact printed local URL to open in their normal signed-in browser. Ask them to try a topic they know exists in their Glean instance and confirm a real, cited answer renders inside Glean's chat UI."
+          "description": "Give the user the exact printed local URL to open in their normal signed-in browser. Ask them to try a topic they know exists in their Glean instance and confirm a real, cited answer renders inside Glean's chat UI.",
+          "kind": "verify-live"
         }
       ]
     },
@@ -67,29 +102,67 @@
       "repoPath": "recipes/company-answers/chat-api",
       "language": "typescript",
       "description": "Chat API variant — one chat.create call, citations rendered",
+      "execution": {
+        "questions": [
+          {
+            "id": "email",
+            "prompt": "What is your work email? It is used once to discover your Glean tenant."
+          },
+          {
+            "id": "topic",
+            "prompt": "What topic do you know exists in your Glean content?"
+          }
+        ],
+        "auth": [
+          {
+            "kind": "oauth-with-token-fallback",
+            "scopes": ["CHAT"],
+            "setupCommand": "cd company-answers && npm run login -- --email \"<work-email>\"",
+            "configFile": ".env",
+            "backendVariable": "GLEAN_SERVER_URL",
+            "credentialVariable": "GLEAN_API_TOKEN"
+          }
+        ],
+        "verification": {
+          "kind": "automated",
+          "command": "cd company-answers && npm run verify",
+          "expectedDuration": "1–3 minutes",
+          "startsOwnServer": true
+        },
+        "run": {
+          "command": "cd company-answers && npm start",
+          "url": "http://localhost:3000",
+          "userBrowser": true
+        }
+      },
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers",
+          "kind": "scaffold"
         },
         {
           "title": "Install dependencies",
-          "command": "cd company-answers && npm install"
+          "command": "cd company-answers && npm install",
+          "kind": "install"
         },
         {
           "title": "Set credentials",
-          "command": "cd company-answers && cp .env.example .env",
-          "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — the Authentication section below covers how to get a token."
-        },
-        {
-          "title": "Run it",
-          "command": "cd company-answers && npm start",
-          "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the deterministic verify step below, which starts its own instance."
+          "command": "cd company-answers && npm run login -- --email \"<work-email>\"",
+          "description": "The shipped command discovers the tenant from the user's work email, signs them in with OAuth, and writes the backend plus short-lived access token to ignored .env. Set GLEAN_DEMO_QUERY to the supplied topic. If tenant OAuth is unavailable, enter a CHAT-scoped API token as the fallback.",
+          "kind": "authenticate"
         },
         {
           "title": "Verify",
           "command": "cd company-answers && npm run verify",
-          "description": "Starts the server and checks the example PTO queries for a non-empty answer with deduplicated citations. Run this when the instance contains PTO content; otherwise use the running app with a topic the user knows exists and check the same response shape."
+          "description": "Takes about 1–3 minutes. It starts its own server and checks the configured topic for a non-empty answer with deduplicated citations.",
+          "kind": "verify-live"
+        },
+        {
+          "title": "Run it",
+          "command": "cd company-answers && npm start",
+          "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
+          "kind": "run"
         }
       ]
     }
@@ -97,7 +170,8 @@
   "steps": [
     {
       "title": "Pick a path",
-      "description": "Path A (Web SDK) renders Glean's own chat UI for you — fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend — you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer."
+      "description": "Path A (Web SDK) renders Glean's own chat UI for you — fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend — you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer.",
+      "kind": "choose"
     }
   ],
   "scaffoldActions": [],

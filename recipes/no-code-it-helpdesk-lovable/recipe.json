@@ -16,6 +16,30 @@
   "requiredScopes": ["CHAT"],
   "authMethod": ["custom"],
   "buildMethod": "third-party-build",
+  "execution": {
+    "questions": [
+      {
+        "id": "email",
+        "prompt": "What is your work email? It is used once to discover your Glean tenant."
+      },
+      {
+        "id": "topic",
+        "prompt": "What IT topic do you know exists in your Glean content?"
+      }
+    ],
+    "auth": [
+      {
+        "kind": "hosted-secret",
+        "scopes": ["CHAT"],
+        "credentialVariable": "GLEAN_API_TOKEN"
+      }
+    ],
+    "verification": {
+      "kind": "third-party",
+      "expectedDuration": "user-mediated after Lovable finishes building",
+      "startsOwnServer": false
+    }
+  },
   "prerequisites": [
     "A Lovable account",
     "A Glean API token with the CHAT scope (kept as a Lovable backend secret; every request uses this one token owner's access)",
@@ -39,7 +63,7 @@
     }
   ],
   "scaffoldActions": [],
-  "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt. It is one service identity, so keep this prototype private;\n   multi-user deployment requires per-user Glean OAuth.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
+  "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt. It is one service identity, so keep this prototype private;\n   multi-user deployment requires per-user Glean OAuth.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
   "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations.",
   "goDependency": false,
   "featured": false,
