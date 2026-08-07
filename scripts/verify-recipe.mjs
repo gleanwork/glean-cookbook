@@ -43,7 +43,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { loginCommand, resolveCredential } from './verify-lib/auth.mjs';
+import { resolveCredential } from './verify-lib/auth.mjs';
 import { verificationExitCode } from './verify-lib/outcome.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -174,11 +174,7 @@ if (missing.length > 0) {
     `${recipeId} needs environment that isn't set:\n` +
       missing.map((n) => `  ${n}`).join('\n') +
       `\n\nThis gate verifies against a live Glean instance; there is no ` +
-      `offline mode, because a skipped check reads as a pass.` +
-      (missing.some((n) => n.includes('GLEAN_INSTANCE'))
-        ? ''
-        : `\n\nFor a Client API credential you can also sign in once:\n  ` +
-          `${loginCommand(recipe)}`),
+      `offline mode, because a skipped check reads as a pass.`,
   );
 }
 

@@ -3,7 +3,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
+import { spawnSync } from 'node:child_process';
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 
 import {
   awaitRedirect,
@@ -13,6 +15,22 @@ import {
   storedToken,
   updateEnvFile,
 } from './recipe-auth.mjs';
+
+test('can be imported when Node has no script argument', () => {
+  const moduleUrl = pathToFileURL(
+    path.join(import.meta.dirname, 'recipe-auth.mjs'),
+  ).href;
+  const result = spawnSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '--eval',
+      `await import(${JSON.stringify(moduleUrl)})`,
+    ],
+    { encoding: 'utf8' },
+  );
+  assert.equal(result.status, 0, result.stderr);
+});
 
 test('discovers and normalizes a customer backend', async () => {
   const result = await discoverBackend(
@@ -70,6 +88,10 @@ test('creates an RFC 7636 S256 PKCE pair', () => {
 
 test('configures a Web SDK env file without starting OAuth', async () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'recipe-auth-'));
+  fs.writeFileSync(
+    path.join(directory, '.env.example'),
+    'VITE_GLEAN_BACKEND=\nCHECKLIST_FILE=./steps.example.json\n',
+  );
   await run(
     [
       'configure',
@@ -85,6 +107,14 @@ test('configures a Web SDK env file without starting OAuth', async () => {
   assert.match(
     fs.readFileSync(path.join(directory, '.env.local'), 'utf8'),
     /VITE_GLEAN_BACKEND=https:\/\/acme-be\.glean\.com/u,
+  );
+  assert.match(
+    fs.readFileSync(path.join(directory, '.env.local'), 'utf8'),
+    /CHECKLIST_FILE=\.\/steps\.example\.json/u,
+  );
+  assert.equal(
+    fs.statSync(path.join(directory, '.env.local')).mode & 0o777,
+    0o600,
   );
 });
 
