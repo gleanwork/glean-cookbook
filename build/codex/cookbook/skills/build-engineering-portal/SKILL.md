@@ -10,7 +10,8 @@ disable-model-invocation: true
 - A Glean-issued Indexing API token
 - Node.js 18+ to run the portal app locally
 
-Ask these before running commands:
+Ask these before running commands. Ask one at a time, waiting for each
+answer before asking the next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
 - Which custom datasource should receive the service catalog?

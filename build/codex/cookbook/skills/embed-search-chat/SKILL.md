@@ -11,7 +11,8 @@ disable-model-invocation: true
 - Your Glean web app domain (typically app.glean.com — see admin/about-glean)
 - A frontend app or page where you can install an npm package (or add a script tag) and a container element
 
-Ask these before running commands:
+Ask these before running commands. Ask one at a time, waiting for each
+answer before asking the next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What topic do you know exists in your Glean content?

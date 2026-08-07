@@ -13,7 +13,8 @@ disable-model-invocation: true
 
 Build "On-call copilot with a real approval gate" following https://developers.glean.com/cookbook/incident-copilot
 
-Ask these before running commands:
+Ask these before running commands. Ask one at a time, waiting for each
+answer before asking the next — do not put them all in one message:
 
 - Do you want the instant fixture demo or a live tenant run?
 - For a live run, which service has a catalog entry, runbook, and past incident in Glean?

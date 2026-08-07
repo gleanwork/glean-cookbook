@@ -128,7 +128,18 @@ function renderExecutionIntro(execution) {
   if (!execution) return '';
   const lines = [];
   if (execution.questions?.length > 0) {
-    lines.push('Ask these before running commands:');
+    // One question per turn, not a list in a single message. Setup answers are
+    // mostly free text — an email, a checklist — and a reader answering several
+    // at once has to structure the reply themselves, which is where they drop
+    // one or guess at the format.
+    //
+    // Bulleted, not numbered: the build steps below are a numbered list, and a
+    // second one directly above it reads as part of the same sequence.
+    lines.push(
+      'Ask these before running commands. Ask one at a time, waiting for each',
+      'answer before asking the next — do not put them all in one message:',
+      '',
+    );
     for (const question of execution.questions)
       lines.push(`- ${question.prompt}`);
   }
@@ -170,6 +181,18 @@ function renderStepsBody(recipe) {
   const variantsWithSteps = (recipe.codeAssets ?? []).filter(
     (asset) => asset.steps?.length > 0,
   );
+
+  // With more than one variant the reader has to choose before anything else is
+  // relevant, and the questions under each variant only apply once they have.
+  // Saying so keeps the choice from being bundled into the same message as the
+  // variant's own questions.
+  if (variantsWithSteps.length > 1) {
+    parts.push(
+      'Ask which variant to build first, on its own, and wait for the answer.' +
+        ' Then follow only that variant below, asking its questions one at a time.',
+    );
+  }
+
   for (const asset of variantsWithSteps) {
     parts.push(
       `### ${humanizeVariantLabel(asset.repoPath)}\n\n${asset.description}`,

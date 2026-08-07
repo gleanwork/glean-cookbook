@@ -11,7 +11,8 @@ disable-model-invocation: true
 - A Glean API token with the CHAT scope (kept in Replit Secrets; every request uses this one token owner's access)
 - A private Repl — multi-user deployments require authenticated per-user Glean OAuth
 
-Ask these before running commands:
+Ask these before running commands. Ask one at a time, waiting for each
+answer before asking the next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What HR topic do you know exists in your Glean content?
