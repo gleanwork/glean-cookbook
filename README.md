@@ -1,13 +1,14 @@
 # Glean Cookbook
 
-Runnable, copy-paste-able examples of building on the [Glean platform](https://developers.glean.com) — the Indexing API, Platform API, Web SDK, Connector SDK, MCP, and Agents. This repo is the code companion to the **Cookbooks** section of [developers.glean.com](https://developers.glean.com): every recipe published there has its full, tested source here.
+Customer-ready examples of building on the [Glean platform](https://developers.glean.com) — the Indexing API, Platform API, Web SDK, Connector SDK, MCP, and Agents. This repo is the code companion to the **Cookbooks** section of [developers.glean.com](https://developers.glean.com). Each recipe includes a runnable scaffold, integration instructions, or a build prompt appropriate to the surface it teaches.
 
 > **Status:** private, pre-launch. This repo goes public alongside the Cookbooks section launch at Glean Go (targeting Aug 26–27, 2026). Until then, treat it as internal-only — do not link to it from public docs or share the URL externally.
 
 ## Build a recipe
 
-This repo is an installable plugin marketplace, so you can build any recipe against your own Glean
-instance without copying code by hand. In Claude Code:
+This repo is an installable plugin marketplace, so an AI coding host can guide each recipe against
+your own Glean instance. Some recipes scaffold a complete project; integration, no-code, and
+admin-console recipes stop for the required user action. In Claude Code:
 
 ```
 /plugin marketplace add gleanwork/glean-cookbook
@@ -24,7 +25,9 @@ Then run a recipe, or browse them first:
 /cookbook:browse-cookbook      # list what's available and pick one
 ```
 
-Each recipe asks for whatever it needs (instance, credentials, language) as it goes.
+Each recipe checks its prerequisites and asks for the configuration it needs as it goes. Web SDK
+recipes leave the local server running and ask you to open its URL in your normal, signed-in browser;
+the coding agent must not substitute its isolated browser for your Glean SSO session.
 
 ## Recipes
 
@@ -53,9 +56,11 @@ Full write-ups for each live at
 
 ## Read the code instead
 
-Every recipe is a self-contained, runnable directory under `recipes/{id}/` with its own README —
-clone one into a fresh project and it works. All recipes read `GLEAN_INSTANCE` and `GLEAN_API_TOKEN`
-(or a recipe-specific scoped token) from the environment; none contain hardcoded credentials.
+Every recipe has a directory under `recipes/{id}/` with its own README. Scaffold recipes are
+self-contained and runnable when their documented prerequisites are met. Integration recipes provide
+snippets for an existing app; third-party recipes provide a prompt for their hosted builder. Recipes
+that need credentials read them from environment variables or a server-side secret store. Web SDK
+SSO paths use the signed-in user's browser session and require no API token.
 
 ```
 recipes/{id}/   one directory per recipe, self-contained and runnable

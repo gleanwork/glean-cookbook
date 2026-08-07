@@ -62,5 +62,6 @@ Style only the surrounding page for Web SDK components. The embedded Glean UI su
 branding. If the user wants their company's identity, replace the logo and accent consistently.
 
 Give `renderChat`, `renderSearchBox`, and `renderSearchResults` a positioned container with explicit
-width and height; 480–500px is a good default. Pass the recipe's first demo query as
-`initialMessage` when the experience should open directly into a cited answer.
+width and height; 480–500px is a good default. When the experience should open directly into a cited
+answer, ask the user for a topic they know exists in their Glean instance and pass that question as
+`initialMessage`.

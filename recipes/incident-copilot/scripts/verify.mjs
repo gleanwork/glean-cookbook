@@ -42,13 +42,11 @@ const check = (label, ok, detail = '') => {
 const alarm = (file) =>
   JSON.parse(fs.readFileSync(path.join(root, 'fixtures', file), 'utf8'));
 
-// One server for the whole run. An earlier version restarted it to change the
-// acting user, which quietly did not work: `npx` forwards SIGTERM to itself and
-// leaves the tsx child listening, so the next `waitUp()` connected to the *previous*
-// server and every authorization assertion passed against the wrong process. The
-// actor is a per-request header instead, and the process group is killed properly.
+// Use one server for the whole run. The actor is a per-request header, and the
+// process group is killed as a unit.
 function boot(env = {}) {
-  const child = spawn('npx', ['tsx', 'server.ts'], {
+  const tsxCli = path.join(root, 'node_modules', 'tsx', 'dist', 'cli.mjs');
+  const child = spawn(process.execPath, [tsxCli, 'server.ts'], {
     cwd: root,
     detached: true,
     env: {
@@ -171,10 +169,7 @@ async function main() {
       'escalation window read from the catalog (12 min, not the 30 min default)',
       inc1.service.escalateAfterMinutes === 12,
     );
-    // The parse above proves only that a number was read. This proves the number
-    // is the one the timer uses: arm() ignored it for the whole first build, and
-    // the assertion could not fail because the catalog, the default and the test
-    // override were all 30.
+    // Confirm that the parsed catalog value is the value used by the timer.
     const windowMin = Math.round(
       (Date.parse(inc1.expiresAt) - Date.parse(inc1.createdAt)) / 60000,
     );

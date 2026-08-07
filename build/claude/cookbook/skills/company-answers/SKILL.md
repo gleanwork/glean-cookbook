@@ -4,6 +4,14 @@ description: 'The hello-world of Glean apps: one page, one input, one permission
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `CHAT`
+- A Glean instance with content indexed
+- An OAuth access token or Glean API token with the CHAT scope
+- For the Web SDK path: your tenant backend URL and an existing Glean session in your normal browser
+- Node 20.19+ or 22.12+
+
 Build "Company Answers: a cited Q&A page on your own content" following https://developers.glean.com/cookbook/company-answers
 
 1. **Pick a path**
@@ -16,7 +24,7 @@ Web SDK variant — renderChat in a page
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers
+   npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers
    ```
 
 2. **Install dependencies**
@@ -25,17 +33,22 @@ Web SDK variant — renderChat in a page
    cd company-answers && npm install
    ```
 
-3. **Credentials**
-   Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean.
-
-4. **Run it**
+3. **Configure the tenant**
+   Set VITE_GLEAN_BACKEND to the tenant's HTTPS backend origin. Optionally set VITE_GLEAN_INITIAL_MESSAGE to a question about content the user knows exists.
 
    ```bash
-   npm run dev
+   cd company-answers && cp .env.example .env.local
+   ```
+
+4. **Run it**
+   Keep Vite running, report its exact Local URL, and wait for the user to open it in their normal signed-in browser. Never open or automate the URL yourself.
+
+   ```bash
+   cd company-answers && npm run dev
    ```
 
 5. **Verify**
-   Open the printed local URL and ask "What's our PTO policy?" — confirm a real, cited answer renders inside Glean's chat UI.
+   Give the user the exact printed local URL to open in their normal signed-in browser. Ask them to try a topic they know exists in their Glean instance and confirm a real, cited answer renders inside Glean's chat UI.
 
 ### Chat API
 
@@ -44,7 +57,7 @@ Chat API variant — one chat.create call, citations rendered
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers
+   npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers
    ```
 
 2. **Install dependencies**
@@ -57,25 +70,25 @@ Chat API variant — one chat.create call, citations rendered
    Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — the Authentication section below covers how to get a token.
 
    ```bash
-   cp .env.example .env
+   cd company-answers && cp .env.example .env
    ```
 
 4. **Run it**
    Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the deterministic verify step below, which starts its own instance.
 
    ```bash
-   npm start
+   cd company-answers && npm start
    ```
 
 5. **Verify**
-   Starts the server itself, runs both demo queries for real, and asserts the response shape (non-empty answer, non-empty deduped citations with title+url) — exits non-zero on any failure. Do not report this recipe as done until this passes.
+   Starts the server and checks the example PTO queries for a non-empty answer with deduplicated citations. Run this when the instance contains PTO content; otherwise use the running app with a topic the user knows exists and check the same response shape.
    ```bash
-   npm run verify
+   cd company-answers && npm run verify
    ```
 
 ## Reference
 
-Client Chat uses POST /rest/api/v1/chat through glean.client.chat.create. Construct Glean with apiToken plus instance or serverURL. Read answer text only from CONTENT messages, collect citations from fragment.citation.sourceDocument, and deduplicate by URL. Keep the token server-side, set saveChat:false for verification, and treat an empty joined answer as a retryable failure.
+Path A uses renderChat with an explicit backend and the user's existing Glean browser session; live verification is user-mediated in their normal signed-in browser. Path B constructs Glean with apiToken plus instance or serverURL, reads answer text only from CONTENT messages, collects citations from fragment.citation.sourceDocument, deduplicates by URL, keeps the token server-side, sets saveChat:false for verification, and treats an empty joined answer as retryable.
 
 ## Authentication
 
@@ -123,15 +136,24 @@ Style only the surrounding page for Web SDK components. The embedded Glean UI su
 branding. If the user wants their company's identity, replace the logo and accent consistently.
 
 Give `renderChat`, `renderSearchBox`, and `renderSearchResults` a positioned container with explicit
-width and height; 480–500px is a good default. Pass the recipe's first demo query as
-`initialMessage` when the experience should open directly into a cited answer.
+width and height; 480–500px is a good default. When the experience should open directly into a cited
+answer, ask the user for a topic they know exists in their Glean instance and pass that question as
+`initialMessage`.
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance,
-with real credentials) and confirmed every query below produces its expected behavior. A build
-that runs without errors but fails one of these checks is not done — fix it and re-run before
-reporting success.
+If the selected path uses Web SDK cookie SSO, do not open the app in an agent-controlled browser,
+incognito window, Playwright, or any other browser automation. Those browsers do not carry the
+user's existing Glean session. Start the development server, keep it running, report the exact local
+URL printed by the server, and ask the user to open that URL in their normal browser where they are
+signed in to Glean. Wait for the user to report the result before claiming the live check passed.
+
+Treat the queries below as acceptance scenarios, not as assumptions about what every Glean instance
+contains. For a live check, ask the user for an equivalent topic they know exists in their instance
+and confirm the same response properties: grounding, citations, permission filtering, and explicit
+no-answer behavior where applicable. Use fixture or automated checks for corpus-independent
+behavior. Do not claim a live check passed when the required content, credentials, user session, or
+user confirmation was unavailable.
 
 - **Query:** "What's our PTO policy?"
   **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

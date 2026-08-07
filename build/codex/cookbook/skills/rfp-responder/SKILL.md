@@ -4,12 +4,19 @@ description: 'Turn a customer questionnaire into grounded, cited draft answers �
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `CHAT`
+- A Glean instance with your company content indexed
+- Your own OAuth access token or Glean API token with the CHAT scope (no admin or global token — the app runs as you)
+- Node 20+
+
 Build "Answer an RFP or security questionnaire" following https://developers.glean.com/cookbook/rfp-responder
 
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder
+   npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder
    ```
 
 2. **Install dependencies**
@@ -22,20 +29,20 @@ Build "Answer an RFP or security questionnaire" following https://developers.gle
    Runs the whole flow against recorded responses and asserts the failure contract: no ungrounded row carries an answer, every answered row carries a citation, and export is gated on approval.
 
    ```bash
-   npm run verify:fixture
+   cd rfp-responder && npm run verify:fixture
    ```
 
 4. **Set credentials**
    Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. The app runs as you; there is no act-as.
 
    ```bash
-   cp .env.example .env
+   cd rfp-responder && cp .env.example .env
    ```
 
 5. **Run it**
 
    ```bash
-   npm start
+   cd rfp-responder && npm start
    ```
 
 6. **Verify**
@@ -66,10 +73,12 @@ server-side.
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance,
-with real credentials) and confirmed every query below produces its expected behavior. A build
-that runs without errors but fails one of these checks is not done — fix it and re-run before
-reporting success.
+Treat the queries below as acceptance scenarios, not as assumptions about what every Glean instance
+contains. For a live check, ask the user for an equivalent topic they know exists in their instance
+and confirm the same response properties: grounding, citations, permission filtering, and explicit
+no-answer behavior where applicable. Use fixture or automated checks for corpus-independent
+behavior. Do not claim a live check passed when the required content, credentials, user session, or
+user confirmation was unavailable.
 
 - **Query:** "Draft answers to a real questionnaire you've had to fill in"
   **Expected:** Every row is parsed across every tab, exact duplicates are merged, and each row is classified by the evidence behind it: strongly grounded rows get a cited draft, adjacent-evidence rows are flagged for verification, and rows with nothing behind them are left blank. Use a questionnaire your own content can actually speak to.

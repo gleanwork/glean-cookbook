@@ -50,11 +50,8 @@ const timers = new Map<string, NodeJS.Timeout>();
  * and not of this process: a checkout service on a 10-minute window and an
  * internal tool on an hour are the same code path with different catalog entries.
  *
- * APPROVAL_EXPIRY_MS overrides it, which exists so verification can drive expiry
- * without waiting. It used to be the only source, so arm() ignored the catalog
- * value that registry.ts had gone to the trouble of parsing -- and the fixture
- * check asserted only that the parse produced 30, which is also the default, so
- * nothing failed.
+ * APPROVAL_EXPIRY_MS is a verification-only override that drives expiry without
+ * waiting.
  */
 export function expiryMs(incident?: Incident): number {
   const override = process.env.APPROVAL_EXPIRY_MS;

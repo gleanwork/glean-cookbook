@@ -1,8 +1,7 @@
 // Governed actions: a closed registry, an audit entry per attempt, and loud
 // failures.
 //
-// Three properties the ticket calls non-negotiable, implemented as code paths
-// rather than as prompt instructions:
+// Three properties enforced as code paths rather than prompt instructions:
 //
 //   1. Only pre-registered actions can execute. The model proposes an action *by
 //      id*; it cannot describe a new one into existence. An unknown id is refused
@@ -13,9 +12,8 @@
 //      worse than one that never ran, because the incident channel now believes
 //      the ticket was filed.
 //
-// What this does NOT claim: actions do not execute *as the approving user*. The
-// ticket specifies that, but impersonation was removed from these recipes, so the
-// executor is the app's own credential and the gate is an app-level policy check.
+// Actions do not execute *as the approving user*. The executor is the app's own
+// credential and the gate is an app-level policy check.
 // That distinction is in the README and on the dashboard, because overstating it
 // would be the one genuinely dangerous thing this recipe could teach.
 
@@ -28,9 +26,6 @@ export interface ActionInput {
    * Demo seam: forces this action to fail so the failure path is observable.
    *
    * server.ts refuses this from the request body unless INCIDENT_DEMO_MODE=true.
-   * It previously said "never read from user input in a real deployment" while
-   * the approve route read it straight off the body -- a comment is not a
-   * control, so the check is now in code.
    */
   simulateFailure?: string;
 }

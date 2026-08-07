@@ -4,19 +4,27 @@ description: "Discover a published Glean agent's A2A card and run it from any A2
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `AGENTS`
+- A published auto agent with a chat-message trigger (text input only)
+- Its agent id, from the Agent Builder URL or agents/search
+- An OAuth access token or Glean API token with the AGENTS scope
+- uv (a2a-sdk is pinned < 1.0 — see below)
+
 Build "Call a Glean agent from an A2A client" following https://developers.glean.com/cookbook/a2a-client
 
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client
+   npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client
    ```
 
 2. **Set credentials**
-   Fill in GLEAN_A2A_CARD_URL and GLEAN_A2A_TOKEN from the agent's Share → A2A dialog — this is a per-agent bearer token, not the general Glean OAuth/token chain.
+   Fill in GLEAN_INSTANCE, GLEAN_API_TOKEN, and GLEAN_AGENT_ID. Use an OAuth access token or Glean API token with the AGENTS scope.
 
    ```bash
-   cp .env.example .env
+   cd a2a-client && cp .env.example .env
    ```
 
 3. **Run it**
@@ -31,7 +39,7 @@ Build "Call a Glean agent from an A2A client" following https://developers.glean
 
 ## Reference
 
-Use /rest/api/v1/a2a/agents/{agentId}/agent-card.json for discovery and the sibling JSON-RPC endpoint for message/send, message/stream, and tasks/get. The agent must be published, use a chat-message trigger, and be text-only. An AGENTS-scoped credential or per-agent share token works. Pin a2a-sdk to 0.3.26 and use ClientFactory with Client.send_message(); the server implements the 0.3 method names. Read task answers from task.artifacts[].parts[].root.text. Streaming events contain the accumulated answer, not deltas. Set an httpx timeout of at least 60 seconds.
+Use /rest/api/v1/a2a/agents/{agentId}/agent-card.json for discovery and the sibling JSON-RPC endpoint for message/send, message/stream, and tasks/get. The agent must be published, use a chat-message trigger, and be text-only. Use an AGENTS-scoped credential. Pin a2a-sdk to 0.3.26 and use ClientFactory with Client.send_message(); the server implements the 0.3 method names. Read task answers from task.artifacts[].parts[].root.text. Streaming events contain the accumulated answer, not deltas. Set an httpx timeout of at least 60 seconds.
 
 ## Authentication
 
@@ -54,10 +62,12 @@ server-side.
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance,
-with real credentials) and confirmed every query below produces its expected behavior. A build
-that runs without errors but fails one of these checks is not done — fix it and re-run before
-reporting success.
+Treat the queries below as acceptance scenarios, not as assumptions about what every Glean instance
+contains. For a live check, ask the user for an equivalent topic they know exists in their instance
+and confirm the same response properties: grounding, citations, permission filtering, and explicit
+no-answer behavior where applicable. Use fixture or automated checks for corpus-independent
+behavior. Do not claim a live check passed when the required content, credentials, user session, or
+user confirmation was unavailable.
 
 - **Query:** "Who owns our most critical service?"
   **Expected:** The agent returns a non-empty answer via the A2A message/send response (a Message or Task, not an error), the scripted follow-up carries the same context_id proving multi-turn works, and the streamed turn prints its answer once rather than repeating it per event.

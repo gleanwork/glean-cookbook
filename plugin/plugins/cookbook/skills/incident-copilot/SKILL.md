@@ -4,12 +4,20 @@ description: 'Triage an incident from your own runbooks and past incidents, prop
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `SEARCH`, `CHAT`, `AGENTS`
+- A Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review
+- Your own OAuth access token or Glean API token with SEARCH and CHAT scopes (add AGENTS for the agent-orchestrated path)
+- X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)
+- Node 20+
+
 Build "On-call copilot with a real approval gate" following https://developers.glean.com/cookbook/incident-copilot
 
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot
+   npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot
    ```
 
 2. **Install dependencies**
@@ -22,20 +30,20 @@ Build "On-call copilot with a real approval gate" following https://developers.g
    Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited.
 
    ```bash
-   npm run verify:fixture
+   cd incident-copilot && npm run verify:fixture
    ```
 
 4. **Set credentials**
    Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. Optionally set GLEAN_AGENT_ID for the agent-orchestrated path, and INCIDENT_ACTOR to change who the dashboard acts as.
 
    ```bash
-   cp .env.example .env
+   cd incident-copilot && cp .env.example .env
    ```
 
 5. **Run it**
 
    ```bash
-   npm start
+   cd incident-copilot && npm start
    ```
 
 6. **Verify**

@@ -25,6 +25,14 @@ export interface OnboardingResource {
   url: string;
 }
 
+export type StepsSource = 'config' | 'missing' | 'error';
+
+export interface LoadedSteps {
+  steps: OnboardingStep[];
+  source: StepsSource;
+  error?: string;
+}
+
 function isSafeLinkUrl(value: string): boolean {
   if (value.startsWith('//')) return false;
   if (value.startsWith('/')) return true;
@@ -60,53 +68,89 @@ export async function loadResources(): Promise<OnboardingResource[]> {
 }
 
 export function parseSteps(raw: unknown): OnboardingStep[] {
-  if (!Array.isArray(raw)) return [];
+  if (!Array.isArray(raw)) {
+    throw new Error('public/steps.json must contain a JSON array.');
+  }
+  if (raw.length === 0) {
+    throw new Error('public/steps.json must contain at least one step.');
+  }
+
   const steps: OnboardingStep[] = [];
-  for (const item of raw) {
-    if (!item || typeof item !== 'object') continue;
+  const ids = new Set<string>();
+  for (const [index, item] of raw.entries()) {
+    if (!item || typeof item !== 'object') {
+      throw new Error(`Step ${index + 1} must be a JSON object.`);
+    }
     const row = item as Record<string, unknown>;
     if (
       typeof row.id !== 'string' ||
+      row.id.trim() === '' ||
       typeof row.title !== 'string' ||
+      row.title.trim() === '' ||
       typeof row.askPrompt !== 'string' ||
+      row.askPrompt.trim() === '' ||
       typeof row.group !== 'string' ||
-      !GROUPS.has(row.group as MilestoneGroup)
+      !GROUPS.has(row.group as MilestoneGroup) ||
+      typeof row.initiallyDone !== 'boolean' ||
+      (row.dueDate !== undefined && typeof row.dueDate !== 'string')
     ) {
-      continue;
+      throw new Error(
+        `Step ${index + 1} must have non-empty id, title, and askPrompt strings; ` +
+          'a valid group; a boolean initiallyDone; and an optional string dueDate.',
+      );
     }
+
+    const id = row.id.trim();
+    if (ids.has(id)) {
+      throw new Error(`Duplicate step id "${id}" in public/steps.json.`);
+    }
+    ids.add(id);
+
     steps.push({
-      id: row.id,
-      title: row.title,
+      id,
+      title: row.title.trim(),
       group: row.group as MilestoneGroup,
-      initiallyDone: Boolean(row.initiallyDone),
-      dueDate: typeof row.dueDate === 'string' ? row.dueDate : undefined,
-      askPrompt: row.askPrompt,
+      initiallyDone: row.initiallyDone,
+      dueDate:
+        typeof row.dueDate === 'string' && row.dueDate.trim() !== ''
+          ? row.dueDate.trim()
+          : undefined,
+      askPrompt: row.askPrompt.trim(),
     });
   }
   return steps;
 }
 
 /**
- * Live: GET /steps.json if the reader copied steps.example.json → steps.json.
- * Otherwise: empty checklist (do not invent a named hire).
+ * Load the reader's checklist. Missing and invalid configuration remain distinct
+ * so the UI can explain the exact next step.
  */
-export async function loadSteps(): Promise<{
-  steps: OnboardingStep[];
-  source: 'config' | 'empty';
-}> {
+export async function loadSteps(): Promise<LoadedSteps> {
   try {
     const response = await fetch('/steps.json');
-    if (response.ok) {
+    const contentType = response.headers.get('content-type') ?? '';
+    if (response.status === 404 || contentType.includes('text/html')) {
+      return { steps: [], source: 'missing' };
+    }
+    if (!response.ok) {
       return {
-        steps: parseSteps(await response.json()),
-        source: 'config',
+        steps: [],
+        source: 'error',
+        error: `Could not load public/steps.json (HTTP ${response.status}).`,
       };
     }
-  } catch {
-    // missing steps.json is the empty-live path
-  }
 
-  return { steps: [], source: 'empty' };
+    const parsed = (await response.json()) as unknown;
+    return { steps: parseSteps(parsed), source: 'config' };
+  } catch (error) {
+    const message =
+      error instanceof SyntaxError
+        ? 'public/steps.json contains invalid JSON.'
+        : error instanceof Error
+          ? error.message
+          : 'Could not load public/steps.json.';
+    return { steps: [], source: 'error', error: message };
+  }
 }
 
 export function loadCompletedIds(): Set<string> {

@@ -4,12 +4,20 @@ description: 'Triage an incident from your own runbooks and past incidents, prop
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `SEARCH`, `CHAT`, `AGENTS`
+- A Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review
+- Your own OAuth access token or Glean API token with SEARCH and CHAT scopes (add AGENTS for the agent-orchestrated path)
+- X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)
+- Node 20+
+
 Build "On-call copilot with a real approval gate" following https://developers.glean.com/cookbook/incident-copilot
 
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot
+   npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot
    ```
 
 2. **Install dependencies**
@@ -22,20 +30,20 @@ Build "On-call copilot with a real approval gate" following https://developers.g
    Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited.
 
    ```bash
-   npm run verify:fixture
+   cd incident-copilot && npm run verify:fixture
    ```
 
 4. **Set credentials**
    Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. Optionally set GLEAN_AGENT_ID for the agent-orchestrated path, and INCIDENT_ACTOR to change who the dashboard acts as.
 
    ```bash
-   cp .env.example .env
+   cd incident-copilot && cp .env.example .env
    ```
 
 5. **Run it**
 
    ```bash
-   npm start
+   cd incident-copilot && npm start
    ```
 
 6. **Verify**
@@ -66,10 +74,12 @@ server-side.
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance,
-with real credentials) and confirmed every query below produces its expected behavior. A build
-that runs without errors but fails one of these checks is not done — fix it and re-run before
-reporting success.
+Treat the queries below as acceptance scenarios, not as assumptions about what every Glean instance
+contains. For a live check, ask the user for an equivalent topic they know exists in their instance
+and confirm the same response properties: grounding, citations, permission filtering, and explicit
+no-answer behavior where applicable. Use fixture or automated checks for corpus-independent
+behavior. Do not claim a live check passed when the required content, credentials, user session, or
+user confirmation was unavailable.
 
 - **Query:** "Triage a real alert from one of your services"
   **Expected:** The copilot acknowledges in the channel, resolves the service to its on-call engineer and owner from your own service catalog, fans out retrieval, and posts a triage card. A past incident is cited as the precedent that supports whatever it proposes — the proposal has to point at evidence, not at a hunch.

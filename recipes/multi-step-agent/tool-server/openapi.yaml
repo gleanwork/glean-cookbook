@@ -3,7 +3,9 @@ info:
   title: Incident Ticket Tool
   version: 1.0.0
 servers:
-  - url: https://your-tool-server.example.com/tools/incidents
+  # Replace with the public HTTPS origin printed by cloudflared. Do not add a
+  # path: the operation below is served at /file_incident_ticket.
+  - url: https://REPLACE-WITH-YOUR-TUNNEL-HOST
 paths:
   /file_incident_ticket:
     post:

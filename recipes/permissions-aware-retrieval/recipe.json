@@ -42,12 +42,12 @@
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval"
         },
         {
           "title": "Set credentials",
-          "command": "cp .env.example .env",
-          "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY, then export them into your shell — unlike the TypeScript variant, this one reads the environment directly and does not load .env automatically."
+          "command": "cd permissions-aware-retrieval && cp .env.example .env",
+          "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY. This variant loads .env automatically."
         },
         {
           "title": "Run it",
@@ -67,7 +67,7 @@
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval"
         },
         {
           "title": "Install dependencies",
@@ -75,12 +75,12 @@
         },
         {
           "title": "Set credentials",
-          "command": "cp .env.example .env",
+          "command": "cd permissions-aware-retrieval && cp .env.example .env",
           "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY — loaded automatically via dotenv in this variant."
         },
         {
           "title": "Run it",
-          "command": "npm start -- \"What's our PTO policy?\""
+          "command": "cd permissions-aware-retrieval && npm start -- \"What's our PTO policy?\""
         },
         {
           "title": "Verify",

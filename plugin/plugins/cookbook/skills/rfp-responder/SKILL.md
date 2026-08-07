@@ -4,12 +4,19 @@ description: 'Turn a customer questionnaire into grounded, cited draft answers â
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `CHAT`
+- A Glean instance with your company content indexed
+- Your own OAuth access token or Glean API token with the CHAT scope (no admin or global token â€” the app runs as you)
+- Node 20+
+
 Build "Answer an RFP or security questionnaire" following https://developers.glean.com/cookbook/rfp-responder
 
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder
+   npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder
    ```
 
 2. **Install dependencies**
@@ -22,20 +29,20 @@ Build "Answer an RFP or security questionnaire" following https://developers.gle
    Runs the whole flow against recorded responses and asserts the failure contract: no ungrounded row carries an answer, every answered row carries a citation, and export is gated on approval.
 
    ```bash
-   npm run verify:fixture
+   cd rfp-responder && npm run verify:fixture
    ```
 
 4. **Set credentials**
    Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. The app runs as you; there is no act-as.
 
    ```bash
-   cp .env.example .env
+   cd rfp-responder && cp .env.example .env
    ```
 
 5. **Run it**
 
    ```bash
-   npm start
+   cd rfp-responder && npm start
    ```
 
 6. **Verify**

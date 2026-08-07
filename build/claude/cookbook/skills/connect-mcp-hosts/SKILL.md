@@ -4,19 +4,29 @@ description: 'Point Claude Code, Cursor, and Claude Desktop at your Glean MCP en
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `MCP`
+- Glean MCP server enabled for your deployment (admin toggle)
+- At least one MCP host installed (Claude Code, Cursor, or Claude Desktop)
+
 Build "Connect Glean MCP to your AI tools" following https://developers.glean.com/cookbook/connect-mcp-hosts
 
 1. **Detect installed hosts**
    Check for Claude Code, Cursor, and Claude Desktop on this machine.
 
 2. **Resolve your Glean backend**
-   Resolve the backend from the user's work email — the Authentication section below has the exact command. The MCP server URL is {backend}/mcp/default.
+   Ask for the user's work email. Locate the installed cookbook plugin root from this skill, run its bundled resolver, and copy the returned backend value. The MCP server URL is <resolved-backend>/mcp/default.
+
+   ```bash
+   node <cookbook-plugin-root>/scripts/resolve-backend.mjs "<work-email>"
+   ```
 
 3. **Configure each detected host**
    --client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token.
 
    ```bash
-   npx -y @gleanwork/configure-mcp-server remote --url https://{instance}-be.glean.com/mcp/default --client <host>
+   npx -y @gleanwork/configure-mcp-server remote --url <resolved-backend>/mcp/default --client <host>
    ```
 
 4. **Restart the host app**
@@ -31,10 +41,12 @@ Use https://{instance}-be.glean.com/mcp/{server-name}; the default server name i
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance,
-with real credentials) and confirmed every query below produces its expected behavior. A build
-that runs without errors but fails one of these checks is not done — fix it and re-run before
-reporting success.
+Treat the queries below as acceptance scenarios, not as assumptions about what every Glean instance
+contains. For a live check, ask the user for an equivalent topic they know exists in their instance
+and confirm the same response properties: grounding, citations, permission filtering, and explicit
+no-answer behavior where applicable. Use fixture or automated checks for corpus-independent
+behavior. Do not claim a live check passed when the required content, credentials, user session, or
+user confirmation was unavailable.
 
 - **Query:** "What does our team own?"
   **Expected:** The MCP host's chat returns an answer grounded in your Glean content, with citations, proving the server is connected and authenticated.

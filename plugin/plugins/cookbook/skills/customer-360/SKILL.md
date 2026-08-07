@@ -4,6 +4,16 @@ description: 'One page per account — status, risks, and a drill-in chat — as
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `SEARCH`, `CHAT`, `AGENTS`
+- Path A: a Glean API token with SEARCH and CHAT scopes
+- Path B: a Glean API token with SEARCH and AGENTS scopes (tiles still use Platform Search)
+- X_GLEAN_INCLUDE_EXPERIMENTAL=true for Platform Search and Agents
+- Path B: an Account Brief agent in Agent Builder; set GLEAN_AGENT_ID server-side
+- Node 20+
+- An account name your own content covers — the page is built around whichever you pick (GLEAN_ACCOUNT_NAME)
+
 Build "Customer 360: an account page built from your own content" following https://developers.glean.com/cookbook/customer-360
 
 1. **Pick a path**
@@ -16,7 +26,7 @@ Path A — parallel Platform Search tiles + Client Chat synthesis
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-search-chat customer-360
+   npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-search-chat customer-360
    ```
 
 2. **Install dependencies**
@@ -29,20 +39,20 @@ Path A — parallel Platform Search tiles + Client Chat synthesis
    Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, and GLEAN_ACCOUNT_NAME. The app runs as you; there is no act-as.
 
    ```bash
-   cp .env.example .env
+   cd customer-360 && cp .env.example .env
    ```
 
 4. **Run it**
    Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance.
 
    ```bash
-   npm start
+   cd customer-360 && npm start
    ```
 
 5. **Verify**
    Loads credentials from .env (same as npm start), runs the demo queries against the account you picked, and asserts cited answers with blank unsupported KPI fields. Do not report this recipe as done until this passes.
    ```bash
-   npm run verify
+   cd customer-360 && npm run verify
    ```
 
 ### Platform Agents
@@ -52,7 +62,7 @@ Path B — Platform Agents createRun for prescriptive account briefs
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-agents customer-360
+   npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-agents customer-360
    ```
 
 2. **Install dependencies**
@@ -65,20 +75,20 @@ Path B — Platform Agents createRun for prescriptive account briefs
    Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, GLEAN_ACCOUNT_NAME, and GLEAN_AGENT_ID (Account Brief agent). The app runs as you; there is no act-as.
 
    ```bash
-   cp .env.example .env
+   cd customer-360 && cp .env.example .env
    ```
 
 4. **Run it**
    Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance.
 
    ```bash
-   npm start
+   cd customer-360 && npm start
    ```
 
 5. **Verify**
    Loads credentials from .env (same as npm start), runs the demo queries against your Account Brief agent, and asserts cited answers (or an explicit failure if the agent is missing or unauthorized). Do not report this recipe as done until this passes.
    ```bash
-   npm run verify
+   cd customer-360 && npm run verify
    ```
 
 ## Reference

@@ -1,6 +1,6 @@
 # recipes/
 
-One directory per recipe, `recipes/{id}/`. See the root [README](../README.md#recipe-directory-convention) for the directory convention each recipe follows.
+One directory per recipe, `recipes/{id}/`. See [Contributing](../CONTRIBUTING.md#recipe-directory-conventions) for the directory convention and the root [README](../README.md#recipes) for the complete generated recipe list.
 
 - [`company-answers/`](company-answers/) — company knowledge Q&A page, built two ways (Web SDK vs Chat API)
 - [`permissions-aware-retrieval/`](permissions-aware-retrieval/) — Glean Search as the retrieval layer for your own LLM app (Python + TypeScript)

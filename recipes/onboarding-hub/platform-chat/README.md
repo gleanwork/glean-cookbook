@@ -1,7 +1,7 @@
 # Onboarding Hub — Client Chat path
 
-Checklist + progress + Glean Client Chat. Steps are
-server-owned via env/file config, or empty — not a hardcoded named hire.
+Checklist + progress + Glean Client Chat. Steps are server-owned through env/file configuration and
+remain empty until configured.
 The app runs as you; there is no act-as / impersonation.
 
 ## Run
@@ -9,15 +9,14 @@ The app runs as you; there is no act-as / impersonation.
 ```bash
 npm install
 cp .env.example .env     # fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL
-# Required for a non-empty checklist:
-#   GLEAN_ONBOARDING_STEPS_FILE=./steps.example.json
-#   # or GLEAN_ONBOARDING_STEPS_JSON='[...]'
+# Customize steps.example.json, or point GLEAN_ONBOARDING_STEPS_FILE at your own file.
 npm start
 ```
 
 Open http://localhost:3000. The server holds your API token — never expose it in the browser.
 
-- **Live steps:** set `GLEAN_ONBOARDING_STEPS_FILE` or `GLEAN_ONBOARDING_STEPS_JSON` (see `steps.example.json`).
+- **Live steps:** `.env.example` selects the included multi-step `steps.example.json`. Customize it,
+  point `GLEAN_ONBOARDING_STEPS_FILE` at another file, or set `GLEAN_ONBOARDING_STEPS_JSON`.
 - **Empty:** without those env vars, `/api/checklist` returns `{ steps: [], source: "empty" }` and the UI asks you to configure steps.
 
 ## Verify

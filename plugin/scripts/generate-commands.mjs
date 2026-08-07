@@ -169,10 +169,15 @@ function hasStepsContent(recipe) {
 function renderVerifySection(recipe) {
   if (!recipe.demoQueries || recipe.demoQueries.length === 0) return [];
 
-  const lines =
-    recipe.buildMethod === 'third-party-build'
-      ? ['{{> verify-gate-third-party}}', '']
-      : ['{{> verify-gate}}', ''];
+  const lines = [];
+  if (recipe.buildMethod === 'third-party-build') {
+    lines.push('{{> verify-gate-third-party}}', '');
+  } else {
+    if (recipe.surfaces?.includes('web-sdk')) {
+      lines.push('{{> verify-gate-web-sdk}}', '');
+    }
+    lines.push('{{> verify-gate}}', '');
+  }
   for (const { query, expectedBehavior } of recipe.demoQueries) {
     lines.push(`- **Query:** "${query}"`);
     lines.push(`  **Expected:** ${expectedBehavior}`);
@@ -192,9 +197,24 @@ function renderRecipeSkill(recipe) {
     `description: ${yamlQuote(recipe.description)}`,
     `disable-model-invocation: true`,
     `---`,
+  ];
+
+  if (recipe.prerequisites?.length > 0 || recipe.requiredScopes?.length > 0) {
+    sections.push('', '## Before you start');
+    if (recipe.requiredScopes?.length > 0) {
+      sections.push(
+        `- Required API scopes (for paths that use API credentials): ${recipe.requiredScopes.map((scope) => `\`${scope}\``).join(', ')}`,
+      );
+    }
+    for (const prerequisite of recipe.prerequisites ?? []) {
+      sections.push(`- ${prerequisite}`);
+    }
+  }
+
+  sections.push(
     '',
     hasStepsContent(recipe) ? renderStepsBody(recipe) : recipe.aiPrompt.trim(),
-  ];
+  );
 
   if (recipe.scaffoldActions?.length > 0) {
     sections.push('', '## Setup');

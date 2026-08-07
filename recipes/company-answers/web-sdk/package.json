@@ -4,6 +4,9 @@
   "private": true,
   "description": "Company Answers \u2014 Web SDK path: renderChat in a page, Glean owns the UI.",
   "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

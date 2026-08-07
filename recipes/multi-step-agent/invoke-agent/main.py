@@ -7,8 +7,8 @@
 # ///
 """Invoke the incident-triage agent and demo the governed-tool branch.
 
-Verified against the actually installed glean-api-client==0.15.4:
-- Agents use glean.client.agents.run() (or .run_stream()), NOT the
+Current glean-api-client==0.15.4 contract:
+- Agents use glean.client.agents.run() (or .run_stream()), not the
   chat/search Message models -- agents.run() takes models.Message /
   models.MessageTextBlock, a distinct shape from chat.create's
   ChatMessage / ChatMessageFragment.
@@ -34,9 +34,7 @@ from dotenv import load_dotenv
 from glean.api_client import Glean
 from glean.api_client.models import ContentType, Message, MessageTextBlock
 
-# Every recipe README says to `cp .env.example .env`; uv run doesn't read that
-# file and neither did this script, so following the documented setup failed on
-# a missing credential. Loading it here makes the instructions true.
+# Load the local configuration created from .env.example.
 load_dotenv()
 
 

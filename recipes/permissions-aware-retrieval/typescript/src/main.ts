@@ -2,10 +2,8 @@
  * Permissions-aware retrieval — Glean's data-first Platform API as the retrieval
  * layer for your own LLM app.
  *
- * Verified against the actually installed pinned SDKs (real HTTP round-trip
- * against a local echo server, headers and all — not just constructed and
- * inspected):
- * - @gleanwork/api-client@0.18.0: the top-level glean.search.query() (not
+ * Current API contract:
+ * - @gleanwork/api-client@0.18.0 uses the top-level glean.search.query() (not
  *   glean.client.search.query() — that's the older Client/REST API, a
  *   different surface entirely). This is Glean's newer, data-first retrieval
  *   API (POST /api/search): launched publicly 2026-07 but still Experimental,
@@ -14,7 +12,7 @@
  *   search.query() itself). Response shape is deliberately plain: each
  *   result's `snippets` is a string[], not an array of {text: ...} objects
  *   like the Client API's search.query() — one less unwrap.
- * - @anthropic-ai/sdk@0.115.0: messages.create() with model "claude-sonnet-5".
+ * - @anthropic-ai/sdk@0.115.0 uses messages.create() with model "claude-sonnet-5".
  *
  * Per-user enforcement needs no code: the caller's own credential is the
  * permission boundary, so results come back already filtered to what that

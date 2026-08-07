@@ -38,4 +38,4 @@ the boundary.
 2. **Extract**: `results[].title`, `results[].url`, and `results[].snippets` — a plain `string[]` on this API, with no `.text` unwrap — become numbered sources.
 3. **Answer**: the sources — and only the sources — go to Claude (`claude-sonnet-5` here; swap the `Anthropic` client for any provider) with a prompt requiring inline `[n]` citations.
 
-Verified against the actually installed `@gleanwork/api-client@0.18.0` and `@anthropic-ai/sdk@0.115.0` — typechecks clean, and a runtime smoke test confirms it reaches the real SDK call path.
+The example pins `@gleanwork/api-client@0.18.0` and `@anthropic-ai/sdk@0.115.0`.

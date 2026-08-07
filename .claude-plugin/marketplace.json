@@ -2,7 +2,7 @@
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "glean-cookbook",
   "version": "0.1.0",
-  "description": "Build Glean cookbook recipes hands-free from Claude Code, Cursor, or Codex.",
+  "description": "Build Glean cookbook recipes with guided setup and verification in Claude Code, Cursor, or Codex.",
   "owner": {
     "name": "Glean"
   },
@@ -10,7 +10,7 @@
     {
       "name": "cookbook",
       "source": "./build/claude/cookbook",
-      "description": "Build Glean cookbook recipes hands-free: browse what's available, then run a recipe's command to scaffold it against your own Glean instance.",
+      "description": "Build Glean cookbook recipes with guided setup: browse what is available, scaffold a recipe, and complete its required user and admin handoffs.",
       "version": "0.1.0",
       "author": {
         "name": "Glean"

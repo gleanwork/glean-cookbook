@@ -47,7 +47,7 @@ uv run main.py
 That second run is the one worth watching. A governed tool refusing is easy; an
 agent degrading gracefully instead of erroring is the part you have to build.
 
-Two things worth calling out, verified against the actually installed `glean-api-client==0.15.4`, not assumed:
+The pinned `glean-api-client==0.15.4` has two relevant contracts:
 
 1. Agents use a distinct `Message`/`MessageTextBlock` model (`role`, `content: [{text, type}]`) — **not** the `ChatMessage`/`ChatMessageFragment` shape from `chat.create`.
 2. `run_stream()` returns the raw SSE response as a plain `str`, not a parsed event iterator. This recipe uses `run()` (wait-for-completion) since it only needs the final messages, not live tokens.
