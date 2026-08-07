@@ -6,10 +6,24 @@
 // Exits 0 only if every query passes.
 
 import fs from 'node:fs';
+import net from 'node:net';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
-const PORT = Number(process.env.PORT ?? 3000);
+async function availablePort() {
+  const server = net.createServer();
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  const address = server.address();
+  const port = typeof address === 'object' && address ? address.port : 0;
+  await new Promise((resolve) => server.close(resolve));
+  if (!port) throw new Error('Could not allocate a verification port.');
+  return port;
+}
+
+const PORT = Number(process.env.PORT ?? (await availablePort()));
 const BASE_URL = `http://localhost:${PORT}`;
 const START_TIMEOUT_MS = 15_000;
 
@@ -57,7 +71,7 @@ function assertCitationShape(citations) {
 function startServer() {
   const child = spawn('npm', ['start'], {
     stdio: ['ignore', 'pipe', 'inherit'],
-    env: process.env,
+    env: { ...process.env, PORT: String(PORT) },
   });
   child.stdout.on('data', (chunk) => process.stdout.write(chunk));
   return child;
