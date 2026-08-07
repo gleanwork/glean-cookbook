@@ -141,7 +141,7 @@
         "expectedDuration": "5–15 minutes after indexing because this is a composed integration",
         "startsOwnServer": false
       },
-      "run": { "userBrowser": true }
+      "run": { "kind": "existing-app", "userBrowser": true }
     },
     "languages": ["python", "typescript"],
     "prerequisites": [
@@ -773,7 +773,7 @@
         "expectedDuration": "about 1 minute after the integration builds",
         "startsOwnServer": false
       },
-      "run": { "userBrowser": true }
+      "run": { "kind": "existing-app", "userBrowser": true }
     },
     "languages": ["typescript", "javascript"],
     "prerequisites": [
@@ -1587,7 +1587,7 @@
             }
           ],
           "verification": {
-            "kind": "automated",
+            "kind": "manual",
             "expectedDuration": "about 1 minute after sign-in",
             "startsOwnServer": false
           }
@@ -1653,7 +1653,7 @@
             }
           ],
           "verification": {
-            "kind": "automated",
+            "kind": "manual",
             "expectedDuration": "about 1 minute after sign-in",
             "startsOwnServer": false
           }
