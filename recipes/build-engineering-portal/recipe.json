@@ -47,6 +47,7 @@
       "startsOwnServer": false
     },
     "run": {
+      "kind": "existing-app",
       "userBrowser": true
     }
   },

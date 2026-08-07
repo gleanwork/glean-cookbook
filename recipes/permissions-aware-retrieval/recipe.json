@@ -71,7 +71,7 @@
           }
         ],
         "verification": {
-          "kind": "automated",
+          "kind": "manual",
           "expectedDuration": "about 1 minute after sign-in",
           "startsOwnServer": false
         }
@@ -137,7 +137,7 @@
           }
         ],
         "verification": {
-          "kind": "automated",
+          "kind": "manual",
           "expectedDuration": "about 1 minute after sign-in",
           "startsOwnServer": false
         }
