@@ -22,7 +22,11 @@ import { fileURLToPath } from 'node:url';
 // written to the instance and no content is indexed.
 export const sideEffects = 'read-only';
 
-export const requiredEnv = ['GLEAN_API_TOKEN', 'GLEAN_SERVER_URL'];
+export const requiredEnv = [
+  'GLEAN_API_TOKEN',
+  'GLEAN_SERVER_URL',
+  'RFP_APPROVED_SOURCE_PREFIXES',
+];
 
 const PORT = 3287;
 const BASE = `http://localhost:${PORT}`;

@@ -13,11 +13,26 @@
 
 import { execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
+import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PORT = Number(process.env.PORT ?? 3210);
+
+async function availablePort() {
+  const server = net.createServer();
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  const address = server.address();
+  const port = typeof address === 'object' && address ? address.port : 0;
+  await new Promise((resolve) => server.close(resolve));
+  if (!port) throw new Error('Could not allocate a verification port.');
+  return port;
+}
+
+const PORT = Number(process.env.PORT ?? (await availablePort()));
 const BASE = `http://localhost:${PORT}`;
 const useFixture = process.env.GLEAN_USE_FIXTURE !== 'false';
 
@@ -142,16 +157,20 @@ async function main() {
   if (useFixture) assertFixtureContract();
 
   console.log(`\nBooting server (${useFixture ? 'fixture' : 'live'} mode)`);
-  const child = spawn('npx', ['tsx', 'server.ts'], {
-    cwd: root,
-    env: {
-      ...process.env,
-      PORT: String(PORT),
-      GLEAN_USE_FIXTURE: String(useFixture),
+  const child = spawn(
+    process.execPath,
+    [path.join(root, 'node_modules/tsx/dist/cli.mjs'), 'server.ts'],
+    {
+      cwd: root,
+      env: {
+        ...process.env,
+        PORT: String(PORT),
+        GLEAN_USE_FIXTURE: String(useFixture),
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+      detached: true,
     },
-    stdio: ['ignore', 'pipe', 'pipe'],
-    detached: true,
-  });
+  );
   let stderr = '';
   child.stderr.on('data', (chunk) => (stderr += chunk));
 
