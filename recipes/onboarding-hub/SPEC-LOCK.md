@@ -29,7 +29,7 @@
 - Platform scope: `CHAT` (see `llmContext` / registry)
 - Auth: `GLEAN_SERVER_URL` + caller's `GLEAN_API_TOKEN` — no `X-Glean-ActAs`
 - Checklist: `GET /api/checklist` — `GLEAN_ONBOARDING_STEPS_FILE` / `GLEAN_ONBOARDING_STEPS_JSON`
-- **Not** Client API `glean.client.chat.create`
+- Platform Chat is the target contract, not Client API `chat.create` — but see **Transport reality** below: it is unavailable, so the code currently uses `/rest/api/v1/chat`
 
 ## Content backing
 
@@ -41,3 +41,10 @@
 - Auto-deriving checklist steps from Search/Chat (explicitly out of scope)
 - Handler/SDK GA (cookbook teaches OpenAPI contract)
 - `featured` band placement
+
+## Transport (2026-08-06)
+
+`POST /api/chat` is not available on the instances we test against — it returns 404 — so the
+code calls `POST /rest/api/v1/chat` instead. The response parsing differs; the comments in the
+recipe explain how. Platform Chat remains the intended contract: revert and delete this section
+once the endpoint is available.

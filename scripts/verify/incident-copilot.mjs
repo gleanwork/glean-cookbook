@@ -188,10 +188,25 @@ function scenarioFor(query) {
  * `error` depending on what stopped it; reading only one of them reports
  * `undefined`, which is what hid a 400 from /api/search behind a message that
  * read like a thin corpus.
+ *
+ * A missing service catalog entry is a skip, not a failure: this recipe reads
+ * ownership and the approval set out of the reader's own catalog, and says so in
+ * its prerequisites. Without one there is nothing to authorize against, which is
+ * a fact about the corpus rather than a defect in the recipe.
  */
 function noIncident(body) {
-  if (body.error)
+  if (body.error) {
+    if (/No service catalog entry found/u.test(body.error)) {
+      return {
+        skip:
+          `${body.error} ` +
+          `This recipe needs a service catalog document indexed in the format it parses ` +
+          `(Tech lead / On-call this week / Tier / Dependencies), per its prerequisites. ` +
+          `Point VERIFY_SERVICE at a service yours describes.`,
+      };
+    }
     return `no incident was created — the server failed: ${body.error}`;
+  }
   if (body.filtered)
     return `no incident was created — the alarm was filtered: ${body.reason}`;
   if (body.refused) return `no incident was created — refused: ${body.refused}`;
