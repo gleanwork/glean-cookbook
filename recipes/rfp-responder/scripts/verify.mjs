@@ -150,6 +150,7 @@ async function main() {
       GLEAN_USE_FIXTURE: String(useFixture),
     },
     stdio: ['ignore', 'pipe', 'pipe'],
+    detached: true,
   });
   let stderr = '';
   child.stderr.on('data', (chunk) => (stderr += chunk));
@@ -405,7 +406,7 @@ async function main() {
       unacceptedExported.every((line) => /,"",/u.test(line)),
     );
   } finally {
-    child.kill();
+    await stopProcessGroup(child);
     fs.rmSync(path.join(root, '.answer-library.json'), { force: true });
   }
 
@@ -468,8 +469,8 @@ async function main() {
     'a normal answer is NOT marked unfinished',
     shapes.answered.unfinished === false,
   );
-  // Why the flag had to exist: on the old fields the two are identical, which is
-  // how an unfinished run came to be shown as "insufficient evidence".
+  // The explicit flag is required because both shapes otherwise contain an empty
+  // answer and no citations.
   check(
     'unfinished and refused are indistinguishable without the flag',
     shapes.unfinished.answer === shapes.refused.answer &&
@@ -564,15 +565,22 @@ async function checkUnfinishedRun() {
       sec01?.confidence === 'strong',
     );
   } finally {
-    if (child.pid !== undefined) {
-      try {
-        process.kill(-child.pid, 'SIGKILL');
-      } catch {
-        child.kill('SIGKILL');
-      }
-    }
+    await stopProcessGroup(child);
     fs.rmSync(path.join(root, '.answer-library.json'), { force: true });
   }
+}
+
+async function stopProcessGroup(child) {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  const closed = new Promise((resolve) => child.once('close', resolve));
+  if (child.pid !== undefined) {
+    try {
+      process.kill(-child.pid, 'SIGKILL');
+    } catch {
+      child.kill('SIGKILL');
+    }
+  }
+  await closed;
 }
 
 await main();
