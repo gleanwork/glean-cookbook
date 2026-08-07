@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0](https://github.com/gleanwork/glean-cookbook/compare/v0.2.0...v0.3.0) (2026-08-07)
+
+### Features
+
+* make cookbook recipes one-command runnable ([#20](https://github.com/gleanwork/glean-cookbook/issues/20)) ([5a347f7](https://github.com/gleanwork/glean-cookbook/commit/5a347f7845ffd2cee17d6bce5ae7c464b4a3df23))
+
+### Bug Fixes
+
+* harden recipe execution contracts ([#21](https://github.com/gleanwork/glean-cookbook/issues/21)) ([f9d7bae](https://github.com/gleanwork/glean-cookbook/commit/f9d7bae1277674f837b46c958cdf8274a40f59a6))
+* **onboarding-hub:** make "Ask about this" actually send the question ([#19](https://github.com/gleanwork/glean-cookbook/issues/19)) ([3cd608b](https://github.com/gleanwork/glean-cookbook/commit/3cd608baf7a4fff83d28749621c1f4488a9ca10e))
+
 ## 0.2.0 (2026-08-07)
 
 ### Features

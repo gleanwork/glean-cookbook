@@ -1,6 +1,6 @@
 {
   "name": "cookbook",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Build Glean cookbook recipes with guided setup: browse what is available, scaffold a recipe, and complete its required user and admin handoffs.",
   "author": {
     "name": "Glean"
