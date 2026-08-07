@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0](https://github.com/gleanwork/glean-cookbook/compare/v0.3.0...v0.4.0) (2026-08-07)
+
+### Features
+
+* **plugin:** ask setup questions one at a time ([d5d06fc](https://github.com/gleanwork/glean-cookbook/commit/d5d06fc3c658a63a395c30a1237d4ef5933189ac))
+
 ## [0.3.0](https://github.com/gleanwork/glean-cookbook/compare/v0.2.0...v0.3.0) (2026-08-07)
 
 ### Features
