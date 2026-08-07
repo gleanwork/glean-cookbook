@@ -7,11 +7,11 @@ disable-model-invocation: true
 Build "Customer 360: an account page built from your own content" following https://developers.glean.com/cookbook/customer-360
 
 1. **Pick a path**
-   Path A (Platform Search + Chat) builds an open-ended explorable dashboard: parallel search.query tiles and POST /api/chat for journey summary and saved prompts. Path B (Platform Agents) keeps the same page UX but runs synthesis through glean.agents.createRun against a template Account Brief agent.
+   Path A combines parallel Platform Search tiles with Client Chat synthesis. Path B keeps the same page UX but uses a template Account Brief agent.
 
 ### Platform Search Chat
 
-Path A — parallel Platform Search tiles + Platform Chat synthesis
+Path A — parallel Platform Search tiles + Client Chat synthesis
 
 1. **Scaffold the project**
 
@@ -83,7 +83,7 @@ Path B — Platform Agents createRun for prescriptive account briefs
 
 ## Reference
 
-Platform-only recipe. Search: glean.search.query -> POST /api/search, results[].title/url/snippets (string[]). Chat: fetch POST /api/chat (until glean.chat.create ships); request {input, stream:false, store:true}; response output[].content[] type=output_text with annotations[].sources[]. Agents: glean.agents.createRun(request, agentId) -> POST /api/agents/{agent_id}/runs; stream:false returns PlatformAgentRunWaitResponse synchronously (no polling); messages use role USER|GLEAN_AI and content[{text,type:text}]. Experimental opt-in via X_GLEAN_INCLUDE_EXPERIMENTAL. Do NOT teach glean.client.chat.create, glean.client.search.query, or glean.client.agents.run. Auth is the caller's own token; impersonation/act-as was removed from the cookbook recipes. Tokens server-side only. The account and every figure on the page come from the reader's own instance. Nothing may hardcode an account name, owner, ARR, seat count or renewal date: an earlier version returned a fixed demo account on the live path, so the KPI header showed one fictional customer's numbers whatever retrieval returned. Use GLEAN_SERVER_URL rather than deriving the backend from an instance name, and GLEAN_ACCOUNT_NAME for the account. This recipe does not depend on examples/sample-catalog.NOTE (2026-08-06): POST /api/chat is not available on the instances we test against (404), so the code calls POST /rest/api/v1/chat and parses messages[] entries where messageType is CONTENT. Platform Chat remains the intended contract.
+Use Platform Search for tiles, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. Client Chat answers are CONTENT messages from GLEAN_AI; citations are fragment.citation.sourceDocument. Set saveChat:false for verification and keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME and leave owner, ARR, seats, renewal date, and risk blank unless retrieved documents support them. Use GLEAN_SERVER_URL directly.
 
 ## Authentication
 

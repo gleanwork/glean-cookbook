@@ -75,7 +75,7 @@ Chat API variant — one chat.create call, citations rendered
 
 ## Reference
 
-Chat API: POST /rest/api/v1/chat (client SDK glean.client.chat.create). A real response can include earlier UPDATE-type messages narrating search/read steps ahead of the answer — filter to messageType === 'CONTENT' before joining fragments[].text, or that narration text ends up prepended to the answer. Citations live per-fragment at fragments[].citation.sourceDocument (title, url), not a top-level citedDocuments field and not the older message.citations[] field — that field is deprecated (removal scheduled 2026-10-15) and, verified live, wasn't populated at all on an agentic chat response even though real citations existed. Dedupe citations by url since the same source is commonly cited by more than one fragment. Client constructor takes apiToken + instance (or serverURL), not domain. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.
+Client Chat uses POST /rest/api/v1/chat through glean.client.chat.create. Construct Glean with apiToken plus instance or serverURL. Read answer text only from CONTENT messages, collect citations from fragment.citation.sourceDocument, and deduplicate by URL. Keep the token server-side, set saveChat:false for verification, and treat an empty joined answer as a retryable failure.
 
 ## Authentication
 

@@ -2,7 +2,7 @@
 // Verify gate for rfp-responder.
 //
 // Fixture mode (default) runs the whole flow with no credentials and no network:
-// recorded /api/chat responses in fixtures/chat-responses.json drive the app, and
+// recorded Client Chat responses in fixtures/chat-responses.json drive the app, and
 // the extra columns in fixtures/sample-security-questionnaire.csv act as a test
 // oracle. That means a regression in dedup, in the confidence classifier, or in
 // the refusal path fails CI instead of quietly shipping a confident wrong answer
@@ -32,7 +32,7 @@ const check = (label, condition, detail = '') => {
 };
 
 function assertFixtureContract() {
-  console.log('\nRecorded /api/chat fixtures match the Platform Chat contract');
+  console.log('\nRecorded fixtures match the Client Chat contract');
   const recorded = JSON.parse(
     fs.readFileSync(path.join(root, 'fixtures', 'chat-responses.json'), 'utf8'),
   );
@@ -41,35 +41,24 @@ function assertFixtureContract() {
   for (const id of ids) {
     const body = recorded[id];
     const problems = [];
-    for (const key of [
-      'id',
-      'object',
-      'created_at',
-      'status',
-      'output',
-      'store',
-      'request_id',
-    ]) {
-      if (!(key in body)) problems.push(`missing ${key}`);
+    if (!Array.isArray(body.messages))
+      problems.push('messages must be an array');
+    const message = body.messages?.[0];
+    if (message?.author !== 'GLEAN_AI')
+      problems.push('messages[0].author must be GLEAN_AI');
+    if (message?.messageType !== 'CONTENT')
+      problems.push('messages[0].messageType must be CONTENT');
+    if (!Array.isArray(message?.fragments))
+      problems.push('messages[0].fragments must be an array');
+    for (const fragment of message?.fragments ?? []) {
+      if (fragment.text !== undefined && typeof fragment.text !== 'string') {
+        problems.push('fragment.text must be a string');
+      }
+      const document = fragment.citation?.sourceDocument;
+      if (document && (!document.title || !document.url)) {
+        problems.push('cited sourceDocument must include title and url');
+      }
     }
-    if (body.object !== 'response') problems.push('object must be "response"');
-    if (body.status !== 'completed')
-      problems.push('status must be "completed"');
-    if (!/^resp_[0-9a-f-]{36}$/u.test(body.id ?? ''))
-      problems.push('id must be resp_<uuid>');
-    if (Number.isNaN(Date.parse(body.created_at ?? '')))
-      problems.push('created_at must be RFC 3339');
-    const block = body.output?.[0]?.content?.[0];
-    if (body.output?.[0]?.type !== 'message')
-      problems.push('output[0].type must be "message"');
-    if (body.output?.[0]?.role !== 'assistant')
-      problems.push('output[0].role must be "assistant"');
-    if (block?.type !== 'output_text')
-      problems.push('content[0].type must be "output_text"');
-    if (typeof block?.text !== 'string')
-      problems.push('content[0].text must be a string');
-    if (!Array.isArray(block?.annotations))
-      problems.push('content[0].annotations must be an array');
     check(`${id} shape`, problems.length === 0, problems.join('; '));
   }
 }
@@ -456,7 +445,7 @@ async function main() {
 
   // /api/chat can return 200 for a run that never finished. That is a transport
   // failure, and it must not be reported as a finding about the corpus.
-  console.log('\nUnfinished /api/chat runs are not evidence findings');
+  console.log('\nUnfinished Chat runs are not evidence findings');
   const shapes = JSON.parse(
     execFileSync('npx', ['tsx', 'scripts/unfinished-probe.ts'], {
       cwd: root,

@@ -1,11 +1,10 @@
 // Exercises the chat response parser directly, on the three shapes that matter.
 // The distinction it proves -- an unfinished run is not a refusal -- is invisible
-// from the outside, because both used to arrive as an empty answer with no
-// citations.
-import { parsePlatformChatResponse } from '../lib/chat.ts';
+// from the outside because both have an empty answer with no citations.
+import { parseClientChatResponse } from '../lib/chat.ts';
 
 // A run that never produced text: progress narration, then an empty CONTENT.
-const unfinished = parsePlatformChatResponse({
+const unfinished = parseClientChatResponse({
   messages: [
     {
       author: 'GLEAN_AI',
@@ -17,7 +16,7 @@ const unfinished = parsePlatformChatResponse({
 });
 
 // A settled verdict: the model answered, and the answer is a refusal.
-const refused = parsePlatformChatResponse({
+const refused = parseClientChatResponse({
   messages: [
     {
       author: 'GLEAN_AI',
@@ -27,7 +26,7 @@ const refused = parsePlatformChatResponse({
   ],
 });
 
-const answered = parsePlatformChatResponse({
+const answered = parseClientChatResponse({
   messages: [
     {
       author: 'GLEAN_AI',

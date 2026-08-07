@@ -2,7 +2,7 @@
   "name": "customer-360-platform-search-chat",
   "version": "0.0.0",
   "private": true,
-  "description": "Customer 360 — Platform Search tiles + Platform Chat synthesis.",
+  "description": "Customer 360 — Platform Search tiles + Client Chat synthesis.",
   "type": "module",
   "scripts": {
     "start": "tsx server.ts",

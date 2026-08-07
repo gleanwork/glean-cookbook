@@ -51,7 +51,7 @@ Build "Multi-step agent with governed tools" following https://developers.glean.
 
 ## Reference
 
-Agents API: glean.client.agents.run(agent_id, messages) -> AgentRunWaitResponse{run.status, messages}. messages use Message(role, content=[MessageTextBlock(text, type=ContentType.TEXT)]) — distinct from chat.create's ChatMessage/ChatMessageFragment. run_stream() returns a raw SSE string, not an iterator. Tools are registered via the admin console (upload an OpenAPI spec), not an API call. A run executes as the identity behind the credential; there is no impersonation header to add and no admin token needed. Custom tool servers receive the acting user's email via the Glean-User-Email header, which is where tool-level authorization (governance) is actually enforced for scratch-built tools.
+Run agents with glean.client.agents.run(agent_id, messages) using Message and MessageTextBlock. run_stream() returns raw SSE text. Register custom tools in the admin console from an OpenAPI specification. Runs use the credential's identity; custom tool servers receive the acting user's email in Glean-User-Email and must enforce authorization there.
 
 ## Authentication
 

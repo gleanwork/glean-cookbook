@@ -1,7 +1,7 @@
 {
   "id": "multi-step-agent",
   "title": "Multi-step agent with governed tools",
-  "description": "Build a Glean agent that plans, retrieves, and acts through a governed custom tool \u2014 with a safe fallback when the tool is denied.",
+  "description": "Build a Glean agent that plans, retrieves, and acts through a governed custom tool — with a safe fallback when the tool is denied.",
   "sidebarLabel": "Multi-Step Agent",
   "surfaces": ["agents", "tools"],
   "status": "production-pattern",
@@ -33,7 +33,7 @@
     {
       "repoPath": "recipes/multi-step-agent/tool-server",
       "language": "python",
-      "description": "Governed custom Tool \u2014 files an incident ticket, restricted to one group"
+      "description": "Governed custom Tool — files an incident ticket, restricted to one group"
     },
     {
       "repoPath": "recipes/multi-step-agent/invoke-agent",
@@ -49,16 +49,16 @@
     {
       "title": "Set the tool server's allow-list",
       "command": "cd multi-step-agent/tool-server && cp .env.example .env",
-      "description": "Set AUTHORIZED_EMAILS to your own email for the first run. You'll remove it for the second run to see the denied branch \u2014 changing the allow-list is how both governance paths get demonstrated, since the agent always runs as you. The server refuses to start on an empty allow-list, since that denies everyone and makes the permitted branch unobservable."
+      "description": "Set AUTHORIZED_EMAILS to your own email for the first run. You'll remove it for the second run to see the denied branch — changing the allow-list is how both governance paths get demonstrated, since the agent always runs as you. The server refuses to start on an empty allow-list, since that denies everyone and makes the permitted branch unobservable."
     },
     {
       "title": "Run the tool server",
       "command": "cd multi-step-agent/tool-server && uv run server.py",
-      "description": "Listens on port 8080. Keep this running in its own terminal \u2014 the agent calls it over HTTP once registered."
+      "description": "Listens on port 8080. Keep this running in its own terminal — the agent calls it over HTTP once registered."
     },
     {
       "title": "Register the tool",
-      "description": "Manual, UI-only step \u2014 there is no API to create a tool. In Admin > Platform > Tools > Add, register the tool and upload multi-step-agent/tool-server/openapi.yaml as its API spec."
+      "description": "Manual, UI-only step — there is no API to create a tool. In Admin > Platform > Tools > Add, register the tool and upload multi-step-agent/tool-server/openapi.yaml as its API spec."
     },
     {
       "title": "Create the agent",
@@ -72,7 +72,7 @@
     {
       "title": "Run it",
       "command": "cd multi-step-agent/invoke-agent && uv run main.py",
-      "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run \u2014 no requirements.txt, venv, or activate step."
+      "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step."
     },
     {
       "title": "Verify",
@@ -83,7 +83,7 @@
   "architecture": [
     {
       "label": "Agent",
-      "caption": "plan \u2192 retrieve \u2192 act",
+      "caption": "plan → retrieve → act",
       "category": "agent",
       "emphasized": true
     },
@@ -98,8 +98,8 @@
       "category": "workflow"
     }
   ],
-  "aiPrompt": "Build the governed multi-step agent from\nhttps://developers.glean.com/cookbook/multi-step-agent\n\n1. Register the recipe's custom tool (an incident-ticket-creation HTTP\n   tool) in the Glean admin console (Admin > Platform > Tools > Add) \u2014\n   this is a manual/admin-console step, there is no API to create a\n   tool. Upload the recipe's openapi.yaml as the tool's API spec.\n2. Create an agent in the Agent Builder (also a UI step, not an API\n   call): instructions from the recipe, retrieval on, the tool\n   attached. Copy the agent's ID.\n3. Invoke via glean.client.agents.run(agent_id=..., messages=[...])\n   \u2014 the agent runs as whoever my credential belongs to, so send no\n   impersonation header and don't ask me for an admin token. NOT\n   chat.create's\n   ChatMessage/ChatMessageFragment shape; agents use Message/\n   MessageTextBlock instead. run_stream() returns raw SSE text (a\n   string), not a parsed event iterator \u2014 use run() unless you're\n   ready to parse SSE yourself.\n4. Demo both governance branches by changing the tool server's\n   AUTHORIZED_EMAILS allow-list between runs, not by impersonating\n   anyone: once with my email on it (the ticket is filed), once\n   without (the tool returns 403 and the agent's own instructions\n   produce a read-only summary rather than failing the run). Glean\n   forwards my identity to the tool as the Glean-User-Email header,\n   which is where that authorization is enforced.",
-  "llmContext": "Agents API: glean.client.agents.run(agent_id, messages) -> AgentRunWaitResponse{run.status, messages}. messages use Message(role, content=[MessageTextBlock(text, type=ContentType.TEXT)]) \u2014 distinct from chat.create's ChatMessage/ChatMessageFragment. run_stream() returns a raw SSE string, not an iterator. Tools are registered via the admin console (upload an OpenAPI spec), not an API call. A run executes as the identity behind the credential; there is no impersonation header to add and no admin token needed. Custom tool servers receive the acting user's email via the Glean-User-Email header, which is where tool-level authorization (governance) is actually enforced for scratch-built tools.",
+  "aiPrompt": "Build the governed multi-step agent from\nhttps://developers.glean.com/cookbook/multi-step-agent\n\n1. Register the recipe's custom tool (an incident-ticket-creation HTTP\n   tool) in the Glean admin console (Admin > Platform > Tools > Add) —\n   this is a manual/admin-console step, there is no API to create a\n   tool. Upload the recipe's openapi.yaml as the tool's API spec.\n2. Create an agent in the Agent Builder (also a UI step, not an API\n   call): instructions from the recipe, retrieval on, the tool\n   attached. Copy the agent's ID.\n3. Invoke via glean.client.agents.run(agent_id=..., messages=[...])\n   — the agent runs as whoever my credential belongs to, so send no\n   impersonation header and don't ask me for an admin token. NOT\n   chat.create's\n   ChatMessage/ChatMessageFragment shape; agents use Message/\n   MessageTextBlock instead. run_stream() returns raw SSE text (a\n   string), not a parsed event iterator — use run() unless you're\n   ready to parse SSE yourself.\n4. Demo both governance branches by changing the tool server's\n   AUTHORIZED_EMAILS allow-list between runs, not by impersonating\n   anyone: once with my email on it (the ticket is filed), once\n   without (the tool returns 403 and the agent's own instructions\n   produce a read-only summary rather than failing the run). Glean\n   forwards my identity to the tool as the Glean-User-Email header,\n   which is where that authorization is enforced.",
+  "llmContext": "Run agents with glean.client.agents.run(agent_id, messages) using Message and MessageTextBlock. run_stream() returns raw SSE text. Register custom tools in the admin console from an OpenAPI specification. Runs use the credential's identity; custom tool servers receive the acting user's email in Glean-User-Email and must enforce authorization there.",
   "goDependency": false,
   "featured": true,
   "tags": ["agents", "governance"]

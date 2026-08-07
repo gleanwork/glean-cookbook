@@ -1,7 +1,7 @@
 {
   "id": "build-engineering-portal",
   "title": "Build an engineering portal",
-  "description": "The end-to-end showcase \u2014 index a developer catalog into Glean, then embed permission-aware search and chat back into the portal your team already uses.",
+  "description": "The end-to-end showcase — index a developer catalog into Glean, then embed permission-aware search and chat back into the portal your team already uses.",
   "sidebarLabel": "Engineering Portal",
   "surfaces": ["connector-sdk", "indexing-api", "web-sdk", "client-api"],
   "status": "showcase",
@@ -28,7 +28,7 @@
   "demoQueries": [
     {
       "query": "How do I find out who is on call?",
-      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content. Asked this way rather than \"who's on call this week?\" deliberately: the live roster is answered by a schedule tool with no citable document, so the direct question intermittently returns an answer with no citations, or no answer at all. Verified live -- three runs of the direct form produced all three outcomes; this form returned 3-4 citations every time."
+      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL from your indexed engineering content."
     },
     {
       "query": "How do I deploy a service?",
@@ -84,8 +84,8 @@
       "icon": "layout-outlined"
     }
   ],
-  "aiPrompt": "Build the \"Engineering portal with Glean\" flagship recipe from\nhttps://developers.glean.com/cookbook/build-engineering-portal\n\nIt composes two building blocks:\n1. Index the portal's service catalog into Glean with the open-source\n   indexing SDK (follow\n   https://developers.glean.com/api-info/indexing/getting-started/overview).\n2. Embed Glean search and chat into the portal UI with the Web SDK (see\n   https://developers.glean.com/cookbook/embed-search-chat \u2014 same\n   container sizing and initialMessage guidance applies here).\n\nStyle the portal shell itself per the house style below (real logomark,\nteal accent) so the catalog UI and the embedded search/chat feel like one\ncohesive app, not two mismatched pieces bolted together.\n\nAsk me for: my Glean instance/backend domain, an Indexing API token, and\nmy Glean web app domain. See Verify below for what a correct build must do.",
-  "llmContext": "Flagship showcase composing the custom-connector and Web SDK embed recipes: a service-catalog portal whose catalog is indexed into Glean via the indexing SDK, with Glean search and chat embedded back into the portal UI. Requires a Glean-issued Indexing API token for the connector and SEARCH/CHAT scopes for the embed. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.",
+  "aiPrompt": "Build the \"Engineering portal with Glean\" flagship recipe from\nhttps://developers.glean.com/cookbook/build-engineering-portal\n\nIt composes two building blocks:\n1. Index the portal's service catalog into Glean with the open-source\n   indexing SDK (follow\n   https://developers.glean.com/api-info/indexing/getting-started/overview).\n2. Embed Glean search and chat into the portal UI with the Web SDK (see\n   https://developers.glean.com/cookbook/embed-search-chat — same\n   container sizing and initialMessage guidance applies here).\n\nStyle the portal shell itself per the house style below (real logomark,\nteal accent) so the catalog UI and the embedded search/chat feel like one\ncohesive app, not two mismatched pieces bolted together.\n\nAsk me for: my Glean instance/backend domain, an Indexing API token, and\nmy Glean web app domain. See Verify below for what a correct build must do.",
+  "llmContext": "Index the service catalog with an Indexing API token, then embed permission-aware search and chat with SEARCH and CHAT access. Keep credentials server-side. Join only non-empty CONTENT fragments, collect citations from fragment.citation.sourceDocument, and treat an empty completed response as a retryable failure.",
   "goDependency": false,
   "featured": false,
   "tags": ["portal"],

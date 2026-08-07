@@ -5,13 +5,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Glean } from '@gleanwork/api-client';
 
-// Path A: Platform Search tiles + Platform Chat synthesis.
+// Path A: Platform Search tiles + Client Chat synthesis.
 // Search: glean.search.query (POST /api/search) — @gleanwork/api-client@0.18.0
-// Chat: fetch POST /rest/api/v1/chat. The Platform POST /api/chat is the
-// eventual target and is what SPEC-LOCK describes, but it returns 404
-// resource_not_found today -- gated behind a backend flag that is not enabled --
-// so this recipe could not synthesise at all. Swap back when it ships; only the
-// parsing changes.
+// Chat: fetch POST /rest/api/v1/chat.
 
 interface ChatCitationDocument {
   title?: string;
@@ -29,7 +25,7 @@ interface ChatMessageEnvelope {
   fragments?: ChatFragment[];
 }
 
-interface PlatformChatResponse {
+interface ClientChatResponse {
   messages?: ChatMessageEnvelope[];
 }
 
@@ -118,7 +114,7 @@ function requireEnv(name: string): string {
   return value;
 }
 
-function parsePlatformChatResponse(data: PlatformChatResponse): {
+function parseClientChatResponse(data: ClientChatResponse): {
   answer: string;
   citations: Array<{ title: string; url: string }>;
 } {
@@ -155,7 +151,7 @@ function parsePlatformChatResponse(data: PlatformChatResponse): {
   return { answer, citations };
 }
 
-async function askPlatformChat(input: string): Promise<{
+async function askClientChat(input: string): Promise<{
   answer: string;
   citations: Array<{ title: string; url: string }>;
 }> {
@@ -169,6 +165,7 @@ async function askPlatformChat(input: string): Promise<{
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
+      saveChat: false,
       messages: [{ author: 'USER', fragments: [{ text: input }] }],
     }),
   });
@@ -183,11 +180,9 @@ async function askPlatformChat(input: string): Promise<{
     );
   }
 
-  const data = (await response.json()) as PlatformChatResponse;
-  const parsed = parsePlatformChatResponse(data);
-  // Platform Chat can return HTTP 200 with the run unfinished (empty
-  // output_text, trailing tool activity, no error field). Treat that as
-  // failure so the UI does not render a blank "success".
+  const data = (await response.json()) as ClientChatResponse;
+  const parsed = parseClientChatResponse(data);
+  // Empty answer text is a transport failure, not a blank success.
   if (!parsed.answer.trim()) {
     throw new Error(
       'Glean returned no answer text. This happens when a chat run ends while ' +
@@ -284,7 +279,7 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: 'question is required' }));
         return;
       }
-      const { answer, citations } = await askPlatformChat(
+      const { answer, citations } = await askClientChat(
         frameAccountPrompt(question),
       );
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -298,7 +293,7 @@ const server = http.createServer(async (req, res) => {
           error: 'Could not answer that question.',
           hint: message.startsWith('Glean returned no answer text')
             ? 'Retrying usually works when a chat run ends before the answer is produced.'
-            : 'Check credentials and that experimental Platform Chat is enabled.',
+            : 'Check credentials and the CHAT scope.',
         }),
       );
     }

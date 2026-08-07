@@ -148,7 +148,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('Running verify against live POST /api/chat');
+  console.log('Running verify against live Client Chat');
 
   const checkQueries = CHECKS.map((c) => c.query);
   if (JSON.stringify(checkQueries) !== JSON.stringify(DEMO_QUERIES)) {

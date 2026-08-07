@@ -1,7 +1,7 @@
 {
   "id": "connect-mcp-hosts",
   "title": "Connect Glean MCP to your AI tools",
-  "description": "Point Claude Code, Cursor, and Claude Desktop at your Glean MCP endpoint and run one enterprise task from each \u2014 same context, three surfaces.",
+  "description": "Point Claude Code, Cursor, and Claude Desktop at your Glean MCP endpoint and run one enterprise task from each — same context, three surfaces.",
   "sidebarLabel": "Connect MCP",
   "surfaces": ["mcp"],
   "status": "production-pattern",
@@ -26,7 +26,7 @@
     },
     {
       "query": "Summarize our most recent incident review",
-      "expectedBehavior": "The host returns a cited summary grounded in your own content \u2014 not a fabricated one. If it answers without citations, the MCP server is not actually being consulted."
+      "expectedBehavior": "The host returns a cited summary grounded in your own content — not a fabricated one. If it answers without citations, the MCP server is not actually being consulted."
     }
   ],
   "codeAssets": [],
@@ -37,12 +37,12 @@
     },
     {
       "title": "Resolve your Glean backend",
-      "description": "Resolve the backend from the user's work email \u2014 the Authentication section below has the exact command. The MCP server URL is {backend}/mcp/default."
+      "description": "Resolve the backend from the user's work email — the Authentication section below has the exact command. The MCP server URL is {backend}/mcp/default."
     },
     {
       "title": "Configure each detected host",
       "command": "npx -y @gleanwork/configure-mcp-server remote --url https://{instance}-be.glean.com/mcp/default --client <host>",
-      "description": "--client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job \u2014 it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token."
+      "description": "--client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token."
     },
     {
       "title": "Restart the host app",
@@ -54,8 +54,8 @@
     }
   ],
   "scaffoldActions": [],
-  "aiPrompt": "Connect me to the Glean remote MCP server following\nhttps://developers.glean.com/cookbook/connect-mcp-hosts\n\n1. Detect which MCP hosts I have installed (Claude Code, Cursor, Claude\n   Desktop).\n2. Resolve my Glean backend from my work email using the command in\n   this skill's Authentication section. The MCP server URL is\n   {backend}/mcp/default.\n3. For each detected host, run the real, first-party configurator \u2014\n   don't hand-walk a Configurator URL or ask me for an API token, this\n   CLI does the whole job including OAuth with Dynamic Client\n   Registration by default:\n   npx -y @gleanwork/configure-mcp-server remote --url <mcp-server-url> --client <host>\n   (--client values: claude-code, cursor, claude-desktop)\n4. Tell me to restart the host app afterward \u2014 Cursor and Claude Code\n   pick up the new server on restart; Claude Desktop needs the hammer\n   icon to confirm Glean tools are available.\n5. Verify per host by asking \"Who's on call for payments-service?\" and\n   confirming a Glean-cited answer.",
-  "llmContext": "Glean MCP server URL: https://{instance}-be.glean.com/mcp/{server-name} (default server-name is \"default\"). @gleanwork/configure-mcp-server (npx -y @gleanwork/configure-mcp-server remote --url <url> --client <host>) is the real, GA, first-party CLI for wiring this up -- it handles OAuth with Dynamic Client Registration by default and writes the correct host-specific config (Claude Code/Cursor connect natively over HTTP; Claude Desktop is stdio-only, so the CLI wires the mcp-remote bridge automatically). Never reference @gleanwork/mcp-server (deprecated local package), never hand-walk the app.glean.com/settings/install MCP Configurator URL pattern when this CLI exists, and never tell users an API token is required by default -- pass --token only if a host genuinely doesn't support OAuth.",
+  "aiPrompt": "Connect me to the Glean remote MCP server following\nhttps://developers.glean.com/cookbook/connect-mcp-hosts\n\n1. Detect which MCP hosts I have installed (Claude Code, Cursor, Claude\n   Desktop).\n2. Resolve my Glean backend from my work email using the command in\n   this skill's Authentication section. The MCP server URL is\n   {backend}/mcp/default.\n3. For each detected host, run the real, first-party configurator —\n   don't hand-walk a Configurator URL or ask me for an API token, this\n   CLI does the whole job including OAuth with Dynamic Client\n   Registration by default:\n   npx -y @gleanwork/configure-mcp-server remote --url <mcp-server-url> --client <host>\n   (--client values: claude-code, cursor, claude-desktop)\n4. Tell me to restart the host app afterward — Cursor and Claude Code\n   pick up the new server on restart; Claude Desktop needs the hammer\n   icon to confirm Glean tools are available.\n5. Verify per host by asking \"Who's on call for payments-service?\" and\n   confirming a Glean-cited answer.",
+  "llmContext": "Use https://{instance}-be.glean.com/mcp/{server-name}; the default server name is default. Configure hosts with npx -y @gleanwork/configure-mcp-server remote --url <url> --client <host>. OAuth with Dynamic Client Registration is the default. Claude Code and Cursor connect over HTTP; Claude Desktop uses the CLI-managed mcp-remote bridge. Supply --token only when the host cannot use OAuth.",
   "goDependency": false,
   "featured": false,
   "tags": ["mcp", "starter"],
