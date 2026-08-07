@@ -4,15 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Path B: you own the UI; the server calls Glean's chat API and renders the
-// answer plus its citations itself.
-//
-// This calls the Client API, POST /rest/api/v1/chat. The Platform equivalent
-// (POST /api/chat, OpenAI Responses-style) is the eventual target and is what
-// the recipe's SPEC-LOCK describes, but it currently returns 404
-// resource_not_found -- it is gated behind a backend flag that is not on yet.
-// Shipping against it meant this recipe could not run at all. Swap back when
-// /api/chat is generally available; the parsing is the only part that changes.
+// Path B: you own the UI; the server calls Client Chat and renders the answer
+// plus its citations.
 
 interface ChatCitationDocument {
   title?: string;
@@ -33,6 +26,14 @@ interface ChatMessage {
 interface ChatResponse {
   messages?: ChatMessage[];
 }
+
+interface ConversationTurn {
+  author: 'USER' | 'GLEAN_AI';
+  text: string;
+}
+
+const MAX_CONVERSATION_TURNS = 10;
+const MAX_TURN_CHARS = 8_000;
 
 type MilestoneGroup = 'it' | 'hr' | 'team' | 'engineering';
 
@@ -120,7 +121,7 @@ function isSafeHttpUrl(value: string): boolean {
   }
 }
 
-function parsePlatformChatResponse(data: ChatResponse): {
+function parseClientChatResponse(data: ChatResponse): {
   answer: string;
   citations: Array<{ title: string; url: string }>;
 } {
@@ -179,7 +180,11 @@ function withEscalate(parsed: {
   return { ...parsed, escalate };
 }
 
-async function askPlatformChat(input: string): Promise<{
+async function askClientChat(
+  input: string,
+  history: ConversationTurn[],
+  attempt = 1,
+): Promise<{
   answer: string;
   citations: Array<{ title: string; url: string }>;
   escalate: boolean;
@@ -199,7 +204,14 @@ async function askPlatformChat(input: string): Promise<{
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      messages: [{ author: 'USER', fragments: [{ text: input }] }],
+      saveChat: false,
+      messages: [...history, { author: 'USER' as const, text: input }].map(
+        (message) => ({
+          author: message.author,
+          messageType: 'CONTENT',
+          fragments: [{ text: message.text }],
+        }),
+      ),
     }),
   });
 
@@ -213,10 +225,16 @@ async function askPlatformChat(input: string): Promise<{
     );
   }
 
-  const data = (await response.json()) as ChatResponse;
-  // Empty or uncited completed responses escalate rather than 500: the hub's
-  // failure mode for "docs don't cover this" is the escalate affordance.
-  return withEscalate(parsePlatformChatResponse(data));
+  const parsed = parseClientChatResponse(
+    (await response.json()) as ChatResponse,
+  );
+  if (!parsed.answer) {
+    if (attempt < 2) return askClientChat(input, history, attempt + 1);
+    throw new Error(
+      'Glean returned no answer text after two attempts. Check the server logs and try again.',
+    );
+  }
+  return withEscalate(parsed);
 }
 
 const server = http.createServer(async (req, res) => {
@@ -247,7 +265,13 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/ask') {
     try {
       const body = await readJsonBody(req);
-      const result = await askPlatformChat(body.question);
+      const question = body.question?.trim();
+      if (!question) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'question is required' }));
+        return;
+      }
+      const result = await askClientChat(question, parseHistory(body.history));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
     } catch (error) {
@@ -257,7 +281,7 @@ const server = http.createServer(async (req, res) => {
       res.end(
         JSON.stringify({
           error: 'Could not answer that question.',
-          hint: 'Check credentials and that experimental Platform Chat is enabled.',
+          hint: 'Check credentials and the CHAT scope.',
         }),
       );
     }
@@ -270,7 +294,7 @@ const server = http.createServer(async (req, res) => {
 
 function readJsonBody(
   req: http.IncomingMessage,
-): Promise<{ question: string }> {
+): Promise<{ question?: string; history?: unknown }> {
   return new Promise((resolve, reject) => {
     let raw = '';
     req.on('data', (chunk) => (raw += chunk));
@@ -285,9 +309,28 @@ function readJsonBody(
   });
 }
 
+function parseHistory(raw: unknown): ConversationTurn[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .slice(-MAX_CONVERSATION_TURNS)
+    .filter(
+      (turn): turn is ConversationTurn =>
+        Boolean(turn) &&
+        typeof turn === 'object' &&
+        ((turn as ConversationTurn).author === 'USER' ||
+          (turn as ConversationTurn).author === 'GLEAN_AI') &&
+        typeof (turn as ConversationTurn).text === 'string',
+    )
+    .map((turn) => ({
+      author: turn.author,
+      text: turn.text.trim().slice(0, MAX_TURN_CHARS),
+    }))
+    .filter((turn) => turn.text.length > 0);
+}
+
 const port = Number(process.env.PORT ?? 3000);
 server.listen(port, () => {
   console.log(
-    `Onboarding Hub (Platform Chat) running at http://localhost:${port}`,
+    `Onboarding Hub (Client Chat) running at http://localhost:${port}`,
   );
 });

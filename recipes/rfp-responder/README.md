@@ -104,36 +104,17 @@ security team. Putting it in a heuristic would have been the mistake.
 
 ## Refusal is enforced, not requested
 
-`classify()` returns the answer text a row may display, which is not always the
-answer the model produced. Two callers previously assigned `row.answer = answer`
-before checking the verdict, so a row routed to a human kept the model's prose and
-citations — the failure this recipe exists to report, reintroduced by the code
-reporting it.
-
-The offline fixtures hid it. The recorded reply for the attachment request was
-literally `INSUFFICIENT_EVIDENCE`, which normalises to empty, so the contract
-appeared to hold. On a real instance that question retrieves a
-vulnerability-management policy and Chat answers it fluently. The fixture now
-records that fluent answer, which makes three previously vacuous checks real:
-revert the enforcement and they fail.
+`classify()` controls the answer text and citations a row may display. Rows routed
+to a human must have an empty answer and no citations, even when Client Chat
+returns fluent prose. The fixture suite enforces this boundary with a response
+that contains a plausible answer for an unsupported attachment request.
 
 ## A failed call is not a finding
 
-`/api/chat` can return HTTP 200 for a run that never finished — an empty CONTENT
-message, a trailing SERVER_TOOL, no error field anywhere — for roughly one call in
-four on questions that invoke a server tool.
-
-That arrived here as an answer with no text and no citations, which is exactly what
-a refusal looks like, so the row was labelled **"No answer drafted — insufficient
-evidence."** On a 19-row questionnaire that told the reviewer their documentation
-lacked coverage it actually had, several rows at a time. It is the recipe's own
-mistake in miniature: absence of a _result_ reported as absence of _evidence_.
-
-A response with no text block is now marked `unfinished`, retried once, and if it
-persists the row ends as `status: 'failed'` with `confidence: null` — no verdict,
-because none was reached — and a retry button. A refusal is untouched: that is a
-settled answer, and retrying it would be wrong, which is why the two had to be told
-apart before either could be handled.
+Client Chat can return HTTP 200 before a run produces a text block. Treat that as
+an unfinished call, not evidence that the corpus lacks an answer. Retry once; if
+the response is still unfinished, set `status: 'failed'` and `confidence: null`,
+and show a retry action. Keep explicit refusals as settled answers.
 
 ## Deliberately not solved
 
@@ -156,7 +137,7 @@ apart before either could be handled.
 | ------------------------- | -------------------------------------------------------------- |
 | `server.ts`               | Routes; SSE progress for the batched run                       |
 | `lib/questionnaire.ts`    | CSV parse, column mapping, dedup                               |
-| `lib/chat.ts`             | Platform Chat call, instructions, response parsing             |
+| `lib/chat.ts`             | Client Chat call, instructions, response parsing               |
 | `lib/grounding.ts`        | Evidence classification                                        |
 | `lib/approved-sources.ts` | Which sources may be quoted to a customer                      |
 | `lib/answer-library.ts`   | Accepted Q&A reuse                                             |

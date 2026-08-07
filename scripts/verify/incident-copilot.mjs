@@ -60,6 +60,10 @@ export async function setup(context) {
       ...process.env,
       PORT: String(PORT),
       GLEAN_USE_FIXTURE: 'false',
+      WATCHED_SERVICES:
+        process.env.WATCHED_SERVICES ??
+        process.env.VERIFY_SERVICE ??
+        'payments-service',
       // Per-request actors are a demo affordance now.
       INCIDENT_DEMO_MODE: 'true',
     },

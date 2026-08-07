@@ -36,6 +36,21 @@ jobs:
       # the live-discovery test skips itself without GLEAN_INSTANCE.
       - run: npm test
 
+  recipe-fixtures:
+    name: Recipe fixture verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm --prefix recipes/incident-copilot ci
+      - run: npm --prefix recipes/onboarding-hub/platform-chat ci
+      - run: npm --prefix recipes/rfp-responder ci
+      - run: PORT=3211 npm --prefix recipes/incident-copilot run verify:fixture
+      - run: npm --prefix recipes/onboarding-hub/platform-chat run verify:context
+      - run: PORT=3212 npm --prefix recipes/rfp-responder run verify:fixture
+
   format-check:
     name: Format check
     runs-on: ubuntu-latest
@@ -59,6 +74,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run snippets:check
+      - run: npm run skill-context:check
 
   pinned-deps:
     name: Pinned SDK versions
@@ -83,9 +99,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
-          cache-dependency-path: plugin/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            plugin/package-lock.json
+      - run: npm ci
       - working-directory: plugin
         run: npm ci
       # Each recipe carries a committed copy of the shared stylesheet, because

@@ -17,6 +17,7 @@
     "format:check": "prettier --check .",
     "release": "release-it",
     "snippets:check": "md-code check && node scripts/check-prompt-snippets.mjs",
+    "skill-context:check": "node scripts/check-skill-context.mjs",
     "snippets:sync": "md-code sync",
     "test": "node --test \"scripts/**/*.test.mjs\"",
     "verify:login": "node scripts/verify-login.mjs"

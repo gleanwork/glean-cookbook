@@ -1,11 +1,8 @@
 // Platform API client: Search, Chat, and Agents, with a fixture mode.
 //
-// Contracts verified against the OpenAPI specs and SDK 0.18.0, matching the
-// conventions the other Platform recipes already use:
+// API contracts:
 //   Search  POST /api/search  -> results[].{title,url,snippets}
 //   Chat    POST /rest/api/v1/chat -> messages[] where messageType === 'CONTENT'
-//           (the Platform POST /api/chat is the eventual target and is what
-//           SPEC-LOCK describes, but it 404s today -- see chat() below)
 //   Agents  POST /api/agents/{agent_id}/runs -> messages[].content[].text
 //
 // Auth is the caller's own token. There is no impersonation anywhere in this
@@ -24,6 +21,18 @@ export interface SearchHit {
 export interface Cited {
   text: string;
   citations: Array<{ title: string; url: string }>;
+}
+
+export class ChatUnfinishedError extends Error {
+  constructor(
+    public readonly attempts: number,
+    fixtureKey: string,
+  ) {
+    super(
+      `Client Chat returned 200 with no answer text for ${fixtureKey} after ${attempts} attempts.`,
+    );
+    this.name = 'ChatUnfinishedError';
+  }
 }
 
 const fixtureDir = () =>
@@ -155,7 +164,11 @@ export function parseChat(data: RawChatResponse): Cited {
   return { text, citations };
 }
 
-export async function chat(input: string, fixtureKey: string): Promise<Cited> {
+export async function chat(
+  input: string,
+  fixtureKey: string,
+  attempt = 1,
+): Promise<Cited> {
   if (useFixture()) {
     const all = readFixture<Record<string, RawChatResponse>>(
       'chat-responses.json',
@@ -163,14 +176,12 @@ export async function chat(input: string, fixtureKey: string): Promise<Cited> {
     return parseChat(all[fixtureKey] ?? {});
   }
 
-  // Client API rather than the Platform POST /api/chat: that endpoint returns
-  // 404 resource_not_found today, gated behind a backend flag that is not
-  // enabled, and shipping against it meant this recipe could not triage at all.
-  // Swap back when it ships; only parseChat changes.
+  // Client Chat synthesis.
   const response = await fetch(`${backend()}/rest/api/v1/chat`, {
     method: 'POST',
     headers: headers(),
     body: JSON.stringify({
+      saveChat: false,
       messages: [{ author: 'USER', fragments: [{ text: input }] }],
     }),
   });
@@ -179,7 +190,10 @@ export async function chat(input: string, fixtureKey: string): Promise<Cited> {
       `POST /rest/api/v1/chat returned ${response.status}: ${await response.text()}`,
     );
   }
-  return parseChat((await response.json()) as RawChatResponse);
+  const parsed = parseChat((await response.json()) as RawChatResponse);
+  if (parsed.text) return parsed;
+  if (attempt < 2) return chat(input, fixtureKey, attempt + 1);
+  throw new ChatUnfinishedError(attempt, fixtureKey);
 }
 
 interface RawAgentRunResponse {

@@ -1,15 +1,9 @@
-// Platform Chat client.
+// Client Chat client.
 //
 // Auth: this recipe runs as the caller. There is no impersonation and no act-as —
 // your own OAuth token is the permission boundary, so content you cannot see can
 // never reach the prompt, and therefore can never reach the customer's document.
 // That property is the recipe, not a caveat.
-//
-// Calls the Client API, POST /rest/api/v1/chat. The Platform equivalent
-// (POST /api/chat, OpenAI Responses-style) is the eventual target and is what
-// SPEC-LOCK describes, but it currently returns 404 resource_not_found -- gated
-// behind a backend flag that is not enabled. Shipping against it meant this
-// recipe could not run. Only the parsing differs; swap back when it ships.
 //
 //   POST /rest/api/v1/chat  { messages: [{ author, fragments: [{ text }] }] }
 //   -> messages[] where messageType === 'CONTENT' && author === 'GLEAN_AI'
@@ -37,7 +31,7 @@ interface ChatMessageEnvelope {
   fragments?: ChatFragment[];
 }
 
-export interface PlatformChatResponse {
+export interface ClientChatResponse {
   messages?: ChatMessageEnvelope[];
 }
 
@@ -90,9 +84,7 @@ export function buildInstructions(steering?: string): string {
 
 export const INSUFFICIENT = 'INSUFFICIENT_EVIDENCE';
 
-export function parsePlatformChatResponse(
-  data: PlatformChatResponse,
-): ChatAnswer {
+export function parseClientChatResponse(data: ClientChatResponse): ChatAnswer {
   // The answer is the CONTENT messages from GLEAN_AI. UPDATE messages are
   // progress narration ('Searching company knowledge') and are not the answer.
   const contentMessages = (data.messages ?? []).filter(
@@ -164,7 +156,7 @@ function requireEnv(name: string): string {
 }
 
 /** Recorded responses keyed by question id, for offline verification. */
-export function loadFixtureResponses(): Record<string, PlatformChatResponse> {
+export function loadFixtureResponses(): Record<string, ClientChatResponse> {
   // Overridable so the verification can point at a recorded unfinished run
   // without disturbing the main fixture's row counts. Only ever read when
   // GLEAN_USE_FIXTURE is already on, so it is not a production affordance.
@@ -173,7 +165,7 @@ export function loadFixtureResponses(): Record<string, PlatformChatResponse> {
     path.join(fixtureDir(), 'chat-responses.json');
   return JSON.parse(fs.readFileSync(file, 'utf8')) as Record<
     string,
-    PlatformChatResponse
+    ClientChatResponse
   >;
 }
 
@@ -189,7 +181,7 @@ export async function askChat(
     const fixtures = loadFixtureResponses();
     const recorded = fixtures[questionId];
     if (!recorded) return { answer: '', citations: [], unfinished: false };
-    const parsed = parsePlatformChatResponse(recorded);
+    const parsed = parseClientChatResponse(recorded);
     if (parsed.unfinished) throw new ChatUnfinishedError(questionId, 1);
     return parsed;
   }
@@ -208,6 +200,7 @@ export async function askChat(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
+      saveChat: false,
       messages: [
         {
           author: 'USER',
@@ -228,8 +221,8 @@ export async function askChat(
     );
   }
 
-  const parsed = parsePlatformChatResponse(
-    (await response.json()) as PlatformChatResponse,
+  const parsed = parseClientChatResponse(
+    (await response.json()) as ClientChatResponse,
   );
   if (!parsed.unfinished) return parsed;
 

@@ -6,7 +6,7 @@
 // evidence is sufficient. That division is the reason this path is the default: the
 // governance-critical decisions are in code you can read and test.
 
-import { chat } from '../platform.ts';
+import { ChatUnfinishedError, chat } from '../platform.ts';
 import type { Alarm } from '../evidence.ts';
 import type { ServiceRecord } from '../registry.ts';
 import { triage } from '../triage.ts';
@@ -54,7 +54,15 @@ export const appOrchestrated: Orchestrator = {
       `Evidence: ${result.evidence.map((hit) => `${hit.role}:${hit.title}`).join('; ')}`,
     ].join('\n');
 
-    const { text } = await chat(summaryPrompt, `triage:${alarm.id}`);
+    let text = '';
+    try {
+      ({ text } = await chat(summaryPrompt, `triage:${alarm.id}`));
+    } catch (error) {
+      if (!(error instanceof ChatUnfinishedError)) throw error;
+      notes.push(
+        'Chat synthesis produced no answer after one retry, so the summary uses retrieved evidence only.',
+      );
+    }
 
     const detail = [
       text.trim() ||

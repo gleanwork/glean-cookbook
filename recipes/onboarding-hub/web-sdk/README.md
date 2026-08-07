@@ -60,4 +60,4 @@ Two things worth knowing if you adapt this:
 
 ## Path note
 
-This is Path A. For Path B (Platform Chat `POST /api/chat`), see [`../platform-chat/`](../platform-chat/).
+This is Path A. For Path B (Client Chat), see [`../platform-chat/`](../platform-chat/).

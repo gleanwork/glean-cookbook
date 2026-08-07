@@ -2,10 +2,10 @@
 
 Customer 360 — one account page built from whatever your instance already
 knows about that customer. KPI header, three source tiles, journey summary,
-saved-prompt buttons, and drill-in chat. Built two ways on **Platform APIs only**:
+saved-prompt buttons, and drill-in chat. Built two ways:
 
-- **[`platform-search-chat/`](platform-search-chat/)** — parallel `glean.search.query`
-  tiles + Platform Chat (`POST /api/chat`) for synthesis.
+- **[`platform-search-chat/`](platform-search-chat/)** — parallel Platform Search tiles plus
+  Client Chat synthesis.
 - **[`platform-agents/`](platform-agents/)** — same page UX; journey / saved prompts /
   follow-ups via `glean.agents.createRun`.
 

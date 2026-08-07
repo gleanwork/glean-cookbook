@@ -2,11 +2,12 @@
   "name": "onboarding-hub-platform-chat",
   "version": "0.0.0",
   "private": true,
-  "description": "Onboarding Hub — Platform Chat path: POST /api/chat, you own the UI.",
+  "description": "Onboarding Hub — Client Chat path with a custom UI.",
   "type": "module",
   "scripts": {
     "start": "tsx server.ts",
     "verify": "node scripts/verify.mjs",
+    "verify:context": "node scripts/verify-context.mjs",
     "lint": "eslint ."
   },
   "dependencies": {

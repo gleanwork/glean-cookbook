@@ -6,8 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "tsx server.ts",
+    "test": "node --import tsx --test \"lib/**/*.test.ts\"",
     "verify": "node scripts/verify.mjs",
-    "verify:fixture": "GLEAN_USE_FIXTURE=true node scripts/verify.mjs",
+    "verify:fixture": "npm test && GLEAN_USE_FIXTURE=true node scripts/verify.mjs",
     "lint": "eslint ."
   },
   "dependencies": {

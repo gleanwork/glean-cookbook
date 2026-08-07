@@ -7,7 +7,7 @@ disable-model-invocation: true
 Build "Onboarding Hub: a day-one checklist grounded in your own docs" following https://developers.glean.com/cookbook/onboarding-hub
 
 1. **Pick a path**
-   Path A (Web SDK) renders Glean's chat UI via renderChat — fastest for a portal page with SSO. Path B (Platform Chat) calls POST /api/chat from your backend — you own every pixel and parse OpenAI Responses-style output with citation annotations.
+   Path A embeds Glean's chat UI with the Web SDK. Path B calls Client Chat from your backend and renders the response in your own UI.
 
 ### Web SDK
 
@@ -35,11 +35,11 @@ Web SDK variant — checklist + renderChat
    ```
 
 5. **Verify**
-   Open the printed local URL (copy steps.example.json → steps.json). Confirm the checklist renders without a named-hire persona, click Ask about this on a step, and ask a first-day question for a cited answer.
+   Open the printed local URL (copy steps.example.json → steps.json). Confirm the configured checklist renders, click Ask about this, and verify a cited first-day answer.
 
-### Platform Chat
+### Client Chat
 
-Platform Chat variant — POST /api/chat, you own the UI
+Client Chat variant — server-side API call, custom UI
 
 1. **Scaffold the project**
 
@@ -75,7 +75,7 @@ Platform Chat variant — POST /api/chat, you own the UI
 
 ## Reference
 
-Platform Chat (Path B): POST /api/chat, OpenAI Responses-style. Request: { input: string, stream?: boolean, store?: boolean }. Response: output[].content[].text + annotations[].sources[] (document/person/file/custom_entity). Experimental — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true. Platform scope is CHAT_WRITE (registry uses cookbook-style CHAT). No scoping/inclusion filter fields in OpenAPI — soft-scope via corpus framing only. Until @gleanwork/api-client ships glean.chat.create, use fetch against /api/chat. Auth is the caller's own OAuth token or API token with CHAT scope -- impersonation/act-as was removed from the cookbook recipes, so the caller's credential is the permission boundary. Path A: Web SDK renderChat with SSO cookie; all ChatOptions fields optional, but backend should still be set explicitly — unset, the widget prompts for the user's email to route to an instance. renderChat returns a ChatHandle exposing only on/off, so there is no imperative way to send a message: injecting one means re-mounting, which starts a new thread unless ChatOptions.chatId is passed back. Capture it from chat:location_update (chat:id_update is deprecated; both can report undefined when a chat is cleared). Do NOT teach Client API glean.client.chat.create or messageType === 'CONTENT' fragment parsing in this recipe. The checklist and its steps must be derived from the reader's own onboarding content. An earlier draft seeded a named new hire's nine steps from a demo corpus that no longer exists, which made the hub display one fictional person's checklist on every instance. Ask rather than invent, and treat an empty or uncited answer as a state to render -- a new hire cannot distinguish an invented process from a real one. Use GLEAN_SERVER_URL rather than deriving the backend from an instance name.NOTE (2026-08-06): POST /api/chat is not available on the instances we test against (404), so the code calls POST /rest/api/v1/chat and parses messages[] entries where messageType is CONTENT. Platform Chat remains the intended contract.
+Path A uses Web SDK renderChat with SSO, an explicit backend, and chatId preservation when re-mounting with a new initialMessage. Path B uses server-side Client Chat POST /rest/api/v1/chat. Read CONTENT messages from GLEAN_AI and citations from fragment.citation.sourceDocument; keep the token server-side and set saveChat:false for verification. Build checklist steps from GLEAN_ONBOARDING_STEPS_JSON or GLEAN_ONBOARDING_STEPS_FILE. Retry empty chat output once; escalate only completed thin or uncited answers.
 
 ## Authentication
 
@@ -104,7 +104,7 @@ This recipe offers a path choice. Apply the block matching the path the user pic
 - **Query:** "What should I do on my first day?"
   **Expected:** Returns a cited answer drawn from your own onboarding documents, and the checklist reflects steps that actually appear in them rather than a hardcoded list.
 - **Query:** "How do I set up VPN?"
-  **Expected:** Returns a cited answer from your own IT documentation. This is the kind of question almost every company's onboarding content covers, so it works without seeding anything.
+  **Expected:** Returns a cited answer from your own IT documentation.
 - **Query:** "What's our PTO policy?"
   **Expected:** Returns a cited answer respecting the asker's permissions — the same question from two people with different access should not return content either of them can't see.
 - **Query:** "Ask about a step your docs don't cover"

@@ -70,7 +70,7 @@ Same flow in TypeScript
 
 ## Reference
 
-Platform API search (data-first retrieval, distinct from the Client API's glean.client.search.query): glean.search.query(query, page_size, http_headers) -> PlatformSearchResponse. Result shape: results[].title, results[].url, results[].snippets (string[], not snippet objects). Experimental since its 2026-07-14 public launch — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var, read automatically by the SDK) on every call or it 4xxs. Per-user filtering needs no headers: with a token from the Glean Authorization Server the caller's own credential is the permission boundary. Send no impersonation header; that belongs to a different architecture and does not apply here. The verifiable claim for this recipe is that an empty retrieval produces a refusal rather than a fabricated answer.
+Use Platform Search glean.search.query with query, page_size, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Results expose title, url, and snippets as strings. The caller's OAuth credential is the permission boundary; send no impersonation header. Pass only retrieved, ACL-filtered content to the model, include source links, and refuse to answer when retrieval is empty.
 
 ## Authentication
 

@@ -44,6 +44,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { loginCommand, resolveCredential } from './verify-lib/auth.mjs';
+import { verificationExitCode } from './verify-lib/outcome.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 
@@ -227,14 +228,19 @@ try {
   }
 }
 
-if (failed > 0) {
+const exitCode = verificationExitCode({
+  failed,
+  skipped: skipped.length,
+});
+
+if (exitCode === 1) {
   console.error(
     `\n${failed} of ${queries.length} demo queries failed for ${recipeId}.`,
   );
-  process.exit(1);
+  process.exit(exitCode);
 }
 
-if (skipped.length > 0) {
+if (exitCode === 2) {
   console.log(
     `\n${queries.length - skipped.length} of ${queries.length} demo queries passed for ${recipeId}; ${skipped.length} skipped:`,
   );
@@ -244,6 +250,7 @@ if (skipped.length > 0) {
   console.log(
     `\nThis is a PARTIAL verification. Do not set lastVerified from it without\nexercising the skipped checks another way.`,
   );
+  process.exit(exitCode);
 } else {
   console.log(`\nAll ${queries.length} demo queries passed for ${recipeId}.`);
 }

@@ -1,7 +1,7 @@
 {
   "id": "no-code-pto-lookup-replit",
-  "title": "PTO & benefits lookup \u2014 no code, on Replit",
-  "description": "Prompt Replit Agent into a working HR lookup tool on the Glean Chat API \u2014 zero hand-written backend, permissions enforced by Glean.",
+  "title": "PTO & benefits lookup — no code, on Replit",
+  "description": "Prompt Replit Agent into a working HR lookup tool on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.",
   "sidebarLabel": "PTO Lookup (Replit)",
   "surfaces": ["client-api"],
   "status": "showcase",
@@ -38,8 +38,8 @@
     }
   ],
   "scaffoldActions": [],
-  "aiPrompt": "I'm using Replit Agent, not you, to build this \u2014 your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Generate the Replit prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt.\n3. After Replit builds it, hand it back to me \u2014 see Verify below for\n   the exact queries to test and what a correct result looks like.",
-  "llmContext": "This recipe's deliverable is a prompt template, not a runnable project \u2014 \"building\" it means pasting the prompt into Replit Agent, which then writes and runs the actual code. The prompt pins the same Chat API shape used elsewhere in this cookbook: Glean({ apiToken, instance }) (never `domain`), chat.create({ messages: [{ author: 'USER', fragments: [{ text }] }] }), filtering the response to messageType === 'CONTENT' before joining fragments[].text (a real response can include earlier step-narration messages), and reading citations from fragments[].citation.sourceDocument \u2014 not the deprecated message.citations[] field, which wasn't populated at all on a live test response. The demo query \"How do I enroll in the commuter benefit?\" from this recipe's source ticket was swapped for \"When is open enrollment?\" because it is too company-specific to assume any instance documents it \u2014 asking the original question would produce no citation or a fabricated answer. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.",
+  "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Generate the Replit prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt.\n3. After Replit builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
+  "llmContext": "Have Replit keep the Glean token server-side and call glean.client.chat.create with USER message fragments. Construct Glean with apiToken plus instance or serverURL. Read answer text from CONTENT messages and citations from fragment.citation.sourceDocument. Never expose the token in browser code. Treat empty answer text as a retryable failure and show cited answers or an explicit no-answer state.",
   "goDependency": false,
   "featured": false,
   "tags": ["no-code", "hr"]

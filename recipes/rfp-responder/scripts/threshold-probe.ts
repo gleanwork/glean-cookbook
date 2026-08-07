@@ -12,10 +12,7 @@
  * TypeScript library directly, so it spawns this.
  */
 import { classify, citationOverlap } from '../lib/grounding.ts';
-import {
-  loadFixtureResponses,
-  parsePlatformChatResponse,
-} from '../lib/chat.ts';
+import { loadFixtureResponses, parseClientChatResponse } from '../lib/chat.ts';
 
 const CASES: Record<string, string> = {
   'SEC-08': 'Describe your at-rest encryption, including key length.',
@@ -29,7 +26,7 @@ const out: Record<
 > = {};
 
 for (const [id, question] of Object.entries(CASES)) {
-  const { answer, citations } = parsePlatformChatResponse(fixtures[id]);
+  const { answer, citations } = parseClientChatResponse(fixtures[id]);
   const confidenceAt = (threshold: number) =>
     classify(question, answer, citations, threshold).confidence;
   out[id] = {

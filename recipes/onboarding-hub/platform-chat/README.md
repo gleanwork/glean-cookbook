@@ -1,6 +1,6 @@
-# Onboarding Hub — Platform Chat path
+# Onboarding Hub — Client Chat path
 
-Checklist + progress + Glean chat via Platform Chat (`POST /api/chat`). Steps are
+Checklist + progress + Glean Client Chat. Steps are
 server-owned via env/file config, or empty — not a hardcoded named hire.
 The app runs as you; there is no act-as / impersonation.
 
@@ -22,27 +22,20 @@ Open http://localhost:3000. The server holds your API token — never expose it 
 
 ## Verify
 
-Requires credentials (from `.env` or the shell — same as `npm start`) and a
-working experimental `/api/chat` handler. Stop `npm start` first (Ctrl-C); verify
-starts its own server on the same port.
+Requires credentials from `.env` or the shell. Stop `npm start` first (Ctrl-C);
+verify starts its own server on the same port.
 
 ```bash
 npm run verify
 ```
 
-## Platform Chat contract
+## Client Chat contract
 
-Aligned with `scio/openapi/public/platform/chat.yaml` (`ChatCreateRequest` / `ChatCompletedResponse`):
-
-- Request: `{ "input": "<question>", "stream": false, "store": true }`
-- Response (required): `id` (`resp_<uuid4>`), `object: "response"`, `created_at`, `status: "completed"`, `output`, `store`, `request_id`
-- Answer text: `output[0].content[0].text` where `type` is `output_text`
-- Citations: `annotations[].type == "citation"` → `sources[]` (`document` sources use `document_id` and/or `url`, plus optional `title`)
-- Header: `X-GLEAN-INCLUDE-EXPERIMENTAL=true`
-- Platform scope: `CHAT` (see registry `requiredScopes` / `llmContext`)
+- Request: `POST /rest/api/v1/chat` with `saveChat: false` and a USER message fragment
+- Answer text: `CONTENT` messages from `GLEAN_AI`
+- Citations: `fragments[].citation.sourceDocument`
 - Auth: caller credential only (`GLEAN_SERVER_URL` + `GLEAN_API_TOKEN`); no act-as
-
-When `@gleanwork/api-client` ships `glean.chat.create`, swap the `fetch` call in `server.ts` for the generated SDK method — the response parsing stays the same.
+- Empty answer text retries once, then returns a transport error
 
 ## Path note
 

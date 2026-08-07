@@ -508,7 +508,21 @@
         chatLog.scrollTop = chatLog.scrollHeight;
       }
 
+      const MAX_CONVERSATION_TURNS = 10;
+      const conversation = [];
+
+      function remember(author, text) {
+        const turn = { author, text };
+        conversation.push(turn);
+        if (conversation.length > MAX_CONVERSATION_TURNS) {
+          conversation.splice(0, conversation.length - MAX_CONVERSATION_TURNS);
+        }
+        return turn;
+      }
+
       async function askGlean(question) {
+        const history = conversation.slice();
+        const pendingTurn = remember('USER', question);
         appendMessage('user', question);
         escalate.hidden = true;
         appendMessage('assistant', 'Asking Glean…');
@@ -517,7 +531,7 @@
         const response = await fetch('/api/ask', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question }),
+          body: JSON.stringify({ question, history }),
         });
         const data = await response.json();
         loading.remove();
@@ -525,21 +539,24 @@
         if (data.error) {
           const message = [data.error, data.hint].filter(Boolean).join(' — ');
           appendMessage('assistant', `Error: ${message}`);
+          const pendingIndex = conversation.indexOf(pendingTurn);
+          if (pendingIndex !== -1) conversation.splice(pendingIndex, 1);
           escalate.hidden = false;
           return;
         }
 
         const answer = (data.answer ?? '').trim();
         if (data.escalate || !answer || answer.length < 20) {
-          appendMessage(
-            'assistant',
-            "I don't have enough information to answer that confidently.",
-          );
+          const refusal =
+            "I don't have enough information to answer that confidently.";
+          appendMessage('assistant', refusal);
+          remember('GLEAN_AI', refusal);
           escalate.hidden = false;
           return;
         }
 
         appendMessage('assistant', answer, data.citations ?? []);
+        remember('GLEAN_AI', answer);
       }
 
       function rerender() {
@@ -584,6 +601,7 @@
           completed.clear();
           saveCompleted(completed);
           chatLog.innerHTML = '';
+          conversation.length = 0;
           rerender();
           askGlean(DEFAULT_CHAT);
         }

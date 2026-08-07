@@ -5,7 +5,7 @@
 // review meeting argues over — so it is assembled from recorded events, and the
 // model is only asked for the prose summary around them.
 
-import { chat } from './platform.ts';
+import { ChatUnfinishedError, chat } from './platform.ts';
 import { auditLog, type Incident } from './state.ts';
 
 export function timeline(incident: Incident): string[] {
@@ -42,12 +42,17 @@ export async function draft(incident: Incident): Promise<string> {
     ...facts,
   ].join('\n');
 
-  const { text } = await chat(prompt, `postmortem:${incident.alarm.id}`);
-  const body = text.trim();
+  let body = '';
+  try {
+    const { text } = await chat(prompt, `postmortem:${incident.alarm.id}`);
+    body = text.trim();
+  } catch (error) {
+    if (!(error instanceof ChatUnfinishedError)) throw error;
+  }
 
   // The timeline is authoritative even when the narrative is unavailable, so a
-  // failed or empty Chat response degrades to the recorded facts rather than
-  // producing nothing.
+  // Chat response that remains unfinished after retrying degrades to the recorded
+  // facts rather than making the whole postmortem unavailable.
   const header = [
     `# ${incident.id} — ${incident.service.service}`,
     '',

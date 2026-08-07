@@ -64,6 +64,10 @@ const VARIANT_LABEL_WORDS = {
   javascript: 'JavaScript',
 };
 
+const VARIANT_LABELS = {
+  'platform-chat': 'Client Chat',
+};
+
 // Matches recipe.ts's RECIPE_AUTH_METHODS — the partial under plugin/partials/
 // each value inlines. 'none' and 'custom' have no entry: they need no shared
 // credential guidance at all.
@@ -92,9 +96,9 @@ function humanizeScaffoldAction(action) {
 
 /** Last path segment of a codeAsset's repoPath, title-cased ("web-sdk" -> "Web SDK"). */
 function humanizeVariantLabel(repoPath) {
-  return repoPath
-    .split('/')
-    .pop()
+  const slug = repoPath.split('/').pop();
+  if (VARIANT_LABELS[slug]) return VARIANT_LABELS[slug];
+  return slug
     .split('-')
     .map(
       (word) =>
