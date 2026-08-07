@@ -39,10 +39,23 @@ those browsers do not share your Glean SSO session.
 1. Confirm your configured steps, groups, and progress render without a configuration message.
 2. Ask **What should I do on my first day?** and confirm Glean returns a cited answer from your
    instance.
-3. Ask another question, then click **Ask about this** on a step. The earlier turns remain visible and
-   the step question is appended.
+3. Click **Ask about this** on a step and confirm the chat submits that step's question and answers
+   it. Each click starts a fresh thread — see the note below.
 4. Complete every step. Confirm the completion panel appears, then reset the demo and confirm the
    checklist and chat start fresh.
+
+## Why "Ask about this" starts a new thread
+
+`renderChat` returns a handle with only `on`/`off`, so there is no imperative way to send a message —
+seeding one means re-mounting the widget with `initialMessage`.
+
+That means each click starts a fresh thread. Passing `chatId` to try to continue the previous one does
+not work: it makes the widget treat that chat as the selected one and look for a message in its own
+frame URL instead of using `initialMessage`, so the chat visibly reloads and sends nothing. Verified
+against `@gleanwork/web-sdk` 2.4.0.
+
+If you need the history to carry, own the transcript yourself — that is what the
+[Client Chat variant](../platform-chat/) does.
 
 The Client Chat variant owns the response UI and can also show an application-level escalation state;
 see [`../platform-chat/`](../platform-chat/).

@@ -10,7 +10,8 @@ onboarding content. Never invent a person, company process, checklist item, or r
   signed-in browser; agents do not open or automate it.
 - Read checklist steps from `public/steps.json`. Missing and invalid configuration are distinct,
   actionable states.
-- Preserve `chatId` when re-mounting with a step's `initialMessage`.
+- Seed a step question by re-mounting with `initialMessage`. Do not pass `chatId`: it suppresses
+  the message, so each ask starts a fresh thread.
 - Keep completion state in localStorage.
 
 ## Client Chat
