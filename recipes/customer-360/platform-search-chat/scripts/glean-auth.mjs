@@ -328,6 +328,11 @@ export async function run(argv = process.argv.slice(2), cwd = process.cwd()) {
   }
 
   const envPath = path.join(cwd, args.envFile);
+  const exampleEnvPath = path.join(cwd, '.env.example');
+  if (!fs.existsSync(envPath) && fs.existsSync(exampleEnvPath)) {
+    fs.copyFileSync(exampleEnvPath, envPath);
+    fs.chmodSync(envPath, 0o600);
+  }
   const currentEnv = fs.existsSync(envPath)
     ? fs.readFileSync(envPath, 'utf8')
     : '';
@@ -388,7 +393,10 @@ export async function run(argv = process.argv.slice(2), cwd = process.cwd()) {
   );
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
   run().catch((error) => {
     console.error(`Authentication failed: ${error.message}`);
     console.error(
