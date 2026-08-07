@@ -84,6 +84,7 @@ async def main() -> None:
     instance = require_env("GLEAN_INSTANCE")
     token = require_env("GLEAN_API_TOKEN")
     agent_id = require_env("GLEAN_AGENT_ID")
+    demo_question = require_env("GLEAN_DEMO_QUERY")
 
     base_url = f"https://{instance}-be.glean.com"
     card_path = f"/rest/api/v1/a2a/agents/{agent_id}/agent-card.json"
@@ -107,7 +108,7 @@ async def main() -> None:
             ClientConfig(httpx_client=httpx_client, streaming=False)
         ).create(card)
         question = create_text_message_object(
-            role=Role.user, content="Who owns our most critical service?"
+            role=Role.user, content=demo_question
         )
 
         context_id = None

@@ -5,6 +5,7 @@
   "description": "Onboarding Hub — Client Chat path with a custom UI.",
   "type": "module",
   "scripts": {
+    "login": "node scripts/glean-auth.mjs login --scopes chat",
     "start": "tsx server.ts",
     "verify": "node scripts/verify.mjs",
     "verify:context": "node scripts/verify-context.mjs",

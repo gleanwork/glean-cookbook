@@ -6,7 +6,9 @@ Path B of the [Company Answers](https://developers.glean.com/cookbook/company-an
 
 ```bash
 npm install
-cp .env.example .env   # fill in GLEAN_API_TOKEN and GLEAN_INSTANCE
+npm run login
+# Set GLEAN_DEMO_QUERY in .env to a topic you know exists.
+npm run verify
 npm start
 ```
 

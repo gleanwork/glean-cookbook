@@ -5,6 +5,7 @@
   "description": "Glean Search as the permissions-aware retrieval layer for your own LLM app.",
   "type": "module",
   "scripts": {
+    "login": "node scripts/glean-auth.mjs login --scopes search",
     "start": "tsx src/main.ts",
     "lint": "eslint ."
   },

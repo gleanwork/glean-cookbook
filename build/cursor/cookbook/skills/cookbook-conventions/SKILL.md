@@ -17,22 +17,10 @@ opt-out of cookie auth into the `client-api-oauth-or-token` flow — don't blend
 
 ## Client API OAuth or token
 
-Use the first available credential path:
-
-1. **Glean OAuth:** ask for the user's work email and run:
-   ```bash
-   node <plugin-root>/scripts/resolve-backend.mjs <work-email>
-   ```
-   If `oauthAvailable` is true, register a public client through the returned backend's Dynamic
-   Client Registration endpoint and use authorization code + PKCE. Reuse the client id and refresh
-   token.
-2. **External IdP OAuth:** if Glean OAuth is unavailable, ask whether the user's administrator has
-   configured Okta, Azure AD, Google, or another IdP for Glean Client API access. Use that sign-in
-   flow when available.
-3. **Glean API token:** otherwise request a token carrying the scopes declared by the recipe.
-
-Do not use client credentials for an end-user Client API integration. Keep access and refresh tokens
-server-side.
+Run the scaffold's shipped login command. It discovers the tenant from the user's work email, uses
+OAuth when the tenant supports it, and writes local configuration to ignored `.env`. If OAuth is
+unavailable, ask the user to enter a narrowly scoped Glean API token in `.env` without exposing it in
+chat or command output. Never implement or modify an authentication flow while setting up a recipe.
 
 ## Indexing token
 

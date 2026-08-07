@@ -153,12 +153,150 @@
             "type": "string",
             "minLength": 1
           },
+          "execution": {
+            "type": "object",
+            "properties": {
+              "questions": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9-]*$"
+                    },
+                    "prompt": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "required": {
+                      "default": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["id", "prompt"],
+                  "additionalProperties": false
+                }
+              },
+              "auth": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "browser-cookie",
+                        "oauth-with-token-fallback",
+                        "host-managed",
+                        "hosted-secret",
+                        "external-api-key",
+                        "indexing-token"
+                      ]
+                    },
+                    "scopes": {
+                      "default": [],
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "setupCommand": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "configFile": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "backendVariable": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "credentialVariable": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": ["kind"],
+                  "additionalProperties": false
+                }
+              },
+              "verification": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "automated",
+                      "user-browser",
+                      "third-party",
+                      "manual-admin"
+                    ]
+                  },
+                  "command": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "expectedDuration": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "startsOwnServer": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": ["kind", "expectedDuration"],
+                "additionalProperties": false
+              },
+              "run": {
+                "type": "object",
+                "properties": {
+                  "command": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "url": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "userBrowser": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": ["auth", "verification"],
+            "additionalProperties": false
+          },
           "steps": {
             "minItems": 1,
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "choose",
+                    "scaffold",
+                    "install",
+                    "configure",
+                    "authenticate",
+                    "verify-fixture",
+                    "verify-live",
+                    "run",
+                    "manual",
+                    "handoff"
+                  ]
+                },
                 "title": {
                   "type": "string",
                   "minLength": 1
@@ -200,6 +338,21 @@
       "items": {
         "type": "object",
         "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "choose",
+              "scaffold",
+              "install",
+              "configure",
+              "authenticate",
+              "verify-fixture",
+              "verify-live",
+              "run",
+              "manual",
+              "handoff"
+            ]
+          },
           "title": {
             "type": "string",
             "minLength": 1
@@ -216,6 +369,129 @@
         "required": ["title"],
         "additionalProperties": false
       }
+    },
+    "execution": {
+      "type": "object",
+      "properties": {
+        "questions": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "prompt": {
+                "type": "string",
+                "minLength": 1
+              },
+              "required": {
+                "default": true,
+                "type": "boolean"
+              }
+            },
+            "required": ["id", "prompt"],
+            "additionalProperties": false
+          }
+        },
+        "auth": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "browser-cookie",
+                  "oauth-with-token-fallback",
+                  "host-managed",
+                  "hosted-secret",
+                  "external-api-key",
+                  "indexing-token"
+                ]
+              },
+              "scopes": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "setupCommand": {
+                "type": "string",
+                "minLength": 1
+              },
+              "configFile": {
+                "type": "string",
+                "minLength": 1
+              },
+              "backendVariable": {
+                "type": "string",
+                "minLength": 1
+              },
+              "credentialVariable": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["kind"],
+            "additionalProperties": false
+          }
+        },
+        "verification": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "automated",
+                "user-browser",
+                "third-party",
+                "manual-admin"
+              ]
+            },
+            "command": {
+              "type": "string",
+              "minLength": 1
+            },
+            "expectedDuration": {
+              "type": "string",
+              "minLength": 1
+            },
+            "startsOwnServer": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          "required": ["kind", "expectedDuration"],
+          "additionalProperties": false
+        },
+        "run": {
+          "type": "object",
+          "properties": {
+            "command": {
+              "type": "string",
+              "minLength": 1
+            },
+            "url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "userBrowser": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["auth", "verification"],
+      "additionalProperties": false
     },
     "combines": {
       "type": "array",

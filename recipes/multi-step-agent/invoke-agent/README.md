@@ -14,7 +14,8 @@ There's no API to create an agent from scratch. In the Glean Agent Builder:
 ## Run it
 
 ```bash
-cp .env.example .env   # GLEAN_API_TOKEN, GLEAN_INSTANCE, GLEAN_AGENT_ID
+node scripts/glean-auth.mjs login --scopes agents
+# Set GLEAN_AGENT_ID in .env.
 uv run main.py
 ```
 

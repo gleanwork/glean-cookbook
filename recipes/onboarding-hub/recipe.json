@@ -19,8 +19,7 @@
   "languages": ["typescript"],
   "prerequisites": [
     "A Glean instance with your onboarding content indexed",
-    "For the Client Chat path: a token with the CHAT scope",
-    "For the Web SDK path: your tenant backend URL and an existing Glean session in your normal browser",
+    "For the Web SDK path: an existing Glean session in your normal browser",
     "Node 20.19+ or 22.12+"
   ],
   "demoQueries": [
@@ -45,7 +44,8 @@
   "steps": [
     {
       "title": "Pick a path",
-      "description": "Path A embeds Glean's chat UI with the Web SDK. Path B calls Client Chat from your backend and renders the response in your own UI."
+      "description": "Path A embeds Glean's chat UI with the Web SDK. Path B calls Client Chat from your backend and renders the response in your own UI.",
+      "kind": "choose"
     }
   ],
   "scaffoldActions": [],
@@ -95,28 +95,64 @@
       "repoPath": "recipes/onboarding-hub/web-sdk",
       "language": "typescript",
       "description": "Web SDK variant — checklist + renderChat",
+      "execution": {
+        "questions": [
+          {
+            "id": "email",
+            "prompt": "What is your work email? It is used once to discover your Glean tenant."
+          },
+          {
+            "id": "steps",
+            "prompt": "What onboarding steps should appear in the checklist?"
+          }
+        ],
+        "auth": [
+          {
+            "kind": "browser-cookie",
+            "scopes": [],
+            "setupCommand": "cd onboarding-hub && npm run configure -- --email \"<work-email>\"",
+            "configFile": ".env.local",
+            "backendVariable": "VITE_GLEAN_BACKEND"
+          }
+        ],
+        "verification": {
+          "kind": "user-browser",
+          "expectedDuration": "about 1 minute",
+          "startsOwnServer": false
+        },
+        "run": {
+          "command": "cd onboarding-hub && npm run dev",
+          "url": "the Local URL printed by Vite",
+          "userBrowser": true
+        }
+      },
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/web-sdk onboarding-hub"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/web-sdk onboarding-hub",
+          "kind": "scaffold"
         },
         {
           "title": "Install dependencies",
-          "command": "cd onboarding-hub && npm install"
+          "command": "cd onboarding-hub && npm install",
+          "kind": "install"
         },
         {
           "title": "Configure the backend and checklist",
-          "command": "cd onboarding-hub && cp .env.example .env.local && cp public/steps.example.json public/steps.json",
-          "description": "Before running, set VITE_GLEAN_BACKEND in .env.local to the tenant's HTTPS backend origin and customize public/steps.json with the user's real onboarding steps. Keep every id unique. The included generic multi-step example is runnable but should be tailored."
+          "command": "cd onboarding-hub && npm run configure -- --email \"<work-email>\" && cp public/steps.example.json public/steps.json",
+          "description": "Enter the user's work email when prompted; tenant discovery writes VITE_GLEAN_BACKEND to .env.local. Replace public/steps.json with the onboarding steps the user supplied and keep every id unique.",
+          "kind": "configure"
         },
         {
           "title": "Run it",
           "command": "cd onboarding-hub && npm run dev",
-          "description": "Start Vite and leave it running. Report the exact Local URL printed by Vite. Never open the URL yourself and never use browser automation. Wait for the user to open it in their normal browser where they are already signed in to Glean and tell you it is ready."
+          "description": "Start Vite and leave it running. Report the exact Local URL printed by Vite. Never open the URL yourself and never use browser automation. Wait for the user to open it in their normal browser where they are already signed in to Glean and tell you it is ready.",
+          "kind": "run"
         },
         {
           "title": "Verify",
-          "description": "After the user confirms the app is open in their normal signed-in browser, ask them to confirm the configured checklist renders. Have them click Ask about this and verify a cited first-day answer. Do not open or drive their browser."
+          "description": "After the user confirms the app is open in their normal signed-in browser, ask them to confirm the configured checklist renders. Have them click Ask about this and verify a cited first-day answer. Do not open or drive their browser.",
+          "kind": "verify-live"
         }
       ]
     },
@@ -124,29 +160,67 @@
       "repoPath": "recipes/onboarding-hub/platform-chat",
       "language": "typescript",
       "description": "Client Chat variant — server-side API call, custom UI",
+      "execution": {
+        "questions": [
+          {
+            "id": "email",
+            "prompt": "What is your work email? It is used once to discover your Glean tenant."
+          },
+          {
+            "id": "steps",
+            "prompt": "What onboarding steps should appear in the checklist?"
+          }
+        ],
+        "auth": [
+          {
+            "kind": "oauth-with-token-fallback",
+            "scopes": ["CHAT"],
+            "setupCommand": "cd onboarding-hub && npm run login -- --email \"<work-email>\"",
+            "configFile": ".env",
+            "backendVariable": "GLEAN_SERVER_URL",
+            "credentialVariable": "GLEAN_API_TOKEN"
+          }
+        ],
+        "verification": {
+          "kind": "automated",
+          "command": "cd onboarding-hub && npm run verify",
+          "expectedDuration": "1–3 minutes",
+          "startsOwnServer": true
+        },
+        "run": {
+          "command": "cd onboarding-hub && npm start",
+          "url": "http://localhost:3000",
+          "userBrowser": true
+        }
+      },
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/platform-chat onboarding-hub"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/platform-chat onboarding-hub",
+          "kind": "scaffold"
         },
         {
           "title": "Install dependencies",
-          "command": "cd onboarding-hub && npm install"
+          "command": "cd onboarding-hub && npm install",
+          "kind": "install"
         },
         {
           "title": "Set credentials",
-          "command": "cd onboarding-hub && cp .env.example .env",
-          "description": "Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Customize the included steps.example.json, point GLEAN_ONBOARDING_STEPS_FILE at another file, or set GLEAN_ONBOARDING_STEPS_JSON. The app runs as the token owner; there is no act-as."
-        },
-        {
-          "title": "Run it",
-          "command": "cd onboarding-hub && npm start",
-          "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
+          "command": "cd onboarding-hub && npm run login -- --email \"<work-email>\"",
+          "description": "The shipped command discovers the tenant and completes OAuth, with a CHAT-scoped API token fallback. Configure the supplied onboarding steps in ignored .env or a local steps file. The app runs as the signed-in user; there is no act-as.",
+          "kind": "authenticate"
         },
         {
           "title": "Verify",
           "command": "cd onboarding-hub && npm run verify",
-          "description": "Loads credentials from .env (same as npm start), runs the demo queries against your own onboarding docs, and asserts cited answers for first-day / VPN / PTO plus escalation for an unsupported question. Do not report this recipe as done until this passes."
+          "description": "Allow 1–3 minutes. It starts its own server and checks the configured onboarding topics for cited answers plus unsupported-question escalation.",
+          "kind": "verify-live"
+        },
+        {
+          "title": "Run it",
+          "command": "cd onboarding-hub && npm start",
+          "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
+          "kind": "run"
         }
       ]
     }

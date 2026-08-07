@@ -11,12 +11,16 @@ disable-model-invocation: true
 - A Glean API token with the CHAT scope (kept in Replit Secrets; every request uses this one token owner's access)
 - A private Repl — multi-user deployments require authenticated per-user Glean OAuth
 
+Ask these before running commands:
+
+- What is your work email? It is used once to discover your Glean tenant.
+- What HR topic do you know exists in your Glean content?
+
 I'm using Replit Agent, not you, to build this — your job is to prepare
 my inputs per
 https://developers.glean.com/cookbook/no-code-pto-lookup-replit
 
-1. Generate the Replit prompt from the recipe's template, filling in
-   my Glean server URL.
+1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.
 2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never
    in the prompt. It is one service identity, so keep this prototype
    private; multi-user deployment requires per-user Glean OAuth.

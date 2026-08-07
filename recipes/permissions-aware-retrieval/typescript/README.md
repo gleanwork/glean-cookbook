@@ -6,8 +6,9 @@ Same flow as [`../python/`](../python/): Glean Search as the retrieval layer for
 
 ```bash
 npm install
-cp .env.example .env   # fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, ANTHROPIC_API_KEY
-npm start -- "What's our PTO policy?"
+npm run login
+# Add ANTHROPIC_API_KEY to .env without committing it.
+npm start -- "<a topic you know you can access>"
 ```
 
 ## The permissions demo

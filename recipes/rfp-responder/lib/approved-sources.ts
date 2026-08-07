@@ -17,11 +17,19 @@
 // in a heuristic.
 
 /** URL prefixes whose content is cleared for customer-facing use. */
-const APPROVED_PREFIXES = [
+const DEMO_APPROVED_PREFIXES = [
   'https://portal.sample.internal/sales/accounts/',
   'https://portal.sample.internal/legal/',
   'https://portal.sample.internal/security/',
 ];
+
+function configuredPrefixes(name: string, fallback: string[]): string[] {
+  const configured = process.env[name]
+    ?.split(',')
+    .map((prefix) => prefix.trim())
+    .filter(Boolean);
+  return configured?.length ? configured : fallback;
+}
 
 /**
  * Topically relevant but not cleared for external use. Kept explicit rather than
@@ -37,7 +45,11 @@ const INTERNAL_PREFIXES = [
 export type SourceClass = 'approved' | 'internal' | 'unknown';
 
 export function classifySource(url: string): SourceClass {
-  if (APPROVED_PREFIXES.some((prefix) => url.startsWith(prefix)))
+  const approvedPrefixes = configuredPrefixes(
+    'RFP_APPROVED_SOURCE_PREFIXES',
+    DEMO_APPROVED_PREFIXES,
+  );
+  if (approvedPrefixes.some((prefix) => url.startsWith(prefix)))
     return 'approved';
   if (INTERNAL_PREFIXES.some((prefix) => url.startsWith(prefix)))
     return 'internal';

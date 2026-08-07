@@ -7,11 +7,12 @@ Call a Glean agent from any A2A client — card discovery, `message/send`, multi
 ## Run it
 
 ```bash
-cp .env.example .env   # fill in GLEAN_INSTANCE, GLEAN_API_TOKEN, and GLEAN_AGENT_ID
+node scripts/glean-auth.mjs login --scopes agents
+# Set GLEAN_AGENT_ID and GLEAN_DEMO_QUERY in .env.
 uv run main.py
 ```
 
-Use an OAuth access token or Glean API token with the `AGENTS` scope. The agent must be published and use a chat-message trigger; its ID appears in the Agent Builder URL.
+The login command discovers your tenant from your work email and uses OAuth. If tenant OAuth is unavailable, put an `AGENTS`-scoped API token in the generated `.env`. The agent must be published and use a chat-message trigger; its ID appears in the Agent Builder URL.
 
 Dependencies are declared inline ([PEP 723](https://peps.python.org/pep-0723/)) and locked,
 so [uv](https://docs.astral.sh/uv/) installs them into an isolated environment on first run —

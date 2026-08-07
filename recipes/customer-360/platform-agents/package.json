@@ -5,6 +5,7 @@
   "description": "Customer 360 — Platform Agents createRun for prescriptive account briefs.",
   "type": "module",
   "scripts": {
+    "login": "node scripts/glean-auth.mjs login --scopes search,agents",
     "start": "tsx server.ts",
     "verify": "node scripts/verify.mjs",
     "lint": "eslint ."

@@ -6,10 +6,8 @@ disable-model-invocation: true
 
 ## Before you start
 
-- Required API scopes (for paths that use API credentials): `CHAT`
 - A Glean instance with content indexed
-- An OAuth access token or Glean API token with the CHAT scope
-- For the Web SDK path: your tenant backend URL and an existing Glean session in your normal browser
+- For the Web SDK path: an existing Glean session in your normal browser
 - Node 20.19+ or 22.12+
 
 Build "Company Answers: a cited Q&A page on your own content" following https://developers.glean.com/cookbook/company-answers
@@ -20,6 +18,13 @@ Build "Company Answers: a cited Q&A page on your own content" following https://
 ### Web SDK
 
 Web SDK variant — renderChat in a page
+
+Ask these before running commands:
+
+- What is your work email? It is used once to discover your Glean tenant.
+- What topic do you know exists in your Glean content?
+
+Cookie SSO requires the user's normal signed-in browser. Never open or automate the app yourself.
 
 1. **Scaffold the project**
 
@@ -34,10 +39,10 @@ Web SDK variant — renderChat in a page
    ```
 
 3. **Configure the tenant**
-   Set VITE_GLEAN_BACKEND to the tenant's HTTPS backend origin. Optionally set VITE_GLEAN_INITIAL_MESSAGE to a question about content the user knows exists.
+   Enter the user's work email when prompted. The shipped discovery command writes VITE_GLEAN_BACKEND to .env.local. Set VITE_GLEAN_INITIAL_MESSAGE to the topic they supplied.
 
    ```bash
-   cd company-answers && cp .env.example .env.local
+   cd company-answers && npm run configure -- --email "<work-email>"
    ```
 
 4. **Run it**
@@ -54,6 +59,13 @@ Web SDK variant — renderChat in a page
 
 Chat API variant — one chat.create call, citations rendered
 
+Ask these before running commands:
+
+- What is your work email? It is used once to discover your Glean tenant.
+- What topic do you know exists in your Glean content?
+
+Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+
 1. **Scaffold the project**
 
    ```bash
@@ -67,56 +79,21 @@ Chat API variant — one chat.create call, citations rendered
    ```
 
 3. **Set credentials**
-   Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — the Authentication section below covers how to get a token.
+   The shipped command discovers the tenant from the user's work email, signs them in with OAuth, and writes the backend plus short-lived access token to ignored .env. Set GLEAN_DEMO_QUERY to the supplied topic. If tenant OAuth is unavailable, enter a CHAT-scoped API token as the fallback.
 
    ```bash
-   cd company-answers && cp .env.example .env
+   cd company-answers && npm run login -- --email "<work-email>"
    ```
 
-4. **Run it**
-   Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the deterministic verify step below, which starts its own instance.
+4. **Verify**
+   Takes about 1–3 minutes. It starts its own server and checks the configured topic for a non-empty answer with deduplicated citations.
 
-   ```bash
-   cd company-answers && npm start
-   ```
-
-5. **Verify**
-   Starts the server and checks the example PTO queries for a non-empty answer with deduplicated citations. Run this when the instance contains PTO content; otherwise use the running app with a topic the user knows exists and check the same response shape.
    ```bash
    cd company-answers && npm run verify
    ```
 
-## Reference
-
-Path A uses renderChat with an explicit backend and the user's existing Glean browser session; live verification is user-mediated in their normal signed-in browser. Path B constructs Glean with apiToken plus instance or serverURL, reads answer text only from CONTENT messages, collects citations from fragment.citation.sourceDocument, deduplicates by URL, keeps the token server-side, sets saveChat:false for verification, and treats an empty joined answer as retryable.
-
-## Authentication
-
-This recipe offers a path choice. Apply the block matching the path the user picks:
-
-### `web-sdk-cookie`
-
-{{> auth-web-sdk-cookie}}
-
-### `client-api-oauth-or-token`
-
-{{> auth-client-api}}
-
-## House style
-
-{{> web-sdk-house-style}}
-
-{{> brand-kit}}
-
-{{> web-sdk-sizing}}
-
-## Verify
-
-{{> verify-gate-web-sdk}}
-
-{{> verify-gate}}
-
-- **Query:** "What's our PTO policy?"
-  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
-- **Query:** "How do I request time off?"
-  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+5. **Run it**
+   Leave the verified app running at http://localhost:3000 and give that URL to the user.
+   ```bash
+   cd company-answers && npm start
+   ```

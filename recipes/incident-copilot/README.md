@@ -20,9 +20,8 @@ npm start                # http://localhost:3000
 Run `verify:fixture` first. It replays recorded responses and asserts the
 governance, so you can watch the guarantees hold before wiring up a token.
 
-For live use, `cp .env.example .env` and set `GLEAN_SERVER_URL` plus your own
-`GLEAN_API_TOKEN` with `SEARCH` and `CHAT`. Add `GLEAN_AGENT_ID` for the
-agent-orchestrated path.
+For live use, run `npm run login`; it discovers your tenant from your work email and uses OAuth.
+Add `GLEAN_AGENT_ID` for the agent-orchestrated path.
 
 ## Two things to try immediately
 

@@ -34,8 +34,14 @@ function listEnvKeys(targetDir) {
   return fs
     .readFileSync(envExample, 'utf8')
     .split('\n')
-    .map((line) => line.split('=')[0].trim())
+    .map((line) => line.match(/^([A-Za-z_][A-Za-z0-9_]*)=/u)?.[1])
     .filter(Boolean);
+}
+
+function packageScripts(targetDir) {
+  const file = path.join(targetDir, 'package.json');
+  if (!fs.existsSync(file)) return {};
+  return JSON.parse(fs.readFileSync(file, 'utf8')).scripts ?? {};
 }
 
 function install(targetDir) {
@@ -67,8 +73,9 @@ function main() {
     stdio: 'inherit',
   });
 
+  const scripts = packageScripts(targetDir);
   const envKeys = listEnvKeys(targetDir);
-  if (envKeys.length > 0) {
+  if (!scripts.login && !scripts.configure && envKeys.length > 0) {
     console.log(
       `\nThis recipe needs these environment variables (see .env.example):`,
     );
@@ -81,6 +88,9 @@ function main() {
   install(targetDir);
 
   console.log('\nScaffold complete.');
+  if (scripts.configure)
+    console.log(`Next: cd ${targetDir} && npm run configure`);
+  if (scripts.login) console.log(`Next: cd ${targetDir} && npm run login`);
 }
 
 main();

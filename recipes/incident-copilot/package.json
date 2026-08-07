@@ -5,6 +5,8 @@
   "description": "On-call copilot: evidence-ranked triage, a real approval gate, and pre-registered actions only.",
   "type": "module",
   "scripts": {
+    "login": "node scripts/glean-auth.mjs login --scopes search,chat",
+    "login:agent": "node scripts/glean-auth.mjs login --scopes search,chat,agents",
     "start": "tsx server.ts",
     "test": "node --import tsx --test \"lib/**/*.test.ts\"",
     "verify": "node scripts/verify.mjs",

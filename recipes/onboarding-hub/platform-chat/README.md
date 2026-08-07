@@ -8,8 +8,9 @@ The app runs as you; there is no act-as / impersonation.
 
 ```bash
 npm install
-cp .env.example .env     # fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL
+npm run login
 # Customize steps.example.json, or point GLEAN_ONBOARDING_STEPS_FILE at your own file.
+npm run verify
 npm start
 ```
 
@@ -21,8 +22,7 @@ Open http://localhost:3000. The server holds your API token — never expose it 
 
 ## Verify
 
-Requires credentials from `.env` or the shell. Stop `npm start` first (Ctrl-C);
-verify starts its own server on the same port.
+Requires credentials from `.env` or the shell and starts its own server.
 
 ```bash
 npm run verify

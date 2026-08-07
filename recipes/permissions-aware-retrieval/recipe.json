@@ -18,7 +18,7 @@
   "buildMethod": "scaffold",
   "languages": ["python", "typescript"],
   "prerequisites": [
-    "An OAuth access token or Glean API token with the SEARCH scope (your own — no global/admin token needed)",
+    "A work email for tenant discovery and OAuth sign-in; a SEARCH-scoped API token is the fallback",
     "X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)",
     "An LLM API key (any provider; example uses Claude)",
     "uv (for the Python path) or Node 20+"
@@ -39,24 +39,65 @@
       "repoPath": "recipes/permissions-aware-retrieval/python",
       "language": "python",
       "description": "Platform API search.query → snippets → LLM with citations",
+      "execution": {
+        "questions": [
+          {
+            "id": "email",
+            "prompt": "What is your work email? It is used once to discover your Glean tenant."
+          },
+          {
+            "id": "allowed-topic",
+            "prompt": "What topic can you access and expect Glean to answer?"
+          },
+          {
+            "id": "denied-topic",
+            "prompt": "What topic should your account not be able to access?"
+          }
+        ],
+        "auth": [
+          {
+            "kind": "oauth-with-token-fallback",
+            "scopes": ["SEARCH"],
+            "setupCommand": "cd permissions-aware-retrieval && node scripts/glean-auth.mjs login --scopes search --email \"<work-email>\"",
+            "configFile": ".env",
+            "backendVariable": "GLEAN_SERVER_URL",
+            "credentialVariable": "GLEAN_API_TOKEN"
+          },
+          {
+            "kind": "external-api-key",
+            "scopes": [],
+            "configFile": ".env",
+            "credentialVariable": "ANTHROPIC_API_KEY"
+          }
+        ],
+        "verification": {
+          "kind": "automated",
+          "expectedDuration": "about 1 minute after sign-in",
+          "startsOwnServer": false
+        }
+      },
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval",
+          "kind": "scaffold"
         },
         {
           "title": "Set credentials",
-          "command": "cd permissions-aware-retrieval && cp .env.example .env",
-          "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY. This variant loads .env automatically."
+          "command": "cd permissions-aware-retrieval && node scripts/glean-auth.mjs login --scopes search --email \"<work-email>\"",
+          "description": "Use the shipped login flow. Then have the user enter ANTHROPIC_API_KEY in ignored .env without exposing it in chat or command output.",
+          "kind": "authenticate"
         },
         {
           "title": "Run it",
-          "command": "cd permissions-aware-retrieval && uv run main.py \"What's our PTO policy?\"",
-          "description": "Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run — there's no requirements.txt, venv, or activate step."
+          "command": "cd permissions-aware-retrieval && uv run main.py \"<allowed-topic>\"",
+          "description": "Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run — there's no requirements.txt, venv, or activate step.",
+          "kind": "run"
         },
         {
           "title": "Verify",
-          "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge."
+          "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge.",
+          "kind": "verify-live"
         }
       ]
     },
@@ -64,27 +105,69 @@
       "repoPath": "recipes/permissions-aware-retrieval/typescript",
       "language": "typescript",
       "description": "Same flow in TypeScript",
+      "execution": {
+        "questions": [
+          {
+            "id": "email",
+            "prompt": "What is your work email? It is used once to discover your Glean tenant."
+          },
+          {
+            "id": "allowed-topic",
+            "prompt": "What topic can you access and expect Glean to answer?"
+          },
+          {
+            "id": "denied-topic",
+            "prompt": "What topic should your account not be able to access?"
+          }
+        ],
+        "auth": [
+          {
+            "kind": "oauth-with-token-fallback",
+            "scopes": ["SEARCH"],
+            "setupCommand": "cd permissions-aware-retrieval && npm run login -- --email \"<work-email>\"",
+            "configFile": ".env",
+            "backendVariable": "GLEAN_SERVER_URL",
+            "credentialVariable": "GLEAN_API_TOKEN"
+          },
+          {
+            "kind": "external-api-key",
+            "scopes": [],
+            "configFile": ".env",
+            "credentialVariable": "ANTHROPIC_API_KEY"
+          }
+        ],
+        "verification": {
+          "kind": "automated",
+          "expectedDuration": "about 1 minute after sign-in",
+          "startsOwnServer": false
+        }
+      },
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval",
+          "kind": "scaffold"
         },
         {
           "title": "Install dependencies",
-          "command": "cd permissions-aware-retrieval && npm install"
+          "command": "cd permissions-aware-retrieval && npm install",
+          "kind": "install"
         },
         {
           "title": "Set credentials",
-          "command": "cd permissions-aware-retrieval && cp .env.example .env",
-          "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY — loaded automatically via dotenv in this variant."
+          "command": "cd permissions-aware-retrieval && npm run login -- --email \"<work-email>\"",
+          "description": "Use the shipped login flow. Then have the user enter ANTHROPIC_API_KEY in ignored .env without exposing it in chat or command output.",
+          "kind": "authenticate"
         },
         {
           "title": "Run it",
-          "command": "cd permissions-aware-retrieval && npm start -- \"What's our PTO policy?\""
+          "command": "cd permissions-aware-retrieval && npm start -- \"<allowed-topic>\"",
+          "kind": "run"
         },
         {
           "title": "Verify",
-          "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge."
+          "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge.",
+          "kind": "verify-live"
         }
       ]
     }
@@ -92,7 +175,8 @@
   "steps": [
     {
       "title": "Pick a language",
-      "description": "Both variants implement the same flow — pick whichever fits your app's stack."
+      "description": "Both variants implement the same flow — pick whichever fits your app's stack.",
+      "kind": "choose"
     }
   ],
   "scaffoldActions": [],

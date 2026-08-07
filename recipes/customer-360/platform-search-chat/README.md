@@ -8,28 +8,20 @@ as you; there is no act-as / impersonation.
 
 ```bash
 npm install
-cp .env.example .env
+npm run login
 ```
 
-Fill `GLEAN_SERVER_URL` / `GLEAN_API_TOKEN` / `GLEAN_ACCOUNT_NAME`. Platform Search
-uses `X_GLEAN_INCLUDE_EXPERIMENTAL=true`.
+The login command discovers your tenant and uses OAuth. Set `GLEAN_ACCOUNT_NAME` in the generated
+`.env`. Platform Search uses `X_GLEAN_INCLUDE_EXPERIMENTAL=true`.
 
-## Run
+## Verify, then run
 
 ```bash
+npm run verify
 npm start
 ```
 
 Open http://localhost:3000.
-
-## Verify
-
-Credentials come from `.env` or the shell (same as `npm start`). Stop `npm start`
-first (Ctrl-C); verify starts its own server on the same port.
-
-```bash
-npm run verify
-```
 
 ## Contracts
 

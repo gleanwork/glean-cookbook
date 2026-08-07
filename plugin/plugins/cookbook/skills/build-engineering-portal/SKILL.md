@@ -6,29 +6,22 @@ disable-model-invocation: true
 
 ## Before you start
 
-- Required API scopes (for paths that use API credentials): `SEARCH`, `CHAT`
 - A Glean instance where you can add a custom datasource
 - A Glean-issued Indexing API token
 - Node.js 18+ to run the portal app locally
 
+Ask these before running commands:
+
+- What is your work email? It is used once to discover your Glean tenant.
+- Which custom datasource should receive the service catalog?
+- Where is the service catalog data to index?
+
+Cookie SSO requires the user's normal signed-in browser. Never open or automate the app yourself.
+
 Build the "Engineering portal with Glean" flagship recipe from
 https://developers.glean.com/cookbook/build-engineering-portal
 
-It composes two building blocks:
-
-1. Index the portal's service catalog into Glean with the open-source
-   indexing SDK (follow
-   https://developers.glean.com/api-info/indexing/getting-started/overview).
-2. Embed Glean search and chat into the portal UI with the Web SDK (see
-   https://developers.glean.com/cookbook/embed-search-chat — same
-   container sizing and initialMessage guidance applies here).
-
-Style the portal shell itself per the house style below (real logomark,
-teal accent) so the catalog UI and the embedded search/chat feel like one
-cohesive app, not two mismatched pieces bolted together.
-
-Ask me for: my Glean instance/backend domain, an Indexing API token, and
-my Glean web app domain. See Verify below for what a correct build must do.
+Resolve my backend from the work email already supplied with the cookbook resolver. Index the supplied service catalog into the named datasource with the open-source indexing SDK, keeping the Indexing API token server-side. Then embed Glean search and chat with Web SDK cookie SSO. Style the portal shell per the house style below, run it, and give me the URL to open in my normal signed-in browser. See Verify below for the required checks.
 
 ## Setup
 
@@ -37,7 +30,7 @@ my Glean web app domain. See Verify below for what a correct build must do.
 
 ## Reference
 
-Index the service catalog with an Indexing API token, then embed permission-aware search and chat with SEARCH and CHAT access. Keep credentials server-side. Join only non-empty CONTENT fragments, collect citations from fragment.citation.sourceDocument, and treat an empty completed response as a retryable failure.
+Index the service catalog with a server-side Indexing API token. Embed search and chat with Web SDK cookie SSO, then have the user verify it in their normal signed-in browser.
 
 ## Authentication
 
@@ -50,10 +43,6 @@ This recipe offers a path choice. Apply the block matching the path the user pic
 ### `web-sdk-cookie`
 
 {{> auth-web-sdk-cookie}}
-
-### `client-api-oauth-or-token`
-
-{{> auth-client-api}}
 
 ## Language
 

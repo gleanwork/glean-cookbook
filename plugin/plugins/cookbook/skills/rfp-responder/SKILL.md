@@ -6,12 +6,19 @@ disable-model-invocation: true
 
 ## Before you start
 
-- Required API scopes (for paths that use API credentials): `CHAT`
 - A Glean instance with your company content indexed
-- Your own OAuth access token or Glean API token with the CHAT scope (no admin or global token — the app runs as you)
+- A work email for tenant discovery and OAuth sign-in; a CHAT-scoped API token is the fallback
 - Node 20+
 
 Build "Answer an RFP or security questionnaire" following https://developers.glean.com/cookbook/rfp-responder
+
+Ask these before running commands:
+
+- Do you want the instant fixture demo or a live tenant run?
+- For a live run, which Glean URL prefixes are approved sources for external answers?
+- For a live run, what is your work email?
+
+Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
 
 1. **Scaffold the project**
 
@@ -33,10 +40,10 @@ Build "Answer an RFP or security questionnaire" following https://developers.gle
    ```
 
 4. **Set credentials**
-   Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. The app runs as you; there is no act-as.
+   Only for a live run. Use the shipped login flow, then configure the approved source prefixes supplied up front. The app runs as the signed-in user; there is no act-as.
 
    ```bash
-   cd rfp-responder && cp .env.example .env
+   cd rfp-responder && npm run login -- --email "<work-email>"
    ```
 
 5. **Run it**
@@ -47,24 +54,3 @@ Build "Answer an RFP or security questionnaire" following https://developers.gle
 
 6. **Verify**
    Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered.
-
-## Reference
-
-Use Client Chat POST /rest/api/v1/chat with saveChat:false during verification. Read answer text from CONTENT messages and citations from fragment.citation.sourceDocument. Merge only exact duplicate questions. Classify citation topicality separately from approval for external use; every answer requires a citation, and unsupported rows remain blank with needs-sme status. Use the caller's credential as the permission boundary. Retry empty chat output and keep export behind explicit human approval with an audit log.
-
-## Authentication
-
-{{> auth-client-api}}
-
-## Verify
-
-{{> verify-gate}}
-
-- **Query:** "Draft answers to a real questionnaire you've had to fill in"
-  **Expected:** Every row is parsed across every tab, exact duplicates are merged, and each row is classified by the evidence behind it: strongly grounded rows get a cited draft, adjacent-evidence rows are flagged for verification, and rows with nothing behind them are left blank. Use a questionnaire your own content can actually speak to.
-- **Query:** "Ask something your documentation genuinely doesn't cover"
-  **Expected:** Retrieval finds nothing, so the row returns INSUFFICIENT_EVIDENCE and renders as 'needs SME' with no draft text, and accepting it is refused. This is the behaviour to check first — an RFP tool that invents a compliance answer is worse than no tool, because someone will send it to a customer.
-- **Query:** "Ask something only tangentially covered"
-  **Expected:** Retrieval finds a document that is genuinely on-topic but not authoritative, so the row is flagged weak rather than strong: drafted, but labelled as resting on documentation a person must clear before it goes out.
-- **Query:** "Run the same questionnaire as a colleague with narrower access"
-  **Expected:** Rows backed by documents that person cannot see collapse to 'needs SME' rather than being answered from elsewhere. Their own credential is the permission boundary — you are not impersonating them, you are each running the app as yourselves and comparing.

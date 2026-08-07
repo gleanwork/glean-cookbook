@@ -6,14 +6,20 @@ disable-model-invocation: true
 
 ## Before you start
 
-- Required API scopes (for paths that use API credentials): `AGENTS`, `TOOLS`
 - Agent builder access in your Glean instance
 - Permission to register a custom tool (or admin help)
-- A Glean token with AGENTS scope for API invocation
+- A work email for tenant discovery and OAuth sign-in; an AGENTS-scoped API token is the fallback
 - uv and cloudflared installed locally
 - Your own email, to put on (and take off) the tool server's allow-list between the two runs
 
 Build "Multi-step agent with governed tools" following https://developers.glean.com/cookbook/multi-step-agent
+
+Ask these before running commands:
+
+- What is your work email for tenant discovery and the tool allow-list?
+- After creating the agent, what is its agent ID?
+
+Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
 
 1. **Scaffold the project**
 
@@ -49,10 +55,10 @@ Build "Multi-step agent with governed tools" following https://developers.glean.
    Manual, UI-only step. In Agent Builder: paste the recipe's instructions, turn retrieval on, attach the tool you just registered. Copy the agent's ID for the next step.
 
 7. **Set credentials**
-   Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and GLEAN_AGENT_ID (the ID from the previous step).
+   Use the shipped login flow, then set GLEAN_AGENT_ID from the agent created above. Never implement authentication.
 
    ```bash
-   (cd multi-step-agent/invoke-agent && cp .env.example .env)
+   (cd multi-step-agent/invoke-agent && node scripts/glean-auth.mjs login --scopes agents --email "<work-email>")
    ```
 
 8. **Run it**
@@ -64,38 +70,3 @@ Build "Multi-step agent with governed tools" following https://developers.glean.
 
 9. **Verify**
    With your email on the allow-list, confirm the ticket actually gets filed. Then restart the tool server without it and confirm the agent produces a read-only fallback summary instead of a hard failure.
-
-## Reference
-
-Run agents with glean.client.agents.run(agent_id, messages) using Message and MessageTextBlock. Expose a local demo tool through public HTTPS and set the OpenAPI server URL to that origin with route paths aligned. Register tools manually in the admin console. Glean-User-Email supports an authorization allow-list only after the request is authenticated as coming from Glean; the sample server is demo-only and must not front a real write action.
-
-## Authentication
-
-Use the first available credential path:
-
-1. **Glean OAuth:** ask for the user's work email and run:
-   ```bash
-   node <plugin-root>/scripts/resolve-backend.mjs <work-email>
-   ```
-   If `oauthAvailable` is true, register a public client through the returned backend's Dynamic
-   Client Registration endpoint and use authorization code + PKCE. Reuse the client id and refresh
-   token.
-2. **External IdP OAuth:** if Glean OAuth is unavailable, ask whether the user's administrator has
-   configured Okta, Azure AD, Google, or another IdP for Glean Client API access. Use that sign-in
-   flow when available.
-3. **Glean API token:** otherwise request a token carrying the scopes declared by the recipe.
-
-Do not use client credentials for an end-user Client API integration. Keep access and refresh tokens
-server-side.
-
-## Verify
-
-Treat the queries below as acceptance scenarios, not as assumptions about what every Glean instance
-contains. For a live check, ask the user for an equivalent topic they know exists in their instance
-and confirm the same response properties: grounding, citations, permission filtering, and explicit
-no-answer behavior where applicable. Use fixture or automated checks for corpus-independent
-behavior. Do not claim a live check passed when the required content, credentials, user session, or
-user confirmation was unavailable.
-
-- **Query:** "Summarize our open incidents and file a tracking ticket"
-  **Expected:** With your email on the tool server's allow-list: the agent summarizes and the demo tool call succeeds (200, a fake in-memory ticket id). With it removed: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The allow-list demonstrates authorization logic; authenticate requests from Glean before connecting a real write action.

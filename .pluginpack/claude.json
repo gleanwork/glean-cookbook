@@ -5,6 +5,7 @@
     ".claude-plugin/marketplace.json",
     "build/claude/cookbook/.claude-plugin/plugin.json",
     "build/claude/cookbook/.mcp.json",
+    "build/claude/cookbook/scripts/glean-auth.mjs",
     "build/claude/cookbook/scripts/resolve-backend.mjs",
     "build/claude/cookbook/scripts/scaffold-recipe.mjs",
     "build/claude/cookbook/skills/a2a-client/SKILL.md",

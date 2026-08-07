@@ -124,6 +124,31 @@ function renderStepList(steps, startNum) {
     .join('\n\n');
 }
 
+function renderExecutionIntro(execution) {
+  if (!execution) return '';
+  const lines = [];
+  if (execution.questions?.length > 0) {
+    lines.push('Ask these before running commands:');
+    for (const question of execution.questions)
+      lines.push(`- ${question.prompt}`);
+  }
+  if (
+    execution.auth.some((auth) => auth.kind === 'oauth-with-token-fallback')
+  ) {
+    if (lines.length > 0) lines.push('');
+    lines.push(
+      "Use the scaffold's shipped login command. Never implement or modify OAuth during setup.",
+    );
+  }
+  if (execution.auth.some((auth) => auth.kind === 'browser-cookie')) {
+    if (lines.length > 0) lines.push('');
+    lines.push(
+      "Cookie SSO requires the user's normal signed-in browser. Never open or automate the app yourself.",
+    );
+  }
+  return lines.join('\n');
+}
+
 /**
  * Renders a `buildMethod: 'scaffold'` recipe's skill body from its `steps`
  * (and any variant-specific `codeAssets[].steps`) instead of a hand-written
@@ -134,6 +159,9 @@ function renderStepsBody(recipe) {
   const parts = [
     `Build "${recipe.title}" following https://developers.glean.com/cookbook/${recipe.id}`,
   ];
+
+  const recipeExecutionIntro = renderExecutionIntro(recipe.execution);
+  if (recipeExecutionIntro) parts.push(recipeExecutionIntro);
 
   if (recipe.steps?.length > 0) {
     parts.push(renderStepList(recipe.steps, 1));
@@ -146,6 +174,8 @@ function renderStepsBody(recipe) {
     parts.push(
       `### ${humanizeVariantLabel(asset.repoPath)}\n\n${asset.description}`,
     );
+    const executionIntro = renderExecutionIntro(asset.execution);
+    if (executionIntro) parts.push(executionIntro);
     parts.push(renderStepList(asset.steps, 1));
   }
 
@@ -157,6 +187,13 @@ function hasStepsContent(recipe) {
   return (
     recipe.steps?.length > 0 ||
     (recipe.codeAssets ?? []).some((asset) => asset.steps?.length > 0)
+  );
+}
+
+function hasExecutionContracts(recipe) {
+  return Boolean(
+    recipe.execution ||
+    (recipe.codeAssets ?? []).some((asset) => asset.execution),
   );
 }
 
@@ -199,9 +236,11 @@ function renderRecipeSkill(recipe) {
     `---`,
   ];
 
+  const executionContracts = hasExecutionContracts(recipe);
+  const structuredScaffold = executionContracts && hasStepsContent(recipe);
   if (recipe.prerequisites?.length > 0 || recipe.requiredScopes?.length > 0) {
     sections.push('', '## Before you start');
-    if (recipe.requiredScopes?.length > 0) {
+    if (!structuredScaffold && recipe.requiredScopes?.length > 0) {
       sections.push(
         `- Required API scopes (for paths that use API credentials): ${recipe.requiredScopes.map((scope) => `\`${scope}\``).join(', ')}`,
       );
@@ -211,10 +250,12 @@ function renderRecipeSkill(recipe) {
     }
   }
 
-  sections.push(
-    '',
-    hasStepsContent(recipe) ? renderStepsBody(recipe) : recipe.aiPrompt.trim(),
-  );
+  const body = hasStepsContent(recipe)
+    ? renderStepsBody(recipe)
+    : [renderExecutionIntro(recipe.execution), recipe.aiPrompt.trim()]
+        .filter(Boolean)
+        .join('\n\n');
+  sections.push('', body);
 
   if (recipe.scaffoldActions?.length > 0) {
     sections.push('', '## Setup');
@@ -223,7 +264,7 @@ function renderRecipeSkill(recipe) {
     }
   }
 
-  if (recipe.llmContext) {
+  if (recipe.llmContext && !hasStepsContent(recipe)) {
     sections.push('', '## Reference', recipe.llmContext.trim());
   }
 
@@ -232,9 +273,11 @@ function renderRecipeSkill(recipe) {
   // may not take, and the pointer sentence itself was prose living in this
   // script. The partials under plugin/partials/ are the single source; the
   // cookbook-conventions skill renders the same ones for browsing.
-  const authPartials = (recipe.authMethod ?? [])
-    .filter((method) => AUTH_METHOD_PARTIALS[method])
-    .map((method) => [method, AUTH_METHOD_PARTIALS[method]]);
+  const authPartials = structuredScaffold
+    ? []
+    : (recipe.authMethod ?? [])
+        .filter((method) => AUTH_METHOD_PARTIALS[method])
+        .map((method) => [method, AUTH_METHOD_PARTIALS[method]]);
   if (authPartials.length > 0) {
     sections.push('', '## Authentication');
     if (authPartials.length === 1) {
@@ -265,7 +308,7 @@ function renderRecipeSkill(recipe) {
 
   // Web SDK recipes share brand-kit and container-sizing conventions; inline
   // the same partials cookbook-conventions renders rather than pointing at it.
-  if (recipe.surfaces?.includes('web-sdk')) {
+  if (recipe.surfaces?.includes('web-sdk') && !hasStepsContent(recipe)) {
     sections.push(
       '',
       '## House style',
@@ -277,7 +320,7 @@ function renderRecipeSkill(recipe) {
     );
   }
 
-  sections.push(...renderVerifySection(recipe));
+  if (!structuredScaffold) sections.push(...renderVerifySection(recipe));
 
   return `${sections.join('\n')}\n`;
 }

@@ -10,7 +10,13 @@ disable-model-invocation: true
 - A Glean instance with content indexed
 - Your Glean web app domain (typically app.glean.com — see admin/about-glean)
 - A frontend app or page where you can install an npm package (or add a script tag) and a container element
-- For token auth only: an admin API key from the Token Management page
+
+Ask these before running commands:
+
+- What is your work email? It is used once to discover your Glean tenant.
+- What topic do you know exists in your Glean content?
+
+Cookie SSO requires the user's normal signed-in browser. Never open or automate the app yourself.
 
 Embed Glean search and chat in my internal web app using the Glean Web
 SDK, following the recipe at
@@ -18,7 +24,7 @@ https://developers.glean.com/cookbook/embed-search-chat
 
 Steps:
 
-1. Ask me for my Glean backend URL (https://{instance}-be.glean.com).
+1. Resolve my Glean backend from the work email already supplied by running the cookbook plugin's resolve-backend.mjs script.
 2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no
    build toolchain, fall back to the script tag from my Glean app domain:
    <script defer src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"></script>
@@ -28,9 +34,7 @@ Steps:
    renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>
    renderSearchResults(resultsElement, { query }) });
 4. Add a chat container: position: relative, display: block, width: 100%,
-   height: 480px. Ask me for a topic I know exists in my Glean instance,
-   then pass that question as initialMessage so the user-mediated check is
-   relevant to my tenant.
+   height: 480px. Use the topic already supplied as initialMessage so the user-mediated check is relevant to my tenant.
 5. Default SSO auth needs no extra configuration. If I ask for
    server-to-server auth instead, follow
    https://developers.glean.com/libraries/web-sdk/authentication/server-to-server
@@ -48,34 +52,11 @@ Use @gleanwork/web-sdk named exports renderSearchBox, renderSearchResults, and r
 
 ## Authentication
 
-This recipe offers a path choice. Apply the block matching the path the user picks:
-
-### `web-sdk-cookie`
-
 No explicit credential handling — the Web SDK's default `authMethod: 'sso'` relies on the user's
 existing browser session with Glean (they're already logged in, or get redirected to log in).
 Don't ask for a token or walk through OAuth for this path; that's a different, unnecessary auth
 model. If the recipe or user asks for server-to-server auth instead, that's a deliberate
 opt-out of cookie auth into the `client-api-oauth-or-token` flow — don't blend the two.
-
-### `client-api-oauth-or-token`
-
-Use the first available credential path:
-
-1. **Glean OAuth:** ask for the user's work email and run:
-   ```bash
-   node <plugin-root>/scripts/resolve-backend.mjs <work-email>
-   ```
-   If `oauthAvailable` is true, register a public client through the returned backend's Dynamic
-   Client Registration endpoint and use authorization code + PKCE. Reuse the client id and refresh
-   token.
-2. **External IdP OAuth:** if Glean OAuth is unavailable, ask whether the user's administrator has
-   configured Okta, Azure AD, Google, or another IdP for Glean Client API access. Use that sign-in
-   flow when available.
-3. **Glean API token:** otherwise request a token carrying the scopes declared by the recipe.
-
-Do not use client credentials for an end-user Client API integration. Keep access and refresh tokens
-server-side.
 
 ## Language
 

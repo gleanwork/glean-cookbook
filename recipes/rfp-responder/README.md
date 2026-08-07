@@ -22,8 +22,8 @@ npm start                # http://localhost:3000
 responses and asserts the contract, so you can see the guarantees before wiring up
 a token.
 
-For live use, `cp .env.example .env` and set `GLEAN_SERVER_URL` plus your own
-`GLEAN_API_TOKEN` with the `CHAT` scope.
+For live use, run `npm run login`, then set `RFP_APPROVED_SOURCE_PREFIXES` in `.env` to the
+comma-separated Glean URL prefixes cleared for customer-facing answers.
 
 ## Auth: this app runs as you
 

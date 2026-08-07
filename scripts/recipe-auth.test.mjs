@@ -1,0 +1,174 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import http from 'node:http';
+import test from 'node:test';
+
+import {
+  awaitRedirect,
+  createPkce,
+  discoverBackend,
+  run,
+  storedToken,
+  updateEnvFile,
+} from './recipe-auth.mjs';
+
+test('discovers and normalizes a customer backend', async () => {
+  const result = await discoverBackend(
+    ' Person@Example.com ',
+    async (url, init) => {
+      assert.equal(url, 'https://app.glean.com/config/search');
+      assert.deepEqual(JSON.parse(init.body), { email: 'person@example.com' });
+      return { search_config: { queryURL: 'https://acme.askscio.com/search' } };
+    },
+  );
+  assert.deepEqual(result, {
+    instance: 'acme',
+    backend: 'https://acme-be.glean.com',
+  });
+});
+
+test('rejects generic and untrusted discovery responses', async () => {
+  await assert.rejects(
+    discoverBackend('person@example.com', async () => ({
+      search_config: { queryURL: 'https://app.askscio.com/search' },
+    })),
+    /No customer Glean tenant/u,
+  );
+  await assert.rejects(
+    discoverBackend('person@example.com', async () => ({
+      search_config: { queryURL: 'https://attacker.example/search' },
+    })),
+    /No customer Glean tenant/u,
+  );
+});
+
+test('updates an env file without deleting customer configuration', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'recipe-auth-'));
+  const file = path.join(directory, '.env');
+  fs.writeFileSync(
+    file,
+    '# customer setting\nGLEAN_API_TOKEN=old\nCUSTOM=value\n',
+  );
+  updateEnvFile(file, {
+    GLEAN_API_TOKEN: 'new',
+    GLEAN_SERVER_URL: 'https://acme-be.glean.com',
+  });
+  assert.equal(
+    fs.readFileSync(file, 'utf8'),
+    '# customer setting\nGLEAN_API_TOKEN=new\nCUSTOM=value\nGLEAN_SERVER_URL=https://acme-be.glean.com\n',
+  );
+  assert.equal(fs.statSync(file).mode & 0o777, 0o600);
+});
+
+test('creates an RFC 7636 S256 PKCE pair', () => {
+  const { verifier, challenge } = createPkce();
+  assert.match(verifier, /^[A-Za-z0-9_-]{43}$/u);
+  assert.match(challenge, /^[A-Za-z0-9_-]{43}$/u);
+});
+
+test('configures a Web SDK env file without starting OAuth', async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'recipe-auth-'));
+  await run(
+    [
+      'configure',
+      '--backend',
+      'https://acme-be.glean.com',
+      '--config-file',
+      '.env.local',
+      '--backend-variable',
+      'VITE_GLEAN_BACKEND',
+    ],
+    directory,
+  );
+  assert.match(
+    fs.readFileSync(path.join(directory, '.env.local'), 'utf8'),
+    /VITE_GLEAN_BACKEND=https:\/\/acme-be\.glean\.com/u,
+  );
+});
+
+test('refreshes an expired cached OAuth token', async () => {
+  const stateRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'recipe-auth-state-'),
+  );
+  const previousStateRoot = process.env.XDG_STATE_HOME;
+  process.env.XDG_STATE_HOME = stateRoot;
+  const backend = 'https://acme-be.glean.com';
+  const stateDirectory = path.join(stateRoot, 'glean-cookbook');
+  fs.mkdirSync(stateDirectory, { recursive: true });
+  fs.writeFileSync(
+    path.join(stateDirectory, 'acme-be.glean.com.json'),
+    JSON.stringify({
+      client_id: 'client-id',
+      refresh_token: 'refresh-token',
+      expires_at: 0,
+      scope: 'search offline_access',
+    }),
+  );
+  const server = http.createServer((request, response) => {
+    assert.equal(request.method, 'POST');
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.end(
+      JSON.stringify({ access_token: 'fresh-token', expires_in: 3600 }),
+    );
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const port = server.address().port;
+    assert.equal(
+      await storedToken(
+        backend,
+        { token_endpoint: `http://127.0.0.1:${port}/token` },
+        ['search'],
+      ),
+      'fresh-token',
+    );
+  } finally {
+    server.close();
+    if (previousStateRoot === undefined) delete process.env.XDG_STATE_HOME;
+    else process.env.XDG_STATE_HOME = previousStateRoot;
+  }
+});
+
+test('does not reuse a cached token missing the recipe scopes', async () => {
+  const stateRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'recipe-auth-state-'),
+  );
+  const previousStateRoot = process.env.XDG_STATE_HOME;
+  process.env.XDG_STATE_HOME = stateRoot;
+  const stateDirectory = path.join(stateRoot, 'glean-cookbook');
+  fs.mkdirSync(stateDirectory, { recursive: true });
+  fs.writeFileSync(
+    path.join(stateDirectory, 'acme-be.glean.com.json'),
+    JSON.stringify({
+      access_token: 'chat-token',
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      scope: 'chat offline_access',
+    }),
+  );
+  try {
+    assert.equal(
+      await storedToken(
+        'https://acme-be.glean.com',
+        { token_endpoint: 'https://unused.example/token' },
+        ['agents'],
+      ),
+      undefined,
+    );
+  } finally {
+    if (previousStateRoot === undefined) delete process.env.XDG_STATE_HOME;
+    else process.env.XDG_STATE_HOME = previousStateRoot;
+  }
+});
+
+test('rejects an OAuth callback with the wrong state', async () => {
+  const server = http.createServer();
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const port = server.address().port;
+  const redirect = awaitRedirect(server, 'expected-state', 2_000);
+  const rejected = assert.rejects(redirect, /state mismatch/iu);
+  await fetch(`http://127.0.0.1:${port}/callback?code=code&state=wrong-state`);
+  await rejected;
+  server.close();
+});

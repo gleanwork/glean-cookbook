@@ -375,6 +375,14 @@ const server = http.createServer(async (req, res) => {
 });
 
 const port = Number(process.env.PORT ?? 3000);
+if (
+  process.env.GLEAN_USE_FIXTURE !== 'true' &&
+  !process.env.RFP_APPROVED_SOURCE_PREFIXES?.trim()
+) {
+  throw new Error(
+    'RFP_APPROVED_SOURCE_PREFIXES is required for live use; list the Glean URL prefixes cleared for customer-facing answers.',
+  );
+}
 server.listen(port, () => {
   console.log(`RFP responder running at http://localhost:${port}`);
   if (process.env.GLEAN_USE_FIXTURE === 'true') {

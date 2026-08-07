@@ -5,6 +5,7 @@
     ".cursor-plugin/marketplace.json",
     "build/cursor/cookbook/.cursor-plugin/plugin.json",
     "build/cursor/cookbook/.mcp.json",
+    "build/cursor/cookbook/scripts/glean-auth.mjs",
     "build/cursor/cookbook/scripts/resolve-backend.mjs",
     "build/cursor/cookbook/scripts/scaffold-recipe.mjs",
     "build/cursor/cookbook/skills/a2a-client/SKILL.md",

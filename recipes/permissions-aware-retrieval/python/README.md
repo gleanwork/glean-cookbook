@@ -5,8 +5,9 @@ Use Glean Search as the retrieval layer for your own LLM app — every result is
 ## Run it
 
 ```bash
-cp .env.example .env   # fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, ANTHROPIC_API_KEY
-uv run main.py "What's our PTO policy?"
+node scripts/glean-auth.mjs login --scopes search
+# Add ANTHROPIC_API_KEY to .env without committing it.
+uv run main.py "<a topic you know you can access>"
 ```
 
 Dependencies are declared inline in `main.py` ([PEP 723](https://peps.python.org/pep-0723/)),

@@ -12,13 +12,44 @@
     "wow": true
   },
   "timeEstimate": "~30 min",
-  "requiredScopes": ["SEARCH", "CHAT"],
-  "authMethod": [
-    "indexing-token",
-    "web-sdk-cookie",
-    "client-api-oauth-or-token"
-  ],
+  "requiredScopes": [],
+  "authMethod": ["indexing-token", "web-sdk-cookie"],
   "buildMethod": "integrate",
+  "execution": {
+    "questions": [
+      {
+        "id": "email",
+        "prompt": "What is your work email? It is used once to discover your Glean tenant."
+      },
+      {
+        "id": "datasource",
+        "prompt": "Which custom datasource should receive the service catalog?"
+      },
+      {
+        "id": "catalog",
+        "prompt": "Where is the service catalog data to index?"
+      }
+    ],
+    "auth": [
+      {
+        "kind": "indexing-token",
+        "scopes": ["INDEXING"],
+        "credentialVariable": "GLEAN_INDEXING_TOKEN"
+      },
+      {
+        "kind": "browser-cookie",
+        "scopes": []
+      }
+    ],
+    "verification": {
+      "kind": "user-browser",
+      "expectedDuration": "5–15 minutes after indexing because this is a composed integration",
+      "startsOwnServer": false
+    },
+    "run": {
+      "userBrowser": true
+    }
+  },
   "languages": ["python", "typescript"],
   "prerequisites": [
     "A Glean instance where you can add a custom datasource",
@@ -84,8 +115,8 @@
       "icon": "layout-outlined"
     }
   ],
-  "aiPrompt": "Build the \"Engineering portal with Glean\" flagship recipe from\nhttps://developers.glean.com/cookbook/build-engineering-portal\n\nIt composes two building blocks:\n1. Index the portal's service catalog into Glean with the open-source\n   indexing SDK (follow\n   https://developers.glean.com/api-info/indexing/getting-started/overview).\n2. Embed Glean search and chat into the portal UI with the Web SDK (see\n   https://developers.glean.com/cookbook/embed-search-chat — same\n   container sizing and initialMessage guidance applies here).\n\nStyle the portal shell itself per the house style below (real logomark,\nteal accent) so the catalog UI and the embedded search/chat feel like one\ncohesive app, not two mismatched pieces bolted together.\n\nAsk me for: my Glean instance/backend domain, an Indexing API token, and\nmy Glean web app domain. See Verify below for what a correct build must do.",
-  "llmContext": "Index the service catalog with an Indexing API token, then embed permission-aware search and chat with SEARCH and CHAT access. Keep credentials server-side. Join only non-empty CONTENT fragments, collect citations from fragment.citation.sourceDocument, and treat an empty completed response as a retryable failure.",
+  "aiPrompt": "Build the \"Engineering portal with Glean\" flagship recipe from\nhttps://developers.glean.com/cookbook/build-engineering-portal\n\nResolve my backend from the work email already supplied with the cookbook resolver. Index the supplied service catalog into the named datasource with the open-source indexing SDK, keeping the Indexing API token server-side. Then embed Glean search and chat with Web SDK cookie SSO. Style the portal shell per the house style below, run it, and give me the URL to open in my normal signed-in browser. See Verify below for the required checks.",
+  "llmContext": "Index the service catalog with a server-side Indexing API token. Embed search and chat with Web SDK cookie SSO, then have the user verify it in their normal signed-in browser.",
   "goDependency": false,
   "featured": false,
   "tags": ["portal"],

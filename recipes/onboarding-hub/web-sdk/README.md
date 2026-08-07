@@ -9,14 +9,14 @@ Requires Node 20.19+ or 22.12+.
 
 ```bash
 npm install
-cp .env.example .env.local
+npm run configure
 cp public/steps.example.json public/steps.json
 ```
 
-Set `VITE_GLEAN_BACKEND` in `.env.local` to your tenant's HTTPS backend origin, for example
-`https://example-be.glean.com`. Do not include a path. Customize `public/steps.json` with your
-checklist before running the app. Each step needs a unique `id`, a `title`, a `group` (`it`, `hr`,
-`team`, or `engineering`), a boolean `initiallyDone`, and an `askPrompt`.
+The configure command discovers your tenant from your work email and writes `.env.local`.
+Customize `public/steps.json` with your checklist before running the app. Each step needs a unique
+`id`, a `title`, a `group` (`it`, `hr`, `team`, or `engineering`), a boolean `initiallyDone`, and an
+`askPrompt`.
 
 Optional completion links come from `public/resources.json`:
 

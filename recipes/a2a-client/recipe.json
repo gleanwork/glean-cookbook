@@ -16,11 +16,43 @@
   "requiredScopes": ["AGENTS"],
   "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",
+  "execution": {
+    "questions": [
+      {
+        "id": "email",
+        "prompt": "What is your work email? It is used once to discover your Glean tenant."
+      },
+      {
+        "id": "agent-id",
+        "prompt": "What is the ID of the published agent to invoke?"
+      },
+      {
+        "id": "question",
+        "prompt": "What question is that agent expected to answer from your content?"
+      }
+    ],
+    "auth": [
+      {
+        "kind": "oauth-with-token-fallback",
+        "scopes": ["AGENTS"],
+        "setupCommand": "cd a2a-client && node scripts/glean-auth.mjs login --scopes agents --email \"<work-email>\"",
+        "configFile": ".env",
+        "backendVariable": "GLEAN_SERVER_URL",
+        "credentialVariable": "GLEAN_API_TOKEN"
+      }
+    ],
+    "verification": {
+      "kind": "automated",
+      "command": "cd a2a-client && uv run main.py",
+      "expectedDuration": "about 1 minute after sign-in",
+      "startsOwnServer": false
+    }
+  },
   "languages": ["python"],
   "prerequisites": [
     "A published auto agent with a chat-message trigger (text input only)",
     "Its agent id, from the Agent Builder URL or agents/search",
-    "An OAuth access token or Glean API token with the AGENTS scope",
+    "A work email for tenant discovery and OAuth sign-in; an AGENTS-scoped API token is the fallback",
     "uv (a2a-sdk is pinned < 1.0 — see below)"
   ],
   "demoQueries": [
@@ -39,21 +71,25 @@
   "steps": [
     {
       "title": "Scaffold the project",
-      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client"
+      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client",
+      "kind": "scaffold"
     },
     {
       "title": "Set credentials",
-      "command": "cd a2a-client && cp .env.example .env",
-      "description": "Fill in GLEAN_INSTANCE, GLEAN_API_TOKEN, and GLEAN_AGENT_ID. Use an OAuth access token or Glean API token with the AGENTS scope."
+      "command": "cd a2a-client && node scripts/glean-auth.mjs login --scopes agents --email \"<work-email>\"",
+      "description": "Use the shipped login flow, then set GLEAN_AGENT_ID and GLEAN_DEMO_QUERY from the answers already supplied. Never implement authentication.",
+      "kind": "authenticate"
     },
     {
       "title": "Run it",
       "command": "cd a2a-client && uv run main.py",
-      "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step."
+      "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.",
+      "kind": "run"
     },
     {
       "title": "Verify",
-      "description": "Confirm a real answer to \"Who owns the payments service?\", a follow-up reusing the same context_id to prove multi-turn, and a streaming response — all three paths this recipe exercises."
+      "description": "Use the question supplied up front. Confirm a real answer, a follow-up reusing the same context_id to prove multi-turn, and a streaming response — all three paths this recipe exercises.",
+      "kind": "verify-live"
     }
   ],
   "scaffoldActions": [],
