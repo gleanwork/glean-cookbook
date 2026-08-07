@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.0](https://github.com/gleanwork/glean-cookbook/compare/v0.4.0...v0.5.0) (2026-08-07)
+
+### Features
+
+* make recipe metadata the content source ([#23](https://github.com/gleanwork/glean-cookbook/issues/23)) ([8e5fb83](https://github.com/gleanwork/glean-cookbook/commit/8e5fb8346793abb748a2daaa23799ea6ac71551e))
+
+### Bug Fixes
+
+* harden recipe authentication and verification ([#22](https://github.com/gleanwork/glean-cookbook/issues/22)) ([6856be6](https://github.com/gleanwork/glean-cookbook/commit/6856be66e71cb076a20f1da66c05c8ae72dbde7f))
+
 ## [0.4.0](https://github.com/gleanwork/glean-cookbook/compare/v0.3.0...v0.4.0) (2026-08-07)
 
 ### Features
