@@ -185,8 +185,22 @@ export async function run(query, _context) {
     }
     const contract = checkFailureContract(rows);
     if (contract) return contract;
+    // Corpus-independent: whether any row reaches "strong" depends on what the
+    // reader has indexed, so requiring one asserts a fact about their corpus.
+    // What must hold on any corpus is that the grade matches the evidence --
+    // a strong row carries citations, and a row with no evidence carries no
+    // draft. Grading a row strong with nothing behind it is the actual defect.
+    const ungrounded = rows.find(
+      (row) =>
+        row.confidence === 'strong' && (row.citations ?? []).length === 0,
+    );
+    if (ungrounded) {
+      return `row ${ungrounded.questionId} was graded strong with no citations behind it`;
+    }
     if (!rows.some((row) => row.confidence === 'strong')) {
-      return 'no row reached strong grounding — check that the questionnaire corpus is indexed and your token has the CHAT scope';
+      return {
+        skip: 'no row reached strong grounding on this corpus, so the cited-draft path went unexercised — run a questionnaire your own content can speak to',
+      };
     }
     return null;
   }
@@ -194,8 +208,18 @@ export async function run(query, _context) {
   if (scenario === 'unsupported') {
     const row = findRow(rows, 'penetration testing');
     if (!row) return 'penetration-testing row missing from the run';
+    // Corpus-independent: this row is only unanswerable if the reader's corpus
+    // is silent on it, and plenty of corpora document pen testing. The claim
+    // that must hold everywhere is that an answer is grounded -- an answer with
+    // no citations is invention, which is the failure this recipe exists to
+    // prevent. A cited answer here means the corpus covered it.
+    if (row.answer !== '' && (row.citations ?? []).length === 0) {
+      return `answered with no citations behind it, which is invention: ${JSON.stringify(row.answer.slice(0, 160))}`;
+    }
     if (row.answer !== '') {
-      return `answered a question the corpus does not support: ${JSON.stringify(row.answer.slice(0, 160))}`;
+      return {
+        skip: `this corpus documents penetration testing, so the row was answered with ${(row.citations ?? []).length} citation(s) and the refusal path went unexercised — ask something your own docs genuinely omit`,
+      };
     }
     if (row.status !== 'needs-sme')
       return `status was ${row.status}, expected needs-sme`;

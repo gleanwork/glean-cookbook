@@ -31,7 +31,7 @@ hardcodes ARR, seats, renewal date, owner, or risk.
 | Surface | Call                                                                        | Wait semantics                                                 | Experimental                                        |
 | ------- | --------------------------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------- |
 | Search  | `glean.search.query` → `POST /api/search`                                   | Sync `PlatformSearchResponse` (`results[].title/url/snippets`) | `X_GLEAN_INCLUDE_EXPERIMENTAL=true` (env; SDK hook) |
-| Chat    | raw `fetch` → `POST /api/chat`                                              | Sync JSON when `stream: false`                                 | Header + `platform.apiMigratedEndpointsEnabled`     |
+| Chat    | raw `fetch` → `POST /api/chat`                                              | Sync JSON when `stream: false`                                 | Header + a backend opt-in                           |
 | Agents  | `glean.agents.createRun(req, agentId)` → `POST /api/agents/{agent_id}/runs` | Sync wait body when `stream: false` (**no polling**)           | Same experimental opt-in                            |
 
 ### Chat parse path
@@ -39,7 +39,7 @@ hardcodes ARR, seats, renewal date, owner, or risk.
 - Request: `{ input, stream: false, store: true }`
 - Response: `output[].content[]` where `type === 'output_text'` → `text` + `annotations[].sources[]` (`title`, `url`)
 - Empty `output_text` after HTTP 200 is treated as failure (unfinished run), not a blank success
-- **Not** Client API `glean.client.chat.create` / fragment parsing
+- Platform Chat is the target contract, not Client API `chat.create` — but see **Transport reality** below: it is unavailable, so the code currently uses `/rest/api/v1/chat`
 - Backend URL from `GLEAN_SERVER_URL` (not derived from an instance name)
 
 ### Agents parse path
@@ -70,3 +70,10 @@ Verify: `npm run verify` against live Platform APIs (credentials required).
 - Account Brief agent created in Agent Builder (template-driven QBR sections)
 - `GLEAN_AGENT_ID` server-only env
 - Live verify requires the agent; missing/unauthorized → explicit failure UX
+
+## Transport (2026-08-06)
+
+`POST /api/chat` is not available on the instances we test against — it returns 404 — so the
+code calls `POST /rest/api/v1/chat` instead. The response parsing differs; the comments in the
+recipe explain how. Platform Chat remains the intended contract: revert and delete this section
+once the endpoint is available.

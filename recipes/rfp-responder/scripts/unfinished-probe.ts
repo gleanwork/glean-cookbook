@@ -1,40 +1,47 @@
-// Exercises the /api/chat response parser directly, on the three shapes that
-// matter. The distinction it proves -- an unfinished run is not a refusal -- is
-// invisible from the outside, because both used to arrive as an empty answer
-// with no citations.
+// Exercises the chat response parser directly, on the three shapes that matter.
+// The distinction it proves -- an unfinished run is not a refusal -- is invisible
+// from the outside, because both used to arrive as an empty answer with no
+// citations.
 import { parsePlatformChatResponse } from '../lib/chat.ts';
 
+// A run that never produced text: progress narration, then an empty CONTENT.
 const unfinished = parsePlatformChatResponse({
-  output: [
-    { role: 'assistant', content: [] },
-    { role: 'assistant', content: [{ type: 'server_tool_use', text: '' }] },
+  messages: [
+    {
+      author: 'GLEAN_AI',
+      messageType: 'UPDATE',
+      fragments: [{ text: '**Searching company knowledge**' }],
+    },
+    { author: 'GLEAN_AI', messageType: 'CONTENT', fragments: [{ text: '' }] },
   ],
 });
 
+// A settled verdict: the model answered, and the answer is a refusal.
 const refused = parsePlatformChatResponse({
-  output: [
+  messages: [
     {
-      role: 'assistant',
-      content: [{ type: 'output_text', text: 'INSUFFICIENT_EVIDENCE' }],
+      author: 'GLEAN_AI',
+      messageType: 'CONTENT',
+      fragments: [{ text: 'INSUFFICIENT_EVIDENCE' }],
     },
   ],
 });
 
 const answered = parsePlatformChatResponse({
-  output: [
+  messages: [
     {
-      role: 'assistant',
-      content: [
+      author: 'GLEAN_AI',
+      messageType: 'CONTENT',
+      fragments: [
+        { text: 'Backups are encrypted at rest with AES-256.' },
         {
-          type: 'output_text',
-          text: 'Backups are encrypted at rest with AES-256.',
-          annotations: [
-            {
-              sources: [
-                { title: 'Data Protection Standard', url: 'https://example/1' },
-              ],
+          text: '',
+          citation: {
+            sourceDocument: {
+              title: 'Data Protection Standard',
+              url: 'https://example/1',
             },
-          ],
+          },
         },
       ],
     },

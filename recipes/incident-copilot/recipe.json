@@ -1,7 +1,7 @@
 {
   "id": "incident-copilot",
   "title": "On-call copilot with a real approval gate",
-  "description": "Triage an incident from your own runbooks and past incidents, propose one pre-registered action, and let a human approve it \u2014 where the gate refuses the wrong person, expiry escalates instead of auto-approving, and every attempt is audited.",
+  "description": "Triage an incident from your own runbooks and past incidents, propose one pre-registered action, and let a human approve it — where the gate refuses the wrong person, expiry escalates instead of auto-approving, and every attempt is audited.",
   "sidebarLabel": "Incident copilot",
   "surfaces": ["platform-api", "agents", "tools"],
   "status": "showcase",
@@ -18,7 +18,7 @@
   "buildMethod": "scaffold",
   "languages": ["typescript"],
   "prerequisites": [
-    "A Glean instance with engineering content indexed \u2014 a service catalog, runbooks, and at least one past incident review",
+    "A Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review",
     "Your own OAuth access token or Glean API token with SEARCH and CHAT scopes (add AGENTS for the agent-orchestrated path)",
     "X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)",
     "Node 20+"
@@ -26,7 +26,7 @@
   "demoQueries": [
     {
       "query": "Triage a real alert from one of your services",
-      "expectedBehavior": "The copilot acknowledges in the channel, resolves the service to its on-call engineer and owner from your own service catalog, fans out retrieval, and posts a triage card. A past incident is cited as the precedent that supports whatever it proposes \u2014 the proposal has to point at evidence, not at a hunch."
+      "expectedBehavior": "The copilot acknowledges in the channel, resolves the service to its on-call engineer and owner from your own service catalog, fans out retrieval, and posts a triage card. A past incident is cited as the precedent that supports whatever it proposes — the proposal has to point at evidence, not at a hunch."
     },
     {
       "query": "Triage an alert with no matching past incident",
@@ -34,7 +34,7 @@
     },
     {
       "query": "Approve the proposed action as someone who is not on call",
-      "expectedBehavior": "Refused with 403 and audited against that actor. The allowed set is the on-call engineer and service owner read from your service catalog, not a config file. The incident stays awaiting approval. The recipe implements the authorization itself \u2014 nothing upstream does it for you.",
+      "expectedBehavior": "Refused with 403 and audited against that actor. The allowed set is the on-call engineer and service owner read from your service catalog, not a config file. The incident stays awaiting approval. The recipe implements the authorization itself — nothing upstream does it for you.",
       "permissionDifferentiated": true
     },
     {
@@ -123,7 +123,7 @@
     }
   ],
   "aiPrompt": "Build an on-call incident copilot on the Glean Platform API following the incident-copilot recipe. Resolve the alarming service to its owner, on-call engineer and escalation path from an indexed service catalog before retrieving anything. Fan out retrieval, then classify every retrieved document by the role it can play in an argument: a past incident with a matching alarm signature is a precedent and is the only thing that may support a claim about cause; a runbook is procedure and may only license a proposed action; everything else is context. Do not rank probable cause by relevance -- on a real corpus the runbook outranks the precedent because it is dense with the alarm's own vocabulary while containing no information about why anything broke. Assert no cause when no precedent matches. Gate every action behind a human: restrict approval to the on-call engineer and service owners from the catalog, expire unapproved proposals into an escalation that does not execute, allow only pre-registered actions, require an evidence-supported cause before any mutating action, and write an audit entry for every attempt including refusals and failures.",
-  "llmContext": "Platform Search POST /api/search -> results[].{title,url,snippets}. Platform Chat POST /api/chat with { input, stream: false, store: true } -> output[].content[] where type === 'output_text', with .annotations[].sources[]. Platform Agents POST /api/agents/{agent_id}/runs with { messages: [{role:'USER',content:[{text,type:'text'}]}], stream: false } -> messages[].content[].text, synchronous, no polling. All require X-GLEAN-INCLUDE-EXPERIMENTAL: true and platform.apiMigratedEndpointsEnabled. Auth is the caller's own token; impersonation/act-as was removed from the cookbook recipes, so actions cannot execute as the approving user and the approval gate is an app-level policy check -- say so rather than implying per-person enforcement. Design findings worth carrying over: (1) relevance is not evidence -- classify documents by evidentiary role, because a runbook always outranks the precedent for alarm-shaped queries; (2) a mutating action requires an evidence-supported cause, or the same relevance-is-not-evidence mistake reappears in the action choice; (3) expiry must escalate rather than auto-approve; (4) authorization (who may approve) and authentication (proving who you are) are different problems and this recipe only implements the first. Service names, on-call identities and escalation targets all come from the reader's own catalog: an earlier draft named services from the sample catalog in examples/sample-catalog, which does still ship but is an opt-in Indexing SDK dataset that writes to your instance and must be seeded first -- no recipe may depend on it. The four negative cases -- unauthorized approver, expired window, unregistered action, no matching precedent -- are the recipe. A run where every path succeeds has not exercised the gate. /api/chat can return HTTP 200 for a run that never finished: an empty CONTENT message, a trailing SERVER_TOOL, and no error field anywhere, for roughly one call in four on questions that invoke a server tool. Treat a response with no text block as a retryable transport failure, not as a finding. It is not the same as a refusal, and it must never be reported to the user as absent or insufficient evidence -- that is a claim about their corpus which a call that never completed cannot support.",
+  "llmContext": "Platform Search POST /api/search -> results[].{title,url,snippets}. Platform Chat POST /api/chat with { input, stream: false, store: true } -> output[].content[] where type === 'output_text', with .annotations[].sources[]. Platform Agents POST /api/agents/{agent_id}/runs with { messages: [{role:'USER',content:[{text,type:'text'}]}], stream: false } -> messages[].content[].text, synchronous, no polling. All require X-GLEAN-INCLUDE-EXPERIMENTAL: true. Auth is the caller's own token; impersonation/act-as was removed from the cookbook recipes, so actions cannot execute as the approving user and the approval gate is an app-level policy check -- say so rather than implying per-person enforcement. Design findings worth carrying over: (1) relevance is not evidence -- classify documents by evidentiary role, because a runbook always outranks the precedent for alarm-shaped queries; (2) a mutating action requires an evidence-supported cause, or the same relevance-is-not-evidence mistake reappears in the action choice; (3) expiry must escalate rather than auto-approve; (4) authorization (who may approve) and authentication (proving who you are) are different problems and this recipe only implements the first. Service names, on-call identities and escalation targets all come from the reader's own catalog: an earlier draft named services from the sample catalog in examples/sample-catalog, which does still ship but is an opt-in Indexing SDK dataset that writes to your instance and must be seeded first -- no recipe may depend on it. The four negative cases -- unauthorized approver, expired window, unregistered action, no matching precedent -- are the recipe. A run where every path succeeds has not exercised the gate. /api/chat can return HTTP 200 for a run that never finished: an empty CONTENT message, a trailing SERVER_TOOL, and no error field anywhere, for roughly one call in four on questions that invoke a server tool. Treat a response with no text block as a retryable transport failure, not as a finding. It is not the same as a refusal, and it must never be reported to the user as absent or insufficient evidence -- that is a claim about their corpus which a call that never completed cannot support.",
   "goDependency": false,
   "featured": true,
   "tags": [
@@ -138,7 +138,7 @@
     {
       "repoPath": "recipes/incident-copilot",
       "language": "typescript",
-      "description": "Webhook \u2192 service registry \u2192 retrieval fan-out \u2192 evidence classification \u2192 triage card \u2192 approval gate (authz, expiry, escalation, audit) \u2192 pre-registered actions \u2192 postmortem timeline. Both orchestrators render into one shell."
+      "description": "Webhook → service registry → retrieval fan-out → evidence classification → triage card → approval gate (authz, expiry, escalation, audit) → pre-registered actions → postmortem timeline. Both orchestrators render into one shell."
     }
   ]
 }

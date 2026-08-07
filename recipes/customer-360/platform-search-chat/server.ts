@@ -7,32 +7,30 @@ import { Glean } from '@gleanwork/api-client';
 
 // Path A: Platform Search tiles + Platform Chat synthesis.
 // Search: glean.search.query (POST /api/search) — @gleanwork/api-client@0.18.0
-// Chat: fetch POST /api/chat until glean.chat.create ships (same Onboarding contract).
+// Chat: fetch POST /rest/api/v1/chat. The Platform POST /api/chat is the
+// eventual target and is what SPEC-LOCK describes, but it returns 404
+// resource_not_found today -- gated behind a backend flag that is not enabled --
+// so this recipe could not synthesise at all. Swap back when it ships; only the
+// parsing changes.
 
-interface PlatformSource {
-  type?: string;
+interface ChatCitationDocument {
   title?: string;
   url?: string;
 }
 
-interface PlatformAnnotation {
-  type?: string;
-  sources?: PlatformSource[];
-}
-
-interface PlatformContentBlock {
-  type?: string;
+interface ChatFragment {
   text?: string;
-  annotations?: PlatformAnnotation[];
+  citation?: { sourceDocument?: ChatCitationDocument };
 }
 
-interface PlatformOutputMessage {
-  type?: string;
-  content?: PlatformContentBlock[];
+interface ChatMessageEnvelope {
+  author?: string;
+  messageType?: string;
+  fragments?: ChatFragment[];
 }
 
 interface PlatformChatResponse {
-  output?: PlatformOutputMessage[];
+  messages?: ChatMessageEnvelope[];
 }
 
 interface SearchHit {
@@ -124,18 +122,25 @@ function parsePlatformChatResponse(data: PlatformChatResponse): {
   answer: string;
   citations: Array<{ title: string; url: string }>;
 } {
-  const blocks = data.output?.flatMap((message) => message.content ?? []) ?? [];
-  const textBlocks = blocks.filter((block) => block.type === 'output_text');
-  const answer = textBlocks
-    .map((block) => block.text ?? '')
-    .join('\n')
+  // CONTENT messages from GLEAN_AI are the answer; UPDATE messages are progress
+  // narration. A trailing empty CONTENT message is normal, so join across all of
+  // them rather than reading the last one.
+  const fragments = (data.messages ?? [])
+    .filter(
+      (message) =>
+        message.messageType === 'CONTENT' && message.author === 'GLEAN_AI',
+    )
+    .flatMap((message) => message.fragments ?? []);
+
+  const answer = fragments
+    .map((fragment) => fragment.text ?? '')
+    .join('')
     .trim();
 
-  const rawCitations = textBlocks.flatMap(
-    (block) =>
-      block.annotations?.flatMap((annotation) => annotation.sources ?? []) ??
-      [],
-  );
+  // Citations hang off individual fragments, not off the message.
+  const rawCitations = fragments
+    .map((fragment) => fragment.citation?.sourceDocument)
+    .filter((document): document is ChatCitationDocument => Boolean(document));
   const citations = Array.from(
     new Map(
       rawCitations
@@ -157,21 +162,24 @@ async function askPlatformChat(input: string): Promise<{
   const backend = requireEnv('GLEAN_SERVER_URL').replace(/\/$/, '');
   const token = requireEnv('GLEAN_API_TOKEN');
 
-  const response = await fetch(`${backend}/api/chat`, {
+  const response = await fetch(`${backend}/rest/api/v1/chat`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
-      'X-GLEAN-INCLUDE-EXPERIMENTAL': 'true',
     },
-    body: JSON.stringify({ input, stream: false, store: true }),
+    body: JSON.stringify({
+      messages: [{ author: 'USER', fragments: [{ text: input }] }],
+    }),
   });
 
   if (!response.ok) {
     const body = await response.text();
-    console.error(`POST /api/chat returned ${response.status}: ${body}`);
+    console.error(
+      `POST /rest/api/v1/chat returned ${response.status}: ${body}`,
+    );
     throw new Error(
-      `Chat request failed (${response.status}). Check credentials and that experimental Platform Chat is enabled.`,
+      `Chat request failed (${response.status}). Check that your token carries the CHAT scope.`,
     );
   }
 

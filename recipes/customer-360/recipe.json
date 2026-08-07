@@ -1,7 +1,7 @@
 {
   "id": "customer-360",
   "title": "Customer 360: an account page built from your own content",
-  "description": "One page per account \u2014 status, risks, and a drill-in chat \u2014 assembled from whatever your instance already knows about that customer. No CRM export, no separate index.",
+  "description": "One page per account — status, risks, and a drill-in chat — assembled from whatever your instance already knows about that customer. No CRM export, no separate index.",
   "sidebarLabel": "Customer 360",
   "surfaces": ["platform-api"],
   "status": "showcase",
@@ -23,12 +23,12 @@
     "X_GLEAN_INCLUDE_EXPERIMENTAL=true (Platform Search, Chat, and Agents are experimental)",
     "Path B: an Account Brief agent in Agent Builder; set GLEAN_AGENT_ID server-side",
     "Node 20+",
-    "An account name your own content covers \u2014 the page is built around whichever you pick (GLEAN_ACCOUNT_NAME)"
+    "An account name your own content covers — the page is built around whichever you pick (GLEAN_ACCOUNT_NAME)"
   ],
   "demoQueries": [
     {
       "query": "What's the status of our renewal with that account?",
-      "expectedBehavior": "Returns a non-empty answer citing real documents about the account you built the page around. Substitute the name when you ask \u2014 there is no fixed query text for a page built around whichever account you pick."
+      "expectedBehavior": "Returns a non-empty answer citing real documents about the account you built the page around. Substitute the name when you ask — there is no fixed query text for a page built around whichever account you pick."
     },
     {
       "query": "Give me a customer summary",
@@ -43,7 +43,7 @@
     {
       "repoPath": "recipes/customer-360/platform-search-chat",
       "language": "typescript",
-      "description": "Path A \u2014 parallel Platform Search tiles + Platform Chat synthesis",
+      "description": "Path A — parallel Platform Search tiles + Platform Chat synthesis",
       "steps": [
         {
           "title": "Scaffold the project",
@@ -61,7 +61,7 @@
         {
           "title": "Run it",
           "command": "npm start",
-          "description": "Leaves the server running so you can try it yourself at http://localhost:3000 \u2014 stop it (Ctrl-C) before the verify step below, which starts its own instance."
+          "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
         },
         {
           "title": "Verify",
@@ -73,7 +73,7 @@
     {
       "repoPath": "recipes/customer-360/platform-agents",
       "language": "typescript",
-      "description": "Path B \u2014 Platform Agents createRun for prescriptive account briefs",
+      "description": "Path B — Platform Agents createRun for prescriptive account briefs",
       "steps": [
         {
           "title": "Scaffold the project",
@@ -91,7 +91,7 @@
         {
           "title": "Run it",
           "command": "npm start",
-          "description": "Leaves the server running so you can try it yourself at http://localhost:3000 \u2014 stop it (Ctrl-C) before the verify step below, which starts its own instance."
+          "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
         },
         {
           "title": "Verify",
@@ -151,7 +151,7 @@
     }
   ],
   "aiPrompt": "Build a Customer 360 account page following\nhttps://developers.glean.com/cookbook/customer-360\n\n1. Ask me which path: (A) Platform Search + Chat or (B) Platform Agents.\n   Build the one I pick. Do NOT use Client API chat.create, client.search.query,\n   or client.agents.run.\n2. Ask me which account to build around and which of my sources cover\n   it. Read every figure from retrieval -- ARR, seat count, renewal\n   date, risk -- and leave a field blank when nothing supports it.\n   Never display a number the sources do not contain.\n3. Path A: parallel glean.search.query for account notes / renewal / security\n   tiles; journey + prompts + follow-ups via server-side POST /api/chat with\n   { input, stream: false, store: true } and X_GLEAN_INCLUDE_EXPERIMENTAL.\n   Parse output_text + annotations[].sources[]. Keep the token server-side.\n4. Path B: same page UX; synthesis via glean.agents.createRun({ messages,\n   stream: false }, GLEAN_AGENT_ID). Document Agent Builder Account Brief\n   prereq. Failure UX if agent missing/unauthorized.\n5. Empty tiles read \"no recent activity\", not \"0\". An empty retrieval\n   is a state to render, not a gap to fill. HTTP 200 with no answer\n   text is a failure to retry, not a blank success.\n6. Style it per the house style below: the real Glean logomark, Glean\n   Blue (#343ced) as the accent.\n7. Verify with the demo queries against the account I chose.\n",
-  "llmContext": "Platform-only recipe. Search: glean.search.query -> POST /api/search, results[].title/url/snippets (string[]). Chat: fetch POST /api/chat (until glean.chat.create ships); request {input, stream:false, store:true}; response output[].content[] type=output_text with annotations[].sources[]. Agents: glean.agents.createRun(request, agentId) -> POST /api/agents/{agent_id}/runs; stream:false returns PlatformAgentRunWaitResponse synchronously (no polling); messages use role USER|GLEAN_AI and content[{text,type:text}]. Experimental opt-in via X_GLEAN_INCLUDE_EXPERIMENTAL. Do NOT teach glean.client.chat.create, glean.client.search.query, or glean.client.agents.run. Auth is the caller's own token; impersonation/act-as was removed from the cookbook recipes. Tokens server-side only. The account and every figure on the page come from the reader's own instance. Nothing may hardcode an account name, owner, ARR, seat count or renewal date: an earlier version returned a fixed demo account on the live path, so the KPI header showed one fictional customer's numbers whatever retrieval returned. Use GLEAN_SERVER_URL rather than deriving the backend from an instance name, and GLEAN_ACCOUNT_NAME for the account. This recipe does not depend on examples/sample-catalog.",
+  "llmContext": "Platform-only recipe. Search: glean.search.query -> POST /api/search, results[].title/url/snippets (string[]). Chat: fetch POST /api/chat (until glean.chat.create ships); request {input, stream:false, store:true}; response output[].content[] type=output_text with annotations[].sources[]. Agents: glean.agents.createRun(request, agentId) -> POST /api/agents/{agent_id}/runs; stream:false returns PlatformAgentRunWaitResponse synchronously (no polling); messages use role USER|GLEAN_AI and content[{text,type:text}]. Experimental opt-in via X_GLEAN_INCLUDE_EXPERIMENTAL. Do NOT teach glean.client.chat.create, glean.client.search.query, or glean.client.agents.run. Auth is the caller's own token; impersonation/act-as was removed from the cookbook recipes. Tokens server-side only. The account and every figure on the page come from the reader's own instance. Nothing may hardcode an account name, owner, ARR, seat count or renewal date: an earlier version returned a fixed demo account on the live path, so the KPI header showed one fictional customer's numbers whatever retrieval returned. Use GLEAN_SERVER_URL rather than deriving the backend from an instance name, and GLEAN_ACCOUNT_NAME for the account. This recipe does not depend on examples/sample-catalog.NOTE (2026-08-06): POST /api/chat is not available on the instances we test against (404), so the code calls POST /rest/api/v1/chat and parses messages[] entries where messageType is CONTENT. Platform Chat remains the intended contract.",
   "goDependency": false,
   "featured": false,
   "tags": ["dual-implementation", "sales", "platform-api"]

@@ -169,7 +169,7 @@ Follow `customer-360/SPEC-LOCK.md`, which is verified against OpenAPI + SDK 0.18
 
 Chat request `{ input, stream: false, store: true }`; parse `output[].content[]` where
 `type === 'output_text'` → `text` + `annotations[].sources[]` (`title`, `url`).
-Requires `X_GLEAN_INCLUDE_EXPERIMENTAL=true` and `platform.apiMigratedEndpointsEnabled`.
+Requires `X_GLEAN_INCLUDE_EXPERIMENTAL=true` and a backend opt-in.
 
 **Security:** tokens and Glean calls stay server-side; browser only hits local recipe routes. Build
 the UI with safe DOM APIs and URL validation from the start — Chris had to retrofit an
@@ -203,3 +203,10 @@ available for Chris's PRs. Fixture mode is the CI gate.
       (recipe dirs stay copyable; the maintainer harness reads `demoQueries` so the two can't drift)
 - [ ] Fable mockup → Frank He (listed on the ticket; Chris skipped it on customer-360 — confirm
       whether it's actually optional)
+
+## Transport (2026-08-06)
+
+`POST /api/chat` is not available on the instances we test against — it returns 404 — so the
+code calls `POST /rest/api/v1/chat` instead. The response parsing differs; the comments in the
+recipe explain how. Platform Chat remains the intended contract: revert and delete this section
+once the endpoint is available.

@@ -3,7 +3,9 @@
 // Contracts verified against the OpenAPI specs and SDK 0.18.0, matching the
 // conventions the other Platform recipes already use:
 //   Search  POST /api/search  -> results[].{title,url,snippets}
-//   Chat    POST /api/chat    -> output[].content[] where type === 'output_text'
+//   Chat    POST /rest/api/v1/chat -> messages[] where messageType === 'CONTENT'
+//           (the Platform POST /api/chat is the eventual target and is what
+//           SPEC-LOCK describes, but it 404s today -- see chat() below)
 //   Agents  POST /api/agents/{agent_id}/runs -> messages[].content[].text
 //
 // Auth is the caller's own token. There is no impersonation anywhere in this
@@ -106,29 +108,40 @@ export async function search(query: string): Promise<SearchHit[]> {
 }
 
 interface RawChatResponse {
-  output?: Array<{
-    content?: Array<{
-      type?: string;
+  messages?: Array<{
+    author?: string;
+    messageType?: string;
+    fragments?: Array<{
       text?: string;
-      annotations?: Array<{
-        sources?: Array<{ title?: string; url?: string }>;
-      }>;
+      citation?: { sourceDocument?: { title?: string; url?: string } };
     }>;
   }>;
 }
 
 export function parseChat(data: RawChatResponse): Cited {
-  const blocks = data.output?.flatMap((message) => message.content ?? []) ?? [];
-  const textBlocks = blocks.filter((block) => block.type === 'output_text');
-  const text = textBlocks
-    .map((block) => block.text ?? '')
-    .join('\n')
+  // CONTENT messages from GLEAN_AI are the answer; UPDATE messages are progress
+  // narration. A trailing empty CONTENT message is normal, so join across all of
+  // them rather than reading the last one.
+  const fragments = (data.messages ?? [])
+    .filter(
+      (message) =>
+        message.messageType === 'CONTENT' && message.author === 'GLEAN_AI',
+    )
+    .flatMap((message) => message.fragments ?? []);
+
+  const text = fragments
+    .map((fragment) => fragment.text ?? '')
+    .join('')
     .trim();
-  const raw = textBlocks.flatMap(
-    (block) =>
-      block.annotations?.flatMap((annotation) => annotation.sources ?? []) ??
-      [],
-  );
+
+  // Citations hang off individual fragments, not off the message.
+  const raw = fragments
+    .map((fragment) => fragment.citation?.sourceDocument)
+    .filter(
+      (document): document is { title?: string; url?: string } =>
+        document !== undefined,
+    );
+
   const citations = Array.from(
     new Map(
       raw
@@ -150,14 +163,20 @@ export async function chat(input: string, fixtureKey: string): Promise<Cited> {
     return parseChat(all[fixtureKey] ?? {});
   }
 
-  const response = await fetch(`${backend()}/api/chat`, {
+  // Client API rather than the Platform POST /api/chat: that endpoint returns
+  // 404 resource_not_found today, gated behind a backend flag that is not
+  // enabled, and shipping against it meant this recipe could not triage at all.
+  // Swap back when it ships; only parseChat changes.
+  const response = await fetch(`${backend()}/rest/api/v1/chat`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ input, stream: false, store: true }),
+    body: JSON.stringify({
+      messages: [{ author: 'USER', fragments: [{ text: input }] }],
+    }),
   });
   if (!response.ok) {
     throw new Error(
-      `POST /api/chat returned ${response.status}: ${await response.text()}`,
+      `POST /rest/api/v1/chat returned ${response.status}: ${await response.text()}`,
     );
   }
   return parseChat((await response.json()) as RawChatResponse);

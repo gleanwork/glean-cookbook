@@ -5,49 +5,47 @@
 // never reach the prompt, and therefore can never reach the customer's document.
 // That property is the recipe, not a caveat.
 //
-// Contract verified against scio/openapi/public/platform/chat.yaml:
-//   POST /api/chat  { input, stream: false, store: true }
-//   -> output[].content[] where type === 'output_text'
-//      .text and .annotations[].sources[] { title, url }
+// Calls the Client API, POST /rest/api/v1/chat. The Platform equivalent
+// (POST /api/chat, OpenAI Responses-style) is the eventual target and is what
+// SPEC-LOCK describes, but it currently returns 404 resource_not_found -- gated
+// behind a backend flag that is not enabled. Shipping against it meant this
+// recipe could not run. Only the parsing differs; swap back when it ships.
+//
+//   POST /rest/api/v1/chat  { messages: [{ author, fragments: [{ text }] }] }
+//   -> messages[] where messageType === 'CONTENT' && author === 'GLEAN_AI'
+//      .fragments[].text and .fragments[].citation.sourceDocument { title, url }
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Citation } from './grounding.ts';
 
-interface PlatformSource {
-  type?: string;
+interface ChatCitationDocument {
   title?: string;
   url?: string;
   snippet?: string;
 }
 
-interface PlatformAnnotation {
-  type?: string;
-  sources?: PlatformSource[];
-}
-
-interface PlatformContentBlock {
-  type?: string;
+interface ChatFragment {
   text?: string;
-  annotations?: PlatformAnnotation[];
+  citation?: { sourceDocument?: ChatCitationDocument };
 }
 
-interface PlatformOutputMessage {
-  type?: string;
-  role?: string;
-  content?: PlatformContentBlock[];
+interface ChatMessageEnvelope {
+  author?: string;
+  messageType?: string;
+  fragments?: ChatFragment[];
 }
 
 export interface PlatformChatResponse {
-  output?: PlatformOutputMessage[];
+  messages?: ChatMessageEnvelope[];
 }
 
 export interface ChatAnswer {
   answer: string;
   citations: Citation[];
   /**
-   * True when the response carried no text block at all. /api/chat can return
+   * True when the response carried no answer text at all. Chat can return
    * HTTP 200 for a run that never finished -- an empty CONTENT message, a
    * trailing SERVER_TOOL, and no error field anywhere -- for roughly one call in
    * four on questions that invoke a server tool.
@@ -64,7 +62,7 @@ export interface ChatAnswer {
 export class ChatUnfinishedError extends Error {
   constructor(questionId: string, attempts: number) {
     super(
-      `/api/chat returned 200 with no answer text for ${questionId} after ${attempts} attempt(s). ` +
+      `chat returned 200 with no answer text for ${questionId} after ${attempts} attempt(s). ` +
         'The run did not finish. This says nothing about the evidence in your corpus.',
     );
     this.name = 'ChatUnfinishedError';
@@ -95,19 +93,30 @@ export const INSUFFICIENT = 'INSUFFICIENT_EVIDENCE';
 export function parsePlatformChatResponse(
   data: PlatformChatResponse,
 ): ChatAnswer {
-  const blocks = data.output?.flatMap((message) => message.content ?? []) ?? [];
-  const textBlocks = blocks.filter((block) => block.type === 'output_text');
+  // The answer is the CONTENT messages from GLEAN_AI. UPDATE messages are
+  // progress narration ('Searching company knowledge') and are not the answer.
+  const contentMessages = (data.messages ?? []).filter(
+    (message) =>
+      message.messageType === 'CONTENT' && message.author === 'GLEAN_AI',
+  );
+  const fragments = contentMessages.flatMap(
+    (message) => message.fragments ?? [],
+  );
+  // A trailing empty CONTENT message is normal, so join across all of them
+  // rather than reading the last.
+  const textFragments = fragments.filter(
+    (fragment) => (fragment.text ?? '').trim() !== '',
+  );
 
-  const answer = textBlocks
-    .map((block) => block.text ?? '')
-    .join('\n')
+  const answer = textFragments
+    .map((fragment) => fragment.text ?? '')
+    .join('')
     .trim();
 
-  const raw = textBlocks.flatMap(
-    (block) =>
-      block.annotations?.flatMap((annotation) => annotation.sources ?? []) ??
-      [],
-  );
+  // Citations hang off individual fragments, not off the message.
+  const raw = fragments
+    .map((fragment) => fragment.citation?.sourceDocument)
+    .filter((document): document is ChatCitationDocument => Boolean(document));
 
   const citations = Array.from(
     new Map(
@@ -127,7 +136,7 @@ export function parsePlatformChatResponse(
   // No text block at all is an unfinished run, not a refusal. A refusal is a
   // real verdict and must stay distinguishable from a call that never produced
   // anything, because the two get shown to the reviewer differently.
-  if (textBlocks.length === 0) {
+  if (textFragments.length === 0) {
     return { answer: '', citations: [], unfinished: true };
   }
 
@@ -192,23 +201,31 @@ export async function askChat(
   const backend = requireEnv('GLEAN_SERVER_URL').replace(/\/$/u, '');
   const token = requireEnv('GLEAN_API_TOKEN');
 
-  const response = await fetch(`${backend}/api/chat`, {
+  const response = await fetch(`${backend}/rest/api/v1/chat`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
-      'X-GLEAN-INCLUDE-EXPERIMENTAL': 'true',
     },
     body: JSON.stringify({
-      input: `${buildInstructions(steering)}\n\nQuestion: ${question}`,
-      stream: false,
-      store: true,
+      messages: [
+        {
+          author: 'USER',
+          fragments: [
+            {
+              text: `${buildInstructions(steering)}\n\nQuestion: ${question}`,
+            },
+          ],
+        },
+      ],
     }),
   });
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`POST /api/chat returned ${response.status}: ${body}`);
+    throw new Error(
+      `POST /rest/api/v1/chat returned ${response.status}: ${body}`,
+    );
   }
 
   const parsed = parsePlatformChatResponse(
