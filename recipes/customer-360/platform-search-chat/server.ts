@@ -61,9 +61,7 @@ interface AccountPayload {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
 
-// The account name is the reader's, so the tile queries are built from it. An
-// earlier version searched for a fixed demo account, which returns nothing on any
-// instance but the one it was written against.
+// Build every query from the account selected for this instance.
 function accountName(): string {
   return requireEnv('GLEAN_ACCOUNT_NAME');
 }
@@ -112,6 +110,15 @@ function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
   return value;
+}
+
+function validateEnvironment(names: string[]): void {
+  const missing = names.filter((name) => !process.env[name]?.trim());
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variable${missing.length === 1 ? '' : 's'}: ${missing.join(', ')}`,
+    );
+  }
 }
 
 function parseClientChatResponse(data: ClientChatResponse): {
@@ -235,9 +242,7 @@ async function loadAccount(): Promise<AccountPayload> {
 }
 
 function frameAccountPrompt(question: string): string {
-  // Name the account, and nothing else. An earlier version asserted a persona and a
-  // company, which invites the model to answer about them rather than about whatever
-  // the reader's own content says.
+  // Name the account without inventing a persona or company identity.
   return (
     `Answer about the ${accountName()} account using only this company's own ` +
     `indexed knowledge. Cite every claim. If the sources do not cover it, say so ` +
@@ -322,6 +327,11 @@ function readJsonBody(
 }
 
 const port = Number(process.env.PORT ?? 3000);
+validateEnvironment([
+  'GLEAN_API_TOKEN',
+  'GLEAN_SERVER_URL',
+  'GLEAN_ACCOUNT_NAME',
+]);
 server.listen(port, () => {
   console.log(
     `Customer 360 (Platform Search + Chat) running at http://localhost:${port}`,

@@ -9,6 +9,8 @@ Before you send the prompt, have these two values ready. When Replit Agent asks 
 
 **After Replit Agent finishes:**
 
+- [ ] Confirm the Repl is private. Do not share its URL: all requests use the same backend token and therefore the token owner's Glean access.
 - [ ] Open the app's file tree and confirm neither value appears in any `.js`/`.ts`/`.env` file that got committed — only `process.env.GLEAN_API_TOKEN` / `process.env.GLEAN_INSTANCE` references.
 - [ ] If you fork or share the Repl, re-check this — Replit Secrets are per-Repl and don't travel with a fork by default, but a careless Agent edit could have inlined a value during debugging.
 - [ ] Rotate the token from the Admin Console if you ever suspect it leaked (e.g. pasted into a screenshot, committed by accident).
+- [ ] Before any multi-user deployment, replace the shared token with authenticated per-user OAuth.

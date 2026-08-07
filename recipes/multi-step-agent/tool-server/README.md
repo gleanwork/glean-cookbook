@@ -16,7 +16,39 @@ so [uv](https://docs.astral.sh/uv/) installs them into an isolated environment o
 no `requirements.txt`, virtualenv, or activate step. Re-run `uv lock --script <script>` after
 editing the inline dependencies.
 
-Then, from the Glean admin console (**Admin console → Platform → Tools → Add**), create a custom tool from scratch, upload `openapi.yaml` as its API spec, and point it at wherever you've deployed `server.py`. **Tool registration is an admin-console step, not an API call** — there's no SDK method for it.
+## Give Glean a public HTTPS URL
+
+Glean cannot call `localhost`. For a short-lived demo, install
+[cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/),
+leave the server running, and start a tunnel in a second terminal:
+
+```bash
+cloudflared tunnel --url http://localhost:8080
+```
+
+Copy the printed `https://<random>.trycloudflare.com` origin. In `openapi.yaml`,
+replace `https://REPLACE-WITH-YOUR-TUNNEL-HOST` with that exact origin, with no
+extra path. The operation URL must resolve to:
+
+```text
+https://<random>.trycloudflare.com/file_incident_ticket
+```
+
+Confirm the public route before registering it by repeating the denied `curl`
+below against the HTTPS origin. Then, in **Admin console → Platform → Tools →
+Add**, create a custom tool and upload the edited `openapi.yaml`. Tool
+registration is a manual admin-console step.
+
+The quick tunnel URL changes whenever it restarts. Update and re-upload the
+specification after a restart. For a durable deployment, deploy `server.py`
+behind a stable HTTPS origin and use that origin in the same `servers[0].url`
+field.
+
+> **Demo security boundary:** this sample creates only in-memory fake tickets.
+> A public caller can forge `Glean-User-Email`; the allow-list alone does not
+> authenticate Glean. Before connecting a real ticket system, require a verified
+> Glean request credential at the server or place the route behind an
+> authenticated gateway that only Glean can call.
 
 ## Verify the governance rule directly
 
@@ -36,4 +68,8 @@ curl -X POST http://localhost:8080/file_incident_ticket \
 
 ## How the governance actually works
 
-Glean forwards the identity the agent run is executing as — normally just the caller — via the `Glean-User-Email` header (the same pattern this repo's [Jira issue-creation tool guide](https://developers.glean.com/guides/tools/examples/jira-issue-creation) uses). This server checks that email against the `AUTHORIZED_EMAILS` allow-list and returns `403` for anyone else — that's the enforcement point. Glean's admin UI doesn't have a built-in "restrict this custom tool to a group" toggle for scratch-built tools as of this writing, so the tool server itself is where you enforce it.
+Glean forwards the acting user's identity in `Glean-User-Email`. This server
+checks that value against `AUTHORIZED_EMAILS` and returns `403` for anyone else.
+That is authorization only after the request itself is authenticated as coming
+from Glean; the demo server intentionally does not implement that production
+authentication layer.

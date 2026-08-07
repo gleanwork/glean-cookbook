@@ -1,10 +1,12 @@
 # no-code-it-helpdesk-lovable
 
-Prompt [Lovable](https://lovable.dev/) into an IT helpdesk deflection page on the Glean Chat API — "Where do I reset my SSO password?" answered before a ticket gets filed, zero hand-written backend code.
+Prompt [Lovable](https://lovable.dev/) into a private IT helpdesk prototype on the Glean Chat API — "Where do I reset my SSO password?" answered before a ticket gets filed, zero hand-written backend code.
+
+The backend uses one Glean API token, so every request has that token owner's access. This is a single-user prototype: keep the project private and do not share or deploy it to other users. A multi-user app must authenticate each user and use a per-user OAuth token; a shared service token does not provide per-user permissions.
 
 This recipe's "code" is the prompt, not a project scaffold. There is nothing to `npm install` here.
 
-> **Not yet tested end-to-end on a live Lovable account.** The prompt is written to the same fidelity bar as every other recipe in this cookbook — it states the exact, corrected Chat API shape literally rather than describing it in prose, precisely so an agent can't guess wrong. What's unverified is the part that's out of this cookbook's control: whether Lovable actually produces a working app from it. If you run this, please open an issue with what happened (worked as-is / needed a nudge / didn't work) so this note can be replaced with a real result.
+> **Status:** Not yet tested end-to-end on a live Lovable account.
 
 ## Run it
 
@@ -18,9 +20,9 @@ This recipe's "code" is the prompt, not a project scaffold. There is nothing to 
 - "Where do I reset my SSO password?" — should answer from the SSO password reset guide with a citation.
 - "How do I request a new laptop?" — should answer from the IT helpdesk FAQ (loaner laptops, same-day) with a citation.
 
-## Same shape as `no-code-pto-lookup-replit`, different persona
+## Chat response shape
 
-This recipe mirrors [`no-code-pto-lookup-replit`](../no-code-pto-lookup-replit/) — same Chat API call, same "the browser must never hold the token" constraint, same citation-shape correction (filter to `messageType === 'CONTENT'`, read `fragments[].citation.sourceDocument`, dedupe by `url` — not the deprecated `message.citations[]` field, and not a top-level `citedDocuments` field). What's different is the tool (Lovable vs. Replit) and the persona (IT helpdesk vs. HR), so the two don't read as duplicates in the cookbook. Lovable's default stack leans on a connected backend/database integration for anything server-side (including secrets) rather than a plain Node server — the prompt asks the Agent to set that up rather than assuming a specific mechanism up front, since that surface changes over time.
+Filter to `messageType === 'CONTENT'`, read citations from `fragments[].citation.sourceDocument`, and dedupe them by `url`. Keep the token in Lovable's server-side secret store and make the Glean call from a backend function.
 
 ## Note on demo queries
 

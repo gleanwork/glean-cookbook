@@ -1,26 +1,28 @@
-# Onboarding Hub — spec lock
+# Onboarding Hub contract
 
-Build a first-week checklist from reader-supplied steps and answer questions from the reader's
-indexed onboarding content. Never invent a person, checklist item, link, or company process.
+Build a first-week checklist from user-supplied steps and answer questions from the user's indexed
+onboarding content. Never invent a person, company process, checklist item, or resource link.
 
-## Paths
+## Web SDK
 
-- **Web SDK:** use `renderChat` with the reader's SSO session and an explicit backend. Preserve
-  `chatId` when re-mounting with a step's `initialMessage`.
-- **Client Chat:** call `POST /rest/api/v1/chat` from the server and render the answer and citations
-  in the custom UI.
+- Read a required `VITE_GLEAN_BACKEND` HTTPS origin and pass it explicitly to `renderChat`.
+- Use the viewer's existing Glean SSO session. The user opens the printed local URL in their normal
+  signed-in browser; agents do not open or automate it.
+- Read checklist steps from `public/steps.json`. Missing and invalid configuration are distinct,
+  actionable states.
+- Preserve `chatId` when re-mounting with a step's `initialMessage`.
+- Keep completion state in localStorage.
 
-## Contracts
+## Client Chat
 
-- Checklist input comes from `GLEAN_ONBOARDING_STEPS_JSON` or `GLEAN_ONBOARDING_STEPS_FILE`.
-- Client Chat uses `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`, sets `saveChat: false` for verification,
-  reads `CONTENT` messages by `GLEAN_AI`, and reads citations from
-  `fragments[].citation.sourceDocument`.
-- Empty Chat output retries once and then surfaces a transport error.
-- Completed thin or uncited answers show the escalation affordance.
-- Completion state is local to the browser.
+- Read checklist steps from `GLEAN_ONBOARDING_STEPS_JSON` or `GLEAN_ONBOARDING_STEPS_FILE`.
+- Call `POST /rest/api/v1/chat` from the server with `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`.
+- Set `saveChat: false` for verification, read `CONTENT` messages by `GLEAN_AI`, and read citations
+  from `fragments[].citation.sourceDocument`.
+- Retry empty output once, then return a transport error.
+- Show an escalation affordance for completed thin, unsupported, or uncited answers.
 
 ## Verification
 
-Run every `demoQuery`. First-day, VPN, and PTO questions must produce cited answers when supported;
-an unsupported question must escalate without fabrication.
+Both paths verify cited answers for supported first-day, VPN, and PTO questions. The Client Chat path
+also verifies the application-owned escalation state for an unsupported question.

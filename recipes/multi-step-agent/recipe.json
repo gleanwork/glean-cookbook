@@ -21,12 +21,13 @@
     "Agent builder access in your Glean instance",
     "Permission to register a custom tool (or admin help)",
     "A Glean token with AGENTS scope for API invocation",
+    "uv and cloudflared installed locally",
     "Your own email, to put on (and take off) the tool server's allow-list between the two runs"
   ],
   "demoQueries": [
     {
       "query": "Summarize our open incidents and file a tracking ticket",
-      "expectedBehavior": "With your email on the tool server's allow-list: the agent summarizes and the governed tool call succeeds (200, a real ticket id). With it removed: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The governance check must actually fire, not be assumed."
+      "expectedBehavior": "With your email on the tool server's allow-list: the agent summarizes and the demo tool call succeeds (200, a fake in-memory ticket id). With it removed: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The allow-list demonstrates authorization logic; authenticate requests from Glean before connecting a real write action."
     }
   ],
   "codeAssets": [
@@ -44,21 +45,26 @@
   "steps": [
     {
       "title": "Scaffold the project",
-      "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/multi-step-agent multi-step-agent"
+      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/multi-step-agent multi-step-agent"
     },
     {
       "title": "Set the tool server's allow-list",
-      "command": "cd multi-step-agent/tool-server && cp .env.example .env",
+      "command": "(cd multi-step-agent/tool-server && cp .env.example .env)",
       "description": "Set AUTHORIZED_EMAILS to your own email for the first run. You'll remove it for the second run to see the denied branch — changing the allow-list is how both governance paths get demonstrated, since the agent always runs as you. The server refuses to start on an empty allow-list, since that denies everyone and makes the permitted branch unobservable."
     },
     {
       "title": "Run the tool server",
-      "command": "cd multi-step-agent/tool-server && uv run server.py",
+      "command": "(cd multi-step-agent/tool-server && uv run server.py)",
       "description": "Listens on port 8080. Keep this running in its own terminal — the agent calls it over HTTP once registered."
     },
     {
+      "title": "Expose the demo tool over HTTPS",
+      "command": "cloudflared tunnel --url http://localhost:8080",
+      "description": "Keep this running in a second terminal. Copy the printed https://<random>.trycloudflare.com origin into tool-server/openapi.yaml as servers[0].url, with no path. Confirm that <origin>/file_incident_ticket returns the expected 403 for a denied email. This public demo route accepts a spoofable identity header and only creates fake in-memory tickets; authenticate requests from Glean before connecting a real write action."
+    },
+    {
       "title": "Register the tool",
-      "description": "Manual, UI-only step — there is no API to create a tool. In Admin > Platform > Tools > Add, register the tool and upload multi-step-agent/tool-server/openapi.yaml as its API spec."
+      "description": "Manual, UI-only step. After replacing the OpenAPI placeholder with the tunnel origin, use Admin > Platform > Tools > Add and upload multi-step-agent/tool-server/openapi.yaml. The operation URL must be <origin>/file_incident_ticket."
     },
     {
       "title": "Create the agent",
@@ -66,12 +72,12 @@
     },
     {
       "title": "Set credentials",
-      "command": "cd multi-step-agent/invoke-agent && cp .env.example .env",
+      "command": "(cd multi-step-agent/invoke-agent && cp .env.example .env)",
       "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and GLEAN_AGENT_ID (the ID from the previous step)."
     },
     {
       "title": "Run it",
-      "command": "cd multi-step-agent/invoke-agent && uv run main.py",
+      "command": "(cd multi-step-agent/invoke-agent && uv run main.py)",
       "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step."
     },
     {
@@ -98,8 +104,8 @@
       "category": "workflow"
     }
   ],
-  "aiPrompt": "Build the governed multi-step agent from\nhttps://developers.glean.com/cookbook/multi-step-agent\n\n1. Register the recipe's custom tool (an incident-ticket-creation HTTP\n   tool) in the Glean admin console (Admin > Platform > Tools > Add) —\n   this is a manual/admin-console step, there is no API to create a\n   tool. Upload the recipe's openapi.yaml as the tool's API spec.\n2. Create an agent in the Agent Builder (also a UI step, not an API\n   call): instructions from the recipe, retrieval on, the tool\n   attached. Copy the agent's ID.\n3. Invoke via glean.client.agents.run(agent_id=..., messages=[...])\n   — the agent runs as whoever my credential belongs to, so send no\n   impersonation header and don't ask me for an admin token. NOT\n   chat.create's\n   ChatMessage/ChatMessageFragment shape; agents use Message/\n   MessageTextBlock instead. run_stream() returns raw SSE text (a\n   string), not a parsed event iterator — use run() unless you're\n   ready to parse SSE yourself.\n4. Demo both governance branches by changing the tool server's\n   AUTHORIZED_EMAILS allow-list between runs, not by impersonating\n   anyone: once with my email on it (the ticket is filed), once\n   without (the tool returns 403 and the agent's own instructions\n   produce a read-only summary rather than failing the run). Glean\n   forwards my identity to the tool as the Glean-User-Email header,\n   which is where that authorization is enforced.",
-  "llmContext": "Run agents with glean.client.agents.run(agent_id, messages) using Message and MessageTextBlock. run_stream() returns raw SSE text. Register custom tools in the admin console from an OpenAPI specification. Runs use the credential's identity; custom tool servers receive the acting user's email in Glean-User-Email and must enforce authorization there.",
+  "aiPrompt": "Build the multi-step-agent demo from https://developers.glean.com/cookbook/multi-step-agent. Start its inert tool server, expose port 8080 through a public HTTPS cloudflared tunnel, and replace the OpenAPI servers[0].url placeholder with the tunnel origin so the operation resolves to <origin>/file_incident_ticket. Have me upload that specification in Admin > Platform > Tools > Add, then create an Agent Builder agent with retrieval and the tool attached. Invoke it with glean.client.agents.run using Message and MessageTextBlock. Demonstrate allow and deny by changing AUTHORIZED_EMAILS. State clearly that Glean-User-Email is spoofable on the public demo endpoint: authenticate requests as coming from Glean before connecting a real write action.",
+  "llmContext": "Run agents with glean.client.agents.run(agent_id, messages) using Message and MessageTextBlock. Expose a local demo tool through public HTTPS and set the OpenAPI server URL to that origin with route paths aligned. Register tools manually in the admin console. Glean-User-Email supports an authorization allow-list only after the request is authenticated as coming from Glean; the sample server is demo-only and must not front a real write action.",
   "goDependency": false,
   "featured": true,
   "tags": ["agents", "governance"]

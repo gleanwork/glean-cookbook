@@ -4,6 +4,14 @@ description: 'Put permission-aware Glean search and chat directly inside an inte
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `SEARCH`, `CHAT`
+- A Glean instance with content indexed
+- Your Glean web app domain (typically app.glean.com — see admin/about-glean)
+- A frontend app or page where you can install an npm package (or add a script tag) and a container element
+- For token auth only: an admin API key from the Token Management page
+
 Embed Glean search and chat in my internal web app using the Glean Web
 SDK, following the recipe at
 https://developers.glean.com/cookbook/embed-search-chat
@@ -20,12 +28,9 @@ Steps:
    renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>
    renderSearchResults(resultsElement, { query }) });
 4. Add a chat container: position: relative, display: block, width: 100%,
-   height: 480px — any shorter and long answers scroll awkwardly, any
-   taller and you get dead space below Glean's own chat landing view. Then:
-   import { renderChat } from "@gleanwork/web-sdk";
-   renderChat(containerElement, { backend, initialMessage: "What's our PTO policy?" });
-   initialMessage opens straight into a real cited answer instead of an
-   empty landing screen, and doubles as your on-load verification.
+   height: 480px. Ask me for a topic I know exists in my Glean instance,
+   then pass that question as initialMessage so the user-mediated check is
+   relevant to my tenant.
 5. Default SSO auth needs no extra configuration. If I ask for
    server-to-server auth instead, follow
    https://developers.glean.com/libraries/web-sdk/authentication/server-to-server
@@ -66,6 +71,8 @@ Ask me which language to build in before starting: TypeScript, JavaScript.
 {{> web-sdk-sizing}}
 
 ## Verify
+
+{{> verify-gate-web-sdk}}
 
 {{> verify-gate}}
 

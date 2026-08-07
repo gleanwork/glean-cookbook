@@ -107,7 +107,10 @@ ready. Don't skip this by calling Glean directly from React.
    - Ask "How do I request a new laptop?" and confirm it cites the IT
      helpdesk FAQ (loaner laptops, same-day, from the IT desk).
 
-Do not add authentication, a ticketing integration, or user accounts —
-Glean already enforces per-user permissions on the backend token's
-behalf for this demo, and this is a single-tenant internal tool.
+This is a private, single-user prototype. The backend token is one service
+identity: every request has the token owner's Glean access, not the person
+opening the page. Keep the project private and do not deploy or share it. If
+I ask for a multi-user deployment, stop and require app authentication plus
+a per-user Glean OAuth token; never represent a shared token as per-user
+permission enforcement. Do not add a ticketing integration.
 ````

@@ -58,7 +58,7 @@ export default defineConfig({
   version,
   metadata: {
     description:
-      'Build Glean cookbook recipes hands-free from Claude Code, Cursor, or Codex.',
+      'Build Glean cookbook recipes with guided setup and verification in Claude Code, Cursor, or Codex.',
     author: { name: 'Glean' },
     homepage: 'https://developers.glean.com/cookbook',
     repository: 'https://github.com/gleanwork/glean-cookbook',

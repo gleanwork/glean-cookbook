@@ -1,10 +1,8 @@
 // Two orchestrators, one shell.
 //
-// The ticket asks for a dual implementation: "one that uses Agent API for
-// retrieving an agent built in Glean and another that does not." Steven's sheet
-// adds that both variants render into one shell, so this is a strategy switch
-// rather than two copies of the app. That keeps the interesting difference — who
-// owns planning — visible, instead of burying it in duplicated server plumbing.
+// Both variants render in one shell as a strategy switch. This keeps the
+// relevant difference — who owns planning — visible without duplicating the
+// server and governance plumbing.
 //
 // Both paths converge on the same evidence rules and the same approval gate. The
 // governance is not the planner's to negotiate.

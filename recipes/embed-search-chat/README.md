@@ -1,7 +1,7 @@
 # embed-search-chat
 
-No standalone runnable code — this recipe is a handful of Web SDK snippets
-(`renderSearchBox`, `renderSearchResults`, `renderChat`) embedded directly in
-the doc page rather than a project you'd check out. See the full walkthrough
-at
+This is an integration recipe for an existing frontend, not a standalone scaffold. It provides Web
+SDK snippets (`renderSearchBox`, `renderSearchResults`, `renderChat`) for the coding agent to add to
+the app you identify. When the app starts, open its URL yourself in your normal browser so the Web SDK
+can use your signed-in Glean SSO session. See the full walkthrough at
 [developers.glean.com/cookbook/embed-search-chat](https://developers.glean.com/cookbook/embed-search-chat).

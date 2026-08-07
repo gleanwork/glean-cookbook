@@ -4,6 +4,13 @@ description: 'The end-to-end showcase — index a developer catalog into Glean, 
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `SEARCH`, `CHAT`
+- A Glean instance where you can add a custom datasource
+- A Glean-issued Indexing API token
+- Node.js 18+ to run the portal app locally
+
 Build the "Engineering portal with Glean" flagship recipe from
 https://developers.glean.com/cookbook/build-engineering-portal
 
@@ -61,6 +68,8 @@ Ask me which language to build in before starting: Python, TypeScript.
 {{> web-sdk-sizing}}
 
 ## Verify
+
+{{> verify-gate-web-sdk}}
 
 {{> verify-gate}}
 

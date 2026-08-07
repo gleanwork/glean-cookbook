@@ -25,9 +25,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 
-# Every recipe README says to `cp .env.example .env`; uv run doesn't read that
-# file and neither did this script, so following the documented setup failed on
-# a missing credential. Loading it here makes the instructions true.
+# Load the local configuration created from .env.example.
 load_dotenv()
 
 app = Flask(__name__)

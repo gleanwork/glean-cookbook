@@ -75,13 +75,9 @@ what it says. Inferring a document's evidentiary standing from its prose is exac
 the inference this whole module exists to avoid. Map your own document types in
 `lib/evidence.ts`.
 
-### The same mistake, one layer down
+### Mutating actions require supported causes
 
-The rule above wasn't enough. `PAY-2232` still produced a "draft fix PR" card,
-because the action selector saw a runbook mentioning rollbacks and picked a mutating
-action. Relevance-is-not-evidence had reappeared in the _action choice_.
-
-So a **mutating action requires an evidence-supported cause.** You cannot draft a fix
+You cannot draft a fix
 for a cause nobody established. Without a supported cause the action is downgraded to
 filing a ticket, posted to the channel and audited as a refusal. This lives in
 `approval.ts` rather than in either orchestrator, so neither planner can negotiate it
@@ -103,8 +99,8 @@ Watch the interesting ones with `SIMULATE_ACTION_FAILURE=draft-fix-pr` and the
 
 ## Two orchestrators, one shell
 
-The ticket asks for a dual implementation. Both live in `lib/orchestrators/` and
-render into the same dashboard, so the only difference is _who owns planning_:
+Both orchestrators live in `lib/orchestrators/` and render into the same dashboard,
+so the only difference is _who owns planning_:
 
 - **app-orchestrated** (default) — this code runs a deterministic sequence and uses
   the model for one thing: turning selected evidence into a sentence. It never
@@ -125,20 +121,18 @@ its prompt says. Try the fixture alarm `PAY-2233`, where the agent proposes
 you without restarting anything.
 
 That header, and `simulateFailure`, are refused unless `INCIDENT_DEMO_MODE=true`.
-Both were documented as demo-only in comments, which is not a control: a reader who
-copies this and skims the comment ships a gate anyone can walk through by setting a
-header. One flag, checked in code, fails closed.
+The example configuration leaves this false. Enable it only while exercising the
+demo paths, then turn it off.
 
 Authorization (who may approve) and authentication (proving you are that person) are
 different problems. This solves the first. A deployment must solve the second before
 trusting the first — otherwise you have shipped an approval gate anyone can walk
 through by setting a header.
 
-Relatedly: actions do **not** execute as the approving user. PACT-452 specifies that,
-but impersonation was removed from these recipes, so the executor is the app's own
+Actions do **not** execute as the approving user. The executor is the app's own
 credential and the gate is an app-level policy check. `/api/config` reports
-`impersonation: false`. Claiming per-person permission enforcement here would be the
-one genuinely dangerous thing this recipe could teach.
+`impersonation: false`; this recipe does not claim per-person permission enforcement
+for action execution.
 
 ## Deliberately not solved
 

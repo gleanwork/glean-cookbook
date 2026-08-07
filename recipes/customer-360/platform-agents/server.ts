@@ -57,9 +57,7 @@ interface AgentWaitResponse {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
 
-// The account name is the reader's, so the tile queries are built from it. An
-// earlier version searched for a fixed demo account, which returns nothing on any
-// instance but the one it was written against.
+// Build every query from the account selected for this instance.
 function accountName(): string {
   return requireEnv('GLEAN_ACCOUNT_NAME');
 }
@@ -108,6 +106,15 @@ function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
   return value;
+}
+
+function validateEnvironment(names: string[]): void {
+  const missing = names.filter((name) => !process.env[name]?.trim());
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variable${missing.length === 1 ? '' : 's'}: ${missing.join(', ')}`,
+    );
+  }
 }
 
 function isHttpUrl(url: string): boolean {
@@ -335,6 +342,12 @@ function readJsonBody(
 }
 
 const port = Number(process.env.PORT ?? 3000);
+validateEnvironment([
+  'GLEAN_API_TOKEN',
+  'GLEAN_SERVER_URL',
+  'GLEAN_ACCOUNT_NAME',
+  'GLEAN_AGENT_ID',
+]);
 server.listen(port, () => {
   console.log(
     `Customer 360 (Platform Agents) running at http://localhost:${port}`,

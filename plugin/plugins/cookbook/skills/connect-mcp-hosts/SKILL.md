@@ -4,19 +4,29 @@ description: 'Point Claude Code, Cursor, and Claude Desktop at your Glean MCP en
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `MCP`
+- Glean MCP server enabled for your deployment (admin toggle)
+- At least one MCP host installed (Claude Code, Cursor, or Claude Desktop)
+
 Build "Connect Glean MCP to your AI tools" following https://developers.glean.com/cookbook/connect-mcp-hosts
 
 1. **Detect installed hosts**
    Check for Claude Code, Cursor, and Claude Desktop on this machine.
 
 2. **Resolve your Glean backend**
-   Resolve the backend from the user's work email — the Authentication section below has the exact command. The MCP server URL is {backend}/mcp/default.
+   Ask for the user's work email. Locate the installed cookbook plugin root from this skill, run its bundled resolver, and copy the returned backend value. The MCP server URL is <resolved-backend>/mcp/default.
+
+   ```bash
+   node <cookbook-plugin-root>/scripts/resolve-backend.mjs "<work-email>"
+   ```
 
 3. **Configure each detected host**
    --client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token.
 
    ```bash
-   npx -y @gleanwork/configure-mcp-server remote --url https://{instance}-be.glean.com/mcp/default --client <host>
+   npx -y @gleanwork/configure-mcp-server remote --url <resolved-backend>/mcp/default --client <host>
    ```
 
 4. **Restart the host app**

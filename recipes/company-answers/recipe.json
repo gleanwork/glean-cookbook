@@ -20,7 +20,8 @@
   "prerequisites": [
     "A Glean instance with content indexed",
     "An OAuth access token or Glean API token with the CHAT scope",
-    "Node 20+ (Chat API path) or any static page (Web SDK path)"
+    "For the Web SDK path: your tenant backend URL and an existing Glean session in your normal browser",
+    "Node 20.19+ or 22.12+"
   ],
   "demoQueries": [
     {
@@ -40,23 +41,25 @@
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers"
         },
         {
           "title": "Install dependencies",
           "command": "cd company-answers && npm install"
         },
         {
-          "title": "Credentials",
-          "description": "Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean."
+          "title": "Configure the tenant",
+          "command": "cd company-answers && cp .env.example .env.local",
+          "description": "Set VITE_GLEAN_BACKEND to the tenant's HTTPS backend origin. Optionally set VITE_GLEAN_INITIAL_MESSAGE to a question about content the user knows exists."
         },
         {
           "title": "Run it",
-          "command": "npm run dev"
+          "command": "cd company-answers && npm run dev",
+          "description": "Keep Vite running, report its exact Local URL, and wait for the user to open it in their normal signed-in browser. Never open or automate the URL yourself."
         },
         {
           "title": "Verify",
-          "description": "Open the printed local URL and ask \"What's our PTO policy?\" — confirm a real, cited answer renders inside Glean's chat UI."
+          "description": "Give the user the exact printed local URL to open in their normal signed-in browser. Ask them to try a topic they know exists in their Glean instance and confirm a real, cited answer renders inside Glean's chat UI."
         }
       ]
     },
@@ -67,7 +70,7 @@
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers"
         },
         {
           "title": "Install dependencies",
@@ -75,18 +78,18 @@
         },
         {
           "title": "Set credentials",
-          "command": "cp .env.example .env",
+          "command": "cd company-answers && cp .env.example .env",
           "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — the Authentication section below covers how to get a token."
         },
         {
           "title": "Run it",
-          "command": "npm start",
+          "command": "cd company-answers && npm start",
           "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the deterministic verify step below, which starts its own instance."
         },
         {
           "title": "Verify",
-          "command": "npm run verify",
-          "description": "Starts the server itself, runs both demo queries for real, and asserts the response shape (non-empty answer, non-empty deduped citations with title+url) — exits non-zero on any failure. Do not report this recipe as done until this passes."
+          "command": "cd company-answers && npm run verify",
+          "description": "Starts the server and checks the example PTO queries for a non-empty answer with deduplicated citations. Run this when the instance contains PTO content; otherwise use the running app with a topic the user knows exists and check the same response shape."
         }
       ]
     }
@@ -120,8 +123,8 @@
       "emphasized": true
     }
   ],
-  "aiPrompt": "Build \"Company Answers\", a one-page company Q&A app on Glean, following\nhttps://developers.glean.com/cookbook/company-answers\n\n1. Ask me which path: (A) Web SDK or (B) Chat API. Build the one I pick.\n2. Path A: npm install @gleanwork/web-sdk; create a container with\n   position: relative, display: block, width: 100%, height: 480px, then\n   renderChat(el, { initialMessage: \"What's our PTO policy?\" }) — SSO\n   auth needs no configuration. Passing initialMessage opens straight\n   into a real cited answer instead of an empty landing screen, and\n   doubles as your on-load verification.\n3. Path B: npm install @gleanwork/api-client; construct the client with\n   new Glean({ apiToken, instance }). POST chat.create with my question\n   as a single USER message. Filter the response to CONTENT messages,\n   then join fragments[].text for the answer. Read citations from each\n   fragment's citation.sourceDocument (title + url) and dedupe them by\n   URL. Keep the API token server-side.\n4. Style it per the house style below: the real Glean logomark in the\n   header (not a plain colored square), Glean Blue (#343ced) as the\n   primary accent, \"Company Answers\" title.\n5. Verify with \"What's our PTO policy?\" — the answer must carry\n   citations and respect my permissions. Contrast note for the\n   README: the SDK path ships Glean's full UI free; the API path\n   gives total UI control.",
-  "llmContext": "Client Chat uses POST /rest/api/v1/chat through glean.client.chat.create. Construct Glean with apiToken plus instance or serverURL. Read answer text only from CONTENT messages, collect citations from fragment.citation.sourceDocument, and deduplicate by URL. Keep the token server-side, set saveChat:false for verification, and treat an empty joined answer as a retryable failure.",
+  "aiPrompt": "Build Company Answers following https://developers.glean.com/cookbook/company-answers. Ask whether to use (A) Web SDK or (B) Chat API. Path A requires the tenant's HTTPS backend origin and a topic the user knows exists; pass the backend explicitly to renderChat, start Vite, report its exact URL, and wait for the user to verify it in their normal signed-in browser without browser automation. Path B keeps the CHAT-scoped token server-side, calls glean.client.chat.create, joins CONTENT fragments, and renders deduplicated fragment citations. Verify a tenant-relevant cited answer and do not claim a live check without the user's result.",
+  "llmContext": "Path A uses renderChat with an explicit backend and the user's existing Glean browser session; live verification is user-mediated in their normal signed-in browser. Path B constructs Glean with apiToken plus instance or serverURL, reads answer text only from CONTENT messages, collects citations from fragment.citation.sourceDocument, deduplicates by URL, keeps the token server-side, sets saveChat:false for verification, and treats an empty joined answer as retryable.",
   "goDependency": false,
   "featured": true,
   "tags": ["starter", "dual-implementation"],

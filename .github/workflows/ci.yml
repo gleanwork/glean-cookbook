@@ -75,6 +75,7 @@ jobs:
       - run: npm ci
       - run: npm run snippets:check
       - run: npm run skill-context:check
+      - run: npm run recipe-commands:check
 
   pinned-deps:
     name: Pinned SDK versions

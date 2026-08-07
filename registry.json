@@ -37,12 +37,12 @@
     "steps": [
       {
         "title": "Scaffold the project",
-        "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client"
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client"
       },
       {
         "title": "Set credentials",
-        "command": "cp .env.example .env",
-        "description": "Fill in GLEAN_A2A_CARD_URL and GLEAN_A2A_TOKEN from the agent's Share → A2A dialog — this is a per-agent bearer token, not the general Glean OAuth/token chain."
+        "command": "cd a2a-client && cp .env.example .env",
+        "description": "Fill in GLEAN_INSTANCE, GLEAN_API_TOKEN, and GLEAN_AGENT_ID. Use an OAuth access token or Glean API token with the AGENTS scope."
       },
       {
         "title": "Run it",
@@ -56,8 +56,8 @@
     ],
     "scaffoldActions": [],
     "architecture": [],
-    "aiPrompt": "Build an A2A client for a Glean agent following\nhttps://developers.glean.com/cookbook/a2a-client\n\n1. Ask me for the agent card URL and bearer token (from the agent's\n   Share → A2A dialog).\n2. Pin a2a-sdk BELOW 1.0 (e.g. a2a-sdk==0.3.26) — Glean serves A2A\n   spec 0.3 (message/send, message/stream, tasks/get); 1.x clients\n   will not interop until the server upgrades. Note this in the\n   README.\n3. IMPORTANT: a2a-sdk's own A2AClient class (the one matching\n   message/send naming) is marked [DEPRECATED] even in the pinned\n   0.3.x release, with a runtime warning to use ClientFactory\n   instead. Use ClientFactory + Client.send_message() — do not use\n   A2AClient.\n4. Resolve the card (A2ACardResolver, bearer token via the httpx\n   client's headers), verify card.url contains /a2a/agents/.\n5. Client.send_message() is always an async iterator that yields\n   either a Message directly, or (Task, UpdateEvent) tuples for\n   task-based agents — handle both. Send a question (message/send\n   via a streaming=False client), then a follow-up reusing the\n   response's context_id to prove multi-turn, then a long question\n   via a streaming=True client. Errors: 404 = flag off or agent not\n   eligible; 403 = token scopes.",
-    "llmContext": "Use /rest/api/v1/a2a/agents/{agentId}/agent-card.json for discovery and the sibling JSON-RPC endpoint for message/send, message/stream, and tasks/get. The agent must be published, use a chat-message trigger, and be text-only. An AGENTS-scoped credential or per-agent share token works. Pin a2a-sdk to 0.3.26 and use ClientFactory with Client.send_message(); the server implements the 0.3 method names. Read task answers from task.artifacts[].parts[].root.text. Streaming events contain the accumulated answer, not deltas. Set an httpx timeout of at least 60 seconds.",
+    "aiPrompt": "Build the A2A client from the scaffold. Ask for GLEAN_INSTANCE, GLEAN_AGENT_ID, and an OAuth access token or Glean API token with the AGENTS scope. Use the published agent card at /rest/api/v1/a2a/agents/{agentId}/agent-card.json. Run the initial message, the same-context follow-up, and the streaming example, then report their actual results.",
+    "llmContext": "Use /rest/api/v1/a2a/agents/{agentId}/agent-card.json for discovery and the sibling JSON-RPC endpoint for message/send, message/stream, and tasks/get. The agent must be published, use a chat-message trigger, and be text-only. Use an AGENTS-scoped credential. Pin a2a-sdk to 0.3.26 and use ClientFactory with Client.send_message(); the server implements the 0.3 method names. Read task answers from task.artifacts[].parts[].root.text. Streaming events contain the accumulated answer, not deltas. Set an httpx timeout of at least 60 seconds.",
     "goDependency": false,
     "featured": false,
     "tags": ["a2a", "interop"],
@@ -172,7 +172,8 @@
     "prerequisites": [
       "A Glean instance with content indexed",
       "An OAuth access token or Glean API token with the CHAT scope",
-      "Node 20+ (Chat API path) or any static page (Web SDK path)"
+      "For the Web SDK path: your tenant backend URL and an existing Glean session in your normal browser",
+      "Node 20.19+ or 22.12+"
     ],
     "demoQueries": [
       {
@@ -192,20 +193,25 @@
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers"
           },
           {
             "title": "Install dependencies",
             "command": "cd company-answers && npm install"
           },
           {
-            "title": "Credentials",
-            "description": "Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean."
+            "title": "Configure the tenant",
+            "command": "cd company-answers && cp .env.example .env.local",
+            "description": "Set VITE_GLEAN_BACKEND to the tenant's HTTPS backend origin. Optionally set VITE_GLEAN_INITIAL_MESSAGE to a question about content the user knows exists."
           },
-          { "title": "Run it", "command": "npm run dev" },
+          {
+            "title": "Run it",
+            "command": "cd company-answers && npm run dev",
+            "description": "Keep Vite running, report its exact Local URL, and wait for the user to open it in their normal signed-in browser. Never open or automate the URL yourself."
+          },
           {
             "title": "Verify",
-            "description": "Open the printed local URL and ask \"What's our PTO policy?\" — confirm a real, cited answer renders inside Glean's chat UI."
+            "description": "Give the user the exact printed local URL to open in their normal signed-in browser. Ask them to try a topic they know exists in their Glean instance and confirm a real, cited answer renders inside Glean's chat UI."
           }
         ]
       },
@@ -216,7 +222,7 @@
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers"
           },
           {
             "title": "Install dependencies",
@@ -224,18 +230,18 @@
           },
           {
             "title": "Set credentials",
-            "command": "cp .env.example .env",
+            "command": "cd company-answers && cp .env.example .env",
             "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — the Authentication section below covers how to get a token."
           },
           {
             "title": "Run it",
-            "command": "npm start",
+            "command": "cd company-answers && npm start",
             "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the deterministic verify step below, which starts its own instance."
           },
           {
             "title": "Verify",
-            "command": "npm run verify",
-            "description": "Starts the server itself, runs both demo queries for real, and asserts the response shape (non-empty answer, non-empty deduped citations with title+url) — exits non-zero on any failure. Do not report this recipe as done until this passes."
+            "command": "cd company-answers && npm run verify",
+            "description": "Starts the server and checks the example PTO queries for a non-empty answer with deduplicated citations. Run this when the instance contains PTO content; otherwise use the running app with a topic the user knows exists and check the same response shape."
           }
         ]
       }
@@ -269,8 +275,8 @@
         "emphasized": true
       }
     ],
-    "aiPrompt": "Build \"Company Answers\", a one-page company Q&A app on Glean, following\nhttps://developers.glean.com/cookbook/company-answers\n\n1. Ask me which path: (A) Web SDK or (B) Chat API. Build the one I pick.\n2. Path A: npm install @gleanwork/web-sdk; create a container with\n   position: relative, display: block, width: 100%, height: 480px, then\n   renderChat(el, { initialMessage: \"What's our PTO policy?\" }) — SSO\n   auth needs no configuration. Passing initialMessage opens straight\n   into a real cited answer instead of an empty landing screen, and\n   doubles as your on-load verification.\n3. Path B: npm install @gleanwork/api-client; construct the client with\n   new Glean({ apiToken, instance }). POST chat.create with my question\n   as a single USER message. Filter the response to CONTENT messages,\n   then join fragments[].text for the answer. Read citations from each\n   fragment's citation.sourceDocument (title + url) and dedupe them by\n   URL. Keep the API token server-side.\n4. Style it per the house style below: the real Glean logomark in the\n   header (not a plain colored square), Glean Blue (#343ced) as the\n   primary accent, \"Company Answers\" title.\n5. Verify with \"What's our PTO policy?\" — the answer must carry\n   citations and respect my permissions. Contrast note for the\n   README: the SDK path ships Glean's full UI free; the API path\n   gives total UI control.",
-    "llmContext": "Client Chat uses POST /rest/api/v1/chat through glean.client.chat.create. Construct Glean with apiToken plus instance or serverURL. Read answer text only from CONTENT messages, collect citations from fragment.citation.sourceDocument, and deduplicate by URL. Keep the token server-side, set saveChat:false for verification, and treat an empty joined answer as a retryable failure.",
+    "aiPrompt": "Build Company Answers following https://developers.glean.com/cookbook/company-answers. Ask whether to use (A) Web SDK or (B) Chat API. Path A requires the tenant's HTTPS backend origin and a topic the user knows exists; pass the backend explicitly to renderChat, start Vite, report its exact URL, and wait for the user to verify it in their normal signed-in browser without browser automation. Path B keeps the CHAT-scoped token server-side, calls glean.client.chat.create, joins CONTENT fragments, and renders deduplicated fragment citations. Verify a tenant-relevant cited answer and do not claim a live check without the user's result.",
+    "llmContext": "Path A uses renderChat with an explicit backend and the user's existing Glean browser session; live verification is user-mediated in their normal signed-in browser. Path B constructs Glean with apiToken plus instance or serverURL, reads answer text only from CONTENT messages, collects citations from fragment.citation.sourceDocument, deduplicates by URL, keeps the token server-side, sets saveChat:false for verification, and treats an empty joined answer as retryable.",
     "goDependency": false,
     "featured": true,
     "tags": ["starter", "dual-implementation"],
@@ -312,11 +318,12 @@
       },
       {
         "title": "Resolve your Glean backend",
-        "description": "Resolve the backend from the user's work email — the Authentication section below has the exact command. The MCP server URL is {backend}/mcp/default."
+        "command": "node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"",
+        "description": "Ask for the user's work email. Locate the installed cookbook plugin root from this skill, run its bundled resolver, and copy the returned backend value. The MCP server URL is <resolved-backend>/mcp/default."
       },
       {
         "title": "Configure each detected host",
-        "command": "npx -y @gleanwork/configure-mcp-server remote --url https://{instance}-be.glean.com/mcp/default --client <host>",
+        "command": "npx -y @gleanwork/configure-mcp-server remote --url <resolved-backend>/mcp/default --client <host>",
         "description": "--client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token."
       },
       {
@@ -329,7 +336,7 @@
       }
     ],
     "scaffoldActions": [],
-    "aiPrompt": "Connect me to the Glean remote MCP server following\nhttps://developers.glean.com/cookbook/connect-mcp-hosts\n\n1. Detect which MCP hosts I have installed (Claude Code, Cursor, Claude\n   Desktop).\n2. Resolve my Glean backend from my work email using the command in\n   this skill's Authentication section. The MCP server URL is\n   {backend}/mcp/default.\n3. For each detected host, run the real, first-party configurator —\n   don't hand-walk a Configurator URL or ask me for an API token, this\n   CLI does the whole job including OAuth with Dynamic Client\n   Registration by default:\n   npx -y @gleanwork/configure-mcp-server remote --url <mcp-server-url> --client <host>\n   (--client values: claude-code, cursor, claude-desktop)\n4. Tell me to restart the host app afterward — Cursor and Claude Code\n   pick up the new server on restart; Claude Desktop needs the hammer\n   icon to confirm Glean tools are available.\n5. Verify per host by asking \"Who's on call for payments-service?\" and\n   confirming a Glean-cited answer.",
+    "aiPrompt": "Detect the installed supported MCP hosts. Ask for the user's work email, run the cookbook plugin's bundled resolve-backend.mjs script, and configure each host with @gleanwork/configure-mcp-server using the returned backend plus /mcp/default. Do not ask for an API token when the default OAuth flow is available. Tell the user which apps to restart, then have them verify with a topic they know exists in their Glean instance.",
     "llmContext": "Use https://{instance}-be.glean.com/mcp/{server-name}; the default server name is default. Configure hosts with npx -y @gleanwork/configure-mcp-server remote --url <url> --client <host>. OAuth with Dynamic Client Registration is the default. Claude Code and Cursor connect over HTTP; Claude Desktop uses the CLI-managed mcp-remote bridge. Supply --token only when the host cannot use OAuth.",
     "goDependency": false,
     "featured": false,
@@ -382,7 +389,7 @@
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-search-chat customer-360"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-search-chat customer-360"
           },
           {
             "title": "Install dependencies",
@@ -390,17 +397,17 @@
           },
           {
             "title": "Set credentials",
-            "command": "cp .env.example .env",
+            "command": "cd customer-360 && cp .env.example .env",
             "description": "Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, and GLEAN_ACCOUNT_NAME. The app runs as you; there is no act-as."
           },
           {
             "title": "Run it",
-            "command": "npm start",
+            "command": "cd customer-360 && npm start",
             "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
           },
           {
             "title": "Verify",
-            "command": "npm run verify",
+            "command": "cd customer-360 && npm run verify",
             "description": "Loads credentials from .env (same as npm start), runs the demo queries against the account you picked, and asserts cited answers with blank unsupported KPI fields. Do not report this recipe as done until this passes."
           }
         ]
@@ -412,7 +419,7 @@
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-agents customer-360"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-agents customer-360"
           },
           {
             "title": "Install dependencies",
@@ -420,17 +427,17 @@
           },
           {
             "title": "Set credentials",
-            "command": "cp .env.example .env",
+            "command": "cd customer-360 && cp .env.example .env",
             "description": "Fill in GLEAN_API_TOKEN, GLEAN_SERVER_URL, GLEAN_ACCOUNT_NAME, and GLEAN_AGENT_ID (Account Brief agent). The app runs as you; there is no act-as."
           },
           {
             "title": "Run it",
-            "command": "npm start",
+            "command": "cd customer-360 && npm start",
             "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
           },
           {
             "title": "Verify",
-            "command": "npm run verify",
+            "command": "cd customer-360 && npm run verify",
             "description": "Loads credentials from .env (same as npm start), runs the demo queries against your Account Brief agent, and asserts cited answers (or an explicit failure if the agent is missing or unauthorized). Do not report this recipe as done until this passes."
           }
         ]
@@ -552,7 +559,7 @@
         "emphasized": true
       }
     ],
-    "aiPrompt": "Embed Glean search and chat in my internal web app using the Glean Web\nSDK, following the recipe at\nhttps://developers.glean.com/cookbook/embed-search-chat\n\nSteps:\n1. Ask me for my Glean backend URL (https://{instance}-be.glean.com).\n2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no\n   build toolchain, fall back to the script tag from my Glean app domain:\n   <script defer src=\"https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js\"></script>\n   — the same methods appear on window.GleanWebSDK.)\n3. Add a search box and results container, then:\n   import { renderSearchBox, renderSearchResults } from \"@gleanwork/web-sdk\";\n   renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>\n     renderSearchResults(resultsElement, { query }) });\n4. Add a chat container: position: relative, display: block, width: 100%,\n   height: 480px — any shorter and long answers scroll awkwardly, any\n   taller and you get dead space below Glean's own chat landing view. Then:\n   import { renderChat } from \"@gleanwork/web-sdk\";\n   renderChat(containerElement, { backend, initialMessage: \"What's our PTO policy?\" });\n   initialMessage opens straight into a real cited answer instead of an\n   empty landing screen, and doubles as your on-load verification.\n5. Default SSO auth needs no extra configuration. If I ask for\n   server-to-server auth instead, follow\n   https://developers.glean.com/libraries/web-sdk/authentication/server-to-server\n   and keep the API key strictly server-side.\n\nSee Verify below for what a correct build must do.",
+    "aiPrompt": "Embed Glean search and chat in my internal web app using the Glean Web\nSDK, following the recipe at\nhttps://developers.glean.com/cookbook/embed-search-chat\n\nSteps:\n1. Ask me for my Glean backend URL (https://{instance}-be.glean.com).\n2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no\n   build toolchain, fall back to the script tag from my Glean app domain:\n   <script defer src=\"https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js\"></script>\n   — the same methods appear on window.GleanWebSDK.)\n3. Add a search box and results container, then:\n   import { renderSearchBox, renderSearchResults } from \"@gleanwork/web-sdk\";\n   renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>\n     renderSearchResults(resultsElement, { query }) });\n4. Add a chat container: position: relative, display: block, width: 100%,\n   height: 480px. Ask me for a topic I know exists in my Glean instance,\n   then pass that question as initialMessage so the user-mediated check is\n   relevant to my tenant.\n5. Default SSO auth needs no extra configuration. If I ask for\n   server-to-server auth instead, follow\n   https://developers.glean.com/libraries/web-sdk/authentication/server-to-server\n   and keep the API key strictly server-side.\n\nSee Verify below for what a correct build must do.",
     "llmContext": "Use @gleanwork/web-sdk named exports renderSearchBox, renderSearchResults, and renderChat; the script-tag build exposes the same methods on window.GleanWebSDK. Set backend explicitly. Prefer the user's Glean SSO session; token auth must be minted by a backend and never exposed in browser code. Results remain permission-filtered for the signed-in user. Give every embedded widget an explicitly sized container.",
     "goDependency": false,
     "featured": true,
@@ -607,7 +614,7 @@
     "steps": [
       {
         "title": "Scaffold the project",
-        "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot"
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot"
       },
       {
         "title": "Install dependencies",
@@ -615,15 +622,15 @@
       },
       {
         "title": "Watch the governance hold, with no credentials",
-        "command": "npm run verify:fixture",
+        "command": "cd incident-copilot && npm run verify:fixture",
         "description": "Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited."
       },
       {
         "title": "Set credentials",
-        "command": "cp .env.example .env",
+        "command": "cd incident-copilot && cp .env.example .env",
         "description": "Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. Optionally set GLEAN_AGENT_ID for the agent-orchestrated path, and INCIDENT_ACTOR to change who the dashboard acts as."
       },
-      { "title": "Run it", "command": "npm start" },
+      { "title": "Run it", "command": "cd incident-copilot && npm start" },
       {
         "title": "Verify",
         "description": "Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything."
@@ -717,12 +724,13 @@
       "Agent builder access in your Glean instance",
       "Permission to register a custom tool (or admin help)",
       "A Glean token with AGENTS scope for API invocation",
+      "uv and cloudflared installed locally",
       "Your own email, to put on (and take off) the tool server's allow-list between the two runs"
     ],
     "demoQueries": [
       {
         "query": "Summarize our open incidents and file a tracking ticket",
-        "expectedBehavior": "With your email on the tool server's allow-list: the agent summarizes and the governed tool call succeeds (200, a real ticket id). With it removed: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The governance check must actually fire, not be assumed."
+        "expectedBehavior": "With your email on the tool server's allow-list: the agent summarizes and the demo tool call succeeds (200, a fake in-memory ticket id). With it removed: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The allow-list demonstrates authorization logic; authenticate requests from Glean before connecting a real write action."
       }
     ],
     "codeAssets": [
@@ -740,21 +748,26 @@
     "steps": [
       {
         "title": "Scaffold the project",
-        "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/multi-step-agent multi-step-agent"
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/multi-step-agent multi-step-agent"
       },
       {
         "title": "Set the tool server's allow-list",
-        "command": "cd multi-step-agent/tool-server && cp .env.example .env",
+        "command": "(cd multi-step-agent/tool-server && cp .env.example .env)",
         "description": "Set AUTHORIZED_EMAILS to your own email for the first run. You'll remove it for the second run to see the denied branch — changing the allow-list is how both governance paths get demonstrated, since the agent always runs as you. The server refuses to start on an empty allow-list, since that denies everyone and makes the permitted branch unobservable."
       },
       {
         "title": "Run the tool server",
-        "command": "cd multi-step-agent/tool-server && uv run server.py",
+        "command": "(cd multi-step-agent/tool-server && uv run server.py)",
         "description": "Listens on port 8080. Keep this running in its own terminal — the agent calls it over HTTP once registered."
       },
       {
+        "title": "Expose the demo tool over HTTPS",
+        "command": "cloudflared tunnel --url http://localhost:8080",
+        "description": "Keep this running in a second terminal. Copy the printed https://<random>.trycloudflare.com origin into tool-server/openapi.yaml as servers[0].url, with no path. Confirm that <origin>/file_incident_ticket returns the expected 403 for a denied email. This public demo route accepts a spoofable identity header and only creates fake in-memory tickets; authenticate requests from Glean before connecting a real write action."
+      },
+      {
         "title": "Register the tool",
-        "description": "Manual, UI-only step — there is no API to create a tool. In Admin > Platform > Tools > Add, register the tool and upload multi-step-agent/tool-server/openapi.yaml as its API spec."
+        "description": "Manual, UI-only step. After replacing the OpenAPI placeholder with the tunnel origin, use Admin > Platform > Tools > Add and upload multi-step-agent/tool-server/openapi.yaml. The operation URL must be <origin>/file_incident_ticket."
       },
       {
         "title": "Create the agent",
@@ -762,12 +775,12 @@
       },
       {
         "title": "Set credentials",
-        "command": "cd multi-step-agent/invoke-agent && cp .env.example .env",
+        "command": "(cd multi-step-agent/invoke-agent && cp .env.example .env)",
         "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and GLEAN_AGENT_ID (the ID from the previous step)."
       },
       {
         "title": "Run it",
-        "command": "cd multi-step-agent/invoke-agent && uv run main.py",
+        "command": "(cd multi-step-agent/invoke-agent && uv run main.py)",
         "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step."
       },
       {
@@ -794,8 +807,8 @@
         "category": "workflow"
       }
     ],
-    "aiPrompt": "Build the governed multi-step agent from\nhttps://developers.glean.com/cookbook/multi-step-agent\n\n1. Register the recipe's custom tool (an incident-ticket-creation HTTP\n   tool) in the Glean admin console (Admin > Platform > Tools > Add) —\n   this is a manual/admin-console step, there is no API to create a\n   tool. Upload the recipe's openapi.yaml as the tool's API spec.\n2. Create an agent in the Agent Builder (also a UI step, not an API\n   call): instructions from the recipe, retrieval on, the tool\n   attached. Copy the agent's ID.\n3. Invoke via glean.client.agents.run(agent_id=..., messages=[...])\n   — the agent runs as whoever my credential belongs to, so send no\n   impersonation header and don't ask me for an admin token. NOT\n   chat.create's\n   ChatMessage/ChatMessageFragment shape; agents use Message/\n   MessageTextBlock instead. run_stream() returns raw SSE text (a\n   string), not a parsed event iterator — use run() unless you're\n   ready to parse SSE yourself.\n4. Demo both governance branches by changing the tool server's\n   AUTHORIZED_EMAILS allow-list between runs, not by impersonating\n   anyone: once with my email on it (the ticket is filed), once\n   without (the tool returns 403 and the agent's own instructions\n   produce a read-only summary rather than failing the run). Glean\n   forwards my identity to the tool as the Glean-User-Email header,\n   which is where that authorization is enforced.",
-    "llmContext": "Run agents with glean.client.agents.run(agent_id, messages) using Message and MessageTextBlock. run_stream() returns raw SSE text. Register custom tools in the admin console from an OpenAPI specification. Runs use the credential's identity; custom tool servers receive the acting user's email in Glean-User-Email and must enforce authorization there.",
+    "aiPrompt": "Build the multi-step-agent demo from https://developers.glean.com/cookbook/multi-step-agent. Start its inert tool server, expose port 8080 through a public HTTPS cloudflared tunnel, and replace the OpenAPI servers[0].url placeholder with the tunnel origin so the operation resolves to <origin>/file_incident_ticket. Have me upload that specification in Admin > Platform > Tools > Add, then create an Agent Builder agent with retrieval and the tool attached. Invoke it with glean.client.agents.run using Message and MessageTextBlock. Demonstrate allow and deny by changing AUTHORIZED_EMAILS. State clearly that Glean-User-Email is spoofable on the public demo endpoint: authenticate requests as coming from Glean before connecting a real write action.",
+    "llmContext": "Run agents with glean.client.agents.run(agent_id, messages) using Message and MessageTextBlock. Expose a local demo tool through public HTTPS and set the OpenAPI server URL to that origin with route paths aligned. Register tools manually in the admin console. Glean-User-Email supports an authorization allow-list only after the request is authenticated as coming from Glean; the sample server is demo-only and must not front a real write action.",
     "goDependency": false,
     "featured": true,
     "tags": ["agents", "governance"]
@@ -803,7 +816,7 @@
   {
     "id": "no-code-it-helpdesk-lovable",
     "title": "IT helpdesk deflection page — no code, on Lovable",
-    "description": "Prompt Lovable into an IT helpdesk deflection page on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.",
+    "description": "Prompt Lovable into a private, single-user IT helpdesk prototype on the Glean Chat API — zero hand-written backend.",
     "sidebarLabel": "IT Helpdesk (Lovable)",
     "surfaces": ["client-api"],
     "status": "showcase",
@@ -817,7 +830,8 @@
     "buildMethod": "third-party-build",
     "prerequisites": [
       "A Lovable account",
-      "A Glean API token with the CHAT scope (kept as a Lovable backend secret)"
+      "A Glean API token with the CHAT scope (kept as a Lovable backend secret; every request uses this one token owner's access)",
+      "A private Lovable project — multi-user deployments require authenticated per-user Glean OAuth"
     ],
     "demoQueries": [
       {
@@ -837,8 +851,8 @@
       }
     ],
     "scaffoldActions": [],
-    "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
-    "llmContext": "Have Lovable keep the Glean token in its server-side secret store and call Client Chat from a backend function. Read answer text from CONTENT messages and citations from fragment.citation.sourceDocument. Never expose the token in browser code. Treat empty answer text as a retryable failure and show cited answers or an explicit no-answer state.",
+    "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt. It is one service identity, so keep this prototype private;\n   multi-user deployment requires per-user Glean OAuth.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
+    "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations.",
     "goDependency": false,
     "featured": false,
     "tags": ["no-code", "it"]
@@ -846,7 +860,7 @@
   {
     "id": "no-code-pto-lookup-replit",
     "title": "PTO & benefits lookup — no code, on Replit",
-    "description": "Prompt Replit Agent into a working HR lookup tool on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.",
+    "description": "Prompt Replit Agent into a private, single-user HR lookup prototype on the Glean Chat API — zero hand-written backend.",
     "sidebarLabel": "PTO Lookup (Replit)",
     "surfaces": ["client-api"],
     "status": "showcase",
@@ -860,7 +874,8 @@
     "buildMethod": "third-party-build",
     "prerequisites": [
       "A Replit account with Agent access",
-      "A Glean API token with the CHAT scope (kept in Replit Secrets)"
+      "A Glean API token with the CHAT scope (kept in Replit Secrets; every request uses this one token owner's access)",
+      "A private Repl — multi-user deployments require authenticated per-user Glean OAuth"
     ],
     "demoQueries": [
       {
@@ -880,8 +895,8 @@
       }
     ],
     "scaffoldActions": [],
-    "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Generate the Replit prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt.\n3. After Replit builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
-    "llmContext": "Have Replit keep the Glean token server-side and call glean.client.chat.create with USER message fragments. Construct Glean with apiToken plus instance or serverURL. Read answer text from CONTENT messages and citations from fragment.citation.sourceDocument. Never expose the token in browser code. Treat empty answer text as a retryable failure and show cited answers or an explicit no-answer state.",
+    "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Generate the Replit prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt. It is one service identity, so keep this prototype\n   private; multi-user deployment requires per-user Glean OAuth.\n3. After Replit builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
+    "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token server-side, call glean.client.chat.create with USER message fragments, read CONTENT text and fragment.citation.sourceDocument citations, and show cited answers or an explicit no-answer state.",
     "goDependency": false,
     "featured": false,
     "tags": ["no-code", "hr"]
@@ -905,8 +920,8 @@
     "prerequisites": [
       "A Glean instance with your onboarding content indexed",
       "For the Client Chat path: a token with the CHAT scope",
-      "For the Web SDK path: nothing beyond SSO — the browser session carries the identity",
-      "Node 20+ for the Platform path, or any static page for the Web SDK path"
+      "For the Web SDK path: your tenant backend URL and an existing Glean session in your normal browser",
+      "Node 20.19+ or 22.12+"
     ],
     "demoQueries": [
       {
@@ -923,7 +938,7 @@
       },
       {
         "query": "Ask about a step your docs don't cover",
-        "expectedBehavior": "The hub says it has nothing on that and offers the escalation affordance, rather than inventing a plausible-sounding onboarding step.",
+        "expectedBehavior": "Client Chat path only: the app offers its escalation affordance rather than inventing a plausible-sounding onboarding step. The Web SDK owns its unsupported-answer experience.",
         "permissionDifferentiated": false
       }
     ],
@@ -970,8 +985,8 @@
         "emphasized": true
       }
     ],
-    "aiPrompt": "Build an Onboarding Hub following https://developers.glean.com/cookbook/onboarding-hub. Ask whether to use (A) Web SDK or (B) Client Chat. Build the checklist from the user's configured onboarding steps and keep completion state in localStorage. Each step seeds a contextual question without discarding the existing conversation. Path A uses renderChat with an explicit backend and preserves chatId across re-mounts. Path B calls POST /rest/api/v1/chat server-side with saveChat:false, parses CONTENT messages and fragment citations, retries empty output once, and escalates completed thin or uncited answers. Keep credentials server-side and verify every demo query.",
-    "llmContext": "Path A uses Web SDK renderChat with SSO, an explicit backend, and chatId preservation when re-mounting with a new initialMessage. Path B uses server-side Client Chat POST /rest/api/v1/chat. Read CONTENT messages from GLEAN_AI and citations from fragment.citation.sourceDocument; keep the token server-side and set saveChat:false for verification. Build checklist steps from GLEAN_ONBOARDING_STEPS_JSON or GLEAN_ONBOARDING_STEPS_FILE. Retry empty chat output once; escalate only completed thin or uncited answers.",
+    "aiPrompt": "Build an Onboarding Hub following https://developers.glean.com/cookbook/onboarding-hub. Ask whether to use (A) Web SDK or (B) Client Chat, then collect the selected path's configuration before starting it. Path A requires VITE_GLEAN_BACKEND and public/steps.json, uses renderChat with preserved chatId, and must be opened by the user in their normal signed-in browser—never by browser automation. Path B calls Client Chat server-side, parses CONTENT messages and citations, retries empty output once, and owns the escalation UI. Keep secrets server-side. Verify cited supported answers on both paths and unsupported-answer escalation only on Client Chat.",
+    "llmContext": "Path A requires an explicit VITE_GLEAN_BACKEND, validated public/steps.json, and the user's existing Glean SSO session. Start Vite, report its exact URL, and wait for the user to open it in their normal signed-in browser; never open or automate it. Preserve chatId across re-mounts. Path B uses server-side Client Chat with saveChat:false, CONTENT messages, fragment citations, one empty-output retry, and an application-owned escalation state.",
     "goDependency": false,
     "featured": false,
     "tags": ["dual-implementation", "portal"],
@@ -983,20 +998,25 @@
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/web-sdk onboarding-hub"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/web-sdk onboarding-hub"
           },
           {
             "title": "Install dependencies",
             "command": "cd onboarding-hub && npm install"
           },
           {
-            "title": "Credentials",
-            "description": "Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean."
+            "title": "Configure the backend and checklist",
+            "command": "cd onboarding-hub && cp .env.example .env.local && cp public/steps.example.json public/steps.json",
+            "description": "Before running, set VITE_GLEAN_BACKEND in .env.local to the tenant's HTTPS backend origin and customize public/steps.json with the user's real onboarding steps. Keep every id unique. The included generic multi-step example is runnable but should be tailored."
           },
-          { "title": "Run it", "command": "npm run dev" },
+          {
+            "title": "Run it",
+            "command": "cd onboarding-hub && npm run dev",
+            "description": "Start Vite and leave it running. Report the exact Local URL printed by Vite. Never open the URL yourself and never use browser automation. Wait for the user to open it in their normal browser where they are already signed in to Glean and tell you it is ready."
+          },
           {
             "title": "Verify",
-            "description": "Open the printed local URL (copy steps.example.json → steps.json). Confirm the configured checklist renders, click Ask about this, and verify a cited first-day answer."
+            "description": "After the user confirms the app is open in their normal signed-in browser, ask them to confirm the configured checklist renders. Have them click Ask about this and verify a cited first-day answer. Do not open or drive their browser."
           }
         ]
       },
@@ -1007,7 +1027,7 @@
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/platform-chat onboarding-hub"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/platform-chat onboarding-hub"
           },
           {
             "title": "Install dependencies",
@@ -1015,17 +1035,17 @@
           },
           {
             "title": "Set credentials",
-            "command": "cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON for your checklist. The app runs as you; there is no act-as."
+            "command": "cd onboarding-hub && cp .env.example .env",
+            "description": "Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Customize the included steps.example.json, point GLEAN_ONBOARDING_STEPS_FILE at another file, or set GLEAN_ONBOARDING_STEPS_JSON. The app runs as the token owner; there is no act-as."
           },
           {
             "title": "Run it",
-            "command": "npm start",
+            "command": "cd onboarding-hub && npm start",
             "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
           },
           {
             "title": "Verify",
-            "command": "npm run verify",
+            "command": "cd onboarding-hub && npm run verify",
             "description": "Loads credentials from .env (same as npm start), runs the demo queries against your own onboarding docs, and asserts cited answers for first-day / VPN / PTO plus escalation for an unsupported question. Do not report this recipe as done until this passes."
           }
         ]
@@ -1073,12 +1093,12 @@
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval"
           },
           {
             "title": "Set credentials",
-            "command": "cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY, then export them into your shell — unlike the TypeScript variant, this one reads the environment directly and does not load .env automatically."
+            "command": "cd permissions-aware-retrieval && cp .env.example .env",
+            "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY. This variant loads .env automatically."
           },
           {
             "title": "Run it",
@@ -1098,7 +1118,7 @@
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval"
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval"
           },
           {
             "title": "Install dependencies",
@@ -1106,12 +1126,12 @@
           },
           {
             "title": "Set credentials",
-            "command": "cp .env.example .env",
+            "command": "cd permissions-aware-retrieval && cp .env.example .env",
             "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY — loaded automatically via dotenv in this variant."
           },
           {
             "title": "Run it",
-            "command": "npm start -- \"What's our PTO policy?\""
+            "command": "cd permissions-aware-retrieval && npm start -- \"What's our PTO policy?\""
           },
           {
             "title": "Verify",
@@ -1194,7 +1214,7 @@
     "steps": [
       {
         "title": "Scaffold the project",
-        "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder"
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder"
       },
       {
         "title": "Install dependencies",
@@ -1202,15 +1222,15 @@
       },
       {
         "title": "Try it with no credentials",
-        "command": "npm run verify:fixture",
+        "command": "cd rfp-responder && npm run verify:fixture",
         "description": "Runs the whole flow against recorded responses and asserts the failure contract: no ungrounded row carries an answer, every answered row carries a citation, and export is gated on approval."
       },
       {
         "title": "Set credentials",
-        "command": "cp .env.example .env",
+        "command": "cd rfp-responder && cp .env.example .env",
         "description": "Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. The app runs as you; there is no act-as."
       },
-      { "title": "Run it", "command": "npm start" },
+      { "title": "Run it", "command": "cd rfp-responder && npm start" },
       {
         "title": "Verify",
         "description": "Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered."

@@ -9,6 +9,8 @@ Before you send the prompt, have these two values ready. Add them wherever Lovab
 
 **After Lovable finishes:**
 
+- [ ] Confirm the project is private. Do not share its URL: all requests use the same backend token and therefore the token owner's Glean access.
 - [ ] Open the generated source and confirm neither value appears in any file that ships to the browser (React components, `.env` files bundled client-side) — only references to a server-side secret read.
 - [ ] Confirm the Glean API call happens in a backend/server function, not in client-side React code — open your browser's Network tab while using the app and check that requests to `*.glean.com` never originate from the browser itself.
 - [ ] Rotate the token from the Admin Console if you ever suspect it leaked (e.g. pasted into a screenshot, committed by accident).
+- [ ] Before any multi-user deployment, replace the shared token with authenticated per-user OAuth.

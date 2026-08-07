@@ -17,7 +17,9 @@ import {
 const completed = loadCompletedIds();
 let steps: OnboardingStep[] = [];
 let resources: OnboardingResource[] = [];
-let source: 'config' | 'empty' = 'empty';
+let source: 'config' | 'missing' | 'error' = 'missing';
+let stepsError: string | undefined;
+let gleanBackend = '';
 
 function escapeHtml(value: string): string {
   return value
@@ -31,6 +33,43 @@ function escapeHtml(value: string): string {
 let currentChatId: string | undefined;
 let chatHandle: ChatHandle | undefined;
 
+function loadBackend(): string {
+  const configured = import.meta.env.VITE_GLEAN_BACKEND?.trim();
+  if (!configured) {
+    throw new Error(
+      'Set VITE_GLEAN_BACKEND in .env.local, then restart the dev server.',
+    );
+  }
+
+  let backend: URL;
+  try {
+    backend = new URL(configured);
+  } catch {
+    throw new Error(
+      'VITE_GLEAN_BACKEND must be an absolute URL such as https://example-be.glean.com.',
+    );
+  }
+  if (
+    backend.protocol !== 'https:' ||
+    backend.username ||
+    backend.password ||
+    backend.pathname !== '/' ||
+    backend.search ||
+    backend.hash
+  ) {
+    throw new Error(
+      'VITE_GLEAN_BACKEND must be an HTTPS origin with no path, query, or credentials.',
+    );
+  }
+  return backend.origin;
+}
+
+function showChatConfigurationError(message: string): void {
+  const container = document.getElementById('chat');
+  if (!container) throw new Error('Missing #chat container');
+  container.innerHTML = `<p class="config-error"><strong>Glean configuration needed.</strong><br>${escapeHtml(message)}</p>`;
+}
+
 function rememberChatId(event: WebSdkChatEvent): void {
   if (event.name === 'chat:location_update' && event.id)
     currentChatId = event.id;
@@ -43,6 +82,12 @@ function mountChat(
   initialMessage?: string,
   { continueConversation = false } = {},
 ): void {
+  if (!gleanBackend) {
+    showChatConfigurationError(
+      'Set VITE_GLEAN_BACKEND in .env.local, then restart the dev server.',
+    );
+    return;
+  }
   const container = document.getElementById('chat');
   if (!container) throw new Error('Missing #chat container');
 
@@ -54,7 +99,7 @@ function mountChat(
 
   container.innerHTML = '';
   chatHandle = renderChat(container, {
-    // backend: 'https://{your}-be.glean.com',
+    backend: gleanBackend,
     ...(resumeId ? { chatId: resumeId } : {}),
     ...(initialMessage ? { initialMessage } : {}),
   });
@@ -122,12 +167,7 @@ function renderDoneResources(): void {
 function renderChecklist(): void {
   const checklist = document.getElementById('checklist-panel');
   const donePanel = document.getElementById('done-panel');
-  const emptyNote = document.getElementById('empty-checklist');
   if (!checklist || !donePanel) return;
-
-  if (emptyNote) {
-    emptyNote.hidden = source !== 'empty';
-  }
 
   if (steps.length === 0) {
     checklist.hidden = false;
@@ -219,6 +259,7 @@ async function boot(): Promise<void> {
   ]);
   steps = loaded.steps;
   source = loaded.source;
+  stepsError = loaded.error;
   resources = loadedResources;
 
   const sourceNote = document.getElementById('steps-source');
@@ -226,15 +267,27 @@ async function boot(): Promise<void> {
     if (source === 'config') {
       sourceNote.hidden = true;
       sourceNote.textContent = '';
+    } else if (source === 'error') {
+      sourceNote.hidden = false;
+      sourceNote.textContent = `Checklist configuration error: ${stepsError ?? 'Fix public/steps.json and reload.'}`;
     } else {
       sourceNote.hidden = false;
-      sourceNote.textContent = 'No walkthrough steps are available.';
+      sourceNote.textContent =
+        'No checklist is configured. Copy public/steps.example.json to public/steps.json, customize it, and reload.';
     }
   }
 
-  mountChat(buildContextPrompt(steps, completed));
   rerender();
   wireEvents();
+
+  try {
+    gleanBackend = loadBackend();
+  } catch (error) {
+    showChatConfigurationError((error as Error).message);
+    return;
+  }
+
+  mountChat(buildContextPrompt(steps, completed));
 }
 
 void boot();

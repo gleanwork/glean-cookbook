@@ -4,6 +4,13 @@ description: 'The end-to-end showcase — index a developer catalog into Glean, 
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `SEARCH`, `CHAT`
+- A Glean instance where you can add a custom datasource
+- A Glean-issued Indexing API token
+- Node.js 18+ to run the portal app locally
+
 Build the "Engineering portal with Glean" flagship recipe from
 https://developers.glean.com/cookbook/build-engineering-portal
 
@@ -90,15 +97,24 @@ Style only the surrounding page for Web SDK components. The embedded Glean UI su
 branding. If the user wants their company's identity, replace the logo and accent consistently.
 
 Give `renderChat`, `renderSearchBox`, and `renderSearchResults` a positioned container with explicit
-width and height; 480–500px is a good default. Pass the recipe's first demo query as
-`initialMessage` when the experience should open directly into a cited answer.
+width and height; 480–500px is a good default. When the experience should open directly into a cited
+answer, ask the user for a topic they know exists in their Glean instance and pass that question as
+`initialMessage`.
 
 ## Verify
 
-Do not report this recipe as done until you have run it for real (against a live Glean instance,
-with real credentials) and confirmed every query below produces its expected behavior. A build
-that runs without errors but fails one of these checks is not done — fix it and re-run before
-reporting success.
+If the selected path uses Web SDK cookie SSO, do not open the app in an agent-controlled browser,
+incognito window, Playwright, or any other browser automation. Those browsers do not carry the
+user's existing Glean session. Start the development server, keep it running, report the exact local
+URL printed by the server, and ask the user to open that URL in their normal browser where they are
+signed in to Glean. Wait for the user to report the result before claiming the live check passed.
+
+Treat the queries below as acceptance scenarios, not as assumptions about what every Glean instance
+contains. For a live check, ask the user for an equivalent topic they know exists in their instance
+and confirm the same response properties: grounding, citations, permission filtering, and explicit
+no-answer behavior where applicable. Use fixture or automated checks for corpus-independent
+behavior. Do not claim a live check passed when the required content, credentials, user session, or
+user confirmation was unavailable.
 
 - **Query:** "How do I find out who is on call?"
   **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL from your indexed engineering content.

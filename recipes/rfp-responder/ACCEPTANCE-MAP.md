@@ -1,4 +1,4 @@
-# Acceptance map — PACT-451
+# Acceptance map
 
 Every requirement in the ticket, where it is implemented, and how it is proven.
 `npm run verify:fixture` runs all of it with no credentials.
@@ -29,12 +29,12 @@ Every requirement in the ticket, where it is implemented, and how it is proven.
 | Confidence flag           | Two independent axes (topicality, approval-for-external-use) rather than a single relevance score. Asserted against the corpus oracle for all 20 rows.                     |
 | Answer-library reuse      | Accepted pairs are stored and pre-fill matching questions on the next parse.                                                                                               |
 
-## Deviations from the ticket, and why
+## Scope boundaries
 
-| Ticket says                                     | Built                                                    | Why                                                                                                                                                                                                                       |
-| ----------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Run "as the acting user"                        | Runs as the caller's own credential                      | Impersonation was removed from every recipe (`9a1d1ba`). Single-user, and the caller's token is the permission boundary. Better story for an RFP tool: you cannot launder content you can't see into a customer document. |
-| Questionnaire "lives in acme-corpus (~20 rows)" | Authored at `fixtures/sample-security-questionnaire.csv` | `acme-corpus/` is now `examples/sample-catalog/`, and the Globex artifact there is a 913-byte prose summary, not a questionnaire.                                                                                         |
-| Write-back custom action                        | Export only                                              | Depends on `first-custom-tool` (PACT-454), which does not exist yet. Listed as not-solved in the README.                                                                                                                  |
-| "Deduplicates questions"                        | Exact matches only; near-duplicates proposed             | Measured: the unsafe pair scores 0.60, the true duplicates 0.29–0.30. No threshold is safe. See README.                                                                                                                   |
-| xlsx / docx upload                              | CSV                                                      | Mechanical to add; a spreadsheet dependency would obscure the parts of the recipe worth reading.                                                                                                                          |
+| Boundary      | Current contract                                                   |
+| ------------- | ------------------------------------------------------------------ |
+| Identity      | Single-user app that runs with the caller's own credential.        |
+| Input         | CSV, with a bundled 20-row questionnaire fixture.                  |
+| Output        | Export only; no source-system write-back.                          |
+| Deduplication | Exact matches merge automatically; near-duplicates require review. |
+| File formats  | xlsx and docx are out of scope.                                    |

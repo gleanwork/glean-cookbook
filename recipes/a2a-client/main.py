@@ -9,9 +9,7 @@
 """Call a Glean agent from an A2A client: card discovery, message/send,
 multi-turn via context_id, and streaming.
 
-Verified against the actually installed a2a-sdk==0.3.26 (spec 0.3 --
-Glean's per-agent A2A server speaks 0.3 today; a2a-sdk 1.x will not
-interop until the server upgrades, see EN-1972098):
+Current a2a-sdk==0.3.26 contract (A2A spec 0.3):
 
 - a2a.client.A2AClient (the class whose method names literally match
   "message/send" naming) is marked [DEPRECATED] in this pinned version
@@ -37,9 +35,7 @@ from a2a.client.helpers import create_text_message_object
 from a2a.types import Message, Role, Task
 from dotenv import load_dotenv
 
-# Every recipe README says to `cp .env.example .env`; uv run doesn't read that
-# file and neither did this script, so following the documented setup failed on
-# a missing credential. Loading it here makes the instructions true.
+# Load the local configuration created from .env.example.
 load_dotenv()
 
 
@@ -61,10 +57,8 @@ def unpack_event(event: Message | tuple[Task, object]) -> tuple[str, str | None]
     Task-based agents yield (Task, UpdateEvent) pairs instead --
     ClientEvent = tuple[Task, UpdateEvent].
 
-    For a Task, the reply is in task.artifacts, NOT task.history. Verified
-    against a live Glean agent: history contained only the message we sent, so
-    reading history[-1] echoes the user's own question back as if it were the
-    answer.
+    For a Task, the reply is in task.artifacts, not task.history. History can
+    contain the user's own message and is only a fallback for agent turns.
     """
     if isinstance(event, Message):
         return extract_text(event), event.context_id
@@ -86,10 +80,7 @@ def unpack_event(event: Message | tuple[Task, object]) -> tuple[str, str | None]
 
 
 async def main() -> None:
-    # An ordinary Glean credential with the AGENTS scope is enough for both card
-    # discovery and message/send -- verified live. A per-agent token from the
-    # agent's Share dialog also works, but nothing here requires one, so this
-    # uses the same credential as every other recipe.
+    # Card discovery and message/send use a Glean credential with AGENTS scope.
     instance = require_env("GLEAN_INSTANCE")
     token = require_env("GLEAN_API_TOKEN")
     agent_id = require_env("GLEAN_AGENT_ID")

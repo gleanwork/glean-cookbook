@@ -48,4 +48,4 @@ the boundary.
 2. **Extract**: `results[].title`, `results[].url`, and `results[].snippets` — a plain `string[]` on this API, with no `.text` unwrap — become numbered sources.
 3. **Answer**: the sources — and only the sources — go to Claude (`claude-sonnet-5` here; swap the `Anthropic` client for any provider) with a prompt requiring inline `[n]` citations.
 
-Verified against the actually installed `glean-api-client==0.15.4` and `anthropic==0.120.0` — not guessed from docs.
+The example pins `glean-api-client==0.15.4` and `anthropic==0.120.0`.

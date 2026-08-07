@@ -1,7 +1,7 @@
 {
   "id": "no-code-it-helpdesk-lovable",
   "title": "IT helpdesk deflection page — no code, on Lovable",
-  "description": "Prompt Lovable into an IT helpdesk deflection page on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.",
+  "description": "Prompt Lovable into a private, single-user IT helpdesk prototype on the Glean Chat API — zero hand-written backend.",
   "sidebarLabel": "IT Helpdesk (Lovable)",
   "surfaces": ["client-api"],
   "status": "showcase",
@@ -18,7 +18,8 @@
   "buildMethod": "third-party-build",
   "prerequisites": [
     "A Lovable account",
-    "A Glean API token with the CHAT scope (kept as a Lovable backend secret)"
+    "A Glean API token with the CHAT scope (kept as a Lovable backend secret; every request uses this one token owner's access)",
+    "A private Lovable project — multi-user deployments require authenticated per-user Glean OAuth"
   ],
   "demoQueries": [
     {
@@ -38,8 +39,8 @@
     }
   ],
   "scaffoldActions": [],
-  "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
-  "llmContext": "Have Lovable keep the Glean token in its server-side secret store and call Client Chat from a backend function. Read answer text from CONTENT messages and citations from fragment.citation.sourceDocument. Never expose the token in browser code. Treat empty answer text as a retryable failure and show cited answers or an explicit no-answer state.",
+  "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt. It is one service identity, so keep this prototype private;\n   multi-user deployment requires per-user Glean OAuth.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
+  "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations.",
   "goDependency": false,
   "featured": false,
   "tags": ["no-code", "it"]

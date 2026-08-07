@@ -1,24 +1,15 @@
-# Acceptance map (PACT-449)
+# Onboarding Hub acceptance map
 
-Maps each showpiece state to Path A (Web SDK) and Path B (Client Chat). Checklist
-steps come from the reader's config — never a hardcoded named hire or Acme corpus.
-Chat answers use the reader's own indexed onboarding content.
+| Behavior               | Web SDK                                                   | Client Chat                                                    |
+| ---------------------- | --------------------------------------------------------- | -------------------------------------------------------------- |
+| Checklist source       | Validated `public/steps.json`                             | `GLEAN_ONBOARDING_STEPS_JSON` or `GLEAN_ONBOARDING_STEPS_FILE` |
+| Authentication         | Viewer SSO in their normal browser, with explicit backend | Server-side token                                              |
+| Progress               | localStorage completion and milestone groups              | Browser completion and milestone groups                        |
+| Ask about a step       | Re-mount `renderChat` with preserved `chatId`             | Send a step-specific USER message                              |
+| Supported answer       | Web SDK renders Glean's cited answer                      | App renders parsed answer and citations                        |
+| Unsupported answer     | Glean owns the chat experience                            | App shows its escalation affordance                            |
+| Empty transport output | Web SDK owns transport behavior                           | Retry once, then return a transport error                      |
+| Done state             | Configured resource links or an empty state               | Completion summary                                             |
 
-| #   | Showpiece state                       | Path A (Web SDK)                                                | Path B (Client Chat)                                                 | Demo query / note                         |
-| --- | ------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------- |
-| 1   | Checklist (done vs pending)           | Load `steps.json`; localStorage toggles completion              | `GET /api/checklist` from `GLEAN_ONBOARDING_STEPS_*`; client toggles | Live: your steps                          |
-| 2   | Progress indicator + milestone badges | Progress % = completed/total; badges earn per group             | Same client-side logic                                               | Empty checklist → 0%                      |
-| 3   | Per-step **Ask about this**           | `renderChat` re-seeded with `initialMessage` per step           | Client Chat with a step-specific USER message                        | Step `askPrompt` from config              |
-| 4   | Free-form cited chat                  | `renderChat` handles UI + citations (SSO cookie)                | Parse CONTENT messages and fragment citations                        | Live verify: first-day, VPN, PTO          |
-| 5   | No answer found → escalate            | Glean chat surfaces low-confidence; app can show escalate strip | Empty/short/**uncited** → `escalate: true` + UI affordance           | Live verify: off-corpus query             |
-| 6   | Done state                            | All steps marked complete → summary panel replaces checklist    | Same client UX                                                       | Mark all complete or finish pending items |
-| 7   | Empty live chat (Path B)              | N/A (Web SDK owns streaming UI)                                 | Empty answer retries once, then surfaces a transport error           | Not treated as missing evidence           |
-
-## Demo queries (registry)
-
-| Query                             | Expected behavior                                                                                   |
-| --------------------------------- | --------------------------------------------------------------------------------------------------- |
-| What should I do on my first day? | Cited answer from your own onboarding documents; checklist reflects configured steps, not a persona |
-| How do I set up VPN?              | Cited answer from your own IT documentation                                                         |
-| What's our PTO policy?            | Cited answer respecting the asker's permissions                                                     |
-| Ask about a step docs don't cover | Hub says it has nothing and offers escalation rather than inventing a step                          |
+Verify cited first-day, VPN, and PTO answers on both paths. Verify the unsupported-answer escalation
+only on Client Chat.

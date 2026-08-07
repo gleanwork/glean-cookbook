@@ -4,6 +4,14 @@ description: "Use Glean's Platform API as the retrieval layer for your own LLM a
 disable-model-invocation: true
 ---
 
+## Before you start
+
+- Required API scopes (for paths that use API credentials): `SEARCH`
+- An OAuth access token or Glean API token with the SEARCH scope (your own — no global/admin token needed)
+- X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)
+- An LLM API key (any provider; example uses Claude)
+- uv (for the Python path) or Node 20+
+
 Build "Ground your own LLM app in Glean" following https://developers.glean.com/cookbook/permissions-aware-retrieval
 
 1. **Pick a language**
@@ -16,14 +24,14 @@ Platform API search.query → snippets → LLM with citations
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval
+   npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval
    ```
 
 2. **Set credentials**
-   Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY, then export them into your shell — unlike the TypeScript variant, this one reads the environment directly and does not load .env automatically.
+   Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY. This variant loads .env automatically.
 
    ```bash
-   cp .env.example .env
+   cd permissions-aware-retrieval && cp .env.example .env
    ```
 
 3. **Run it**
@@ -43,7 +51,7 @@ Same flow in TypeScript
 1. **Scaffold the project**
 
    ```bash
-   npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval
+   npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval
    ```
 
 2. **Install dependencies**
@@ -56,13 +64,13 @@ Same flow in TypeScript
    Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY — loaded automatically via dotenv in this variant.
 
    ```bash
-   cp .env.example .env
+   cd permissions-aware-retrieval && cp .env.example .env
    ```
 
 4. **Run it**
 
    ```bash
-   npm start -- "What's our PTO policy?"
+   cd permissions-aware-retrieval && npm start -- "What's our PTO policy?"
    ```
 
 5. **Verify**

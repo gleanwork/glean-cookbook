@@ -1,3 +1,3 @@
 {
-  "description": "Build Glean cookbook recipes hands-free: browse what's available, then run a recipe's command to scaffold it against your own Glean instance."
+  "description": "Build Glean cookbook recipes with guided setup: browse what is available, scaffold a recipe, and complete its required user and admin handoffs."
 }

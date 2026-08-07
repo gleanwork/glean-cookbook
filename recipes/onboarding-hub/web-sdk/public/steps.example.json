@@ -1,9 +1,34 @@
 [
   {
-    "id": "example-step",
-    "title": "Replace this file with your onboarding steps",
+    "id": "review-first-week-plan",
+    "title": "Review your first-week plan",
+    "group": "team",
+    "initiallyDone": false,
+    "dueDate": "Day 1",
+    "askPrompt": "What should I prioritize during my first week?"
+  },
+  {
+    "id": "set-up-vpn",
+    "title": "Set up VPN and required software",
+    "group": "it",
+    "initiallyDone": false,
+    "dueDate": "Day 1",
+    "askPrompt": "How do I set up VPN and required software?"
+  },
+  {
+    "id": "review-benefits",
+    "title": "Review benefits and time-off policies",
     "group": "hr",
     "initiallyDone": false,
-    "askPrompt": "What should I do on my first day?"
+    "dueDate": "Day 3",
+    "askPrompt": "Where can I find our benefits and time-off policies?"
+  },
+  {
+    "id": "meet-your-team",
+    "title": "Meet your team and key partners",
+    "group": "team",
+    "initiallyDone": false,
+    "dueDate": "Week 1",
+    "askPrompt": "Who should I meet during my first week?"
   }
 ]

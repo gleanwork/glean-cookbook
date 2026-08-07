@@ -20,8 +20,8 @@
   "prerequisites": [
     "A Glean instance with your onboarding content indexed",
     "For the Client Chat path: a token with the CHAT scope",
-    "For the Web SDK path: nothing beyond SSO — the browser session carries the identity",
-    "Node 20+ for the Platform path, or any static page for the Web SDK path"
+    "For the Web SDK path: your tenant backend URL and an existing Glean session in your normal browser",
+    "Node 20.19+ or 22.12+"
   ],
   "demoQueries": [
     {
@@ -38,7 +38,7 @@
     },
     {
       "query": "Ask about a step your docs don't cover",
-      "expectedBehavior": "The hub says it has nothing on that and offers the escalation affordance, rather than inventing a plausible-sounding onboarding step.",
+      "expectedBehavior": "Client Chat path only: the app offers its escalation affordance rather than inventing a plausible-sounding onboarding step. The Web SDK owns its unsupported-answer experience.",
       "permissionDifferentiated": false
     }
   ],
@@ -85,8 +85,8 @@
       "emphasized": true
     }
   ],
-  "aiPrompt": "Build an Onboarding Hub following https://developers.glean.com/cookbook/onboarding-hub. Ask whether to use (A) Web SDK or (B) Client Chat. Build the checklist from the user's configured onboarding steps and keep completion state in localStorage. Each step seeds a contextual question without discarding the existing conversation. Path A uses renderChat with an explicit backend and preserves chatId across re-mounts. Path B calls POST /rest/api/v1/chat server-side with saveChat:false, parses CONTENT messages and fragment citations, retries empty output once, and escalates completed thin or uncited answers. Keep credentials server-side and verify every demo query.",
-  "llmContext": "Path A uses Web SDK renderChat with SSO, an explicit backend, and chatId preservation when re-mounting with a new initialMessage. Path B uses server-side Client Chat POST /rest/api/v1/chat. Read CONTENT messages from GLEAN_AI and citations from fragment.citation.sourceDocument; keep the token server-side and set saveChat:false for verification. Build checklist steps from GLEAN_ONBOARDING_STEPS_JSON or GLEAN_ONBOARDING_STEPS_FILE. Retry empty chat output once; escalate only completed thin or uncited answers.",
+  "aiPrompt": "Build an Onboarding Hub following https://developers.glean.com/cookbook/onboarding-hub. Ask whether to use (A) Web SDK or (B) Client Chat, then collect the selected path's configuration before starting it. Path A requires VITE_GLEAN_BACKEND and public/steps.json, uses renderChat with preserved chatId, and must be opened by the user in their normal signed-in browser—never by browser automation. Path B calls Client Chat server-side, parses CONTENT messages and citations, retries empty output once, and owns the escalation UI. Keep secrets server-side. Verify cited supported answers on both paths and unsupported-answer escalation only on Client Chat.",
+  "llmContext": "Path A requires an explicit VITE_GLEAN_BACKEND, validated public/steps.json, and the user's existing Glean SSO session. Start Vite, report its exact URL, and wait for the user to open it in their normal signed-in browser; never open or automate it. Preserve chatId across re-mounts. Path B uses server-side Client Chat with saveChat:false, CONTENT messages, fragment citations, one empty-output retry, and an application-owned escalation state.",
   "goDependency": false,
   "featured": false,
   "tags": ["dual-implementation", "portal"],
@@ -98,23 +98,25 @@
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/web-sdk onboarding-hub"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/web-sdk onboarding-hub"
         },
         {
           "title": "Install dependencies",
           "command": "cd onboarding-hub && npm install"
         },
         {
-          "title": "Credentials",
-          "description": "Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean."
+          "title": "Configure the backend and checklist",
+          "command": "cd onboarding-hub && cp .env.example .env.local && cp public/steps.example.json public/steps.json",
+          "description": "Before running, set VITE_GLEAN_BACKEND in .env.local to the tenant's HTTPS backend origin and customize public/steps.json with the user's real onboarding steps. Keep every id unique. The included generic multi-step example is runnable but should be tailored."
         },
         {
           "title": "Run it",
-          "command": "npm run dev"
+          "command": "cd onboarding-hub && npm run dev",
+          "description": "Start Vite and leave it running. Report the exact Local URL printed by Vite. Never open the URL yourself and never use browser automation. Wait for the user to open it in their normal browser where they are already signed in to Glean and tell you it is ready."
         },
         {
           "title": "Verify",
-          "description": "Open the printed local URL (copy steps.example.json → steps.json). Confirm the configured checklist renders, click Ask about this, and verify a cited first-day answer."
+          "description": "After the user confirms the app is open in their normal signed-in browser, ask them to confirm the configured checklist renders. Have them click Ask about this and verify a cited first-day answer. Do not open or drive their browser."
         }
       ]
     },
@@ -125,7 +127,7 @@
       "steps": [
         {
           "title": "Scaffold the project",
-          "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/platform-chat onboarding-hub"
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/platform-chat onboarding-hub"
         },
         {
           "title": "Install dependencies",
@@ -133,17 +135,17 @@
         },
         {
           "title": "Set credentials",
-          "command": "cp .env.example .env",
-          "description": "Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Set GLEAN_ONBOARDING_STEPS_FILE or GLEAN_ONBOARDING_STEPS_JSON for your checklist. The app runs as you; there is no act-as."
+          "command": "cd onboarding-hub && cp .env.example .env",
+          "description": "Fill in GLEAN_API_TOKEN and GLEAN_SERVER_URL. Customize the included steps.example.json, point GLEAN_ONBOARDING_STEPS_FILE at another file, or set GLEAN_ONBOARDING_STEPS_JSON. The app runs as the token owner; there is no act-as."
         },
         {
           "title": "Run it",
-          "command": "npm start",
+          "command": "cd onboarding-hub && npm start",
           "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the verify step below, which starts its own instance."
         },
         {
           "title": "Verify",
-          "command": "npm run verify",
+          "command": "cd onboarding-hub && npm run verify",
           "description": "Loads credentials from .env (same as npm start), runs the demo queries against your own onboarding docs, and asserts cited answers for first-day / VPN / PTO plus escalation for an unsupported question. Do not report this recipe as done until this passes."
         }
       ]

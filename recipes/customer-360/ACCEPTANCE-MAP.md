@@ -1,4 +1,4 @@
-# Acceptance map (PACT-450)
+# Acceptance map
 
 Maps each showpiece state on the account page to Path A (`platform-search-chat`)
 and Path B (`platform-agents`). The account name and every figure come from the

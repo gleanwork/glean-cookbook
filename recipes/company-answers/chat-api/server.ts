@@ -5,18 +5,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Glean } from '@gleanwork/api-client';
 
-// Path B (Chat API): you own the UI, the server owns the API token.
-// Verified live against a real Glean instance — two corrections from a
-// first-draft reading of the API:
-//   1. The client constructor takes `instance` (or a full `serverURL`),
-//      not `domain` — `domain` isn't a real SDKOptions field even though
-//      it appears in one of the package's own bundled example files.
-//   2. `message.citations[]` is deprecated and, on a live agentic chat
-//      response, isn't populated at all — citations live per-fragment,
-//      in `fragment.citation.sourceDocument`. The response can also
-//      include non-answer messages (search/read step narration) ahead
-//      of the real answer — filter to `messageType === 'CONTENT'` or
-//      that narration text ends up prepended to the rendered answer.
+// Path B (Chat API): you own the UI, the server owns the API token. Construct
+// the client with instance/serverURL, read citations from
+// fragment.citation.sourceDocument, and exclude progress messages from answers.
 const glean = new Glean({
   apiToken: requireEnv('GLEAN_API_TOKEN'),
   instance: requireEnv('GLEAN_INSTANCE'),
@@ -49,12 +40,8 @@ async function askGlean(question: string) {
 
   const answer = fragments.map((fragment) => fragment.text ?? '').join('');
 
-  // A chat run that invoked a server tool can come back HTTP 200 with the run
-  // unfinished: the CONTENT message is present but empty, the last message is a
-  // SERVER_TOOL, and there is no error field anywhere. Verified live -- about one
-  // in four runs of a tool-invoking question. Returning the empty string here
-  // would render a blank answer panel and look like the app is broken, so treat
-  // it as the failure it is and let the caller retry.
+  // Empty answer text means the run did not produce a usable answer. Surface a
+  // retryable failure rather than rendering a blank panel.
   if (answer.trim().length === 0) {
     throw new Error(
       'Glean returned no answer text. This happens when a chat run ends while ' +

@@ -1,4 +1,4 @@
-# Acceptance map — PACT-452
+# Acceptance map
 
 Every step in the ticket, where it lives, and the assertion that proves it.
 `npm run verify:fixture` runs all 58 checks with no credentials.
@@ -24,12 +24,11 @@ Every step in the ticket, where it lives, and the assertion that proves it.
 | Approving an already-executed or escalated incident is refused | A gate that can be re-entered is not a gate.                                                                                                                                      | `approving an already-executed incident is refused with 409`, `approving an escalated proposal is refused with 409`                   |
 | Evidence classification stays out of the planner               | Asking the planner to grade its own evidence is asking the wrong entity.                                                                                                          | `the agent path classifies evidence with the same rules`                                                                              |
 
-## Deviations
+## Scope boundaries
 
-| Ticket says                                             | Built                                                                                 | Why                                                                                                                              |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Execute "as the approving user", per-person permissions | App credential; gate is an app-level policy check, reported as `impersonation: false` | Impersonation was removed in `9a1d1ba`. Overstating it is the one genuinely dangerous thing this recipe could teach.             |
-| Dual implementation                                     | Two orchestrators in one shell                                                        | Steven's 7/31 sheet: both variants render into one shell. Duplicating a governance-heavy app doubles where the gate could drift. |
-| Full dashboard (7/31 sheet)                             | "Little dashboard"                                                                    | Steve 8/3: "a _little_ dashboard thing." MTTA/MTTR rollup, expiring-soon lane, shift handoff and channel sync are Extensions.    |
-| Governed actions via `first-custom-tool`                | Three inert pre-registered actions                                                    | PACT-454 doesn't exist. The registry boundary is real; the executors are simulated so the recipe is safe to run live.            |
-| Fable mockup → Frank He                                 | Skipped                                                                               | Same as `customer-360`. Confirm it's optional.                                                                                   |
+| Boundary        | Current contract                                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Action identity | Actions execute with the app credential; the approval gate is app policy and reports `impersonation: false`.       |
+| Orchestration   | Both orchestrators share one shell and one governance implementation.                                              |
+| Dashboard       | Focuses on triage, approval, expiry, audit, and postmortem; operational rollups and channel sync are out of scope. |
+| Actions         | Three inert pre-registered executors make the registry and refusal behavior safe to exercise.                      |

@@ -44,7 +44,7 @@
   "steps": [
     {
       "title": "Scaffold the project",
-      "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder"
+      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder"
     },
     {
       "title": "Install dependencies",
@@ -52,17 +52,17 @@
     },
     {
       "title": "Try it with no credentials",
-      "command": "npm run verify:fixture",
+      "command": "cd rfp-responder && npm run verify:fixture",
       "description": "Runs the whole flow against recorded responses and asserts the failure contract: no ungrounded row carries an answer, every answered row carries a citation, and export is gated on approval."
     },
     {
       "title": "Set credentials",
-      "command": "cp .env.example .env",
+      "command": "cd rfp-responder && cp .env.example .env",
       "description": "Fill in GLEAN_SERVER_URL and your own GLEAN_API_TOKEN. The app runs as you; there is no act-as."
     },
     {
       "title": "Run it",
-      "command": "npm start"
+      "command": "cd rfp-responder && npm start"
     },
     {
       "title": "Verify",
