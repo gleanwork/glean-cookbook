@@ -1,5 +1,4 @@
 import { renderChat } from '@gleanwork/web-sdk';
-import type { ChatHandle, WebSdkChatEvent } from '@gleanwork/web-sdk';
 import {
   buildContextPrompt,
   loadCompletedIds,
@@ -29,9 +28,6 @@ function escapeHtml(value: string): string {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 }
-
-let currentChatId: string | undefined;
-let chatHandle: ChatHandle | undefined;
 
 function loadBackend(): string {
   const configured = import.meta.env.VITE_GLEAN_BACKEND?.trim();
@@ -70,18 +66,22 @@ function showChatConfigurationError(message: string): void {
   container.innerHTML = `<p class="config-error"><strong>Glean configuration needed.</strong><br>${escapeHtml(message)}</p>`;
 }
 
-function rememberChatId(event: WebSdkChatEvent): void {
-  if (event.name === 'chat:location_update' && event.id)
-    currentChatId = event.id;
-  if (event.name === 'chat:id_update' && event.chatId) {
-    currentChatId = event.chatId;
-  }
-}
-
-function mountChat(
-  initialMessage?: string,
-  { continueConversation = false } = {},
-): void {
+/**
+ * Seeding a message means re-mounting: `renderChat` returns a handle with only
+ * `on`/`off`, so there is no imperative way to send one.
+ *
+ * Do not pass `chatId` here to try to continue the previous thread. The widget
+ * picks how to start from the options it is given, and a `chatId` makes it
+ * resolve that chat as the selected one — at which point it looks for a message
+ * in its own frame URL rather than using `initialMessage`, and `renderChat` never
+ * puts one there. The result is a chat that visibly reloads and sends nothing.
+ * Without `chatId` it takes the path that does submit `initialMessage`.
+ *
+ * So each "Ask about this" starts a fresh thread with that step's question. That
+ * is the behaviour the Web SDK supports today; carrying history across a
+ * re-mount is not available.
+ */
+function mountChat(initialMessage?: string): void {
   if (!gleanBackend) {
     showChatConfigurationError(
       'Set VITE_GLEAN_BACKEND in .env.local, then restart the dev server.',
@@ -91,21 +91,11 @@ function mountChat(
   const container = document.getElementById('chat');
   if (!container) throw new Error('Missing #chat container');
 
-  chatHandle?.off('chat:location_update', rememberChatId);
-  chatHandle?.off('chat:id_update', rememberChatId);
-
-  const resumeId = continueConversation ? currentChatId : undefined;
-  if (!continueConversation) currentChatId = undefined;
-
   container.innerHTML = '';
-  chatHandle = renderChat(container, {
+  renderChat(container, {
     backend: gleanBackend,
-    ...(resumeId ? { chatId: resumeId } : {}),
     ...(initialMessage ? { initialMessage } : {}),
   });
-
-  chatHandle.on('chat:location_update', rememberChatId);
-  chatHandle.on('chat:id_update', rememberChatId);
 }
 
 function renderProgress(): void {
@@ -220,7 +210,7 @@ function wireEvents(): void {
     const ask = target.closest<HTMLButtonElement>('[data-ask]');
     if (ask?.dataset.ask) {
       const prompt = decodeURIComponent(ask.dataset.ask);
-      mountChat(prompt, { continueConversation: true });
+      mountChat(prompt);
       document.getElementById('chat-panel')?.scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',

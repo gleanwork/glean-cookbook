@@ -88,7 +88,7 @@ Client Chat variant — server-side API call, custom UI
 
 ## Reference
 
-Path A requires an explicit VITE_GLEAN_BACKEND, validated public/steps.json, and the user's existing Glean SSO session. Start Vite, report its exact URL, and wait for the user to open it in their normal signed-in browser; never open or automate it. Preserve chatId across re-mounts. Path B uses server-side Client Chat with saveChat:false, CONTENT messages, fragment citations, one empty-output retry, and an application-owned escalation state.
+Path A requires an explicit VITE_GLEAN_BACKEND, validated public/steps.json, and the user's existing Glean SSO session. Start Vite, report its exact URL, and wait for the user to open it in their normal signed-in browser; never open or automate it. Seed a step question by re-mounting with initialMessage. Do not pass chatId to continue a thread: it makes the widget treat that chat as selected and look for a message in its own frame URL instead of using initialMessage, so nothing is sent. Each ask starts a fresh thread; renderChat exposes no imperative send. Path B uses server-side Client Chat with saveChat:false, CONTENT messages, fragment citations, one empty-output retry, and an application-owned escalation state.
 
 ## Authentication
 
