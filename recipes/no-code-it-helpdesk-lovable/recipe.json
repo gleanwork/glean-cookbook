@@ -67,5 +67,13 @@
   "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations.",
   "goDependency": false,
   "featured": false,
-  "tags": ["no-code", "it"]
+  "tags": ["no-code", "it"],
+  "content": {
+    "problem": "Half your helpdesk tickets are \"how do I reset my SSO password\" and \"how do\nI get a new laptop\" — questions your IT docs already answer. You want a\npage that answers them before a ticket gets filed, without pulling an\nengineer off other work to build it.",
+    "takeItFurther": [
+      "Scope the `CHAT` token even further if your Glean plan supports per-collection tokens, so this tool can only ever answer from IT content.",
+      "Compare this to [`no-code-pto-lookup-replit`](/cookbook/no-code-pto-lookup-replit) — same Chat API call, same \"browser never holds the token\" constraint, different no-code tool and persona.",
+      "Once your team outgrows the no-code version, [`company-answers`](/cookbook/company-answers) shows the same pattern as a hand-written, version-controlled app."
+    ]
+  }
 }

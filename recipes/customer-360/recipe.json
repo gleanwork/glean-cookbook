@@ -234,5 +234,13 @@
   "llmContext": "Use Platform Search for tiles, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. Client Chat answers are CONTENT messages from GLEAN_AI; citations are fragment.citation.sourceDocument. Set saveChat:false for verification and keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME and leave owner, ARR, seats, renewal date, and risk blank unless retrieved documents support them. Use GLEAN_SERVER_URL directly.",
   "goDependency": false,
   "featured": false,
-  "tags": ["dual-implementation", "sales", "platform-api"]
+  "tags": ["dual-implementation", "sales", "platform-api"],
+  "content": {
+    "problem": "Account executives jump between CRM notes, renewal docs, and security\npackets to prep a single customer conversation. This puts those sources on\none page per account — KPI header, parallel search tiles, journey summary,\nand one-click saved prompts — so the next call needs one tab, not nine.\n\nEverything on the page comes from what your instance already knows about\nthat account. Nothing is hardcoded, which also means a field stays blank\nwhen no source supports it rather than showing a number nobody can trace.\n\nThis recipe builds the page two ways: Platform Search plus Client Chat for an\nopen-ended dashboard, or Agents `createRun` for a prescriptive QBR-ready brief.",
+    "takeItFurther": [
+      "Add a portfolio dashboard across a rep's whole book of business, with health and renewal countdown tiles per account.",
+      "Schedule a weekly headless job that re-runs the account's queries, diffs against the last run, and posts only what changed to Slack.",
+      "Wire push-to-CRM / push-to-Slack actions from the journey panel once you have a governed custom tool."
+    ]
+  }
 }

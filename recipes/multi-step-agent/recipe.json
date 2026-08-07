@@ -144,5 +144,13 @@
   "llmContext": "Run agents with glean.client.agents.run(agent_id, messages) using Message and MessageTextBlock. Expose a local demo tool through public HTTPS and set the OpenAPI server URL to that origin with route paths aligned. Register tools manually in the admin console. Glean-User-Email supports an authorization allow-list only after the request is authenticated as coming from Glean; the sample server is demo-only and must not front a real write action.",
   "goDependency": false,
   "featured": true,
-  "tags": ["agents", "governance"]
+  "tags": ["agents", "governance"],
+  "content": {
+    "problem": "A chatbot that only answers questions is half an agent. Attach a governed\nTool and it can act — file a ticket, update a record — but only for people\nwho are actually allowed to, with a graceful fallback for everyone else\ninstead of a hard failure.",
+    "takeItFurther": [
+      "Add a second governed tool (e.g., escalate to PagerDuty) and let the agent choose between them based on severity.",
+      "Switch to `run_stream()` and parse the SSE text yourself for a live-updating UI.",
+      "Combine with [permissions-aware-retrieval](/cookbook/permissions-aware-retrieval)'s retrieval pattern if you want the agent's grounding to come from your own index instead of Glean's default retrieval."
+    ]
+  }
 }

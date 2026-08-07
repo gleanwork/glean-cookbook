@@ -202,5 +202,13 @@
   "goDependency": false,
   "featured": true,
   "tags": ["starter", "dual-implementation"],
-  "lastVerified": "2026-08-02"
+  "lastVerified": "2026-08-02",
+  "content": {
+    "problem": "Every team has the same first Glean app: a single page where anyone can ask\na company question and get a cited, permission-aware answer. There are two\nequally valid ways to build it — this recipe builds both, side by side, so\nyou can pick the trade-off that fits your app.",
+    "takeItFurther": [
+      "Swap in a specific agent by passing its `agentId` — to the chat component for Path A, or in the `chat.create` request for Path B.",
+      "Stream responses instead of waiting for the full answer (both the Web SDK and the Chat API support streaming).",
+      "Add follow-up prompt suggestions from the Chat API response's `followUpPrompts`."
+    ]
+  }
 }
