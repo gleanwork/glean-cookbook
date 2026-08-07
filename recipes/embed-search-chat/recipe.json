@@ -93,5 +93,14 @@
   "goDependency": false,
   "featured": true,
   "tags": ["embed", "web-sdk"],
-  "lastVerified": "2026-08-02"
+  "lastVerified": "2026-08-02",
+  "content": {
+    "problem": "Your team lives in an internal tool and context-switches to find answers.\nInstead of sending them elsewhere, bring Glean's answers into the app they\nalready use — with permissions enforced per user, automatically.",
+    "takeItFurther": [
+      "Hand off context between search and chat so a search result opens a grounded conversation ([separate pages for chat and search](/libraries/web-sdk/components/chat)).",
+      "Scope chat to a specific agent by passing its `agentId` to the chat component.",
+      "Go tokenless for guests with the Web SDK's guest auth provider for public-facing deployments.",
+      "Add the [Modal Search](/libraries/web-sdk/components/modal-search) or [Sidebar](/libraries/web-sdk/components/sidebar) variants for search anywhere in the app."
+    ]
+  }
 }

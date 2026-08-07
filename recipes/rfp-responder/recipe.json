@@ -170,5 +170,31 @@
       "language": "typescript",
       "description": "Parse + dedup -> batched Chat calls -> review grid with evidence classification -> approval gate -> structure-preserving export"
     }
-  ]
+  ],
+  "content": {
+    "problem": "A security questionnaire arrives with 200 rows. The answers all exist somewhere —\nin last quarter's SOC 2 report, in a policy doc, in the response you sent a\ndifferent customer in March. Someone spends a week finding them again.\n\nEveryone has seen an RFP bot that drafts those answers. The hard part isn't\ndrafting. It's what happens on the rows where the evidence isn't there, because a\nfluent, confident, wrong answer about your own security controls doesn't get\ncaught in review — it gets pasted into a customer's document over your signature.\n\nSo this recipe is built around the failure contract rather than the happy path.\nOnly permitted, approved evidence enters the prompt. Every claim keeps its\ncitation. Missing evidence stays unanswered. A person approves before anything\nleaves.",
+    "takeItFurther": [
+      "Add an xlsx and docx reader so real questionnaires can be uploaded directly — the parser here reads CSV to keep the interesting logic legible.",
+      "Write answers back into the source document with a custom tool instead of exporting, keeping the confirm step and the approval log.",
+      "Give the answer library its own access control before sharing it across a team. It's a cache of retrieved content, so it can leak across the permission boundary the rest of the app respects.",
+      "Route \"needs SME\" rows to their owners automatically, and track which ones came back — the assignment field here is deliberately inert.",
+      "Combine with [permissions-aware retrieval](/cookbook/permissions-aware-retrieval) to see the same refusal property in a smaller, single-question app."
+    ],
+    "guardrails": [
+      {
+        "title": "Merge only exact duplicates",
+        "rule": "Similarity may rank possible duplicates for review, but must never merge security controls automatically."
+      },
+      {
+        "title": "Topicality is not approval",
+        "rule": "A source must be both relevant and explicitly approved for customer-facing use before it can support a draft."
+      }
+    ],
+    "limitations": [
+      {
+        "title": "Single-user permission boundary",
+        "description": "The app runs as the credential owner. Multi-user deployment requires per-user authentication and authorization."
+      }
+    ]
+  }
 }

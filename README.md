@@ -68,7 +68,7 @@ registry.json   generated manifest — one entry per recipe
 plugin/         source for the cookbook plugin
 build/          the plugin's emitted content, per host
 brand/          Glean styling assets shared by the recipe demos
-schemas/        recipe.schema.json, generated from developers.glean.com
+schemas/        canonical recipe.schema.json consumed by every downstream adapter
 ```
 
 ## Contributing

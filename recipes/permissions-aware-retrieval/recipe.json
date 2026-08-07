@@ -202,5 +202,13 @@
   "llmContext": "Use Platform Search glean.search.query with query, page_size, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Results expose title, url, and snippets as strings. The caller's OAuth credential is the permission boundary; send no impersonation header. Pass only retrieved, ACL-filtered content to the model, include source links, and refuse to answer when retrieval is empty.",
   "goDependency": false,
   "featured": true,
-  "tags": ["rag", "retrieval", "differentiator"]
+  "tags": ["rag", "retrieval", "differentiator"],
+  "content": {
+    "problem": "Grounding your own LLM app in company content — the pattern usually called\nRAG — normally means standing up a vector DB, mirroring every source system's\nACLs into it, and keeping that mirror in sync forever. Get any of that wrong\nand you leak documents. Glean is already the permission-aware index of your\ncompany's content, so use its Platform API as the retrieval layer and skip all\nthree problems.",
+    "takeItFurther": [
+      "Add a re-ranking pass over snippets before they reach the LLM for higher-precision citations.",
+      "Cache retrieval results per session to cut latency on follow-up questions in the same conversation.",
+      "Swap in [Glean Chat](/cookbook/company-answers) instead of a raw LLM call if you want Glean to also own the generation step."
+    ]
+  }
 }

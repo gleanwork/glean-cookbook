@@ -224,5 +224,13 @@
         }
       ]
     }
-  ]
+  ],
+  "content": {
+    "problem": "New hires land on day one with a dozen tasks spread across HR,\nIT, and their team — and no single place to see what's done, what's left, and\nwhere to get help. The Onboarding Hub solves that: a gamified checklist with\nprogress tracking, milestone badges, and contextual Glean chat on every step.\n\nThis recipe builds the hub two ways so you can pick the trade-off that fits\nyour portal — Web SDK for fastest SSO integration, Client Chat when you\nneed full UI control.",
+    "takeItFurther": [
+      "Wire real HRIS completion events instead of localStorage toggles.",
+      "Add a manager view that shows onboarding progress across the team.",
+      "Scope chat to onboarding-only documents, so a first-week question cannot wander into unrelated content."
+    ]
+  }
 }
