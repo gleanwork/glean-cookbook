@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.1](https://github.com/gleanwork/glean-cookbook/compare/v0.5.0...v0.5.1) (2026-08-08)
+
+### Bug Fixes
+
+* isolate live recipe verifiers ([#24](https://github.com/gleanwork/glean-cookbook/issues/24)) ([c437793](https://github.com/gleanwork/glean-cookbook/commit/c437793c8c31fb8c1f994229939ecafbb298246f))
+
 ## [0.5.0](https://github.com/gleanwork/glean-cookbook/compare/v0.4.0...v0.5.0) (2026-08-07)
 
 ### Features
