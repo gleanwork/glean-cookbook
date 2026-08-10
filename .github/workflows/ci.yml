@@ -44,10 +44,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm --prefix recipes/incident-copilot ci
+      - run: npm --prefix recipes/oncall-copilot ci
       - run: npm --prefix recipes/onboarding-hub/platform-chat ci
       - run: npm --prefix recipes/rfp-responder ci
-      - run: PORT=3211 npm --prefix recipes/incident-copilot run verify:fixture
+      - run: PORT=3211 npm --prefix recipes/oncall-copilot run verify:fixture
       - run: npm --prefix recipes/onboarding-hub/platform-chat run verify:context
       - run: PORT=3212 npm --prefix recipes/rfp-responder run verify:fixture
 

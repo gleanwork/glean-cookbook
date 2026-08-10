@@ -1,4 +1,4 @@
-# Incident Copilot — spec lock
+# On-call Copilot — spec lock
 
 Triage an alert using the reader's service catalog, runbooks, and incident history. Propose only
 pre-registered actions and require explicit human approval before execution.
