@@ -22,12 +22,13 @@ Expected input: conversational `messages` with a USER text block (not a form
 `input` object). A form-triggered agent rejects that with
 `invalid user input fields: missing input for required 1 fields`.
 
-To use a form-triggered agent, look up the field names it declares:
+To use a form-triggered agent, list the fields it declares with
+`glean.agents.getSchemas` (`GET /api/agents/{agent_id}/schemas`):
 
-```bash
-curl "$GLEAN_SERVER_URL/rest/api/v1/agents/$GLEAN_AGENT_ID/schemas" \
-  -H "Authorization: Bearer $GLEAN_API_TOKEN" \
-  -H 'X-Glean-Include-Experimental: true'
+```ts
+const schemas = await glean.agents.getSchemas(agentId);
+console.log(Object.keys(schemas.input_schema));
+// ['Account Name', 'Company LinkedIn', 'Company Website']
 ```
 
 Then pass those exact names in `server.ts` — they are the agent's own labels,

@@ -183,8 +183,8 @@ async function runAgent(question: string): Promise<{
       throw new Error(
         `Agent ${agentId} is form-triggered: it declares required input ` +
           'fields, so it rejects the conversational messages run this recipe ' +
-          'sends. List its field names with GET /rest/api/v1/agents/' +
-          `${agentId}/schemas and pass them as an input object — see the README.`,
+          'sends. List its field names with glean.agents.getSchemas and pass ' +
+          'them as an input object — see the README.',
       );
     }
     throw error;
