@@ -73,6 +73,21 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  const publicAsset =
+    req.method === 'GET' &&
+    (req.url === '/glean-cookbook.css' || req.url === '/glean-logomark.svg')
+      ? req.url.slice(1)
+      : null;
+  if (publicAsset) {
+    res.writeHead(200, {
+      'Content-Type': publicAsset.endsWith('.css')
+        ? 'text/css; charset=utf-8'
+        : 'image/svg+xml',
+    });
+    res.end(fs.readFileSync(path.join(publicDir, publicAsset)));
+    return;
+  }
+
   if (req.method === 'POST' && req.url === '/api/ask') {
     try {
       const body = await readJsonBody(req);

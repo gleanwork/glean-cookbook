@@ -8,12 +8,73 @@
     <style>
       /* Recipe-specific only. Everything else comes from the shared stylesheet. */
       h1 {
-        font-size: 18px;
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
         letter-spacing: -0.01em;
-        margin: 0 0 4px;
+      }
+      header .subtitle {
+        margin-left: auto;
+        max-width: 720px;
+        text-align: right;
+      }
+      .incident-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+      .incident-hero h2 {
+        margin: 0;
+        font-size: clamp(22px, 3vw, 30px);
+        letter-spacing: -0.035em;
+      }
+      .incident-hero p:not(.eyebrow) {
+        max-width: 700px;
+        margin: 8px 0 0;
+        color: var(--gdt-text-secondary);
+        font-size: 13px;
+      }
+      .hero-status {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 11px;
+        border: 1px solid var(--gdt-border-light);
+        border-radius: 999px;
+        background: #fff;
+        color: var(--gdt-text-secondary);
+        font-size: 12px;
+      }
+      .hero-status::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--gdt-success);
+        content: '';
+        box-shadow: 0 0 0 4px var(--gdt-success-bg);
+      }
+      .trigger-card {
+        padding: 18px 20px;
+      }
+      .trigger-row {
+        display: grid;
+        grid-template-columns: minmax(240px, 320px) 1fr;
+        gap: 14px;
+        align-items: end;
+      }
+      .trigger-label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--gdt-text-secondary);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
       }
       .split {
-        grid-template-columns: 320px 1fr;
+        grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
         gap: 18px;
         align-items: start;
       }
@@ -75,23 +136,78 @@
         font-size: 12px;
         color: var(--gdt-text-secondary);
       }
+      #detail {
+        display: grid;
+        gap: 14px;
+      }
+      #detail .card {
+        box-shadow: none;
+      }
+      #queue > .muted {
+        padding: 22px 12px;
+        border: 1px dashed var(--gdt-border-dark);
+        border-radius: 12px;
+        background: var(--cookbook-card-muted);
+        text-align: center;
+      }
+      @media (max-width: 900px) {
+        header .subtitle {
+          display: none;
+        }
+        .incident-hero {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .trigger-row,
+        .split {
+          grid-template-columns: 1fr;
+        }
+        #orchestrator {
+          width: 100% !important;
+        }
+      }
     </style>
   </head>
   <body>
     <header>
-      <h1>Incident copilot</h1>
+      <img class="mark" src="/glean-logomark.svg" alt="" />
+      <div class="brand">
+        <h1>Incident Copilot</h1>
+        <div class="brand-copy">
+          Evidence-led response with a human approval gate
+        </div>
+      </div>
       <div class="subtitle" id="banner"></div>
     </header>
     <main class="layout">
-      <section class="card">
-        <h2 class="section-label">Fire an alarm</h2>
-        <div class="actions">
-          <select id="orchestrator" style="width: 300px"></select>
-          <button id="fire" class="btn-primary">
-            PagerDuty webhook → PAY-2231 (canary)
-          </button>
-          <button id="fire-novel">PAY-2232 (no precedent)</button>
-          <button id="reset">Reset</button>
+      <section class="card hero incident-hero">
+        <div>
+          <p class="eyebrow">On-call, with guardrails</p>
+          <h2>Move from alarm to an approved action.</h2>
+          <p>
+            Glean assembles the relevant incident history, runbook, and service
+            context. The copilot can recommend a registered action, but a human
+            stays in control.
+          </p>
+        </div>
+        <div class="hero-status">Monitoring PagerDuty</div>
+      </section>
+      <section class="card trigger-card">
+        <div class="trigger-row">
+          <label
+            ><span class="trigger-label">Planning mode</span
+            ><select id="orchestrator" style="width: 300px"></select
+          ></label>
+          <div>
+            <span class="trigger-label">Try an incident</span>
+            <div class="actions">
+              <button id="fire" class="btn-primary">
+                Fire canary alarm · PAY-2231
+              </button>
+              <button id="fire-novel">No-precedent alarm · PAY-2232</button>
+              <button id="reset">Reset</button>
+            </div>
+          </div>
         </div>
         <div class="muted" style="margin-top: 8px" id="filter-note"></div>
       </section>
@@ -217,6 +333,11 @@
         const data = await (await fetch('/api/incidents')).json();
         state.incidents = data.incidents;
         state.approvers = data.approvers;
+        if (
+          !state.incidents.some((incident) => incident.id === state.selected)
+        ) {
+          state.selected = state.incidents[0]?.id ?? null;
+        }
         renderQueue();
         renderDetail();
       }
