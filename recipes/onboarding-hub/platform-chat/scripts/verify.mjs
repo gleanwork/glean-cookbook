@@ -100,10 +100,7 @@ function assertCitationShape(citations) {
 }
 
 function startServer() {
-  // Prefer local tsx binary: `npx`/`npm start` under Socket Firewall can
-  // break outbound fetch from the child process.
-  const tsx = path.join(root, 'node_modules', '.bin', 'tsx');
-  const child = spawn(tsx, ['server.ts'], {
+  const child = spawn('npm', ['start'], {
     cwd: root,
     stdio: ['ignore', 'pipe', 'inherit'],
     env: {

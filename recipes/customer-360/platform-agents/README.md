@@ -19,8 +19,32 @@ agent chat.
    (`[title](url)`); the recipe also falls back to bare `https://` URLs.
 
 Expected input: conversational `messages` with a USER text block (not a form
-`input` object). If your agent is form-triggered, adapt `server.ts` to pass
-`input: { account: "<name>", question }` instead.
+`input` object). A form-triggered agent rejects that with
+`invalid user input fields: missing input for required 1 fields`.
+
+To use a form-triggered agent, list the fields it declares with
+`glean.agents.getSchemas` (`GET /api/agents/{agent_id}/schemas`):
+
+```ts
+const schemas = await glean.agents.getSchemas(agentId);
+// input_schema is JSON Schema; field labels live under properties.
+console.log(Object.keys(schemas.input_schema.properties ?? {}));
+// ['Account Name', 'Company LinkedIn', 'Company Website']
+```
+
+Then pass those exact names in `server.ts` — they are the agent's own labels,
+not the recipe's variable names:
+
+```ts
+const result = await glean.agents.createRun(
+  {
+    input: { 'Account Name': accountName() },
+    messages: [{ role: 'USER', content: [{ text: prompt, type: 'text' }] }],
+    stream: false,
+  },
+  agentId,
+);
+```
 
 ## Setup
 
