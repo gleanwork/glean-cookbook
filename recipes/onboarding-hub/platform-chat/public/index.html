@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Onboarding Hub</title>
+    <link rel="stylesheet" href="/glean-cookbook.css" />
     <style>
       :root {
         --primary: #343ced;
@@ -243,6 +244,163 @@
         display: block;
         margin: 8px 0;
         color: var(--primary);
+      }
+    </style>
+    <style>
+      body {
+        min-width: 320px;
+        background: var(--gdt-page-bg);
+        color: var(--gdt-text-primary);
+      }
+      header {
+        min-height: 64px;
+        padding: 12px 24px;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .subtitle {
+        color: var(--gdt-text-secondary);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .layout {
+        grid-template-columns: minmax(0, 1fr) minmax(380px, 430px);
+        gap: 18px;
+        width: min(1280px, calc(100% - 40px));
+        max-width: none;
+        min-height: calc(100vh - 124px);
+        margin: 20px auto 40px;
+        padding: 0;
+        align-items: stretch;
+      }
+      .card {
+        border-radius: 16px;
+        padding: 22px 24px;
+        box-shadow: var(--cookbook-shadow);
+      }
+      #checklist-panel {
+        min-height: 600px;
+        background:
+          radial-gradient(
+            circle at 0 0,
+            rgba(52, 60, 237, 0.08),
+            transparent 32%
+          ),
+          #fff;
+      }
+      .progress-row {
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--gdt-border-light);
+      }
+      #progress-ring {
+        width: 72px;
+        height: 72px;
+        background: conic-gradient(
+          var(--gdt-primary) calc(var(--progress) * 1%),
+          var(--gdt-bg-mid) 0
+        );
+      }
+      #progress-ring::after {
+        width: 54px;
+        height: 54px;
+      }
+      #pending-heading,
+      #done-heading {
+        margin-top: 20px;
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--gdt-primary);
+      }
+      .step {
+        padding: 13px 0;
+      }
+      .mark-btn {
+        background: var(--gdt-primary);
+        box-shadow: 0 5px 14px rgba(52, 60, 237, 0.18);
+      }
+      #chat-panel {
+        display: flex;
+        height: calc(100vh - 124px);
+        min-height: 600px;
+        max-height: 780px;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 0;
+      }
+      #chat-panel > h2 {
+        margin: 0;
+        padding: 17px 18px;
+        border-bottom: 1px solid var(--gdt-border-light);
+      }
+      #chat-panel > h2::before {
+        display: inline-grid;
+        width: 34px;
+        height: 34px;
+        margin-right: 10px;
+        place-items: center;
+        border-radius: 10px;
+        background: var(--gdt-primary);
+        color: white;
+        content: 'G';
+        vertical-align: middle;
+      }
+      #chat-log {
+        flex: 1;
+        height: auto;
+        min-height: 0;
+        margin: 0;
+        padding: 18px;
+        border: 0;
+        border-radius: 0;
+      }
+      #ask-form {
+        padding: 12px;
+        border-top: 1px solid var(--gdt-border-light);
+      }
+      #question {
+        min-height: 40px;
+        border-color: var(--gdt-border-dark);
+      }
+      #ask-submit {
+        min-width: 56px;
+        box-shadow: 0 5px 14px rgba(52, 60, 237, 0.2);
+      }
+      .msg {
+        max-width: 88%;
+        padding: 11px 13px;
+        line-height: 1.55;
+      }
+      .msg.user {
+        margin-left: auto;
+        background: var(--cookbook-primary-soft);
+      }
+      .msg.assistant {
+        margin-right: auto;
+        background: var(--cookbook-card-muted);
+        border: 1px solid var(--gdt-border-light);
+      }
+      .escalate {
+        margin: 0 12px 12px;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+          width: min(100% - 24px, 720px);
+        }
+        #checklist-panel {
+          min-height: 0;
+        }
+        #chat-panel {
+          order: -1;
+          height: min(680px, calc(100vh - 96px));
+          min-height: 560px;
+        }
       }
     </style>
   </head>

@@ -2,146 +2,366 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Company Answers</title>
+    <link rel="stylesheet" href="/glean-cookbook.css" />
     <style>
-      body {
-        margin: 0;
-        font-family:
-          'Inter',
-          -apple-system,
-          BlinkMacSystemFont,
-          'Segoe UI',
-          sans-serif;
-        background: #f7f8fa;
-        color: #1f2024;
+      .answers-layout {
+        grid-template-columns: minmax(0, 0.85fr) minmax(420px, 1.15fr);
+        align-items: stretch;
+        min-height: calc(100vh - 124px);
       }
-      header {
+      .welcome {
         display: flex;
+        min-height: 590px;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .welcome h1 {
+        max-width: 520px;
+        margin: 0;
+      }
+      .welcome-copy {
+        max-width: 520px;
+        margin: 10px 0 0;
+        color: var(--gdt-text-secondary);
+        line-height: 1.6;
+      }
+      .prompt-list {
+        display: grid;
+        gap: 9px;
+        margin-top: 28px;
+      }
+      .prompt {
+        display: flex;
+        width: 100%;
+        min-height: 0;
         align-items: center;
-        gap: 10px;
-        padding: 16px 24px;
-        background: #ffffff;
-        border-bottom: 1px solid #e7e8ed;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-color: var(--gdt-border-light);
+        background: var(--cookbook-card-muted);
+        color: var(--gdt-text-primary);
+        text-align: left;
       }
-      .mark {
-        width: 22px;
-        height: 22px;
-      }
-      h1 {
+      .prompt::after {
+        color: var(--gdt-primary);
+        content: '→';
         font-size: 16px;
-        margin: 0;
       }
-      main {
-        max-width: 640px;
-        margin: 32px auto;
-        padding: 0 24px;
-      }
-      form {
+      .grounding-note {
         display: flex;
-        gap: 8px;
+        gap: 9px;
+        margin-top: 28px;
+        padding-top: 18px;
+        border-top: 1px solid var(--gdt-border-light);
+        color: var(--gdt-text-secondary);
+        font-size: 12px;
+        line-height: 1.5;
       }
-      input {
-        flex: 1;
-        padding: 10px 14px;
-        border: 1px solid #c9cbd2;
-        border-radius: 8px;
-        font-size: 14px;
+      .grounding-note strong {
+        color: var(--gdt-text-primary);
       }
-      button {
-        padding: 10px 18px;
-        border: none;
-        border-radius: 8px;
-        background: #343ced;
-        color: #ffffff;
-        font-weight: 600;
-        cursor: pointer;
+      .answers-assistant {
+        height: calc(100vh - 124px);
+        min-height: 590px;
+        max-height: 780px;
       }
-      #answer {
-        margin-top: 24px;
-        padding: 20px;
-        background: #ffffff;
-        border: 1px solid #e7e8ed;
-        border-radius: 12px;
-        min-height: 48px;
+      .empty-thread {
+        display: grid;
+        height: 100%;
+        place-items: center;
+        color: var(--gdt-text-secondary);
+        text-align: center;
+      }
+      .empty-thread span {
+        display: grid;
+        width: 44px;
+        height: 44px;
+        margin: 0 auto 12px;
+        place-items: center;
+        border-radius: 14px;
+        background: var(--cookbook-primary-soft);
+        color: var(--gdt-primary);
+        font-size: 20px;
+      }
+      .message {
+        display: flex;
+        gap: 9px;
+        margin-bottom: 18px;
+      }
+      .message-avatar {
+        display: grid;
+        width: 26px;
+        height: 26px;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 9px;
+        background: var(--gdt-primary);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .message.user {
+        justify-content: flex-end;
+      }
+      .message.user .message-avatar {
+        order: 2;
+        background: var(--gdt-bg-mid);
+        color: var(--gdt-text-secondary);
+      }
+      .message-body {
+        min-width: 0;
+        max-width: calc(100% - 36px);
+      }
+      .message-label {
+        margin-bottom: 5px;
+        color: var(--cookbook-text-muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .message.user .message-label {
+        text-align: right;
+      }
+      .message-content {
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
         white-space: pre-wrap;
       }
-      #citations {
-        margin-top: 12px;
-        font-size: 13px;
+      .message.user .message-content {
+        padding: 10px 12px;
+        border-radius: 12px 4px 12px 12px;
+        background: var(--cookbook-primary-soft);
       }
-      #citations a {
-        color: #343ced;
+      .citation-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 12px;
+      }
+      .citation-chip {
+        display: inline-flex;
+        max-width: 100%;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 9px;
+        border: 1px solid var(--gdt-border-light);
+        border-radius: 999px;
+        background: var(--cookbook-card-muted);
+        color: var(--gdt-primary);
+        font-size: 11px;
+        font-weight: 650;
+        text-decoration: none;
+      }
+      .error-message {
+        padding: 11px 13px;
+        border-radius: 10px;
+        background: var(--gdt-danger-bg);
+        color: var(--gdt-danger-fg);
+      }
+      .loading-dot::after {
+        content: '…';
+        animation: pulse 1.2s infinite;
+      }
+      @keyframes pulse {
+        50% {
+          opacity: 0.35;
+        }
+      }
+      @media (max-width: 900px) {
+        .answers-layout {
+          grid-template-columns: 1fr;
+        }
+        .welcome {
+          min-height: 0;
+        }
+        .answers-assistant {
+          order: -1;
+          height: min(680px, calc(100vh - 96px));
+          min-height: 560px;
+        }
       }
     </style>
   </head>
   <body>
     <header>
-      <svg
-        class="mark"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 32 32"
-        width="22"
-        height="22"
-        role="img"
-        aria-label="Glean"
-      >
-        <title>Glean</title>
-        <path
-          d="M24.3006 2.95427L20.7656 0.199951L17.9028 3.99527C13.5653 1.93495 8.23019 3.08439 5.19394 7.00983C1.65888 11.5642 2.483 18.1138 7.03738 21.6489C8.77238 22.9935 10.7893 23.7092 12.8279 23.8177C16.1461 24.0128 19.5077 22.6248 21.6765 19.8055C24.7344 15.88 24.5175 10.4148 21.4596 6.72789L24.3006 2.95427ZM18.1197 17.0512C16.1028 19.632 12.3725 20.1091 9.77001 18.0922C7.18919 16.0752 6.71207 12.3233 8.72901 9.74246C9.70494 8.48458 11.1146 7.68214 12.6761 7.48696C13.0448 7.44358 13.4135 7.4219 13.7822 7.44358C14.975 7.50865 16.1244 7.94239 17.0787 8.67977C19.6595 10.7184 20.1366 14.4703 18.1197 17.0512Z"
-          fill="#4718F2"
-        ></path>
-        <path
-          d="M24.5176 21.6922C23.932 22.4513 23.2814 23.1236 22.5657 23.7525C21.8717 24.3381 21.1127 24.8803 20.3102 25.3357C19.5295 25.7695 18.6837 26.1382 17.8378 26.4201C16.992 26.702 16.1028 26.8972 15.2137 27.0057C14.3245 27.1141 13.4353 27.1575 12.5244 27.0924C11.6135 27.0273 10.7243 26.8755 9.85684 26.6587L9.66165 27.3743L8.77246 30.9962C9.90021 31.2998 11.0497 31.4733 12.2208 31.56C12.2642 31.56 12.3292 31.56 12.3726 31.56C13.5003 31.6251 14.6498 31.5817 15.7558 31.4516C16.927 31.2998 18.0981 31.0395 19.2258 30.6708C20.3536 30.3022 21.4597 29.825 22.5007 29.2395C23.5634 28.6539 24.561 27.9382 25.4935 27.1575C26.4478 26.355 27.3153 25.4442 28.0744 24.4465C28.1828 24.3164 28.2695 24.1646 28.378 24.0128L24.7779 21.3452C24.6694 21.4537 24.6044 21.5838 24.5176 21.6922Z"
-          fill="#4718F2"
-        ></path>
-      </svg>
-      <h1>Company Answers</h1>
+      <img class="mark" src="/glean-logomark.svg" alt="" />
+      <div class="brand">
+        <div class="brand-title">Company Answers</div>
+        <div class="brand-copy">
+          Permission-aware answers from your company knowledge
+        </div>
+      </div>
     </header>
-    <main>
-      <form id="ask-form">
-        <input
-          id="question"
-          type="text"
-          placeholder="What's our PTO policy?"
-          autocomplete="off"
-        />
-        <button type="submit">Ask</button>
-      </form>
-      <div id="answer"></div>
-      <div id="citations"></div>
+    <main class="layout answers-layout">
+      <section class="card hero welcome">
+        <div>
+          <p class="eyebrow">Your knowledge, ready to ask</p>
+          <h1>Get a clear answer without hunting through tabs.</h1>
+          <p class="welcome-copy">
+            Ask in plain language. Company Answers finds relevant internal
+            sources, synthesizes what they say, and keeps the evidence one click
+            away.
+          </p>
+          <div class="prompt-list" aria-label="Suggested questions">
+            <button class="prompt" type="button">What’s our PTO policy?</button>
+            <button class="prompt" type="button">
+              How do I request software access?
+            </button>
+            <button class="prompt" type="button">
+              Summarize our remote-work guidelines.
+            </button>
+          </div>
+        </div>
+        <div class="grounding-note">
+          <strong>Grounded by Glean</strong>
+          <span
+            >Answers respect your existing permissions and link back to their
+            sources.</span
+          >
+        </div>
+      </section>
+
+      <section
+        class="card assistant-shell answers-assistant"
+        aria-label="Company Answers chat"
+      >
+        <div class="assistant-header">
+          <div class="assistant-avatar">G</div>
+          <div>
+            <h2>Ask Company Answers</h2>
+            <p>Cited answers from the content you can access</p>
+          </div>
+        </div>
+        <div id="thread" class="assistant-thread" aria-live="polite">
+          <div id="empty-thread" class="empty-thread">
+            <div>
+              <span>✦</span>Ask a question to start a grounded conversation.
+            </div>
+          </div>
+        </div>
+        <div class="assistant-composer">
+          <form id="ask-form">
+            <input
+              id="question"
+              type="text"
+              placeholder="Ask about your company…"
+              autocomplete="off"
+              aria-label="Question"
+            />
+            <button class="btn-primary" type="submit">Ask</button>
+          </form>
+        </div>
+      </section>
     </main>
     <script type="module">
       const form = document.getElementById('ask-form');
-      const answerEl = document.getElementById('answer');
-      const citationsEl = document.getElementById('citations');
+      const input = document.getElementById('question');
+      const thread = document.getElementById('thread');
+      const empty = document.getElementById('empty-thread');
+      const submit = form.querySelector('button');
 
-      form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const question = document.getElementById('question').value.trim();
-        if (!question) return;
-
-        answerEl.textContent = 'Asking Glean…';
-        citationsEl.innerHTML = '';
-
-        const response = await fetch('/api/ask', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question }),
-        });
-        const data = await response.json();
-
-        if (data.error) {
-          answerEl.textContent = `Error: ${data.error}`;
-          return;
+      const safeUrl = (value) => {
+        try {
+          const url = new URL(value);
+          return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+        } catch {
+          return null;
         }
+      };
 
-        answerEl.textContent = data.answer || '(no answer)';
-        citationsEl.innerHTML = data.citations
-          .map(
-            (doc) =>
-              `<div><a href="${doc.url}" target="_blank" rel="noreferrer">${doc.title}</a></div>`,
-          )
-          .join('');
+      function message(role, text, citations = [], error = false) {
+        empty?.remove();
+        const row = document.createElement('div');
+        row.className = `message ${role}`;
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        avatar.textContent = role === 'user' ? 'Y' : 'G';
+        const body = document.createElement('div');
+        body.className = 'message-body';
+        const label = document.createElement('div');
+        label.className = 'message-label';
+        label.textContent = role === 'user' ? 'You' : 'Company Answers';
+        const content = document.createElement('div');
+        content.className = `message-content${error ? ' error-message' : ''}`;
+        content.textContent = text;
+        body.append(label, content);
+        if (citations.length) {
+          const list = document.createElement('div');
+          list.className = 'citation-list';
+          citations.forEach((citation, index) => {
+            const url = safeUrl(citation.url);
+            if (!url) return;
+            const link = document.createElement('a');
+            link.className = 'citation-chip';
+            link.href = url;
+            link.target = '_blank';
+            link.rel = 'noreferrer noopener';
+            link.textContent = `${index + 1} · ${citation.title || 'Source'}`;
+            list.append(link);
+          });
+          body.append(list);
+        }
+        row.append(avatar, body);
+        thread.append(row);
+        thread.scrollTop = thread.scrollHeight;
+        return { row, content };
+      }
+
+      async function ask(question) {
+        message('user', question);
+        const pending = message(
+          'assistant',
+          'Searching your company knowledge',
+        );
+        pending.content.classList.add('loading-dot');
+        submit.disabled = true;
+        input.disabled = true;
+        try {
+          const response = await fetch('/api/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question }),
+          });
+          const data = await response.json();
+          if (!response.ok || data.error)
+            throw new Error(data.error || 'Could not get an answer.');
+          pending.row.remove();
+          message(
+            'assistant',
+            data.answer || 'Glean returned no answer.',
+            data.citations || [],
+          );
+        } catch (error) {
+          pending.row.remove();
+          message(
+            'assistant',
+            `${error.message} Try again in a moment.`,
+            [],
+            true,
+          );
+        } finally {
+          submit.disabled = false;
+          input.disabled = false;
+          input.focus();
+        }
+      }
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const question = input.value.trim();
+        if (!question) return;
+        input.value = '';
+        ask(question);
+      });
+      document.querySelectorAll('.prompt').forEach((button) => {
+        button.addEventListener('click', () => {
+          input.value = button.textContent.trim();
+          form.requestSubmit();
+        });
       });
     </script>
   </body>

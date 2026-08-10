@@ -8,9 +8,102 @@
     <style>
       /* Recipe-specific only. Everything else comes from the shared stylesheet. */
       h1 {
-        font-size: 19px;
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
         letter-spacing: -0.01em;
-        margin: 0 0 4px;
+      }
+      header .subtitle {
+        margin-left: auto;
+        max-width: 700px;
+        text-align: right;
+      }
+      .rfp-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+      .rfp-hero h2 {
+        margin: 0;
+        max-width: 760px;
+        font-size: clamp(22px, 3vw, 30px);
+        letter-spacing: -0.035em;
+      }
+      .rfp-hero p:not(.eyebrow) {
+        max-width: 720px;
+        margin: 8px 0 0;
+        color: var(--gdt-text-secondary);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .workflow {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 7px;
+        color: var(--gdt-text-secondary);
+        font-size: 11px;
+      }
+      .workflow span {
+        display: grid;
+        width: 26px;
+        height: 26px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--cookbook-primary-soft);
+        color: var(--gdt-primary);
+        font-weight: 750;
+      }
+      .load-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+        gap: 18px;
+      }
+      .dropzone {
+        display: grid;
+        min-height: 200px;
+        place-items: center;
+        padding: 28px;
+        border: 1.5px dashed var(--gdt-border-dark);
+        border-radius: 14px;
+        background: var(--cookbook-card-muted);
+        text-align: center;
+        cursor: pointer;
+      }
+      .dropzone:hover {
+        border-color: var(--gdt-primary);
+        background: var(--cookbook-primary-soft);
+      }
+      .upload-icon {
+        display: grid;
+        width: 44px;
+        height: 44px;
+        margin: 0 auto 10px;
+        place-items: center;
+        border-radius: 14px;
+        background: var(--cookbook-primary-soft);
+        color: var(--gdt-primary);
+        font-size: 20px;
+      }
+      .dropzone strong {
+        display: block;
+      }
+      .dropzone span {
+        color: var(--gdt-text-secondary);
+        font-size: 12px;
+      }
+      .alternate-load {
+        padding: 18px;
+        border: 1px solid var(--gdt-border-light);
+        border-radius: 14px;
+        background: #fff;
+      }
+      .alternate-load h3 {
+        margin-bottom: 6px;
+      }
+      .alternate-load details {
+        margin: 14px 0;
       }
       /* Evidence strength and per-row status are this recipe's vocabulary, but
          they take shared tokens so the same states read the same way elsewhere. */
@@ -102,41 +195,86 @@
         font-size: 0.85rem;
         margin: 0.5rem 0;
       }
+      #review-section {
+        overflow-x: auto;
+      }
+      @media (max-width: 900px) {
+        header .subtitle {
+          display: none;
+        }
+        .rfp-hero {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .load-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
     <header>
-      <h1>RFP &amp; questionnaire responder</h1>
+      <img class="mark" src="/glean-logomark.svg" alt="" />
+      <div class="brand">
+        <h1>RFP Responder</h1>
+        <div class="brand-copy">Grounded drafts with human approval</div>
+      </div>
       <div class="subtitle">
-        Grounded, cited draft answers with a human approval gate. Runs as you —
-        no impersonation, so evidence you cannot see never reaches the
-        customer's document.
+        Runs as you — evidence you cannot access never reaches the customer’s
+        document.
       </div>
     </header>
     <main class="layout">
+      <section class="card hero rfp-hero">
+        <div>
+          <p class="eyebrow">From questionnaire to cited first draft</p>
+          <h2>
+            Answer the repetitive questions. Keep humans on the consequential
+            ones.
+          </h2>
+          <p>
+            Upload a CSV, let Glean ground each response in approved company
+            knowledge, then review every answer before export.
+          </p>
+        </div>
+        <div class="workflow" aria-label="Workflow">
+          <span>1</span> Upload <b>→</b><span>2</span> Draft <b>→</b
+          ><span>3</span> Review
+        </div>
+      </section>
       <section id="load-section" class="card">
         <h2 class="section-label">1 · Load questionnaire</h2>
         <div id="mapping-note" class="note hidden"></div>
-        <p class="hint">
-          Use your own questionnaire — the argument this app makes is about
-          <em>your</em> evidence, and answers drafted from the bundled sample
-          are answers about a company that does not exist.
-        </p>
-        <label class="file">
-          <input id="file" type="file" accept=".csv,text/csv" />
-        </label>
-        <details>
-          <summary>or paste CSV</summary>
-          <textarea
-            id="paste"
-            rows="6"
-            placeholder="tab,question_id,question&#10;Security,SEC-01,Do you hold a current SOC 2 Type II attestation?"
-          ></textarea>
-          <button id="load-paste" class="btn-primary">Use pasted CSV</button>
-        </details>
-        <button id="load" class="btn-secondary">
-          Or try the bundled sample
-        </button>
+        <div class="load-grid">
+          <label class="dropzone"
+            ><div>
+              <div class="upload-icon">↑</div>
+              <strong>Choose a questionnaire</strong
+              ><span>Upload a CSV with question IDs and questions</span
+              ><input id="file" type="file" accept=".csv,text/csv" /></div
+          ></label>
+          <div class="alternate-load">
+            <h3>Don’t have one handy?</h3>
+            <p class="hint">
+              Use the sample to see parsing, grounded drafting, evidence
+              strength, and approval.
+            </p>
+            <button id="load" class="btn-primary">
+              Try the bundled sample
+            </button>
+            <details>
+              <summary>Or paste CSV</summary>
+              <textarea
+                id="paste"
+                rows="6"
+                placeholder="tab,question_id,question&#10;Security,SEC-01,Do you hold a current SOC 2 Type II attestation?"
+              ></textarea
+              ><button id="load-paste" class="btn-secondary">
+                Use pasted CSV
+              </button>
+            </details>
+          </div>
+        </div>
       </section>
 
       <section id="parse-section" class="card hidden">

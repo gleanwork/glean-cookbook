@@ -13,8 +13,8 @@ needed). The backend is the only thing that talks to Glean — the browser
 never sees a Glean API token.
 
 1. Scaffold an Express server with one route:
-   - GET  /          → serves a static index.html: a text input, a submit
-     button, an answer area, and a "Sources" list below the answer.
+   - GET  /          → serves a polished assistant workspace described in
+     step 4 below.
    - POST /api/ask    → body `{ "question": string }`, calls Glean, returns
      `{ "answer": string, "citations": [{ "title": string, "url": string }] }`.
 
@@ -75,14 +75,20 @@ never sees a Glean API token.
      a live agentic response). Dedupe by `url` since the same source is
      commonly cited by more than one fragment.
 
-4. Frontend: on submit, POST the question to `/api/ask`, render `answer`
-   as text, and render each citation as a link using its `title` and
-   `url`. Show a loading state while waiting. Show the raw error message
-   if the request fails (this is an internal tool — don't hide errors
-   from me while I'm testing it).
+4. Frontend: build a real "HR Assistant" thread. On desktop, use a compact
+   two-column workspace: a short PTO/benefits intro with three suggested
+   questions on the left, and the assistant on the right. Keep the assistant,
+   composer, and latest answer above the fold. On mobile, put the assistant
+   first. Append user and assistant messages, pin the composer, auto-scroll
+   inside the thread, and render citations as compact source chips under the
+   answer. Show a visible loading message, disable duplicate submits, and show
+   an inline retryable error if the request fails.
 
-5. Style it like Glean: use `#343ced` (Glean Blue) as the primary accent —
-   the submit button, an active/focus state, or a header bar. Use this
+5. Style it like the Glean cookbook demos: light gray `#f7f8fa` page,
+   white cards with subtle `#e7e8ed` borders, 16px radii, restrained shadows,
+   Inter/system sans, strong typographic hierarchy, and `#343ced` as the
+   primary accent. Avoid a generic chatbot bubble, oversized hero, gradients
+   behind text, and a separate answer box below the form. Use this
    exact mark as the page's logo/icon instead of a generic chat icon —
    inline the SVG directly rather than approximating it:
 
