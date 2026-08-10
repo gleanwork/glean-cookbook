@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.0](https://github.com/gleanwork/glean-cookbook/compare/v0.6.0...v0.7.0) (2026-08-10)
+
+### Features
+
+* polish cookbook web recipe UIs ([#26](https://github.com/gleanwork/glean-cookbook/issues/26)) ([160b4e0](https://github.com/gleanwork/glean-cookbook/commit/160b4e0e84ea0c49f5b3f7cf53ff216d38c5e4de))
+
 ## [0.6.0](https://github.com/gleanwork/glean-cookbook/compare/v0.5.1...v0.6.0) (2026-08-10)
 
 ### Features
