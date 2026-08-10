@@ -26,14 +26,6 @@ interface Tile {
 interface AccountPayload {
   account: {
     name: string;
-    // Nullable on purpose: these are only populated when a retrieved document
-    // supports them, and a blank KPI is truthful where an assumed one is not.
-    owner: string | null;
-    arr: string | null;
-    renewalDate: string | null;
-    risk: string | null;
-    seats: string | null;
-    kpiNote: string;
   };
   tiles: Tile[];
 }
@@ -84,22 +76,6 @@ function tileQueries(account: string): Array<{
       query: `${account} security questionnaire`,
     },
   ];
-}
-
-// Only the name is known up front. Every other field stays null unless a
-// retrieved document supports it: an unsourced figure on a page about a named
-// customer is the worst output this app can produce, and a blank field is a
-// truthful one.
-function unpopulatedAccount(account: string) {
-  return {
-    name: account,
-    owner: null,
-    arr: null,
-    renewalDate: null,
-    risk: null,
-    seats: null,
-    kpiNote: 'Fields stay blank until a cited document supports them.',
-  };
 }
 
 function requireEnv(name: string): string {
@@ -246,7 +222,7 @@ async function loadAccount(): Promise<AccountPayload> {
   const tiles = await Promise.all(
     tileQueries(account).map((tile) => searchTile(glean, tile)),
   );
-  return { account: unpopulatedAccount(account), tiles };
+  return { account: { name: account }, tiles };
 }
 
 const server = http.createServer(async (req, res) => {
@@ -274,7 +250,10 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.method === 'POST' && req.url === '/api/brief') {
+  if (
+    req.method === 'POST' &&
+    (req.url === '/api/ask' || req.url === '/api/brief')
+  ) {
     try {
       const body = await readJsonBody(req);
       const question = body.question?.trim();

@@ -1,8 +1,8 @@
 # Customer 360 — Platform Search + Chat path
 
-Account page for the account you pick: KPI header, three Search tiles, journey
-summary via Client Chat, saved-prompt buttons, and drill-in chat. The app runs
-as you; there is no act-as / impersonation.
+Account workspace for the account you pick: evidence coverage, three compact
+Search sections, and an above-the-fold assistant thread powered by Client Chat.
+The app runs as you; there is no act-as / impersonation.
 
 ## Setup
 
@@ -28,5 +28,5 @@ Open http://localhost:3000.
 - Tiles: `glean.search.query` → `POST /api/search` (SDK `@gleanwork/api-client@0.18.0`)
 - Chat: server-side `POST /rest/api/v1/chat`. Parse `CONTENT` messages from
   `GLEAN_AI` and citations from `fragments[].citation.sourceDocument`.
-- Token stays server-side — browser only calls `/api/account` and `/api/chat`.
+- Token stays server-side — browser only calls `/api/account` and `/api/ask`.
 - Auth: caller credential only (`GLEAN_SERVER_URL` + `GLEAN_API_TOKEN`); no act-as.
