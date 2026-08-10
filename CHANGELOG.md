@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.8.0](https://github.com/gleanwork/glean-cookbook/compare/v0.7.0...v0.8.0) (2026-08-10)
+
+### Features
+
+* rename recipe to oncall-copilot ([#29](https://github.com/gleanwork/glean-cookbook/issues/29)) ([00db45b](https://github.com/gleanwork/glean-cookbook/commit/00db45bccd338166ee61b1a63aa55c03fb8cbb4a))
+
+### Bug Fixes
+
+* restore npm start in verifiers, correct form-agent guidance ([#28](https://github.com/gleanwork/glean-cookbook/issues/28)) ([308d93f](https://github.com/gleanwork/glean-cookbook/commit/308d93fae752f7b06b30dc0ee5da664ad0be8840))
+
 ## [0.7.0](https://github.com/gleanwork/glean-cookbook/compare/v0.6.0...v0.7.0) (2026-08-10)
 
 ### Features
