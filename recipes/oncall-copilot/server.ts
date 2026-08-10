@@ -102,8 +102,8 @@ function readBody<T>(req: http.IncomingMessage): Promise<T> {
 }
 
 /**
- * Severity/service filters, applied before anything else runs. An incident copilot
- * that wakes up for every Sev3 is an incident copilot people mute.
+ * Severity/service filters, applied before anything else runs. An on-call copilot
+ * that wakes up for every Sev3 is an on-call copilot people mute.
  */
 export function passesFilter(alarm: Alarm): boolean {
   const services = (process.env.WATCHED_SERVICES ?? 'payments-service')
@@ -341,7 +341,7 @@ const server = http.createServer(async (req, res) => {
 
 const port = Number(process.env.PORT ?? 3000);
 server.listen(port, () => {
-  console.log(`Incident copilot running at http://localhost:${port}`);
+  console.log(`On-call Copilot running at http://localhost:${port}`);
   if (process.env.GLEAN_USE_FIXTURE === 'true') {
     console.log('Fixture mode: no credentials used, no network calls made.');
   }

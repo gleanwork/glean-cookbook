@@ -1,4 +1,4 @@
-# Incident copilot
+# On-call Copilot
 
 Triage an incident from your own runbooks and past incidents, propose exactly one
 pre-registered action, and put a human in front of it.

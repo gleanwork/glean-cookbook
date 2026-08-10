@@ -1619,7 +1619,7 @@
       }
     ],
     "content": {
-      "problem": "An alarm fires at 3am. Everything the responder needs already exists — the runbook,\nthe review of the last time this happened, who owns the service, what it depends on\n— scattered across systems they now have to search one at a time, while the graphs\nget worse.\n\nThe retrieval is the easy part. What makes an incident copilot safe to point at a\nproduction service is everything that refuses: a gate that turns away the wrong\nperson, an expiry that escalates instead of quietly approving itself, an action\nregistry the planner cannot talk its way out of, and an audit entry for every\nattempt including the ones that were refused.",
+      "problem": "An alarm fires at 3am. Everything the responder needs already exists — the runbook,\nthe review of the last time this happened, who owns the service, what it depends on\n— scattered across systems they now have to search one at a time, while the graphs\nget worse.\n\nThe retrieval is the easy part. What makes an on-call copilot safe to point at a\nproduction service is everything that refuses: a gate that turns away the wrong\nperson, an expiry that escalates instead of quietly approving itself, an action\nregistry the planner cannot talk its way out of, and an audit entry for every\nattempt including the ones that were refused.",
       "takeItFurther": [
         "Persist incidents and the audit log. An audit log you can lose by restarting a process is not an audit log.",
         "Add the rest of the dashboard: response-time rollups, an expiring-soon lane, and an end-of-shift handoff summary.",
