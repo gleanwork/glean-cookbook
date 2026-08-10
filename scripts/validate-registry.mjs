@@ -32,6 +32,7 @@ const validate = ajv.compile(schema);
 
 let failed = false;
 const seenIds = new Set();
+const MAX_PREVIEW_BYTES = 200 * 1024;
 
 for (const { file, entry } of registry) {
   const label = entry?.id ?? file;
@@ -57,6 +58,42 @@ for (const { file, entry } of registry) {
     failed = true;
     console.error(`✗ ${label}: no matching recipes/${entry.id}/ directory`);
     continue;
+  }
+
+  if (entry.preview) {
+    const previewFile = path.resolve(repoRoot, entry.preview.path);
+    const expectedRoot = `${path.resolve(recipeDir, 'assets')}${path.sep}`;
+    if (!previewFile.startsWith(expectedRoot)) {
+      failed = true;
+      console.error(
+        `✗ ${label}: preview.path must stay inside recipes/${entry.id}/assets/`,
+      );
+      continue;
+    }
+    if (!fs.existsSync(previewFile) || !fs.statSync(previewFile).isFile()) {
+      failed = true;
+      console.error(
+        `✗ ${label}: preview asset does not exist: ${entry.preview.path}`,
+      );
+      continue;
+    }
+    const preview = fs.readFileSync(previewFile);
+    const isWebp =
+      preview.length >= 12 &&
+      preview.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      preview.subarray(8, 12).toString('ascii') === 'WEBP';
+    if (!isWebp) {
+      failed = true;
+      console.error(`✗ ${label}: preview asset must be a WebP file`);
+      continue;
+    }
+    if (preview.length > MAX_PREVIEW_BYTES) {
+      failed = true;
+      console.error(
+        `✗ ${label}: preview asset is ${Math.ceil(preview.length / 1024)} KB; maximum is 200 KB`,
+      );
+      continue;
+    }
   }
 
   console.log(`✓ ${label}`);

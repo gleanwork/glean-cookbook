@@ -3,6 +3,11 @@
   "title": "Answer an RFP or security questionnaire",
   "description": "Turn a customer questionnaire into grounded, cited draft answers — where every claim carries a source, unsupported rows route to a human, and nothing reaches the customer without approval.",
   "sidebarLabel": "RFP responder",
+  "preview": {
+    "path": "recipes/rfp-responder/assets/preview.webp",
+    "alt": "RFP Responder review screen with cited draft answers and approval controls",
+    "caption": "Grounded draft answers stay behind a human review gate."
+  },
   "surfaces": ["client-api"],
   "status": "showcase",
   "category": "workflow",
