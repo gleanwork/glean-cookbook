@@ -51,7 +51,7 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```
 
 4. **Verify**
-   Allow 1–3 minutes. It starts its own server, runs the demo queries against the supplied account, and asserts cited answers with blank unsupported KPI fields.
+   Allow 1–3 minutes. It starts its own server, runs the demo queries against the supplied account, and asserts cited answers plus deterministic evidence coverage.
 
    ```bash
    cd customer-360 && npm run verify

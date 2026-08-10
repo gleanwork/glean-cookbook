@@ -142,7 +142,7 @@ async function main() {
 
     for (const check of CHECKS) {
       try {
-        const response = await fetch(`${BASE_URL}/api/brief`, {
+        const response = await fetch(`${BASE_URL}/api/ask`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question: check.query }),

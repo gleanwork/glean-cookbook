@@ -18,10 +18,12 @@ Build an account page from the reader's own indexed content. The reader supplies
 - Client Chat verification sets `saveChat: false`, reads answer text from `CONTENT` messages by
   `GLEAN_AI`, and reads citations from `fragments[].citation.sourceDocument`.
 - Tokens remain server-side. There is no act-as or impersonation.
-- Owner, ARR, renewal date, risk, and seats are nullable and must never be inferred.
+- The overview shows the supplied account name and deterministic Search result counts; it never
+  invents CRM fields from loosely matching documents.
 - Empty retrieval renders an explicit empty state; empty Chat output is a failure.
+- Both paths serve the canonical shared frontend and answer browser requests at `/api/ask`.
 
 ## Verification
 
-Run the three `demoQueries` against the chosen account. Answers must be cited, unsupported KPI
-fields must remain blank, and the Agent path must fail clearly when its agent is unavailable.
+Run the three `demoQueries` against the chosen account. Answers must be cited, overview counts must
+come directly from Search results, and the Agent path must fail clearly when its agent is unavailable.

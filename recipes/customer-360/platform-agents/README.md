@@ -1,7 +1,7 @@
 # Customer 360 — Platform Agents path
 
-Same account-page UX as Path A, but journey summary, saved prompts, and follow-ups
-run through **Platform Agents** (`glean.agents.createRun` →
+Same account-workspace UX as Path A, but assistant answers and follow-ups run
+through **Platform Agents** (`glean.agents.createRun` →
 `POST /api/agents/{agent_id}/runs` with `stream: false`). The app runs as you;
 there is no act-as / impersonation.
 
