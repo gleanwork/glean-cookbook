@@ -3,6 +3,11 @@
   "title": "Company Answers: a cited Q&A page on your own content",
   "description": "The hello-world of Glean apps: one page, one input, one permission-aware cited answer — built two ways, with the Web SDK and with the Chat API.",
   "sidebarLabel": "Company Answers",
+  "preview": {
+    "path": "recipes/company-answers/assets/preview.webp",
+    "alt": "Company Answers showing a grounded response with source citations",
+    "caption": "A permission-aware answer grounded in company knowledge."
+  },
   "surfaces": ["client-api", "sdk-client", "web-sdk"],
   "status": "showcase",
   "category": "search",

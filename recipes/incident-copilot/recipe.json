@@ -3,6 +3,11 @@
   "title": "On-call copilot with a real approval gate",
   "description": "Triage an incident from your own runbooks and past incidents, propose one pre-registered action, and let a human approve it — where the gate refuses the wrong person, expiry escalates instead of auto-approving, and every attempt is audited.",
   "sidebarLabel": "Incident copilot",
+  "preview": {
+    "path": "recipes/incident-copilot/assets/preview.webp",
+    "alt": "Incident Copilot triaging an alert with evidence and an approval gate",
+    "caption": "Evidence-ranked triage with a human approval gate before action."
+  },
   "surfaces": ["platform-api", "client-api", "agents", "tools"],
   "status": "showcase",
   "category": "agent",
