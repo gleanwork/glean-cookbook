@@ -27,7 +27,8 @@ To use a form-triggered agent, list the fields it declares with
 
 ```ts
 const schemas = await glean.agents.getSchemas(agentId);
-console.log(Object.keys(schemas.input_schema));
+// input_schema is JSON Schema; field labels live under properties.
+console.log(Object.keys(schemas.input_schema.properties ?? {}));
 // ['Account Name', 'Company LinkedIn', 'Company Website']
 ```
 
