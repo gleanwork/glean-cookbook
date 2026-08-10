@@ -8,7 +8,7 @@ const root = path.resolve(import.meta.dirname, '..');
 const sharedStyleUIs = [
   'recipes/company-answers/chat-api/public/index.html',
   'recipes/company-answers/web-sdk/index.html',
-  'recipes/incident-copilot/public/index.html',
+  'recipes/oncall-copilot/public/index.html',
   'recipes/onboarding-hub/platform-chat/public/index.html',
   'recipes/onboarding-hub/web-sdk/index.html',
   'recipes/rfp-responder/public/index.html',

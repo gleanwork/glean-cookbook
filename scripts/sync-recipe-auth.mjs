@@ -17,7 +17,7 @@ const targets = [
   'recipes/company-answers/web-sdk/scripts/glean-auth.mjs',
   'recipes/customer-360/platform-agents/scripts/glean-auth.mjs',
   'recipes/customer-360/platform-search-chat/scripts/glean-auth.mjs',
-  'recipes/incident-copilot/scripts/glean-auth.mjs',
+  'recipes/oncall-copilot/scripts/glean-auth.mjs',
   'recipes/multi-step-agent/invoke-agent/scripts/glean-auth.mjs',
   'recipes/onboarding-hub/platform-chat/scripts/glean-auth.mjs',
   'recipes/onboarding-hub/web-sdk/scripts/glean-auth.mjs',

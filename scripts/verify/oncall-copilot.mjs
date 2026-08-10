@@ -1,4 +1,4 @@
-// Live verification for incident-copilot.
+// Live verification for oncall-copilot.
 //
 // Split of responsibility with the recipe's own fixture gate: that one controls both
 // sides, so it asserts exact evidence classifications against a known corpus. This
@@ -52,7 +52,7 @@ async function waitUp() {
 }
 
 export async function setup(context) {
-  const cwd = path.join(context.repoRoot, 'recipes/incident-copilot');
+  const cwd = path.join(context.repoRoot, 'recipes/oncall-copilot');
   const child = spawn('npx', ['tsx', 'server.ts'], {
     cwd,
     detached: true,
@@ -163,7 +163,7 @@ const RECIPE = JSON.parse(
   fs.readFileSync(
     path.join(
       path.dirname(fileURLToPath(import.meta.url)),
-      '../../recipes/incident-copilot/recipe.json',
+      '../../recipes/oncall-copilot/recipe.json',
     ),
     'utf8',
   ),
@@ -181,7 +181,7 @@ function scenarioFor(query) {
   const index = queries.findIndex((entry) => entry.query === query);
   if (index === -1) {
     throw new Error(
-      `"${query}" is not in recipes/incident-copilot/recipe.json demoQueries`,
+      `"${query}" is not in recipes/oncall-copilot/recipe.json demoQueries`,
     );
   }
   return SCENARIOS[index];

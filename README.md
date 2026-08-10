@@ -21,7 +21,7 @@ Cursor and Codex read their own manifests from the same repo (`.cursor-plugin/`,
 Then run a recipe, or browse them first:
 
 ```
-/cookbook:incident-copilot     # build a specific recipe
+/cookbook:oncall-copilot     # build a specific recipe
 /cookbook:browse-cookbook      # list what's available and pick one
 ```
 
@@ -41,11 +41,11 @@ the coding agent must not substitute its isolated browser for your Glean SSO ses
 | **Connect Glean MCP to your AI tools**                            | Beginner     | ~15 min           | `/cookbook:connect-mcp-hosts`           |
 | **Customer 360: an account page built from your own content**     | Intermediate | ~1 hr             | `/cookbook:customer-360`                |
 | **Embed search & chat in an internal app**                        | Beginner     | ~15 min (minimal) | `/cookbook:embed-search-chat`           |
-| **On-call copilot with a real approval gate**                     | Advanced     | ~1.5 hr           | `/cookbook:incident-copilot`            |
 | **Multi-step agent with governed tools**                          | Advanced     | ~2 hr             | `/cookbook:multi-step-agent`            |
 | **IT helpdesk deflection page — no code, on Lovable**             | Beginner     | ~45 min           | `/cookbook:no-code-it-helpdesk-lovable` |
 | **PTO & benefits lookup — no code, on Replit**                    | Beginner     | ~45 min           | `/cookbook:no-code-pto-lookup-replit`   |
 | **Onboarding Hub: a day-one checklist grounded in your own docs** | Intermediate | ~45 min           | `/cookbook:onboarding-hub`              |
+| **On-call Copilot**                                               | Advanced     | ~1.5 hr           | `/cookbook:oncall-copilot`              |
 | **Ground your own LLM app in Glean**                              | Intermediate | ~1 hr             | `/cookbook:permissions-aware-retrieval` |
 | **Answer an RFP or security questionnaire**                       | Intermediate | ~45 min           | `/cookbook:rfp-responder`               |
 

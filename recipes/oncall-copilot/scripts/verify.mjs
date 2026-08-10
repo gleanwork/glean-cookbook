@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Verify gate for incident-copilot.
+// Verify gate for oncall-copilot.
 //
 // Fixture mode (default) drives the whole flow with no credentials and no network.
 // The assertions are about governance rather than output text, because the

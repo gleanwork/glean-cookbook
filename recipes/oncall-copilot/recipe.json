@@ -1,11 +1,11 @@
 {
-  "id": "incident-copilot",
-  "title": "On-call copilot with a real approval gate",
+  "id": "oncall-copilot",
+  "title": "On-call Copilot",
   "description": "Triage an incident from your own runbooks and past incidents, propose one pre-registered action, and let a human approve it — where the gate refuses the wrong person, expiry escalates instead of auto-approving, and every attempt is audited.",
-  "sidebarLabel": "Incident copilot",
+  "sidebarLabel": "On-call Copilot",
   "preview": {
-    "path": "recipes/incident-copilot/assets/preview.webp",
-    "alt": "Incident Copilot triaging an alert with evidence and an approval gate",
+    "path": "recipes/oncall-copilot/assets/preview.webp",
+    "alt": "On-call Copilot triaging an alert with evidence and an approval gate",
     "caption": "Evidence-ranked triage with a human approval gate before action."
   },
   "surfaces": ["platform-api", "client-api", "agents", "tools"],
@@ -44,7 +44,7 @@
       {
         "kind": "oauth-with-token-fallback",
         "scopes": ["SEARCH", "CHAT"],
-        "setupCommand": "cd incident-copilot && npm run login -- --email \"<work-email>\"",
+        "setupCommand": "cd oncall-copilot && npm run login -- --email \"<work-email>\"",
         "configFile": ".env",
         "backendVariable": "GLEAN_SERVER_URL",
         "credentialVariable": "GLEAN_API_TOKEN"
@@ -56,7 +56,7 @@
       "startsOwnServer": false
     },
     "run": {
-      "command": "cd incident-copilot && npm start",
+      "command": "cd oncall-copilot && npm start",
       "url": "http://localhost:3000",
       "userBrowser": true
     }
@@ -94,29 +94,29 @@
   "steps": [
     {
       "title": "Scaffold the project",
-      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot",
+      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/oncall-copilot oncall-copilot",
       "kind": "scaffold"
     },
     {
       "title": "Install dependencies",
-      "command": "cd incident-copilot && npm install",
+      "command": "cd oncall-copilot && npm install",
       "kind": "install"
     },
     {
       "title": "Watch the governance hold, with no credentials",
-      "command": "cd incident-copilot && npm run verify:fixture",
+      "command": "cd oncall-copilot && npm run verify:fixture",
       "description": "Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited.",
       "kind": "verify-fixture"
     },
     {
       "title": "Set credentials",
-      "command": "cd incident-copilot && npm run login -- --email \"<work-email>\"",
+      "command": "cd oncall-copilot && npm run login -- --email \"<work-email>\"",
       "description": "Only for a live run. Use npm run login for direct Search + Chat, or npm run login:agent when the user selected an existing Glean agent. Set WATCHED_SERVICES to the service already supplied and GLEAN_AGENT_ID only for the agent path.",
       "kind": "authenticate"
     },
     {
       "title": "Run it",
-      "command": "cd incident-copilot && npm start",
+      "command": "cd oncall-copilot && npm start",
       "kind": "run"
     },
     {
@@ -173,7 +173,7 @@
       "category": "agent"
     }
   ],
-  "aiPrompt": "Build an on-call incident copilot following the incident-copilot recipe. Resolve the alarming service from an indexed service catalog, retrieve relevant precedents and runbooks, and classify evidence by role. Only a matching past incident may support a cause; a runbook may support a procedure. Assert no cause when no precedent matches. Gate mutating actions behind authorized human approval, expiry, a closed action registry, evidence support, and a complete audit log. Exercise unauthorized approval, expiry, unregistered action, and no-precedent paths during verification.",
+  "aiPrompt": "Build the On-call Copilot following the oncall-copilot recipe. Resolve the alarming service from an indexed service catalog, retrieve relevant precedents and runbooks, and classify evidence by role. Only a matching past incident may support a cause; a runbook may support a procedure. Assert no cause when no precedent matches. Gate mutating actions behind authorized human approval, expiry, a closed action registry, evidence support, and a complete audit log. Exercise unauthorized approval, expiry, unregistered action, and no-precedent paths during verification.",
   "llmContext": "Use Platform Search for retrieval, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. The app runs as the caller; its approval check is application policy, not impersonation. Resolve owners, on-call engineers, and escalation targets from the reader's service catalog. Only a matching past incident may support a cause; runbooks support procedures, not causes. Mutating actions require a supported cause, an authorized approver, a registered action, an unexpired proposal, and a complete audit trail. Set saveChat:false for verification and treat empty chat output as a retryable failure.",
   "goDependency": false,
   "featured": true,
@@ -187,13 +187,13 @@
   ],
   "codeAssets": [
     {
-      "repoPath": "recipes/incident-copilot",
+      "repoPath": "recipes/oncall-copilot",
       "language": "typescript",
       "description": "Webhook → service registry → retrieval fan-out → evidence classification → triage card → approval gate (authz, expiry, escalation, audit) → pre-registered actions → postmortem timeline. Both orchestrators render into one shell."
     }
   ],
   "content": {
-    "problem": "An alarm fires at 3am. Everything the responder needs already exists — the runbook,\nthe review of the last time this happened, who owns the service, what it depends on\n— scattered across systems they now have to search one at a time, while the graphs\nget worse.\n\nThe retrieval is the easy part. What makes an incident copilot safe to point at a\nproduction service is everything that refuses: a gate that turns away the wrong\nperson, an expiry that escalates instead of quietly approving itself, an action\nregistry the planner cannot talk its way out of, and an audit entry for every\nattempt including the ones that were refused.",
+    "problem": "An alarm fires at 3am. Everything the responder needs already exists — the runbook,\nthe review of the last time this happened, who owns the service, what it depends on\n— scattered across systems they now have to search one at a time, while the graphs\nget worse.\n\nThe retrieval is the easy part. What makes an on-call copilot safe to point at a\nproduction service is everything that refuses: a gate that turns away the wrong\nperson, an expiry that escalates instead of quietly approving itself, an action\nregistry the planner cannot talk its way out of, and an audit entry for every\nattempt including the ones that were refused.",
     "takeItFurther": [
       "Persist incidents and the audit log. An audit log you can lose by restarting a process is not an audit log.",
       "Add the rest of the dashboard: response-time rollups, an expiring-soon lane, and an end-of-shift handoff summary.",

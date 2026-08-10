@@ -32,7 +32,7 @@ const RECIPE_UIS = [
   'recipes/company-answers/web-sdk',
   'recipes/customer-360/platform-agents',
   'recipes/customer-360/platform-search-chat',
-  'recipes/incident-copilot',
+  'recipes/oncall-copilot',
   'recipes/onboarding-hub/platform-chat',
   'recipes/onboarding-hub/web-sdk',
   'recipes/rfp-responder',
