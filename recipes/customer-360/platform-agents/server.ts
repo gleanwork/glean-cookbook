@@ -161,18 +161,34 @@ async function runAgent(question: string): Promise<{
     `with markdown links to the documents you used. If the sources do not cover ` +
     `something, say so rather than inferring it. Question: ${question}`;
 
-  const result = await glean.agents.createRun(
-    {
-      messages: [
-        {
-          role: 'USER',
-          content: [{ text: prompt, type: 'text' }],
-        },
-      ],
-      stream: false,
-    },
-    agentId,
-  );
+  let result;
+  try {
+    result = await glean.agents.createRun(
+      {
+        messages: [
+          {
+            role: 'USER',
+            content: [{ text: prompt, type: 'text' }],
+          },
+        ],
+        stream: false,
+      },
+      agentId,
+    );
+  } catch (error) {
+    // The API reports only a field count, which gives no hint that the agent is
+    // form-triggered rather than conversational.
+    const detail = error instanceof Error ? error.message : String(error);
+    if (detail.includes('invalid user input fields')) {
+      throw new Error(
+        `Agent ${agentId} is form-triggered: it declares required input ` +
+          'fields, so it rejects the conversational messages run this recipe ' +
+          'sends. List its field names with GET /rest/api/v1/agents/' +
+          `${agentId}/schemas and pass them as an input object — see the README.`,
+      );
+    }
+    throw error;
+  }
 
   if (typeof result === 'string') {
     throw new Error(
