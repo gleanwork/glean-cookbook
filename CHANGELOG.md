@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.0](https://github.com/gleanwork/glean-cookbook/compare/v0.5.1...v0.6.0) (2026-08-10)
+
+### Features
+
+* redesign customer 360 workspace ([#25](https://github.com/gleanwork/glean-cookbook/issues/25)) ([24280f0](https://github.com/gleanwork/glean-cookbook/commit/24280f0659cfd08f291cb4548d980b26b4e95c37))
+
 ## [0.5.1](https://github.com/gleanwork/glean-cookbook/compare/v0.5.0...v0.5.1) (2026-08-08)
 
 ### Bug Fixes
