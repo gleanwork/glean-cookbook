@@ -13,8 +13,8 @@ disable-model-invocation: true
 
 Build "Call a Glean agent from an A2A client" following https://developers.glean.com/cookbook/a2a-client
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+Ask these before running commands. Ask one at a time, waiting for each answer before asking the
+next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What is the ID of the published agent to invoke?

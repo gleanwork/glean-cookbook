@@ -15,19 +15,18 @@ Build "Company Answers: a cited Q&A page on your own content" following https://
 1. **Pick a path**
    Path A (Web SDK) renders Glean's own chat UI for you — fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend — you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer.
 
-Ask which variant to build first, on its own, and wait for the answer. Then follow only that variant below, asking its questions one at a time.
+{{> choose-variant}}
 
 ### Web SDK
 
 Web SDK variant — renderChat in a page
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+{{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What topic do you know exists in your Glean content?
 
-Cookie SSO requires the user's normal signed-in browser. Never open or automate the app yourself.
+{{> browser-cookie-setup}}
 
 1. **Scaffold the project**
 
@@ -63,13 +62,12 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
 
 Chat API variant — one chat.create call, citations rendered
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+{{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What topic do you know exists in your Glean content?
 
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+{{> oauth-setup}}
 
 1. **Scaffold the project**
 

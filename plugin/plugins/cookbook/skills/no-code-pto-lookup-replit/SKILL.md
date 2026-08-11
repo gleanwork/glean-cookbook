@@ -11,8 +11,7 @@ disable-model-invocation: true
 - A Glean API token with the CHAT scope (kept in Replit Secrets; every request uses this one token owner's access)
 - A private Repl — multi-user deployments require authenticated per-user Glean OAuth
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+{{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What HR topic do you know exists in your Glean content?
@@ -38,5 +37,6 @@ Keep this single-user prototype private. Its shared backend token is one service
 
 - **Query:** "What is our PTO policy?"
   **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+
 - **Query:** "When is open enrollment?"
   **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

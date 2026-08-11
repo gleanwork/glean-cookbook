@@ -16,20 +16,19 @@ Build "Ground your own LLM app in Glean" following https://developers.glean.com/
 1. **Pick a language**
    Both variants implement the same flow — pick whichever fits your app's stack.
 
-Ask which variant to build first, on its own, and wait for the answer. Then follow only that variant below, asking its questions one at a time.
+{{> choose-variant}}
 
 ### Python
 
 Platform API search.query → snippets → LLM with citations
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+{{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What topic can you access and expect Glean to answer?
 - What topic should your account not be able to access?
 
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+{{> oauth-setup}}
 
 1. **Scaffold the project**
 
@@ -60,14 +59,13 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
 
 Same flow in TypeScript
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+{{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What topic can you access and expect Glean to answer?
 - What topic should your account not be able to access?
 
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+{{> oauth-setup}}
 
 1. **Scaffold the project**
 

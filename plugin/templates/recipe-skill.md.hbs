@@ -1,0 +1,111 @@
+---
+name: {{{id}}}
+description: {{{yamlDescription}}}
+disable-model-invocation: true
+---
+{{#if beforeItems.length}}
+
+## Before you start
+{{#each beforeItems}}
+- {{{this}}}
+{{/each}}
+{{/if}}
+
+{{#if structured}}
+Build "{{{title}}}" following https://developers.glean.com/cookbook/{{{id}}}
+{{#if rootSteps}}
+
+{{> execution rootSteps}}
+{{/if}}
+{{#if chooseVariant}}
+
+{{{pluginPartial "choose-variant"}}}
+{{/if}}
+{{#each variants}}
+
+{{> execution this}}
+{{/each}}
+{{else}}
+{{#with rootExecution}}
+{{#if questions.length}}
+{{{pluginPartial "ask-setup-questions"}}}
+{{#each questions}}
+- {{{prompt}}}
+{{/each}}
+{{/if}}
+{{#if oauth}}
+
+{{{pluginPartial "oauth-setup"}}}
+{{/if}}
+{{#if browserCookie}}
+
+{{{pluginPartial "browser-cookie-setup"}}}
+{{/if}}
+{{/with}}
+
+{{{aiPrompt}}}
+{{#if rootExecution.handoffPartial}}
+
+## Open the running recipe
+
+{{{pluginPartial rootExecution.handoffPartial}}}
+{{/if}}
+{{/if}}
+{{#if setupItems.length}}
+
+## Setup
+{{#each setupItems}}
+- {{{this}}}
+{{/each}}
+{{/if}}
+{{#if reference}}
+
+## Reference
+
+{{{reference}}}
+{{/if}}
+{{#if authBlocks.length}}
+
+## Authentication
+{{#if authChoice}}
+
+This recipe offers a path choice. Apply the block matching the path the user picks:
+{{/if}}
+{{#each authBlocks}}
+{{#if heading}}
+
+### `{{{heading}}}`
+{{/if}}
+
+{{{pluginPartial partial}}}
+{{/each}}
+{{/if}}
+{{#if languagePrompt}}
+
+## Language
+
+{{{languagePrompt}}}
+{{/if}}
+{{#if houseStyle}}
+
+## House style
+
+{{{pluginPartial "web-sdk-house-style"}}}
+
+{{{pluginPartial "brand-kit"}}}
+
+{{{pluginPartial "web-sdk-sizing"}}}
+{{/if}}
+{{#if verify}}
+
+## Verify
+{{#each verify.partials}}
+
+{{{pluginPartial this}}}
+{{/each}}
+{{#each verify.queries}}
+
+- **Query:** "{{{query}}}"
+  **Expected:** {{{expectedBehavior}}}
+{{/each}}
+{{/if}}

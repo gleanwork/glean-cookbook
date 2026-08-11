@@ -24,8 +24,8 @@ not print the environment or the variable value.
   follow the normal configured run, including its setup questions, authentication, and live
   verification.
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+Ask these before running commands. Ask one at a time, waiting for each answer before asking the
+next — do not put them all in one message:
 
 - Which Glean URL prefixes are approved sources for external answers?
 - What is your work email?

@@ -11,8 +11,8 @@ disable-model-invocation: true
 - Your Glean web app domain (typically app.glean.com — see admin/about-glean)
 - A frontend app or page where you can install an npm package (or add a script tag) and a container element
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+Ask these before running commands. Ask one at a time, waiting for each answer before asking the
+next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What topic do you know exists in your Glean content?
@@ -111,7 +111,9 @@ user confirmation was unavailable.
 
 - **Query:** "What's our PTO policy?"
   **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+
 - **Query:** "Who should I ask about billing?"
   **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+
 - **Query:** "Summarize our latest product update"
   **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

@@ -5,9 +5,9 @@
   "description": "Runnable recipes for building on the Glean platform.",
   "type": "module",
   "scripts": {
-    "build": "npm run auth:sync && npm run customer-360-ui:sync && npm run build:registry && npm run build:styles && npm run build:plugin",
+    "build": "npm run build:registry && npm run build:artifacts && npm run build:plugin",
+    "build:artifacts": "node scripts/build-artifacts.mjs",
     "build:registry": "node scripts/build-registry.mjs",
-    "build:styles": "node scripts/build-styles.mjs",
     "build:plugin": "npm --prefix plugin run build",
     "sync:tokens": "node scripts/sync-brand-tokens.mjs",
     "validate:registry": "node scripts/validate-registry.mjs",
@@ -19,13 +19,10 @@
     "snippets:check": "md-code check && node scripts/check-prompt-snippets.mjs",
     "skill-context:check": "node scripts/check-skill-context.mjs",
     "recipe-commands:check": "node scripts/check-recipe-commands.mjs",
-    "customer-360-ui:sync": "node scripts/sync-customer-360-ui.mjs",
-    "customer-360-ui:check": "node scripts/sync-customer-360-ui.mjs --check",
     "snippets:sync": "md-code sync",
-    "test": "node --test \"scripts/**/*.test.mjs\" && npm run auth:check && npm run customer-360-ui:check && npm run execution:check",
+    "test": "node --test \"scripts/**/*.test.mjs\" && npm run artifacts:check && npm run execution:check",
     "verify:login": "node scripts/verify-login.mjs",
-    "auth:sync": "node scripts/sync-recipe-auth.mjs",
-    "auth:check": "node scripts/sync-recipe-auth.mjs --check",
+    "artifacts:check": "node scripts/build-artifacts.mjs --check",
     "execution:check": "node scripts/check-recipe-execution.mjs"
   },
   "devDependencies": {
@@ -33,7 +30,10 @@
     "@release-it/conventional-changelog": "^12.0.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
+    "fast-glob": "^3.3.3",
+    "fs-extra": "^11.4.0",
     "markdown-code": "^1.2.0",
+    "postcss": "^8.5.26",
     "prettier": "^3.4.2",
     "release-it": "^21.0.1"
   },

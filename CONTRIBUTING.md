@@ -162,10 +162,11 @@ Two sources, both at the repo root:
 | `styles/cookbook.css` | **Authored.** Edit this.                                         |
 | `styles/tokens.css`   | **Generated** by `mise exec -- npm run sync:tokens`. Never edit. |
 
-`mise exec -- npm run build:styles` concatenates them into `recipes/*/public/glean-cookbook.css` and copies the
-logomark alongside. Those copies are committed — a recipe is scaffolded one directory at a time with
-`tiged`, so a file at the repo root would never reach it, and most recipes have no bundler to import
-one. CI fails if a copy is stale.
+`mise exec -- npm run build:artifacts` materializes them into every UI scaffold discovered by
+`scripts/artifacts.config.mjs` and copies the logomark alongside. The same declarative artifact plan
+distributes the shared authentication and local-server runtimes. Those copies are committed—a recipe
+is scaffolded one directory at a time with `tiged`, so root files would never reach it. CI evaluates
+the plan in read-only mode and fails if any output is stale.
 
 Primitives are presentational and carry no copy. What an empty state _says_ is a per-recipe decision;
 how it _looks_ is not.
@@ -199,8 +200,8 @@ Every PR runs:
 4. **`format-check`** — Prettier formatting.
 5. **`plugin-build`** — the plugin builds and validates for every target (Claude Code, Cursor,
    Codex), its generated skills and the README recipe table are checked against `registry.json` for
-   drift, the committed output under `build/` is checked against a fresh render, and each recipe's
-   copy of the shared stylesheet is checked against `styles/`.
+   drift, the committed output under `build/` is checked against a fresh render, and every generated
+   standalone-scaffold artifact is checked against the declarative artifact plan.
 6. **`harness-tests`** — `mise exec -- npm test`, covering the verify harness's OAuth state validation and PKCE
    derivation.
 7. **`snippets-check`** — recipe prose and the code it embeds stay in sync.

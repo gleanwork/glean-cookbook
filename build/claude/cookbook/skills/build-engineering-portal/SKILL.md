@@ -10,8 +10,8 @@ disable-model-invocation: true
 - A Glean-issued Indexing API token
 - Node.js 18+ to run the portal app locally
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+Ask these before running commands. Ask one at a time, waiting for each answer before asking the
+next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
 - Which custom datasource should receive the service catalog?
@@ -105,7 +105,9 @@ user confirmation was unavailable.
 
 - **Query:** "How do I find out who is on call?"
   **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL from your indexed engineering content.
+
 - **Query:** "How do I deploy a service?"
   **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+
 - **Query:** "What's our incident response process?"
   **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

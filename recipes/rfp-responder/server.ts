@@ -13,6 +13,7 @@ import {
 } from './lib/questionnaire.ts';
 import { classify } from './lib/grounding.ts';
 import { askChat, ChatUnfinishedError } from './lib/chat.ts';
+import { listenLocal } from './lib/cookbook-server.js';
 import * as library from './lib/answer-library.ts';
 import { findRow, log, requireRun, state, type RowState } from './lib/state.ts';
 
@@ -148,7 +149,7 @@ async function handleRun(res: http.ServerResponse): Promise<void> {
 }
 
 /**
- * Shared cookbook styling, generated into public/ by scripts/build-styles.mjs.
+ * Shared cookbook styling, generated into public/ by scripts/build-artifacts.mjs.
  * Whitelisted by name rather than serving the directory: nothing joins a path
  * from request input, so there is no traversal to reason about.
  */
@@ -374,7 +375,6 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-const requestedPort = process.env.PORT ? Number(process.env.PORT) : 0;
 if (
   process.env.GLEAN_USE_FIXTURE !== 'true' &&
   !process.env.RFP_APPROVED_SOURCE_PREFIXES?.trim()
@@ -383,12 +383,7 @@ if (
     'RFP_APPROVED_SOURCE_PREFIXES is required for live use; list the Glean URL prefixes cleared for customer-facing answers.',
   );
 }
-server.listen(requestedPort, '127.0.0.1', () => {
-  const address = server.address();
-  if (!address || typeof address === 'string') {
-    throw new Error('Could not determine the local server port.');
-  }
-  console.log(`RFP responder running at http://localhost:${address.port}`);
+listenLocal(server, 'RFP responder', () => {
   if (
     process.env.GLEAN_USE_FIXTURE === 'true' &&
     process.env.GLEAN_COOKBOOK_DEMO !== 'true'

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Glean } from '@gleanwork/api-client';
+import { listenLocal } from './lib/cookbook-server.js';
 
 // Path B: Platform Agents createRun for prescriptive account briefs.
 // Tiles: glean.search.query (same as Path A) — keeps the 360 layout.
@@ -336,19 +337,10 @@ function readJsonBody(
   });
 }
 
-const requestedPort = process.env.PORT ? Number(process.env.PORT) : 0;
 validateEnvironment([
   'GLEAN_API_TOKEN',
   'GLEAN_SERVER_URL',
   'GLEAN_ACCOUNT_NAME',
   'GLEAN_AGENT_ID',
 ]);
-server.listen(requestedPort, '127.0.0.1', () => {
-  const address = server.address();
-  if (!address || typeof address === 'string') {
-    throw new Error('Could not determine the local server port.');
-  }
-  console.log(
-    `Customer 360 (Platform Agents) running at http://localhost:${address.port}`,
-  );
-});
+listenLocal(server, 'Customer 360 (Platform Agents)');

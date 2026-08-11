@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Glean } from '@gleanwork/api-client';
+import { listenLocal } from './lib/cookbook-server.js';
 
 // Path A: Platform Search tiles + Client Chat synthesis.
 // Search: glean.search.query (POST /api/search) — @gleanwork/api-client@0.18.0
@@ -305,18 +306,9 @@ function readJsonBody(
   });
 }
 
-const requestedPort = process.env.PORT ? Number(process.env.PORT) : 0;
 validateEnvironment([
   'GLEAN_API_TOKEN',
   'GLEAN_SERVER_URL',
   'GLEAN_ACCOUNT_NAME',
 ]);
-server.listen(requestedPort, '127.0.0.1', () => {
-  const address = server.address();
-  if (!address || typeof address === 'string') {
-    throw new Error('Could not determine the local server port.');
-  }
-  console.log(
-    `Customer 360 (Platform Search + Chat) running at http://localhost:${address.port}`,
-  );
-});
+listenLocal(server, 'Customer 360 (Platform Search + Chat)');

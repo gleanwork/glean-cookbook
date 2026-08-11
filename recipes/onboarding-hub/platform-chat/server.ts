@@ -3,6 +3,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { listenLocal } from './lib/cookbook-server.js';
 
 // Path B: you own the UI; the server calls Client Chat and renders the answer
 // plus its citations.
@@ -328,13 +329,4 @@ function parseHistory(raw: unknown): ConversationTurn[] {
     .filter((turn) => turn.text.length > 0);
 }
 
-const requestedPort = process.env.PORT ? Number(process.env.PORT) : 0;
-server.listen(requestedPort, '127.0.0.1', () => {
-  const address = server.address();
-  if (!address || typeof address === 'string') {
-    throw new Error('Could not determine the local server port.');
-  }
-  console.log(
-    `Onboarding Hub (Client Chat) running at http://localhost:${address.port}`,
-  );
-});
+listenLocal(server, 'Onboarding Hub (Client Chat)');

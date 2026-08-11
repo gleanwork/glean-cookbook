@@ -15,19 +15,18 @@ Build "Onboarding Hub: a day-one checklist grounded in your own docs" following 
 1. **Pick a path**
    Path A embeds Glean's chat UI with the Web SDK. Path B calls Client Chat from your backend and renders the response in your own UI.
 
-Ask which variant to build first, on its own, and wait for the answer. Then follow only that variant below, asking its questions one at a time.
+{{> choose-variant}}
 
 ### Web SDK
 
 Web SDK variant — checklist + renderChat
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+{{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What onboarding steps should appear in the checklist?
 
-Cookie SSO requires the user's normal signed-in browser. Never open or automate the app yourself.
+{{> browser-cookie-setup}}
 
 1. **Scaffold the project**
 
@@ -63,13 +62,12 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
 
 Client Chat variant — server-side API call, custom UI
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+{{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What onboarding steps should appear in the checklist?
 
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+{{> oauth-setup}}
 
 1. **Scaffold the project**
 

@@ -14,13 +14,12 @@ Build "Answer an RFP or security questionnaire" following https://developers.gle
 
 {{> demo-mode}}
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+{{> ask-setup-questions}}
 
 - Which Glean URL prefixes are approved sources for external answers?
 - What is your work email?
 
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+{{> oauth-setup}}
 
 1. **Scaffold the project**
 

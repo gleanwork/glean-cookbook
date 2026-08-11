@@ -15,14 +15,13 @@ Build "On-call Copilot" following https://developers.glean.com/cookbook/oncall-c
 
 {{> demo-mode}}
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+{{> ask-setup-questions}}
 
 - Which service has a catalog entry, runbook, and past incident in Glean?
 - Use direct Search + Chat or an existing Glean agent?
 - What is your work email?
 
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+{{> oauth-setup}}
 
 1. **Scaffold the project**
 

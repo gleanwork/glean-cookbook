@@ -11,8 +11,8 @@ disable-model-invocation: true
 - A Glean API token with the CHAT scope (kept as a Lovable backend secret; every request uses this one token owner's access)
 - A private Lovable project — multi-user deployments require authenticated per-user Glean OAuth
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+Ask these before running commands. Ask one at a time, waiting for each answer before asking the
+next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What IT topic do you know exists in your Glean content?
@@ -41,5 +41,6 @@ equivalent topic I know exists rather than treating the example query as a unive
 
 - **Query:** "Where do I reset my SSO password?"
   **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+
 - **Query:** "How do I request a new laptop?"
   **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.

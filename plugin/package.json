@@ -12,6 +12,11 @@
     "test": "npm run build && npm run validate"
   },
   "devDependencies": {
-    "@gleanwork/pluginpack": "^0.10.0"
+    "@gleanwork/pluginpack": "^0.10.0",
+    "fast-glob": "^3.3.3",
+    "fs-extra": "^11.4.0",
+    "handlebars": "^4.7.9",
+    "prettier": "^3.9.6",
+    "yaml": "^2.9.0"
   }
 }

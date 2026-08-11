@@ -1,0 +1,40 @@
+{{#if heading}}
+
+### {{{heading}}}
+
+{{{description}}}
+{{/if}}
+{{#if demo}}
+
+{{{pluginPartial "demo-mode"}}}
+{{/if}}
+{{#if questions.length}}
+
+{{{pluginPartial "ask-setup-questions"}}}
+{{#each questions}}
+- {{{prompt}}}
+{{/each}}
+{{/if}}
+{{#if oauth}}
+
+{{{pluginPartial "oauth-setup"}}}
+{{/if}}
+{{#if browserCookie}}
+
+{{{pluginPartial "browser-cookie-setup"}}}
+{{/if}}
+{{#each steps}}
+
+{{number}}. **{{{title}}}**
+{{#if description}}
+{{{indent description 3}}}
+{{/if}}
+{{#if command}}
+   ```bash
+{{{indent command 3}}}
+   ```
+{{/if}}
+{{#if handoffPartial}}
+   {{{pluginPartial handoffPartial}}}
+{{/if}}
+{{/each}}
