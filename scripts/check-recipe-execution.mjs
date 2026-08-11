@@ -12,7 +12,31 @@ const skillsRoot = path.join(
   'cookbook',
   'skills',
 );
+const partialsRoot = path.join(repoRoot, 'plugin', 'partials');
 const errors = [];
+
+function runHandoffPartial(execution) {
+  if (execution.type === 'local-web') {
+    return execution.auth.some((auth) => auth.kind === 'browser-cookie')
+      ? 'run-local-web-cookie'
+      : 'run-local-web';
+  }
+  return {
+    'existing-app': 'run-existing-app',
+    cli: 'run-cli',
+    'host-configuration': 'run-host-configuration',
+    'hybrid-service': 'run-hybrid-service',
+  }[execution.type];
+}
+
+function checkPartialReference(skillText, partial, recipeId) {
+  if (!fs.existsSync(path.join(partialsRoot, `${partial}.md`))) {
+    errors.push(`${recipeId}: shared partial ${partial}.md does not exist`);
+  }
+  if (!skillText.includes(`{{> ${partial}}}`)) {
+    errors.push(`${recipeId}: generated skill omits {{> ${partial}}}`);
+  }
+}
 
 function targetFor(recipe, execution) {
   const assets = recipe.codeAssets ?? [];
@@ -262,54 +286,20 @@ for (const entry of fs.readdirSync(recipesRoot, { withFileTypes: true })) {
           steps: asset.steps ?? [],
         })),
     ];
-    if (
-      contracts.some(({ execution }) =>
-        ['local-web', 'existing-app'].includes(execution.type),
-      ) &&
-      !skillText.includes('clickable Markdown link') &&
-      !skillText.includes('as a clickable link')
-    ) {
-      errors.push(
-        `${recipe.id}: generated skill omits the standard clickable browser handoff`,
-      );
-    }
-    if (
-      contracts.some(({ execution }) => execution.type === 'cli') &&
-      (!skillText.includes('concise result') ||
-        !skillText.includes('Do not invent a browser URL'))
-    ) {
-      errors.push(
-        `${recipe.id}: generated CLI skill omits the standard chat-result handoff`,
-      );
-    }
-    if (
-      contracts.some(
-        ({ execution }) => execution.type === 'host-configuration',
-      ) &&
-      !skillText.includes('which host was configured')
-    ) {
-      errors.push(
-        `${recipe.id}: generated host-configuration skill omits the standard host handoff`,
-      );
-    }
-    if (
-      contracts.some(({ execution }) => execution.type === 'hybrid-service') &&
-      !skillText.includes('current checkpoint')
-    ) {
-      errors.push(
-        `${recipe.id}: generated hybrid-service skill omits checkpoint handoff guidance`,
-      );
-    }
+    const expectedPartials = new Set(
+      contracts
+        .map(({ execution }) => runHandoffPartial(execution))
+        .filter(Boolean),
+    );
     if (
       contracts.some(({ steps }) =>
         steps.some((step) => step.kind === 'verify-fixture'),
-      ) &&
-      (!skillText.includes('GLEAN_COOKBOOK_DEMO') ||
-        !skillText.includes('npm run demo'))
+      )
     ) {
-      errors.push(
-        `${recipe.id}: generated skill omits the environment-gated demo policy`,
-      );
+      expectedPartials.add('demo-mode');
+    }
+    for (const partial of expectedPartials) {
+      checkPartialReference(skillText, partial, recipe.id);
     }
   }
 }

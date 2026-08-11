@@ -177,14 +177,7 @@ function hasFixtureDemo(steps) {
  */
 function renderDemoModePolicy(steps) {
   if (!hasFixtureDemo(steps)) return '';
-  return [
-    '### Select the run mode',
-    '',
-    'Before asking setup questions, silently check whether `GLEAN_COOKBOOK_DEMO` is exactly `true`; do not print the environment or the variable value.',
-    '',
-    '- When it is `true`, use the bundled sample-data path: skip all setup questions, authentication, and fixture verification output; after scaffolding and installing, run `npm run demo` and follow the standard browser handoff below.',
-    '- Otherwise, never mention or offer demo, sample, or fixture mode. Skip the fixture-only step and follow the normal configured run, including its setup questions, authentication, and live verification.',
-  ].join('\n');
+  return '{{> demo-mode}}';
 }
 
 function isLiteralHttpUrl(value) {
@@ -200,22 +193,16 @@ function isLiteralHttpUrl(value) {
 function renderRunHandoffLines(execution) {
   const run = execution?.run;
   if (execution?.type === 'cli') {
-    return [
-      'Run the command in this chat and report its concise result rather than reproducing routine install or debug output.',
-      'Do not invent a browser URL. Then give the first verification action.',
-    ];
+    return ['{{> run-cli}}'];
   }
   if (execution?.type === 'host-configuration') {
-    return [
-      'Report which host was configured and whether its restart or reload completed.',
-      'Then give the first verification action inside that host.',
-    ];
+    return ['{{> run-host-configuration}}'];
   }
   if (execution?.type === 'hybrid-service') {
-    return [
-      'Keep required services and tunnels running. Report the current checkpoint and any exact endpoint printed.',
-      'Then give the next manual or verification action.',
-    ];
+    return ['{{> run-hybrid-service}}'];
+  }
+  if (execution?.type === 'existing-app') {
+    return ['{{> run-existing-app}}'];
   }
   if (!run) return [];
 
@@ -224,37 +211,21 @@ function renderRunHandoffLines(execution) {
   );
   const lines = [];
 
-  if (run.kind === 'existing-app') {
-    lines.push(
-      "Report the running integration's exact page URL or route as a clickable Markdown link.",
-    );
-  } else if (run.command) {
+  if (run.command) {
     if (isLiteralHttpUrl(run.url)) {
       lines.push(
-        `Keep it running and report [${run.url}](${run.url}) as a clickable link, using the exact printed URL if different.`,
+        `Report [${run.url}](${run.url}) as a clickable link, using the exact printed URL if different.`,
       );
     } else if (run.url) {
       lines.push(
-        `Keep it running; capture ${run.url} and report it as a clickable Markdown link.`,
-      );
-    } else {
-      lines.push('Leave the process running and report when it is ready.');
-    }
-  }
-
-  if (run.userBrowser) {
-    if (browserCookie) {
-      lines.push(
-        'Do not open or automate it. Ask the user to click it in their normal signed-in browser and confirm the page is ready.',
-      );
-    } else {
-      lines.push(
-        'Ask the user to click it in their normal browser and confirm the page is ready.',
+        `Capture ${run.url} and report it as a clickable Markdown link.`,
       );
     }
   }
 
-  lines.push('Then give the first verification action.');
+  lines.push(
+    browserCookie ? '{{> run-local-web-cookie}}' : '{{> run-local-web}}',
+  );
   return lines;
 }
 

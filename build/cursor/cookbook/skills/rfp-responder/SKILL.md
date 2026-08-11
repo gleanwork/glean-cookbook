@@ -14,10 +14,15 @@ Build "Answer an RFP or security questionnaire" following https://developers.gle
 
 ### Select the run mode
 
-Before asking setup questions, silently check whether `GLEAN_COOKBOOK_DEMO` is exactly `true`; do not print the environment or the variable value.
+Before asking setup questions, silently check whether `GLEAN_COOKBOOK_DEMO` is exactly `true`; do
+not print the environment or the variable value.
 
-- When it is `true`, use the bundled sample-data path: skip all setup questions, authentication, and fixture verification output; after scaffolding and installing, run `npm run demo` and follow the standard browser handoff below.
-- Otherwise, never mention or offer demo, sample, or fixture mode. Skip the fixture-only step and follow the normal configured run, including its setup questions, authentication, and live verification.
+- When it is `true`, use the bundled sample-data path: skip all setup questions, authentication,
+  and fixture verification output; after scaffolding and installing, run `npm run demo` and follow
+  the standard browser handoff.
+- Otherwise, never mention or offer demo, sample, or fixture mode. Skip the fixture-only step and
+  follow the normal configured run, including its setup questions, authentication, and live
+  verification.
 
 Ask these before running commands. Ask one at a time, waiting for each
 answer before asking the next — do not put them all in one message:
@@ -59,9 +64,9 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    cd rfp-responder && npm start
    ```
 
-   Keep it running and report [http://localhost:3000](http://localhost:3000) as a clickable link, using the exact printed URL if different.
-   Ask the user to click it in their normal browser and confirm the page is ready.
-   Then give the first verification action.
+   Report [http://localhost:3000](http://localhost:3000) as a clickable link, using the exact printed URL if different.
+   Keep the server running. Ask the user to click the link in their normal browser and confirm the page
+   is ready. Then give the first verification action.
 
 6. **Verify**
    Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered.

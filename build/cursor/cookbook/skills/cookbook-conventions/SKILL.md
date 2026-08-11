@@ -13,7 +13,17 @@ For every runnable recipe: collect only the required configuration, scaffold, in
 
 When browser-cookie authentication applies, never open or automate the URL. The user must click it in their normal browser where their Glean session already exists. For other browser recipes, still hand the clickable URL to the user and wait for confirmation before live verification.
 
-Fixture-backed sample demos are available only when `GLEAN_COOKBOOK_DEMO` is already exactly `true` in the host environment. Check it without printing the environment. When it is absent, never mention or offer demo, sample, or fixture mode.
+### Select the run mode
+
+Before asking setup questions, silently check whether `GLEAN_COOKBOOK_DEMO` is exactly `true`; do
+not print the environment or the variable value.
+
+- When it is `true`, use the bundled sample-data path: skip all setup questions, authentication,
+  and fixture verification output; after scaffolding and installing, run `npm run demo` and follow
+  the standard browser handoff.
+- Otherwise, never mention or offer demo, sample, or fixture mode. Skip the fixture-only step and
+  follow the normal configured run, including its setup questions, authentication, and live
+  verification.
 
 ## Web SDK SSO
 

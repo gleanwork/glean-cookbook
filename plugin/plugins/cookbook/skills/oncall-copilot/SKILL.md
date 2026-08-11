@@ -13,12 +13,7 @@ disable-model-invocation: true
 
 Build "On-call Copilot" following https://developers.glean.com/cookbook/oncall-copilot
 
-### Select the run mode
-
-Before asking setup questions, silently check whether `GLEAN_COOKBOOK_DEMO` is exactly `true`; do not print the environment or the variable value.
-
-- When it is `true`, use the bundled sample-data path: skip all setup questions, authentication, and fixture verification output; after scaffolding and installing, run `npm run demo` and follow the standard browser handoff below.
-- Otherwise, never mention or offer demo, sample, or fixture mode. Skip the fixture-only step and follow the normal configured run, including its setup questions, authentication, and live verification.
+{{> demo-mode}}
 
 Ask these before running commands. Ask one at a time, waiting for each
 answer before asking the next — do not put them all in one message:
@@ -61,9 +56,8 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    cd oncall-copilot && npm start
    ```
 
-   Keep it running and report [http://localhost:3000](http://localhost:3000) as a clickable link, using the exact printed URL if different.
-   Ask the user to click it in their normal browser and confirm the page is ready.
-   Then give the first verification action.
+   Report [http://localhost:3000](http://localhost:3000) as a clickable link, using the exact printed URL if different.
+   {{> run-local-web}}
 
 6. **Verify**
    Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything.

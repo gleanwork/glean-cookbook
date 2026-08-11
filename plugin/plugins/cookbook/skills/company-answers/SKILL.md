@@ -54,9 +54,8 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
    cd company-answers && npm run dev
    ```
 
-   Keep it running; capture the Local URL printed by Vite and report it as a clickable Markdown link.
-   Do not open or automate it. Ask the user to click it in their normal signed-in browser and confirm the page is ready.
-   Then give the first verification action.
+   Capture the Local URL printed by Vite and report it as a clickable Markdown link.
+   {{> run-local-web-cookie}}
 
 5. **Verify**
    Give the user the exact printed local URL to open in their normal signed-in browser. Ask them to try a topic they know exists in their Glean instance and confirm a real, cited answer renders inside Glean's chat UI.
@@ -103,6 +102,5 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```bash
    cd company-answers && npm start
    ```
-   Keep it running and report [http://localhost:3000](http://localhost:3000) as a clickable link, using the exact printed URL if different.
-   Ask the user to click it in their normal browser and confirm the page is ready.
-   Then give the first verification action.
+   Report [http://localhost:3000](http://localhost:3000) as a clickable link, using the exact printed URL if different.
+   {{> run-local-web}}
