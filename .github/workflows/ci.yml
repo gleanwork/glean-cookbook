@@ -148,9 +148,6 @@ jobs:
             echo "::error::Unexpanded pluginpack partials in build/ (above). Run 'npm run build:plugin' and commit the result."
             exit 1
           fi
-      # Pluginpack 0.11 scans every file below --dir for surviving partials.
-      # Validate a staging tree containing only each target's managed output so
-      # authored partial templates and npm dependencies are not false positives.
       - name: Validate all plugin targets
         working-directory: plugin
         run: npm run validate
