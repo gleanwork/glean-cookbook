@@ -31,6 +31,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - run: npm ci
       # The verify harness owns an OAuth flow; state validation and PKCE
       # derivation are not things to leave untested. No credentials needed --
       # the live-discovery test skips itself without GLEAN_INSTANCE.
@@ -108,13 +110,11 @@ jobs:
       - run: npm ci
       - working-directory: plugin
         run: npm ci
-      # Each recipe carries a committed copy of the shared stylesheet, because
-      # `tiged` scaffolds one directory at a time and most recipes have no
-      # bundler to import a shared one. Dependency-free, so no root npm ci.
-      # The token sync against glean-developer-site stays manual -- that repo
-      # isn't available here.
-      - name: Check shared recipe styles are not stale
-        run: node scripts/build-styles.mjs --check
+      # Standalone recipe scaffolds carry generated runtime and brand assets.
+      # The token sync against glean-developer-site stays manual because that
+      # repository is not available here.
+      - name: Check generated cookbook artifacts are not stale
+        run: npm run artifacts:check
       - name: Check generated commands/skill are not stale
         working-directory: plugin
         run: npm run generate:commands -- --check

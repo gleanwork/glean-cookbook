@@ -1,0 +1,19 @@
+{
+  "local-web": {
+    "handoffPartial": "run-local-web",
+    "browserCookieHandoffPartial": "run-local-web-cookie"
+  },
+  "existing-app": {
+    "handoffPartial": "run-existing-app"
+  },
+  "cli": {
+    "handoffPartial": "run-cli"
+  },
+  "host-configuration": {
+    "handoffPartial": "run-host-configuration"
+  },
+  "external-builder": {},
+  "hybrid-service": {
+    "handoffPartial": "run-hybrid-service"
+  }
+}

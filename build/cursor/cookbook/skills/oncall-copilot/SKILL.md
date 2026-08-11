@@ -25,8 +25,8 @@ not print the environment or the variable value.
   follow the normal configured run, including its setup questions, authentication, and live
   verification.
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+Ask these before running commands. Ask one at a time, waiting for each answer before asking the
+next — do not put them all in one message:
 
 - Which service has a catalog entry, runbook, and past incident in Glean?
 - Use direct Search + Chat or an existing Glean agent?

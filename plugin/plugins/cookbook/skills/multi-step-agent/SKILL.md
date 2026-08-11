@@ -14,13 +14,12 @@ disable-model-invocation: true
 
 Build "Multi-step agent with governed tools" following https://developers.glean.com/cookbook/multi-step-agent
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+{{> ask-setup-questions}}
 
 - What is your work email for tenant discovery and the tool allow-list?
 - After creating the agent, what is its agent ID?
 
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+{{> oauth-setup}}
 
 1. **Scaffold the project**
 

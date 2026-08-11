@@ -17,14 +17,15 @@ Build "Customer 360: an account page built from your own content" following http
 1. **Pick a path**
    Path A combines parallel Platform Search tiles with Client Chat synthesis. Path B keeps the same page UX but uses a template Account Brief agent.
 
-Ask which variant to build first, on its own, and wait for the answer. Then follow only that variant below, asking its questions one at a time.
+Ask which variant to build first, on its own, and wait for the answer. Then follow only that variant
+below, asking its questions one at a time.
 
 ### Platform Search Chat
 
 Path A — parallel Platform Search tiles + Client Chat synthesis
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+Ask these before running commands. Ask one at a time, waiting for each answer before asking the
+next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
 - Which account should the page use?
@@ -69,8 +70,8 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
 
 Path B — Platform Agents createRun for prescriptive account briefs
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+Ask these before running commands. Ask one at a time, waiting for each answer before asking the
+next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
 - Which account should the page use?

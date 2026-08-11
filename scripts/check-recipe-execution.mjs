@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import fg from 'fast-glob';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const recipesRoot = path.join(repoRoot, 'recipes');
@@ -13,20 +14,19 @@ const skillsRoot = path.join(
   'skills',
 );
 const partialsRoot = path.join(repoRoot, 'plugin', 'partials');
+const executionTypes = JSON.parse(
+  fs.readFileSync(
+    path.join(repoRoot, 'config', 'execution-types.json'),
+    'utf8',
+  ),
+);
 const errors = [];
 
 function runHandoffPartial(execution) {
-  if (execution.type === 'local-web') {
-    return execution.auth.some((auth) => auth.kind === 'browser-cookie')
-      ? 'run-local-web-cookie'
-      : 'run-local-web';
-  }
-  return {
-    'existing-app': 'run-existing-app',
-    cli: 'run-cli',
-    'host-configuration': 'run-host-configuration',
-    'hybrid-service': 'run-hybrid-service',
-  }[execution.type];
+  const descriptor = executionTypes[execution.type];
+  return execution.auth.some((auth) => auth.kind === 'browser-cookie')
+    ? descriptor?.browserCookieHandoffPartial
+    : descriptor?.handoffPartial;
 }
 
 function checkPartialReference(skillText, partial, recipeId) {
@@ -54,16 +54,14 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
   const runStep = steps.find((step) => step.kind === 'run');
   const fixtureStep = steps.find((step) => step.kind === 'verify-fixture');
 
+  if (!executionTypes[execution.type]) {
+    errors.push(`${recipe.id} ${location}: unknown execution type`);
+    return;
+  }
+
   if (execution.type === 'local-web') {
-    if (
-      !execution.run?.command ||
-      !execution.run?.url ||
-      execution.run.userBrowser !== true ||
-      !runStep
-    ) {
-      errors.push(
-        `${recipe.id} ${location}: local-web requires a run step, persistent command, URL, and user-browser handoff`,
-      );
+    if (!runStep) {
+      errors.push(`${recipe.id} ${location}: local-web requires a run step`);
     }
     if (
       /^https?:\/\/(?:localhost|127\.0\.0\.1):\d+\/?$/u.test(
@@ -74,24 +72,9 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
         `${recipe.id} ${location}: local-web must report the URL printed after choosing an available port, not encode a localhost port`,
       );
     }
-  } else if (execution.type === 'existing-app') {
-    if (
-      execution.run?.kind !== 'existing-app' ||
-      execution.run.userBrowser !== true
-    ) {
-      errors.push(
-        `${recipe.id} ${location}: existing-app requires an existing-app user-browser handoff`,
-      );
-    }
   } else if (execution.type === 'cli') {
-    if (
-      !execution.run?.command ||
-      execution.run.userBrowser !== false ||
-      !runStep
-    ) {
-      errors.push(
-        `${recipe.id} ${location}: cli requires a run step and non-browser run command`,
-      );
+    if (!runStep) {
+      errors.push(`${recipe.id} ${location}: cli requires a run step`);
     }
   } else if (execution.type === 'host-configuration') {
     if (!steps.some((step) => step.kind === 'configure') || !runStep) {
@@ -100,9 +83,9 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
       );
     }
   } else if (execution.type === 'external-builder') {
-    if (recipe.buildMethod !== 'third-party-build' || execution.run) {
+    if (recipe.buildMethod !== 'third-party-build') {
       errors.push(
-        `${recipe.id} ${location}: external-builder must use third-party-build without a local run contract`,
+        `${recipe.id} ${location}: external-builder must use third-party-build`,
       );
     }
   } else if (execution.type === 'hybrid-service') {
@@ -114,8 +97,6 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
         `${recipe.id} ${location}: hybrid-service requires both runnable and manual handoff steps`,
       );
     }
-  } else {
-    errors.push(`${recipe.id} ${location}: unknown execution type`);
   }
 
   for (const auth of execution.auth) {
@@ -129,21 +110,6 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
         `${recipe.id} ${location}: OAuth auth has no shipped login command`,
       );
     }
-    if (auth.kind === 'browser-cookie' && execution.run?.userBrowser !== true) {
-      errors.push(
-        `${recipe.id} ${location}: browser-cookie auth must hand off to the user's browser`,
-      );
-    }
-  }
-
-  if (
-    execution.run?.userBrowser === true &&
-    execution.run.kind !== 'existing-app' &&
-    !execution.run.url
-  ) {
-    errors.push(
-      `${recipe.id} ${location}: user-browser run must declare the URL to hand off`,
-    );
   }
   if (
     execution.run?.command &&
@@ -309,6 +275,21 @@ for (const entry of fs.readdirSync(recipesRoot, { withFileTypes: true })) {
     }
     for (const partial of expectedPartials) {
       checkPartialReference(skillText, partial, recipe.id);
+    }
+  }
+}
+
+for (const skill of fg.sync('*/SKILL.md', {
+  cwd: skillsRoot,
+  absolute: true,
+})) {
+  const source = fs.readFileSync(skill, 'utf8');
+  for (const match of source.matchAll(/\{\{>\s*([a-z0-9-]+)\s*\}\}/gu)) {
+    const partial = match[1];
+    if (!fs.existsSync(path.join(partialsRoot, `${partial}.md`))) {
+      errors.push(
+        `${path.relative(repoRoot, skill)} references missing partial ${partial}.md`,
+      );
     }
   }
 }

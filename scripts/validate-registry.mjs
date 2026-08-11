@@ -2,19 +2,33 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
+import fg from 'fast-glob';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const schema = JSON.parse(
   fs.readFileSync(path.join(repoRoot, 'schemas', 'recipe.schema.json'), 'utf8'),
 );
+const executionTypes = JSON.parse(
+  fs.readFileSync(
+    path.join(repoRoot, 'config', 'execution-types.json'),
+    'utf8',
+  ),
+);
+const schemaExecutionTypes = schema.$defs.execution.properties.type.enum;
+if (
+  JSON.stringify([...schemaExecutionTypes].sort()) !==
+  JSON.stringify(Object.keys(executionTypes).sort())
+) {
+  console.error(
+    'schemas/recipe.schema.json and config/execution-types.json declare different execution types.',
+  );
+  process.exit(1);
+}
 // Validate the per-recipe sources rather than the built registry.json, so a
 // failure names the file an author actually edits.
 const recipesDir = path.join(repoRoot, 'recipes');
-const registry = fs
-  .readdirSync(recipesDir, { withFileTypes: true })
-  .filter((dirent) => dirent.isDirectory())
-  .map((dirent) => path.join(recipesDir, dirent.name, 'recipe.json'))
-  .filter((file) => fs.existsSync(file))
+const registry = fg
+  .sync('*/recipe.json', { cwd: recipesDir, absolute: true })
   .map((file) => ({
     file: path.relative(repoRoot, file),
     entry: JSON.parse(fs.readFileSync(file, 'utf8')),

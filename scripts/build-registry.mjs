@@ -18,7 +18,10 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import fg from 'fast-glob';
 import prettier from 'prettier';
+
+import { materializeArtifacts } from './lib/artifacts.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const recipesDir = path.join(repoRoot, 'recipes');
@@ -31,11 +34,10 @@ function fail(message) {
   process.exit(1);
 }
 
-const recipeFiles = fs
-  .readdirSync(recipesDir, { withFileTypes: true })
-  .filter((dirent) => dirent.isDirectory())
-  .map((dirent) => path.join(recipesDir, dirent.name, 'recipe.json'))
-  .filter((file) => fs.existsSync(file));
+const recipeFiles = await fg('*/recipe.json', {
+  cwd: recipesDir,
+  absolute: true,
+});
 
 if (recipeFiles.length === 0) {
   fail(`No recipes/<id>/recipe.json files found under ${recipesDir}.`);
@@ -116,7 +118,12 @@ if (existingRaw.trim()) {
 const queryFiles = [];
 for (const entry of entries) {
   const recipeDir = path.join(recipesDir, entry.id);
-  for (const scriptPath of findVerifyScripts(recipeDir)) {
+  const verifyScripts = await fg('**/scripts/verify.mjs', {
+    cwd: recipeDir,
+    absolute: true,
+    ignore: ['**/node_modules/**', '**/.venv/**'],
+  });
+  for (const scriptPath of verifyScripts) {
     const target = path.join(path.dirname(scriptPath), 'demo-queries.json');
     queryFiles.push({
       file: target,
@@ -128,46 +135,26 @@ for (const entry of entries) {
   }
 }
 
-function findVerifyScripts(dir) {
-  const found = [];
-  if (!fs.existsSync(dir)) return found;
-  for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (item.name === 'node_modules' || item.name === '.venv') continue;
-    const full = path.join(dir, item.name);
-    if (item.isDirectory()) found.push(...findVerifyScripts(full));
-    else if (item.name === 'verify.mjs') found.push(full);
+const outputs = [
+  { group: 'registry', file: registryFile, content: Buffer.from(contents) },
+  ...queryFiles.map(({ file, contents: queries }) => ({
+    group: 'demo-queries',
+    file,
+    content: Buffer.from(queries),
+  })),
+];
+const changes = await materializeArtifacts(outputs, { check });
+if (check && changes.length > 0) {
+  console.error('Generated registry artifacts are stale:');
+  for (const { file } of changes) {
+    console.error(`  ${path.relative(repoRoot, file)}`);
   }
-  return found;
+  console.error('Run `npm run build:registry` and commit the result.');
+  process.exit(1);
 }
 
-const staleQueryFiles = queryFiles.filter(
-  ({ file, contents: expected }) =>
-    !fs.existsSync(file) || fs.readFileSync(file, 'utf8') !== expected,
+console.log(
+  check
+    ? `registry.json and demo queries are up to date (${entries.length} recipes).`
+    : `Built registry.json and demo queries from ${entries.length} recipe files.`,
 );
-
-if (check) {
-  if (staleQueryFiles.length > 0) {
-    console.error(
-      'These generated demo-queries.json files are stale. Run ' +
-        '`npm run build:registry` and commit the result:\n' +
-        staleQueryFiles
-          .map(({ file }) => `  ${path.relative(repoRoot, file)}`)
-          .join('\n'),
-    );
-    process.exit(1);
-  }
-  if (existingRaw !== contents) {
-    console.error(
-      'registry.json is stale. Run `npm run build:registry` and commit the result.',
-    );
-    process.exit(1);
-  }
-  console.log(`registry.json is up to date (${entries.length} recipes).`);
-} else {
-  fs.writeFileSync(registryFile, contents);
-  console.log(`Wrote registry.json from ${entries.length} recipe file(s).`);
-  for (const { file, contents: queries } of queryFiles) {
-    fs.writeFileSync(file, queries);
-    console.log(`Wrote ${path.relative(repoRoot, file)}`);
-  }
-}

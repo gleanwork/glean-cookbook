@@ -11,8 +11,7 @@ disable-model-invocation: true
 
 Build "Connect Glean MCP to your AI tools" following https://developers.glean.com/cookbook/connect-mcp-hosts
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+{{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
 - Which installed MCP host should be configured?

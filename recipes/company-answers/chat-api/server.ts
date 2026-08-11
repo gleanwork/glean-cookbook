@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Glean } from '@gleanwork/api-client';
+import { listenLocal } from './lib/cookbook-server.js';
 
 // Path B (Chat API): you own the UI, the server owns the API token. Construct
 // the client with instance/serverURL, read citations from
@@ -122,13 +123,4 @@ function readJsonBody(
   });
 }
 
-const requestedPort = process.env.PORT ? Number(process.env.PORT) : 0;
-server.listen(requestedPort, '127.0.0.1', () => {
-  const address = server.address();
-  if (!address || typeof address === 'string') {
-    throw new Error('Could not determine the local server port.');
-  }
-  console.log(
-    `Company Answers (Chat API) running at http://localhost:${address.port}`,
-  );
-});
+listenLocal(server, 'Company Answers (Chat API)');

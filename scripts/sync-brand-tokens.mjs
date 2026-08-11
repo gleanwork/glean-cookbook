@@ -15,6 +15,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import prettier from 'prettier';
+import postcss from 'postcss';
+
+import { materializeArtifacts } from './lib/artifacts.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
@@ -80,21 +83,17 @@ function readSource(file, label) {
  */
 function allBlockVars(css, selector, prefixes) {
   const vars = new Map();
-  const heads = new RegExp(
-    `(^|\\n)\\s*${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{`,
-    'g',
-  );
-  for (const match of css.matchAll(heads)) {
-    const open = match.index + match[0].length - 1;
-    const close = css.indexOf('}', open);
-    for (const [, name, value] of css
-      .slice(open + 1, close)
-      .matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/gi)) {
-      if (prefixes.some((p) => name.startsWith(p))) {
-        vars.set(name, value.trim().replace(/\s+/g, ' '));
+  postcss.parse(css, { from: undefined }).walkRules((rule) => {
+    if (rule.selector.trim() !== selector) return;
+    rule.walkDecls((declaration) => {
+      if (prefixes.some((prefix) => declaration.prop.startsWith(prefix))) {
+        vars.set(
+          declaration.prop,
+          declaration.value.trim().replace(/\s+/g, ' '),
+        );
       }
-    }
-  }
+    });
+  });
   return vars;
 }
 
@@ -205,45 +204,42 @@ async function formatted(source, file) {
 
 const outputs = [
   {
+    group: 'brand-tokens',
     file: path.join(repoRoot, 'styles/tokens.css'),
-    next: await formatted(tokensCss, path.join(repoRoot, 'styles/tokens.css')),
+    content: Buffer.from(
+      await formatted(tokensCss, path.join(repoRoot, 'styles/tokens.css')),
+    ),
   },
   {
+    group: 'brand-tokens',
     file: path.join(repoRoot, 'brand/tokens.json'),
-    next: await formatted(
-      JSON.stringify(tokensJson),
-      path.join(repoRoot, 'brand/tokens.json'),
+    content: Buffer.from(
+      await formatted(
+        JSON.stringify(tokensJson),
+        path.join(repoRoot, 'brand/tokens.json'),
+      ),
     ),
   },
 ];
 
-let stale = 0;
-for (const { file, next } of outputs) {
+const stale = await materializeArtifacts(outputs, { check });
+const staleFiles = new Set(stale.map(({ file }) => file));
+for (const { file } of outputs) {
   const rel = path.relative(repoRoot, file);
-  const current = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
-  if (current === next) {
-    console.log(`✓ ${rel} up to date`);
-    continue;
-  }
-  stale += 1;
-  if (check) {
-    console.error(
-      `✗ ${rel} is stale (${current === null ? 'missing' : 'differs'})`,
-    );
-    continue;
-  }
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, next);
-  console.log(`→ wrote ${rel}`);
+  console.log(
+    staleFiles.has(file)
+      ? `→ ${rel} ${check ? 'is stale' : 'written'}`
+      : `✓ ${rel} up to date`,
+  );
 }
 
 console.log(
   `${gdtLight.size} light tokens, ${gdtDark.size} dark, ${scales.size} scales from ${path.relative(repoRoot, sitePath) || sitePath}`,
 );
 
-if (check && stale > 0) {
+if (check && stale.length > 0) {
   console.error(
-    `\n${stale} file(s) out of sync with the dev site. Run: npm run sync:tokens`,
+    `\n${stale.length} file(s) out of sync with the dev site. Run: npm run sync:tokens`,
   );
   process.exit(1);
 }

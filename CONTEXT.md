@@ -26,3 +26,17 @@ _Avoid_: Recipe type
 
 **Demo mode**:
 An explicitly enabled sample-data execution path. It is available only when the cookbook demo environment flag is present and is never offered during a configured run.
+
+## Build architecture
+
+**Artifact definition**:
+A declarative source, target selector, and optional transformation in `scripts/artifacts.config.mjs`.
+Definitions are the only place shared standalone-scaffold files are distributed.
+
+**Artifact plan**:
+The complete in-memory set of generated files compiled from the artifact definitions. Writing and
+stale checking consume the same plan; check mode never writes or restores files.
+
+Recipe skills are rendered from `plugin/templates/recipe-skill.md.hbs`, recipe metadata, the execution
+descriptors in `config/execution-types.json`, and pluginpack partials. Shared prose belongs in a
+partial, not in the renderer or generated source skills.

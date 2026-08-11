@@ -19,6 +19,7 @@ import {
   reject,
 } from './lib/approval.ts';
 import { actionCatalog } from './lib/actions.ts';
+import { listenLocal } from './lib/cookbook-server.js';
 import { draft } from './lib/postmortem.ts';
 import * as store from './lib/state.ts';
 
@@ -184,7 +185,7 @@ async function handleWebhook(
 }
 
 /**
- * Shared cookbook styling, generated into public/ by scripts/build-styles.mjs.
+ * Shared cookbook styling, generated into public/ by scripts/build-artifacts.mjs.
  * Whitelisted by name rather than serving the directory: nothing joins a path
  * from request input, so there is no traversal to reason about.
  */
@@ -340,13 +341,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-const requestedPort = process.env.PORT ? Number(process.env.PORT) : 0;
-server.listen(requestedPort, '127.0.0.1', () => {
-  const address = server.address();
-  if (!address || typeof address === 'string') {
-    throw new Error('Could not determine the local server port.');
-  }
-  console.log(`On-call Copilot running at http://localhost:${address.port}`);
+listenLocal(server, 'On-call Copilot', () => {
   if (
     process.env.GLEAN_USE_FIXTURE === 'true' &&
     process.env.GLEAN_COOKBOOK_DEMO !== 'true'

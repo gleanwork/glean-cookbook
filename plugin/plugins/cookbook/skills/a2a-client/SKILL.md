@@ -13,14 +13,13 @@ disable-model-invocation: true
 
 Build "Call a Glean agent from an A2A client" following https://developers.glean.com/cookbook/a2a-client
 
-Ask these before running commands. Ask one at a time, waiting for each
-answer before asking the next — do not put them all in one message:
+{{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What is the ID of the published agent to invoke?
 - What question is that agent expected to answer from your content?
 
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+{{> oauth-setup}}
 
 1. **Scaffold the project**
 
