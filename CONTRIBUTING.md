@@ -104,7 +104,7 @@ What "verify" means depends on the recipe's `buildMethod`:
 
 For the second group especially, verify with a **genuinely fresh build, not inspect-and-patch**:
 spawn an isolated agent (a fresh subagent, or a scratch git worktree) whose _only_ input is the
-generated skill at `plugin/plugins/cookbook/skills/{id}/SKILL.md` — the same content a real
+generated skill at `plugin/shared/cookbook/skills/{id}/SKILL.md` — the same content a real
 `/cookbook:{id}` invocation gets. Do not hand it the existing `recipes/{id}/` code to read and patch;
 that only ever confirms "the code I'm already looking at still basically works," and misses the case
 where the _skill_ is what's wrong, not the reference code. A blind rebuild catches drift in either

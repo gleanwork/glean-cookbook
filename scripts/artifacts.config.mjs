@@ -28,7 +28,7 @@ function executionTarget(recipe, execution) {
 }
 
 async function oauthScaffolds({ repoRoot }) {
-  const targets = new Set(['plugin/plugins/cookbook']);
+  const targets = new Set(['plugin/shared/cookbook']);
   for (const file of await recipeFiles(repoRoot)) {
     const recipe = await fs.readJson(file);
     const contracts = [
