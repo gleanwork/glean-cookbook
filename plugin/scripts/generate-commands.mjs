@@ -12,7 +12,7 @@ import { renderRecipeSkill } from './render-recipe-skill.mjs';
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
 const pluginRoot = path.resolve(import.meta.dirname, '..');
 const registryFile = path.join(repoRoot, 'registry.json');
-const skillsDir = path.join(pluginRoot, 'plugins', 'cookbook', 'skills');
+const skillsDir = path.join(pluginRoot, 'shared', 'cookbook', 'skills');
 const START_MARKER = '<!-- pluginpack-generated:recipes:start -->';
 const END_MARKER = '<!-- pluginpack-generated:recipes:end -->';
 const HAND_AUTHORED_SKILLS = new Set([

@@ -140,7 +140,7 @@ jobs:
       # Belt and braces on the failure mode above: a surviving `{{> name}}` in
       # build/ means a skill shipped its template instead of the partial's text,
       # which reads as valid markdown and passes every other check here. Scoped
-      # to build/ -- plugin/plugins/cookbook/skills/ holds the templates, where
+      # to build/ -- plugin/shared/cookbook/skills/ holds the templates, where
       # these markers are correct.
       - name: No unexpanded partials in emitted plugin content
         run: |
@@ -148,15 +148,12 @@ jobs:
             echo "::error::Unexpanded pluginpack partials in build/ (above). Run 'npm run build:plugin' and commit the result."
             exit 1
           fi
-      - name: Validate claude target
+      # Pluginpack 0.11 scans every file below --dir for surviving partials.
+      # Validate a staging tree containing only each target's managed output so
+      # authored partial templates and npm dependencies are not false positives.
+      - name: Validate all plugin targets
         working-directory: plugin
-        run: npx pluginpack validate --target claude --dir ..
-      - name: Validate cursor target
-        working-directory: plugin
-        run: npx pluginpack validate --target cursor --dir ..
-      - name: Validate codex target
-        working-directory: plugin
-        run: npx pluginpack validate --target codex --dir ..
+        run: npm run validate
       - name: Validate root marketplace manifest with Claude Code itself
         run: npx --yes @anthropic-ai/claude-code plugin validate .
 

@@ -8,11 +8,11 @@
   "scripts": {
     "generate:commands": "node scripts/generate-commands.mjs",
     "build": "npm run generate:commands && pluginpack build",
-    "validate": "pluginpack validate --target claude --dir .. && pluginpack validate --target cursor --dir .. && pluginpack validate --target codex --dir ..",
+    "validate": "node scripts/validate-output.mjs",
     "test": "npm run build && npm run validate"
   },
   "devDependencies": {
-    "@gleanwork/pluginpack": "^0.10.0",
+    "@gleanwork/pluginpack": "0.11.0",
     "fast-glob": "^3.3.3",
     "fs-extra": "^11.4.0",
     "handlebars": "^4.7.9",
