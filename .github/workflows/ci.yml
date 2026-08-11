@@ -31,6 +31,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - run: npm ci
       # The verify harness owns an OAuth flow; state validation and PKCE
       # derivation are not things to leave untested. No credentials needed --
       # the live-discovery test skips itself without GLEAN_INSTANCE.

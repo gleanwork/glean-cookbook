@@ -3,6 +3,7 @@
   "$id": "https://developers.glean.com/schemas/recipe.schema.json",
   "title": "Glean Cookbook Recipe",
   "description": "Canonical validation contract for recipe records authored in gleanwork/glean-cookbook at recipes/<id>/recipe.json.",
+  "type": "object",
   "$defs": {
     "steps": {
       "minItems": 1,
