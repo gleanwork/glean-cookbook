@@ -58,10 +58,12 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```
 
 5. **Run it**
-   Leave the verified app running at http://localhost:3000 and give that URL to the user.
    ```bash
    cd customer-360 && npm start
    ```
+   Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
+   link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
+   the first verification action.
 
 ### Platform Agents
 
@@ -103,7 +105,9 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```
 
 5. **Run it**
-   Leave the verified app running at http://localhost:3000 and give that URL to the user.
    ```bash
    cd customer-360 && npm start
    ```
+   Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
+   link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
+   the first verification action.

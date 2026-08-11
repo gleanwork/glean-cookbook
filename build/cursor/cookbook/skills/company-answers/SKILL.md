@@ -49,11 +49,15 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
    ```
 
 4. **Run it**
-   Keep Vite running, report its exact Local URL, and wait for the user to open it in their normal signed-in browser. Never open or automate the URL yourself.
 
    ```bash
    cd company-answers && npm run dev
    ```
+
+   Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
+   link. Do not open or automate the link. Ask the user to click it in their normal browser where they
+   are already signed in to Glean and confirm the page is ready. Then give the first verification
+   action.
 
 5. **Verify**
    Give the user the exact printed local URL to open in their normal signed-in browser. Ask them to try a topic they know exists in their Glean instance and confirm a real, cited answer renders inside Glean's chat UI.
@@ -97,7 +101,9 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```
 
 5. **Run it**
-   Leave the verified app running at http://localhost:3000 and give that URL to the user.
    ```bash
    cd company-answers && npm start
    ```
+   Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
+   link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
+   the first verification action.

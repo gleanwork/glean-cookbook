@@ -42,6 +42,9 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    (cd multi-step-agent/tool-server && uv run server.py)
    ```
 
+   Keep required services and tunnels running. Report the current checkpoint and any exact endpoint
+   printed. Then give the next manual or verification action.
+
 4. **Expose the demo tool over HTTPS**
    Keep this running in a second terminal. Copy the printed https://<random>.trycloudflare.com origin into tool-server/openapi.yaml as servers[0].url, with no path. Confirm that <origin>/file_incident_ticket returns the expected 403 for a denied email. This public demo route accepts a spoofable identity header and only creates fake in-memory tickets; authenticate requests from Glean before connecting a real write action.
 
@@ -68,6 +71,9 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```bash
    (cd multi-step-agent/invoke-agent && uv run main.py)
    ```
+
+   Keep required services and tunnels running. Report the current checkpoint and any exact endpoint
+   printed. Then give the next manual or verification action.
 
 9. **Verify**
    With your email on the allow-list, confirm the ticket actually gets filed. Then restart the tool server without it and confirm the agent produces a read-only fallback summary instead of a hard failure.

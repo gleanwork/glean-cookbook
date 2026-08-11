@@ -14,7 +14,7 @@ npm run verify
 npm start
 ```
 
-Open http://localhost:3000. The server holds your API token — never expose it in the browser.
+Open the Local URL printed by the server. The server holds your API token — never expose it in the browser.
 
 - **Live steps:** `.env.example` selects the included multi-step `steps.example.json`. Customize it,
   point `GLEAN_ONBOARDING_STEPS_FILE` at another file, or set `GLEAN_ONBOARDING_STEPS_JSON`.

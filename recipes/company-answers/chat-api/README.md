@@ -12,7 +12,7 @@ npm run verify
 npm start
 ```
 
-Open `http://localhost:3000`, ask a question, get a cited answer.
+Open the Local URL printed by the server, ask a question, and get a cited answer.
 
 ## What this does
 

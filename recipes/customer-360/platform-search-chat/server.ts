@@ -305,14 +305,18 @@ function readJsonBody(
   });
 }
 
-const port = Number(process.env.PORT ?? 3000);
+const requestedPort = process.env.PORT ? Number(process.env.PORT) : 0;
 validateEnvironment([
   'GLEAN_API_TOKEN',
   'GLEAN_SERVER_URL',
   'GLEAN_ACCOUNT_NAME',
 ]);
-server.listen(port, () => {
+server.listen(requestedPort, '127.0.0.1', () => {
+  const address = server.address();
+  if (!address || typeof address === 'string') {
+    throw new Error('Could not determine the local server port.');
+  }
   console.log(
-    `Customer 360 (Platform Search + Chat) running at http://localhost:${port}`,
+    `Customer 360 (Platform Search + Chat) running at http://localhost:${address.port}`,
   );
 });

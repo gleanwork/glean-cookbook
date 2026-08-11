@@ -43,6 +43,10 @@ Steps:
 
 See Verify below for what a correct build must do.
 
+## Open the running recipe
+
+{{> run-existing-app}}
+
 ## Setup
 
 - Scaffold web SDK embed

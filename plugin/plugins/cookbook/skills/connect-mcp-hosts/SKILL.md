@@ -37,6 +37,7 @@ answer before asking the next — do not put them all in one message:
 
 4. **Restart the host app**
    Cursor and Claude Code pick up the new server on restart; Claude Desktop needs the hammer icon to confirm Glean tools are available.
+   {{> run-host-configuration}}
 
 5. **Verify**
    Per host, ask "Who's on call for payments-service?" and confirm a real, Glean-cited answer.

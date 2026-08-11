@@ -374,7 +374,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-const port = Number(process.env.PORT ?? 3000);
+const requestedPort = process.env.PORT ? Number(process.env.PORT) : 0;
 if (
   process.env.GLEAN_USE_FIXTURE !== 'true' &&
   !process.env.RFP_APPROVED_SOURCE_PREFIXES?.trim()
@@ -383,9 +383,16 @@ if (
     'RFP_APPROVED_SOURCE_PREFIXES is required for live use; list the Glean URL prefixes cleared for customer-facing answers.',
   );
 }
-server.listen(port, () => {
-  console.log(`RFP responder running at http://localhost:${port}`);
-  if (process.env.GLEAN_USE_FIXTURE === 'true') {
+server.listen(requestedPort, '127.0.0.1', () => {
+  const address = server.address();
+  if (!address || typeof address === 'string') {
+    throw new Error('Could not determine the local server port.');
+  }
+  console.log(`RFP responder running at http://localhost:${address.port}`);
+  if (
+    process.env.GLEAN_USE_FIXTURE === 'true' &&
+    process.env.GLEAN_COOKBOOK_DEMO !== 'true'
+  ) {
     console.log('Fixture mode: no credentials used, no network calls made.');
   }
 });

@@ -42,5 +42,8 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    cd a2a-client && uv run main.py
    ```
 
+   Run the command in this chat and report its concise result rather than reproducing routine install
+   or debug output. Do not invent a browser URL. Then give the first verification action.
+
 4. **Verify**
    Use the question supplied up front. Confirm a real answer, a follow-up reusing the same context_id to prove multi-turn, and a streaming response — all three paths this recipe exercises.

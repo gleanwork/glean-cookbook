@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "login": "node scripts/glean-auth.mjs login --scopes chat",
+    "demo": "node --import tsx scripts/demo.mjs",
     "start": "tsx server.ts",
     "verify": "node scripts/verify.mjs",
     "verify:fixture": "GLEAN_USE_FIXTURE=true node scripts/verify.mjs",

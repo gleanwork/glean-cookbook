@@ -14,7 +14,7 @@ the ones that were refused.
 ```bash
 npm install
 npm run verify:fixture   # 58 checks, no credentials, no network
-npm start                # http://localhost:3000
+npm start                # open the Local URL printed by the server
 ```
 
 Run `verify:fixture` first. It replays recorded responses and asserts the

@@ -16,6 +16,7 @@
   "authMethod": ["indexing-token", "web-sdk-cookie"],
   "buildMethod": "integrate",
   "execution": {
+    "type": "existing-app",
     "questions": [
       {
         "id": "email",

@@ -259,12 +259,13 @@
       async function boot() {
         state.config = await (await fetch('/api/config')).json();
         const c = state.config;
-        $('banner').textContent =
-          `Signed in as ${c.actor}. Default approval expiry ${Math.round(c.defaultExpiryMs / 60000)} min ` +
-          `(per-service, from the catalog). ` +
-          (c.fixtureMode
-            ? 'Fixture mode — no credentials, no network.'
-            : 'Live mode.');
+        $('banner').textContent = c.cookbookDemo
+          ? `Sample environment · Default approval expiry ${Math.round(c.defaultExpiryMs / 60000)} min (per-service, from the catalog).`
+          : `Signed in as ${c.actor}. Default approval expiry ${Math.round(c.defaultExpiryMs / 60000)} min ` +
+            `(per-service, from the catalog). ` +
+            (c.fixtureMode
+              ? 'Fixture mode — no credentials, no network.'
+              : 'Live mode.');
         $('orchestrator').replaceChildren(
           ...c.orchestrators.map((o) =>
             el('option', {

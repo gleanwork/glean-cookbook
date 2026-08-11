@@ -12,7 +12,31 @@ const skillsRoot = path.join(
   'cookbook',
   'skills',
 );
+const partialsRoot = path.join(repoRoot, 'plugin', 'partials');
 const errors = [];
+
+function runHandoffPartial(execution) {
+  if (execution.type === 'local-web') {
+    return execution.auth.some((auth) => auth.kind === 'browser-cookie')
+      ? 'run-local-web-cookie'
+      : 'run-local-web';
+  }
+  return {
+    'existing-app': 'run-existing-app',
+    cli: 'run-cli',
+    'host-configuration': 'run-host-configuration',
+    'hybrid-service': 'run-hybrid-service',
+  }[execution.type];
+}
+
+function checkPartialReference(skillText, partial, recipeId) {
+  if (!fs.existsSync(path.join(partialsRoot, `${partial}.md`))) {
+    errors.push(`${recipeId}: shared partial ${partial}.md does not exist`);
+  }
+  if (!skillText.includes(`{{> ${partial}}}`)) {
+    errors.push(`${recipeId}: generated skill omits {{> ${partial}}}`);
+  }
+}
 
 function targetFor(recipe, execution) {
   const assets = recipe.codeAssets ?? [];
@@ -26,6 +50,74 @@ function targetFor(recipe, execution) {
 }
 
 function checkExecution(recipe, execution, steps, location, repoPath) {
+  const target = repoPath ?? targetFor(recipe, execution);
+  const runStep = steps.find((step) => step.kind === 'run');
+  const fixtureStep = steps.find((step) => step.kind === 'verify-fixture');
+
+  if (execution.type === 'local-web') {
+    if (
+      !execution.run?.command ||
+      !execution.run?.url ||
+      execution.run.userBrowser !== true ||
+      !runStep
+    ) {
+      errors.push(
+        `${recipe.id} ${location}: local-web requires a run step, persistent command, URL, and user-browser handoff`,
+      );
+    }
+    if (
+      /^https?:\/\/(?:localhost|127\.0\.0\.1):\d+\/?$/u.test(
+        execution.run?.url ?? '',
+      )
+    ) {
+      errors.push(
+        `${recipe.id} ${location}: local-web must report the URL printed after choosing an available port, not encode a localhost port`,
+      );
+    }
+  } else if (execution.type === 'existing-app') {
+    if (
+      execution.run?.kind !== 'existing-app' ||
+      execution.run.userBrowser !== true
+    ) {
+      errors.push(
+        `${recipe.id} ${location}: existing-app requires an existing-app user-browser handoff`,
+      );
+    }
+  } else if (execution.type === 'cli') {
+    if (
+      !execution.run?.command ||
+      execution.run.userBrowser !== false ||
+      !runStep
+    ) {
+      errors.push(
+        `${recipe.id} ${location}: cli requires a run step and non-browser run command`,
+      );
+    }
+  } else if (execution.type === 'host-configuration') {
+    if (!steps.some((step) => step.kind === 'configure') || !runStep) {
+      errors.push(
+        `${recipe.id} ${location}: host-configuration requires configure and host restart/reload steps`,
+      );
+    }
+  } else if (execution.type === 'external-builder') {
+    if (recipe.buildMethod !== 'third-party-build' || execution.run) {
+      errors.push(
+        `${recipe.id} ${location}: external-builder must use third-party-build without a local run contract`,
+      );
+    }
+  } else if (execution.type === 'hybrid-service') {
+    if (
+      !runStep ||
+      !steps.some((step) => ['manual', 'handoff'].includes(step.kind))
+    ) {
+      errors.push(
+        `${recipe.id} ${location}: hybrid-service requires both runnable and manual handoff steps`,
+      );
+    }
+  } else {
+    errors.push(`${recipe.id} ${location}: unknown execution type`);
+  }
+
   for (const auth of execution.auth) {
     if (
       auth.kind === 'oauth-with-token-fallback' &&
@@ -44,6 +136,60 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
     }
   }
 
+  if (
+    execution.run?.userBrowser === true &&
+    execution.run.kind !== 'existing-app' &&
+    !execution.run.url
+  ) {
+    errors.push(
+      `${recipe.id} ${location}: user-browser run must declare the URL to hand off`,
+    );
+  }
+  if (
+    execution.run?.command &&
+    runStep?.command &&
+    execution.run.command !== runStep.command
+  ) {
+    errors.push(
+      `${recipe.id} ${location}: execution.run command differs from the run step`,
+    );
+  }
+
+  if (fixtureStep) {
+    const modeQuestion = (execution.questions ?? []).find((question) =>
+      /\b(?:demo|fixture)\b/iu.test(question.prompt),
+    );
+    if (modeQuestion) {
+      errors.push(
+        `${recipe.id} ${location}: demo availability must come from GLEAN_COOKBOOK_DEMO, not a setup question`,
+      );
+    }
+    if (!execution.run?.command || !execution.run?.url) {
+      errors.push(
+        `${recipe.id} ${location}: fixture-backed demo must declare a persistent run command and URL`,
+      );
+    }
+    if (target) {
+      const packageFile = path.join(repoRoot, target, 'package.json');
+      const scripts = fs.existsSync(packageFile)
+        ? (JSON.parse(fs.readFileSync(packageFile, 'utf8')).scripts ?? {})
+        : {};
+      const demoEntry = path.join(repoRoot, target, 'scripts', 'demo.mjs');
+      const demoSource = fs.existsSync(demoEntry)
+        ? fs.readFileSync(demoEntry, 'utf8')
+        : '';
+      if (
+        scripts.demo !== 'node --import tsx scripts/demo.mjs' ||
+        !demoSource.includes("process.env.GLEAN_COOKBOOK_DEMO = 'true'") ||
+        !demoSource.includes("process.env.GLEAN_USE_FIXTURE = 'true'")
+      ) {
+        errors.push(
+          `${recipe.id} ${location}: fixture-backed recipe must ship the quiet, environment-gated demo entry point`,
+        );
+      }
+    }
+  }
+
   if (execution.verification.startsOwnServer) {
     const verifyIndex = steps.findIndex((step) => step.kind === 'verify-live');
     const runIndex = steps.findIndex((step) => step.kind === 'run');
@@ -54,7 +200,6 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
     }
   }
 
-  const target = repoPath ?? targetFor(recipe, execution);
   if (!target) return;
   const absoluteTarget = path.join(repoRoot, target);
   if (
@@ -135,9 +280,36 @@ for (const entry of fs.readdirSync(recipesRoot, { withFileTypes: true })) {
 
   const skill = path.join(skillsRoot, recipe.id, 'SKILL.md');
   if (fs.existsSync(skill)) {
-    const words = fs.readFileSync(skill, 'utf8').trim().split(/\s+/u).length;
+    const skillText = fs.readFileSync(skill, 'utf8');
+    const words = skillText.trim().split(/\s+/u).length;
     if (words > 650)
       errors.push(`${recipe.id}: generated skill is ${words} words (max 650)`);
+    const contracts = [
+      ...(recipe.execution
+        ? [{ execution: recipe.execution, steps: recipe.steps ?? [] }]
+        : []),
+      ...(recipe.codeAssets ?? [])
+        .filter((asset) => asset.execution)
+        .map((asset) => ({
+          execution: asset.execution,
+          steps: asset.steps ?? [],
+        })),
+    ];
+    const expectedPartials = new Set(
+      contracts
+        .map(({ execution }) => runHandoffPartial(execution))
+        .filter(Boolean),
+    );
+    if (
+      contracts.some(({ steps }) =>
+        steps.some((step) => step.kind === 'verify-fixture'),
+      )
+    ) {
+      expectedPartials.add('demo-mode');
+    }
+    for (const partial of expectedPartials) {
+      checkPartialReference(skillText, partial, recipe.id);
+    }
   }
 }
 
