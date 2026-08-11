@@ -66,9 +66,9 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    cd oncall-copilot && npm start
    ```
 
-   Report [http://localhost:3000](http://localhost:3000) as a clickable link, using the exact printed URL if different.
-   Keep the server running. Ask the user to click the link in their normal browser and confirm the page
-   is ready. Then give the first verification action.
+   Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
+   link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
+   the first verification action.
 
 6. **Verify**
    Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything.

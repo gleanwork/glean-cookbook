@@ -328,9 +328,13 @@ function parseHistory(raw: unknown): ConversationTurn[] {
     .filter((turn) => turn.text.length > 0);
 }
 
-const port = Number(process.env.PORT ?? 3000);
-server.listen(port, () => {
+const requestedPort = process.env.PORT ? Number(process.env.PORT) : 0;
+server.listen(requestedPort, '127.0.0.1', () => {
+  const address = server.address();
+  if (!address || typeof address === 'string') {
+    throw new Error('Could not determine the local server port.');
+  }
   console.log(
-    `Onboarding Hub (Client Chat) running at http://localhost:${port}`,
+    `Onboarding Hub (Client Chat) running at http://localhost:${address.port}`,
   );
 });

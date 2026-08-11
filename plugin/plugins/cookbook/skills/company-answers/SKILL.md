@@ -54,7 +54,6 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
    cd company-answers && npm run dev
    ```
 
-   Capture the Local URL printed by Vite and report it as a clickable Markdown link.
    {{> run-local-web-cookie}}
 
 5. **Verify**
@@ -102,5 +101,4 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```bash
    cd company-answers && npm start
    ```
-   Report [http://localhost:3000](http://localhost:3000) as a clickable link, using the exact printed URL if different.
    {{> run-local-web}}

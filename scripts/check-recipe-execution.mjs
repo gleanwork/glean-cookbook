@@ -65,6 +65,15 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
         `${recipe.id} ${location}: local-web requires a run step, persistent command, URL, and user-browser handoff`,
       );
     }
+    if (
+      /^https?:\/\/(?:localhost|127\.0\.0\.1):\d+\/?$/u.test(
+        execution.run?.url ?? '',
+      )
+    ) {
+      errors.push(
+        `${recipe.id} ${location}: local-web must report the URL printed after choosing an available port, not encode a localhost port`,
+      );
+    }
   } else if (execution.type === 'existing-app') {
     if (
       execution.run?.kind !== 'existing-app' ||

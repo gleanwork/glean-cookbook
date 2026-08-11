@@ -340,9 +340,13 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-const port = Number(process.env.PORT ?? 3000);
-server.listen(port, () => {
-  console.log(`On-call Copilot running at http://localhost:${port}`);
+const requestedPort = process.env.PORT ? Number(process.env.PORT) : 0;
+server.listen(requestedPort, '127.0.0.1', () => {
+  const address = server.address();
+  if (!address || typeof address === 'string') {
+    throw new Error('Could not determine the local server port.');
+  }
+  console.log(`On-call Copilot running at http://localhost:${address.port}`);
   if (
     process.env.GLEAN_USE_FIXTURE === 'true' &&
     process.env.GLEAN_COOKBOOK_DEMO !== 'true'

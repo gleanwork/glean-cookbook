@@ -21,7 +21,7 @@ npm run verify
 npm start
 ```
 
-Open http://localhost:3000.
+Open the Local URL printed by the server.
 
 ## Contracts
 

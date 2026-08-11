@@ -61,9 +61,9 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```bash
    cd customer-360 && npm start
    ```
-   Report [http://localhost:3000](http://localhost:3000) as a clickable link, using the exact printed URL if different.
-   Keep the server running. Ask the user to click the link in their normal browser and confirm the page
-   is ready. Then give the first verification action.
+   Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
+   link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
+   the first verification action.
 
 ### Platform Agents
 
@@ -108,6 +108,6 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```bash
    cd customer-360 && npm start
    ```
-   Report [http://localhost:3000](http://localhost:3000) as a clickable link, using the exact printed URL if different.
-   Keep the server running. Ask the user to click the link in their normal browser and confirm the page
-   is ready. Then give the first verification action.
+   Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
+   link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
+   the first verification action.

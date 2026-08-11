@@ -196,7 +196,7 @@
         },
         "run": {
           "command": "cd onboarding-hub && npm start",
-          "url": "http://localhost:3000",
+          "url": "the Local URL printed by the server",
           "userBrowser": true
         }
       },

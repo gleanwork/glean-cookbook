@@ -180,10 +180,6 @@ function renderDemoModePolicy(steps) {
   return '{{> demo-mode}}';
 }
 
-function isLiteralHttpUrl(value) {
-  return /^https?:\/\/[^\s]+$/u.test(value ?? '');
-}
-
 /**
  * The execution contract, rather than recipe-authored prose, owns the final
  * handoff. This keeps every runnable recipe consistent while preserving the one
@@ -209,24 +205,7 @@ function renderRunHandoffLines(execution) {
   const browserCookie = execution.auth.some(
     (auth) => auth.kind === 'browser-cookie',
   );
-  const lines = [];
-
-  if (run.command) {
-    if (isLiteralHttpUrl(run.url)) {
-      lines.push(
-        `Report [${run.url}](${run.url}) as a clickable link, using the exact printed URL if different.`,
-      );
-    } else if (run.url) {
-      lines.push(
-        `Capture ${run.url} and report it as a clickable Markdown link.`,
-      );
-    }
-  }
-
-  lines.push(
-    browserCookie ? '{{> run-local-web-cookie}}' : '{{> run-local-web}}',
-  );
-  return lines;
+  return [browserCookie ? '{{> run-local-web-cookie}}' : '{{> run-local-web}}'];
 }
 
 function renderRunHandoff(execution, heading = '###') {

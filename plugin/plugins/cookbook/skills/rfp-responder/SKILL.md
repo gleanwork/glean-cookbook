@@ -54,7 +54,6 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    cd rfp-responder && npm start
    ```
 
-   Report [http://localhost:3000](http://localhost:3000) as a clickable link, using the exact printed URL if different.
    {{> run-local-web}}
 
 6. **Verify**

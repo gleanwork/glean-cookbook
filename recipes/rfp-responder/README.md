@@ -15,7 +15,7 @@ structurally prevented rather than discouraged by a prompt.
 ```bash
 npm install
 npm run verify:fixture   # whole flow, no credentials, no network
-npm start                # http://localhost:3000
+npm start                # open the Local URL printed by the server
 ```
 
 `verify:fixture` is the interesting one to run first. It replays recorded Chat

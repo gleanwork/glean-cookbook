@@ -64,9 +64,9 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    cd rfp-responder && npm start
    ```
 
-   Report [http://localhost:3000](http://localhost:3000) as a clickable link, using the exact printed URL if different.
-   Keep the server running. Ask the user to click the link in their normal browser and confirm the page
-   is ready. Then give the first verification action.
+   Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
+   link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
+   the first verification action.
 
 6. **Verify**
    Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered.

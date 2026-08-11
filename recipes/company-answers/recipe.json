@@ -137,7 +137,7 @@
         },
         "run": {
           "command": "cd company-answers && npm start",
-          "url": "http://localhost:3000",
+          "url": "the Local URL printed by the server",
           "userBrowser": true
         }
       },

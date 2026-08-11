@@ -78,7 +78,7 @@
         },
         "run": {
           "command": "cd customer-360 && npm start",
-          "url": "http://localhost:3000",
+          "url": "the Local URL printed by the server",
           "userBrowser": true
         }
       },
@@ -150,7 +150,7 @@
         },
         "run": {
           "command": "cd customer-360 && npm start",
-          "url": "http://localhost:3000",
+          "url": "the Local URL printed by the server",
           "userBrowser": true
         }
       },
