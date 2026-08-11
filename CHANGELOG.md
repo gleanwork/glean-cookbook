@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.0](https://github.com/gleanwork/glean-cookbook/compare/v0.8.0...v0.9.0) (2026-08-11)
+
+### Features
+
+* standardize cookbook recipe execution ([#31](https://github.com/gleanwork/glean-cookbook/issues/31)) ([06ff55a](https://github.com/gleanwork/glean-cookbook/commit/06ff55a8572c0787a9e86b666dd3b80c353a666c))
+
+### Bug Fixes
+
+* update on-call copilot preview ([#30](https://github.com/gleanwork/glean-cookbook/issues/30)) ([07ac2e9](https://github.com/gleanwork/glean-cookbook/commit/07ac2e91a63dcedd238a95dc11d442ce04ad5429))
+
 ## [0.8.0](https://github.com/gleanwork/glean-cookbook/compare/v0.7.0...v0.8.0) (2026-08-10)
 
 ### Features
