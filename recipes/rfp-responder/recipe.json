@@ -22,18 +22,15 @@
   "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",
   "execution": {
+    "type": "local-web",
     "questions": [
       {
-        "id": "mode",
-        "prompt": "Do you want the instant fixture demo or a live tenant run?"
-      },
-      {
         "id": "approved-sources",
-        "prompt": "For a live run, which Glean URL prefixes are approved sources for external answers?"
+        "prompt": "Which Glean URL prefixes are approved sources for external answers?"
       },
       {
         "id": "email",
-        "prompt": "For a live run, what is your work email?"
+        "prompt": "What is your work email?"
       }
     ],
     "auth": [
@@ -59,8 +56,8 @@
   },
   "languages": ["typescript"],
   "prerequisites": [
-    "A Glean instance with your company content indexed",
-    "A work email for tenant discovery and OAuth sign-in; a CHAT-scoped API token is the fallback",
+    "For configured runs: a Glean instance with your company content indexed",
+    "For configured runs: a work email for tenant discovery and OAuth sign-in; a CHAT-scoped API token is the fallback",
     "Node 20+"
   ],
   "demoQueries": [

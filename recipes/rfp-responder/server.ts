@@ -385,7 +385,10 @@ if (
 }
 server.listen(port, () => {
   console.log(`RFP responder running at http://localhost:${port}`);
-  if (process.env.GLEAN_USE_FIXTURE === 'true') {
+  if (
+    process.env.GLEAN_USE_FIXTURE === 'true' &&
+    process.env.GLEAN_COOKBOOK_DEMO !== 'true'
+  ) {
     console.log('Fixture mode: no credentials used, no network calls made.');
   }
 });

@@ -17,6 +17,7 @@
   "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",
   "execution": {
+    "type": "cli",
     "questions": [
       {
         "id": "email",
@@ -46,6 +47,10 @@
       "command": "cd a2a-client && uv run main.py",
       "expectedDuration": "about 1 minute after sign-in",
       "startsOwnServer": false
+    },
+    "run": {
+      "command": "cd a2a-client && uv run main.py",
+      "userBrowser": false
     }
   },
   "languages": ["python"],

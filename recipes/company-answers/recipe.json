@@ -43,6 +43,7 @@
       "language": "typescript",
       "description": "Web SDK variant — renderChat in a page",
       "execution": {
+        "type": "local-web",
         "questions": [
           {
             "id": "email",
@@ -93,7 +94,6 @@
         {
           "title": "Run it",
           "command": "cd company-answers && npm run dev",
-          "description": "Keep Vite running, report its exact Local URL, and wait for the user to open it in their normal signed-in browser. Never open or automate the URL yourself.",
           "kind": "run"
         },
         {
@@ -108,6 +108,7 @@
       "language": "typescript",
       "description": "Chat API variant — one chat.create call, citations rendered",
       "execution": {
+        "type": "local-web",
         "questions": [
           {
             "id": "email",
@@ -166,7 +167,6 @@
         {
           "title": "Run it",
           "command": "cd company-answers && npm start",
-          "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
           "kind": "run"
         }
       ]

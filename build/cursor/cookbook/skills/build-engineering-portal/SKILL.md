@@ -24,6 +24,12 @@ https://developers.glean.com/cookbook/build-engineering-portal
 
 Resolve my backend from the work email already supplied with the cookbook resolver. Index the supplied service catalog into the named datasource with the open-source indexing SDK, keeping the Indexing API token server-side. Then embed Glean search and chat with Web SDK cookie SSO. Style the portal shell per the house style below, run it, and give me the URL to open in my normal signed-in browser. See Verify below for the required checks.
 
+## Open the running recipe
+
+Report the running integration's exact page URL or route as a clickable Markdown link.
+Do not open or automate it. Ask the user to click it in their normal signed-in browser and confirm the page is ready.
+Then give the first verification action.
+
 ## Setup
 
 - Scaffold connector

@@ -22,22 +22,19 @@
   "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",
   "execution": {
+    "type": "local-web",
     "questions": [
       {
-        "id": "mode",
-        "prompt": "Do you want the instant fixture demo or a live tenant run?"
-      },
-      {
         "id": "service",
-        "prompt": "For a live run, which service has a catalog entry, runbook, and past incident in Glean?"
+        "prompt": "Which service has a catalog entry, runbook, and past incident in Glean?"
       },
       {
         "id": "orchestrator",
-        "prompt": "For a live run, use direct Search + Chat or an existing Glean agent?"
+        "prompt": "Use direct Search + Chat or an existing Glean agent?"
       },
       {
         "id": "email",
-        "prompt": "For a live run, what is your work email?"
+        "prompt": "What is your work email?"
       }
     ],
     "auth": [
@@ -63,9 +60,9 @@
   },
   "languages": ["typescript"],
   "prerequisites": [
-    "A Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review",
-    "A work email for tenant discovery and OAuth sign-in; a scoped API token is the fallback",
-    "X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)",
+    "For configured runs: a Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review",
+    "For configured runs: a work email for tenant discovery and OAuth sign-in; a scoped API token is the fallback",
+    "For configured runs: X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)",
     "Node 20+"
   ],
   "demoQueries": [

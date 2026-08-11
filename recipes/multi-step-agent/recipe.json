@@ -17,6 +17,7 @@
   "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",
   "execution": {
+    "type": "hybrid-service",
     "questions": [
       {
         "id": "email",

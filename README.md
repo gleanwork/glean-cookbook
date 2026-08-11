@@ -25,6 +25,11 @@ Then run a recipe, or browse them first:
 /cookbook:browse-cookbook      # list what's available and pick one
 ```
 
+Fixture-backed presentation demos are opt-in. Launch the coding host with
+`GLEAN_COOKBOOK_DEMO=true` before invoking a supported recipe; otherwise the
+plugin does not mention or offer the demo path. Demo runs use bundled sample
+data and still hand back the running app as a clickable local URL.
+
 Each recipe checks its prerequisites and asks for the configuration it needs as it goes. Web SDK
 recipes leave the local server running and ask you to open its URL in your normal, signed-in browser;
 the coding agent must not substitute its isolated browser for your Glean SSO session.

@@ -16,6 +16,7 @@
   "authMethod": ["custom"],
   "buildMethod": "scaffold",
   "execution": {
+    "type": "host-configuration",
     "questions": [
       {
         "id": "email",

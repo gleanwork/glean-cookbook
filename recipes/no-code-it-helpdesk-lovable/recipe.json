@@ -17,6 +17,7 @@
   "authMethod": ["custom"],
   "buildMethod": "third-party-build",
   "execution": {
+    "type": "external-builder",
     "questions": [
       {
         "id": "email",

@@ -49,6 +49,7 @@
       "language": "typescript",
       "description": "Path A — parallel Platform Search tiles + Client Chat synthesis",
       "execution": {
+        "type": "local-web",
         "questions": [
           {
             "id": "email",
@@ -107,7 +108,6 @@
         {
           "title": "Run it",
           "command": "cd customer-360 && npm start",
-          "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
           "kind": "run"
         }
       ]
@@ -117,6 +117,7 @@
       "language": "typescript",
       "description": "Path B — Platform Agents createRun for prescriptive account briefs",
       "execution": {
+        "type": "local-web",
         "questions": [
           {
             "id": "email",
@@ -179,7 +180,6 @@
         {
           "title": "Run it",
           "command": "cd customer-360 && npm start",
-          "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
           "kind": "run"
         }
       ]

@@ -108,7 +108,7 @@ function humanizeVariantLabel(repoPath) {
     .join(' ');
 }
 
-function renderStepList(steps, startNum) {
+function renderStepList(steps, startNum, execution) {
   return steps
     .map((step, i) => {
       const lines = [`${startNum + i}. **${step.title}**`];
@@ -118,6 +118,11 @@ function renderStepList(steps, startNum) {
           .split('\n')
           .map((line) => `   ${line}`);
         lines.push('   ```bash', ...commandLines, '   ```');
+      }
+      if (step.kind === 'run') {
+        for (const line of renderRunHandoffLines(execution)) {
+          lines.push(line ? `   ${line}` : '');
+        }
       }
       return lines.join('\n');
     })
@@ -160,6 +165,105 @@ function renderExecutionIntro(execution) {
   return lines.join('\n');
 }
 
+function hasFixtureDemo(steps) {
+  return steps?.some((step) => step.kind === 'verify-fixture') ?? false;
+}
+
+/**
+ * Fixture-backed recipes expose a polished demo only when the host process was
+ * deliberately launched with the cookbook-wide flag. The skill checks the flag
+ * without echoing the environment, so ordinary users are never offered a demo
+ * path that they did not opt into.
+ */
+function renderDemoModePolicy(steps) {
+  if (!hasFixtureDemo(steps)) return '';
+  return [
+    '### Select the run mode',
+    '',
+    'Before asking setup questions, silently check whether `GLEAN_COOKBOOK_DEMO` is exactly `true`; do not print the environment or the variable value.',
+    '',
+    '- When it is `true`, use the bundled sample-data path: skip all setup questions, authentication, and fixture verification output; after scaffolding and installing, run `npm run demo` and follow the standard browser handoff below.',
+    '- Otherwise, never mention or offer demo, sample, or fixture mode. Skip the fixture-only step and follow the normal configured run, including its setup questions, authentication, and live verification.',
+  ].join('\n');
+}
+
+function isLiteralHttpUrl(value) {
+  return /^https?:\/\/[^\s]+$/u.test(value ?? '');
+}
+
+/**
+ * The execution contract, rather than recipe-authored prose, owns the final
+ * handoff. This keeps every runnable recipe consistent while preserving the one
+ * material browser distinction: Web SDK cookie SSO must be opened by the user
+ * in their normal signed-in browser.
+ */
+function renderRunHandoffLines(execution) {
+  const run = execution?.run;
+  if (execution?.type === 'cli') {
+    return [
+      'Run the command in this chat and report its concise result rather than reproducing routine install or debug output.',
+      'Do not invent a browser URL. Then give the first verification action.',
+    ];
+  }
+  if (execution?.type === 'host-configuration') {
+    return [
+      'Report which host was configured and whether its restart or reload completed.',
+      'Then give the first verification action inside that host.',
+    ];
+  }
+  if (execution?.type === 'hybrid-service') {
+    return [
+      'Keep required services and tunnels running. Report the current checkpoint and any exact endpoint printed.',
+      'Then give the next manual or verification action.',
+    ];
+  }
+  if (!run) return [];
+
+  const browserCookie = execution.auth.some(
+    (auth) => auth.kind === 'browser-cookie',
+  );
+  const lines = [];
+
+  if (run.kind === 'existing-app') {
+    lines.push(
+      "Report the running integration's exact page URL or route as a clickable Markdown link.",
+    );
+  } else if (run.command) {
+    if (isLiteralHttpUrl(run.url)) {
+      lines.push(
+        `Keep it running and report [${run.url}](${run.url}) as a clickable link, using the exact printed URL if different.`,
+      );
+    } else if (run.url) {
+      lines.push(
+        `Keep it running; capture ${run.url} and report it as a clickable Markdown link.`,
+      );
+    } else {
+      lines.push('Leave the process running and report when it is ready.');
+    }
+  }
+
+  if (run.userBrowser) {
+    if (browserCookie) {
+      lines.push(
+        'Do not open or automate it. Ask the user to click it in their normal signed-in browser and confirm the page is ready.',
+      );
+    } else {
+      lines.push(
+        'Ask the user to click it in their normal browser and confirm the page is ready.',
+      );
+    }
+  }
+
+  lines.push('Then give the first verification action.');
+  return lines;
+}
+
+function renderRunHandoff(execution, heading = '###') {
+  const lines = renderRunHandoffLines(execution);
+  if (lines.length === 0) return '';
+  return [`${heading} Open the running recipe`, '', ...lines].join('\n');
+}
+
 /**
  * Renders a `buildMethod: 'scaffold'` recipe's skill body from its `steps`
  * (and any variant-specific `codeAssets[].steps`) instead of a hand-written
@@ -172,10 +276,12 @@ function renderStepsBody(recipe) {
   ];
 
   const recipeExecutionIntro = renderExecutionIntro(recipe.execution);
+  const recipeDemoPolicy = renderDemoModePolicy(recipe.steps);
+  if (recipeDemoPolicy) parts.push(recipeDemoPolicy);
   if (recipeExecutionIntro) parts.push(recipeExecutionIntro);
 
   if (recipe.steps?.length > 0) {
-    parts.push(renderStepList(recipe.steps, 1));
+    parts.push(renderStepList(recipe.steps, 1, recipe.execution));
   }
 
   const variantsWithSteps = (recipe.codeAssets ?? []).filter(
@@ -198,8 +304,10 @@ function renderStepsBody(recipe) {
       `### ${humanizeVariantLabel(asset.repoPath)}\n\n${asset.description}`,
     );
     const executionIntro = renderExecutionIntro(asset.execution);
+    const demoPolicy = renderDemoModePolicy(asset.steps);
+    if (demoPolicy) parts.push(demoPolicy);
     if (executionIntro) parts.push(executionIntro);
-    parts.push(renderStepList(asset.steps, 1));
+    parts.push(renderStepList(asset.steps, 1, asset.execution));
   }
 
   return parts.join('\n\n');
@@ -279,6 +387,11 @@ function renderRecipeSkill(recipe) {
         .filter(Boolean)
         .join('\n\n');
   sections.push('', body);
+
+  if (!hasStepsContent(recipe)) {
+    const handoff = renderRunHandoff(recipe.execution, '##');
+    if (handoff) sections.push('', handoff);
+  }
 
   if (recipe.scaffoldActions?.length > 0) {
     sections.push('', '## Setup');

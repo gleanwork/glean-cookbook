@@ -51,6 +51,9 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    cd permissions-aware-retrieval && uv run main.py "<allowed-topic>"
    ```
 
+   Run the command in this chat and report its concise result rather than reproducing routine install or debug output.
+   Do not invent a browser URL. Then give the first verification action.
+
 4. **Verify**
    Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge.
 
@@ -91,6 +94,9 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```bash
    cd permissions-aware-retrieval && npm start -- "<allowed-topic>"
    ```
+
+   Run the command in this chat and report its concise result rather than reproducing routine install or debug output.
+   Do not invent a browser URL. Then give the first verification action.
 
 5. **Verify**
    Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge.
