@@ -33,6 +33,10 @@ const GROUPS = new Set<MilestoneGroup>(['it', 'hr', 'team', 'engineering']);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
 
+const SHARED_ASSETS: Record<string, string> = {
+  '/glean-cookbook.css': 'text/css; charset=utf-8',
+};
+
 function parseSteps(raw: unknown): OnboardingStep[] {
   if (!Array.isArray(raw)) return [];
   const steps: OnboardingStep[] = [];
@@ -87,6 +91,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(fs.readFileSync(path.join(publicDir, 'index.html')));
+    return;
+  }
+
+  if (req.method === 'GET' && req.url && SHARED_ASSETS[req.url]) {
+    res.writeHead(200, { 'Content-Type': SHARED_ASSETS[req.url] });
+    res.end(fs.readFileSync(path.join(publicDir, req.url.slice(1))));
     return;
   }
 

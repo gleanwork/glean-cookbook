@@ -198,6 +198,17 @@
       #review-section {
         overflow-x: auto;
       }
+      #parse-section {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      #parse-section .section-label {
+        margin-bottom: 0;
+      }
+      #cands:empty {
+        display: none;
+      }
       @media (max-width: 900px) {
         header .subtitle {
           display: none;

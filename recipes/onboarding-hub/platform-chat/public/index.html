@@ -73,14 +73,19 @@
         gap: 16px;
         margin-bottom: 16px;
       }
+      .progress-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
       #progress-ring {
-        --progress: 56;
+        --progress: 0;
         width: 64px;
         height: 64px;
         border-radius: 50%;
         background: conic-gradient(
-          var(--primary) calc(var(--progress) * 1%),
-          #e7e8ed 0
+          var(--gdt-success) calc(var(--progress) * 1%),
+          var(--gdt-border-dark) 0
         );
         display: grid;
         place-items: center;
@@ -127,7 +132,7 @@
         text-decoration: line-through;
       }
       .check {
-        color: var(--success);
+        color: var(--gdt-text-secondary);
         font-weight: 700;
       }
       .due {
@@ -153,15 +158,6 @@
         padding: 6px 12px;
         font-size: 13px;
       }
-      .ask-btn {
-        border-color: var(--primary);
-        color: var(--primary);
-      }
-      .mark-btn {
-        background: var(--primary);
-        color: #fff;
-        border: none;
-      }
       ul {
         margin: 0;
         padding: 0;
@@ -180,19 +176,7 @@
         margin-bottom: 12px;
       }
       .msg {
-        margin-bottom: 12px;
-        padding: 10px 12px;
-        border-radius: 10px;
-        font-size: 14px;
         white-space: pre-wrap;
-      }
-      .msg.user {
-        background: #e8eaff;
-        margin-left: 24px;
-      }
-      .msg.assistant {
-        background: #f7f8fa;
-        margin-right: 24px;
       }
       .citations a {
         display: block;
@@ -300,8 +284,8 @@
         width: 72px;
         height: 72px;
         background: conic-gradient(
-          var(--gdt-primary) calc(var(--progress) * 1%),
-          var(--gdt-bg-mid) 0
+          var(--gdt-success) calc(var(--progress) * 1%),
+          var(--gdt-border-dark) 0
         );
       }
       #progress-ring::after {
@@ -320,10 +304,6 @@
       .step {
         padding: 13px 0;
       }
-      .mark-btn {
-        background: var(--gdt-primary);
-        box-shadow: 0 5px 14px rgba(52, 60, 237, 0.18);
-      }
       #chat-panel {
         display: flex;
         height: calc(100vh - 124px);
@@ -332,23 +312,6 @@
         flex-direction: column;
         overflow: hidden;
         padding: 0;
-      }
-      #chat-panel > h2 {
-        margin: 0;
-        padding: 17px 18px;
-        border-bottom: 1px solid var(--gdt-border-light);
-      }
-      #chat-panel > h2::before {
-        display: inline-grid;
-        width: 34px;
-        height: 34px;
-        margin-right: 10px;
-        place-items: center;
-        border-radius: 10px;
-        background: var(--gdt-primary);
-        color: white;
-        content: 'G';
-        vertical-align: middle;
       }
       #chat-log {
         flex: 1;
@@ -359,31 +322,9 @@
         border: 0;
         border-radius: 0;
       }
-      #ask-form {
-        padding: 12px;
-        border-top: 1px solid var(--gdt-border-light);
-      }
-      #question {
-        min-height: 40px;
-        border-color: var(--gdt-border-dark);
-      }
-      #ask-submit {
-        min-width: 56px;
-        box-shadow: 0 5px 14px rgba(52, 60, 237, 0.2);
-      }
-      .msg {
-        max-width: 88%;
-        padding: 11px 13px;
-        line-height: 1.55;
-      }
-      .msg.user {
-        margin-left: auto;
-        background: var(--cookbook-primary-soft);
-      }
-      .msg.assistant {
-        margin-right: auto;
-        background: var(--cookbook-card-muted);
-        border: 1px solid var(--gdt-border-light);
+      .msg-user {
+        background: var(--gdt-bg-mid);
+        color: var(--gdt-text-primary);
       }
       .escalate {
         margin: 0 12px 12px;
@@ -437,7 +378,7 @@
             <div id="progress-ring"></div>
             <span id="progress-label">0%</span>
           </div>
-          <div>
+          <div class="progress-copy">
             <div>Your onboarding progress</div>
             <div id="milestone-badges"></div>
           </div>
@@ -472,22 +413,30 @@
           <button type="button" id="reset-demo">Reset demo</button>
         </div>
       </section>
-      <section class="card" id="chat-panel">
-        <h2>Ask Glean</h2>
-        <div id="chat-log"></div>
+      <section class="card assistant-shell" id="chat-panel">
+        <div class="assistant-header">
+          <div class="assistant-avatar">G</div>
+          <h2>Ask Glean</h2>
+        </div>
+        <div id="chat-log" class="assistant-thread"></div>
         <div id="escalate" class="escalate" hidden>
           I couldn't find a confident answer. Try asking in
           <a href="#">#hr-help</a> or <a href="#">#it-help</a> on Slack.
         </div>
-        <form id="ask-form">
-          <input
-            id="question"
-            type="text"
-            placeholder="What should I do on my first day?"
-            autocomplete="off"
-          />
-          <button type="submit" id="ask-submit">Ask</button>
-        </form>
+        <div class="assistant-composer">
+          <form id="ask-form">
+            <input
+              id="question"
+              type="text"
+              placeholder="Ask anything…"
+              autocomplete="off"
+              aria-label="Question"
+            />
+            <button class="btn-primary" type="submit" id="ask-submit">
+              Ask
+            </button>
+          </form>
+        </div>
       </section>
     </main>
     <script type="module">
@@ -586,10 +535,10 @@
           : '';
         const askButton = done
           ? ''
-          : `<button type="button" class="ask-btn" data-ask="${encodeURIComponent(step.askPrompt)}">Ask about this</button>`;
+          : `<button type="button" class="btn-secondary btn-sm" data-ask="${encodeURIComponent(step.askPrompt)}">Ask about this</button>`;
         const markButton = done
           ? ''
-          : `<button type="button" class="mark-btn" data-mark="${id}">Mark complete</button>`;
+          : `<button type="button" class="btn-primary btn-sm" data-mark="${id}">Mark complete</button>`;
         return `<li class="step${done ? ' done' : ''}">
           <span class="check">${done ? '✓' : '○'}</span>
           <div class="step-body">
@@ -644,8 +593,10 @@
       }
 
       function appendMessage(role, text, citations = []) {
+        const row = document.createElement('div');
+        row.className = 'chat-row';
         const div = document.createElement('div');
-        div.className = `msg ${role}`;
+        div.className = `msg ${role === 'user' ? 'msg-user' : 'msg-assistant'}`;
         div.textContent = text;
         if (citations.length) {
           const cites = document.createElement('div');
@@ -662,7 +613,8 @@
           }
           if (cites.childNodes.length) div.appendChild(cites);
         }
-        chatLog.appendChild(div);
+        row.appendChild(div);
+        chatLog.appendChild(row);
         chatLog.scrollTop = chatLog.scrollHeight;
       }
 
@@ -735,7 +687,6 @@
         const ask = target.closest('[data-ask]');
         if (ask?.dataset.ask) {
           const prompt = decodeURIComponent(ask.dataset.ask);
-          questionInput.value = prompt;
           askGlean(prompt);
           document.getElementById('chat-panel').scrollIntoView({
             behavior: 'smooth',
