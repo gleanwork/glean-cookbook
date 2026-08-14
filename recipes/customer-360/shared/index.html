@@ -96,13 +96,18 @@
       .workspace {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(350px, 410px);
-        grid-template-areas:
-          'overview assistant'
-          'evidence assistant';
-        gap: 18px;
+        gap: 24px;
+        align-items: stretch;
         width: min(1280px, calc(100% - 40px));
         margin: 20px auto 40px;
-        align-items: start;
+      }
+
+      .main {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        min-width: 0;
+        min-height: 0;
       }
 
       .card {
@@ -114,7 +119,6 @@
       }
 
       .overview {
-        grid-area: overview;
         padding: 22px 24px;
       }
 
@@ -183,7 +187,10 @@
       }
 
       .evidence {
-        grid-area: evidence;
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-height: 0;
         padding: 22px 24px 24px;
       }
 
@@ -212,13 +219,18 @@
 
       .evidence-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        flex: 1 1 auto;
+        grid-template-columns: minmax(0, 1fr);
+        grid-auto-rows: 1fr;
         gap: 12px;
-        align-items: start;
+        min-height: 0;
       }
 
       .evidence-group {
+        display: flex;
         min-width: 0;
+        min-height: 0;
+        flex-direction: column;
         overflow: hidden;
         border: 1px solid var(--border);
         border-radius: 12px;
@@ -251,6 +263,8 @@
 
       .source-list {
         display: grid;
+        flex: 1 1 auto;
+        min-height: 0;
       }
 
       .source {
@@ -307,12 +321,10 @@
       .assistant {
         position: sticky;
         top: 84px;
-        grid-area: assistant;
         display: flex;
         overflow: hidden;
-        height: calc(100vh - 108px);
-        min-height: 560px;
-        max-height: 760px;
+        height: auto;
+        min-height: calc(100vh - 108px);
         flex-direction: column;
       }
 
@@ -632,18 +644,12 @@
       @media (max-width: 980px) {
         .workspace {
           grid-template-columns: minmax(0, 1fr);
-          grid-template-areas:
-            'overview'
-            'assistant'
-            'evidence';
           width: min(720px, calc(100% - 28px));
         }
 
         .assistant {
           position: static;
-          height: min(680px, calc(100vh - 100px));
-          min-height: 540px;
-          max-height: none;
+          min-height: min(680px, calc(100vh - 100px));
         }
       }
 
@@ -653,10 +659,14 @@
           padding: 10px 15px;
         }
 
+        .workspace,
+        .main {
+          gap: 10px;
+        }
+
         .workspace {
           width: min(100% - 20px, 560px);
           margin-top: 10px;
-          gap: 10px;
         }
 
         .card {
@@ -682,10 +692,6 @@
 
         .coverage-pill {
           flex: 0 0 auto;
-        }
-
-        .evidence-grid {
-          grid-template-columns: 1fr;
         }
 
         .assistant {
@@ -739,20 +745,32 @@
     </header>
 
     <main class="workspace">
-      <section class="card overview" aria-labelledby="account-title">
-        <p class="eyebrow">Account workspace</p>
-        <div class="overview-skeleton" id="account-skeleton"></div>
-        <h1 id="account-title" data-account-name hidden></h1>
-        <p class="overview-copy">
-          Grounded in sources you already have permission to see. Unsupported
-          account details stay out of the page.
-        </p>
-        <div
-          class="coverage"
-          id="coverage"
-          aria-label="Evidence coverage"
-        ></div>
-      </section>
+      <div class="main">
+        <section class="card overview" aria-labelledby="account-title">
+          <p class="eyebrow">Account workspace</p>
+          <div class="overview-skeleton" id="account-skeleton"></div>
+          <h1 id="account-title" data-account-name hidden></h1>
+          <p class="overview-copy">
+            Grounded in sources you already have permission to see. Unsupported
+            account details stay out of the page.
+          </p>
+          <div
+            class="coverage"
+            id="coverage"
+            aria-label="Evidence coverage"
+          ></div>
+        </section>
+
+        <section class="card evidence" aria-labelledby="evidence-title">
+          <div class="section-heading">
+            <div>
+              <h2 id="evidence-title">Supporting evidence</h2>
+              <p>Permission-aware results retrieved for this account.</p>
+            </div>
+          </div>
+          <div class="evidence-grid" id="evidence-grid"></div>
+        </section>
+      </div>
 
       <aside class="card assistant" aria-labelledby="assistant-title">
         <div class="assistant-header">
@@ -830,16 +848,6 @@
           </form>
         </div>
       </aside>
-
-      <section class="card evidence" aria-labelledby="evidence-title">
-        <div class="section-heading">
-          <div>
-            <h2 id="evidence-title">Supporting evidence</h2>
-            <p>Permission-aware results retrieved for this account.</p>
-          </div>
-        </div>
-        <div class="evidence-grid" id="evidence-grid"></div>
-      </section>
     </main>
 
     <script>
