@@ -103,24 +103,24 @@ function assertFixtureContract() {
     if (typeof body.has_more !== 'boolean') {
       throw new Error(`${key}: has_more must be a boolean`);
     }
-    if (!('next_cursor' in body)) {
-      throw new Error(`${key}: next_cursor is required`);
+    if (body.next_cursor !== null && typeof body.next_cursor !== 'string') {
+      throw new Error(`${key}: next_cursor must be a string or null`);
     }
-    if (!body.request_id) {
-      throw new Error(`${key}: request_id is required`);
+    if (typeof body.request_id !== 'string' || body.request_id.length === 0) {
+      throw new Error(`${key}: request_id must be a non-empty string`);
     }
-    if (!Array.isArray(body.warnings)) {
-      throw new Error(`${key}: warnings must be an array`);
+    if (!Array.isArray(body.warnings) || body.warnings.length !== 0) {
+      throw new Error(`${key}: warnings must be an empty array`);
     }
     for (const result of body.results) {
       if (!result.title || !result.url || !result.datasource) {
         throw new Error(`${key}: result missing title, url, or datasource`);
       }
       if (
-        result.snippets &&
+        !Array.isArray(result.snippets) ||
         !result.snippets.every((snippet) => typeof snippet === 'string')
       ) {
-        throw new Error(`${key}: snippets must be strings`);
+        throw new Error(`${key}: snippets must be a string array`);
       }
     }
   }
@@ -132,19 +132,30 @@ function assertFixtureContract() {
   }
   for (const [key, body] of Object.entries(chat)) {
     const messages = body.messages ?? [];
-    const content = messages.find(
+    const contentMessages = messages.filter(
       (message) =>
         message.author === 'GLEAN_AI' && message.messageType === 'CONTENT',
     );
-    if (!content) {
+    if (contentMessages.length === 0) {
       throw new Error(`${key}: no GLEAN_AI CONTENT message`);
     }
-    const fragments = content.fragments ?? [];
+    const fragments = contentMessages.flatMap(
+      (message) => message.fragments ?? [],
+    );
     const cited = fragments.some((fragment) => fragment.citation);
-    if (cited && messages[0]?.messageType !== 'UPDATE') {
-      throw new Error(
-        `${key}: cited fixture must start with UPDATE then CONTENT`,
-      );
+    if (cited) {
+      const first = messages[0];
+      const second = messages[1];
+      if (
+        first?.author !== 'GLEAN_AI' ||
+        first?.messageType !== 'UPDATE' ||
+        second?.author !== 'GLEAN_AI' ||
+        second?.messageType !== 'CONTENT'
+      ) {
+        throw new Error(
+          `${key}: cited fixture must be GLEAN_AI UPDATE then GLEAN_AI CONTENT`,
+        );
+      }
     }
     for (const fragment of fragments) {
       const document = fragment.citation?.sourceDocument;
@@ -201,9 +212,7 @@ async function waitForServer(deadline) {
 
 async function main() {
   if (useFixture) {
-    if (!process.env.GLEAN_ACCOUNT_NAME?.trim()) {
-      process.env.GLEAN_ACCOUNT_NAME = 'Globex';
-    }
+    process.env.GLEAN_ACCOUNT_NAME = 'Globex';
     assertFixtureContract();
     console.log(
       'Running verify against recorded Platform Search + Chat fixtures',

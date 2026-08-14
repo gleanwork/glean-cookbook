@@ -36,12 +36,15 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(payload));
     } catch (error) {
-      console.error('Account load failed:', (error as Error).message);
+      const message = (error as Error).message;
+      console.error('Account load failed:', message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(
         JSON.stringify({
           error: 'Could not load the account.',
-          hint: 'Check credentials and that experimental Platform search is enabled.',
+          hint: message.startsWith('No fixture recorded')
+            ? 'That account query is not in the recorded demo fixtures.'
+            : 'Check credentials and that experimental Platform search is enabled.',
         }),
       );
     }
@@ -70,9 +73,11 @@ const server = http.createServer(async (req, res) => {
       res.end(
         JSON.stringify({
           error: 'Could not answer that question.',
-          hint: message.startsWith('Glean returned no answer text')
-            ? 'Retrying usually works when a chat run ends before the answer is produced.'
-            : 'Check credentials and the CHAT scope.',
+          hint: message.startsWith('No fixture recorded')
+            ? 'That question is not in the recorded demo fixtures.'
+            : message.startsWith('Glean returned no answer text')
+              ? 'Retrying usually works when a chat run ends before the answer is produced.'
+              : 'Check credentials and the CHAT scope.',
         }),
       );
     }
