@@ -62,6 +62,8 @@ Web SDK variant — checklist + renderChat
 
 Client Chat variant — server-side API call, custom UI
 
+{{> demo-mode}}
+
 {{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
@@ -81,21 +83,28 @@ Client Chat variant — server-side API call, custom UI
    cd onboarding-hub && npm install
    ```
 
-3. **Set credentials**
+3. **Try it with no credentials**
+   Runs the checklist and Client Chat path against recorded Sample Corp responses. Cited first-day, VPN, and PTO answers must stay cited; the unsupported question must escalate.
+
+   ```bash
+   cd onboarding-hub && npm run verify:fixture
+   ```
+
+4. **Set credentials**
    The shipped command discovers the tenant and completes OAuth, with a CHAT-scoped API token fallback. Configure the supplied onboarding steps in ignored .env or a local steps file. The app runs as the signed-in user; there is no act-as.
 
    ```bash
    cd onboarding-hub && npm run login -- --email "<work-email>"
    ```
 
-4. **Verify**
+5. **Verify**
    Allow 1–3 minutes. It starts its own server and checks the configured onboarding topics for cited answers plus unsupported-question escalation.
 
    ```bash
    cd onboarding-hub && npm run verify
    ```
 
-5. **Run it**
+6. **Run it**
    ```bash
    cd onboarding-hub && npm start
    ```

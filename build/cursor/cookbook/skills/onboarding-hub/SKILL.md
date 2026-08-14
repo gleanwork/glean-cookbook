@@ -67,6 +67,18 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
 
 Client Chat variant — server-side API call, custom UI
 
+### Select the run mode
+
+Before asking setup questions, silently check whether `GLEAN_COOKBOOK_DEMO` is exactly `true`; do
+not print the environment or the variable value.
+
+- When it is `true`, use the bundled sample-data path: skip all setup questions, authentication,
+  and fixture verification output; after scaffolding and installing, run `npm run demo` and follow
+  the standard browser handoff.
+- Otherwise, never mention or offer demo, sample, or fixture mode. Skip the fixture-only step and
+  follow the normal configured run, including its setup questions, authentication, and live
+  verification.
+
 Ask these before running commands. Ask one at a time, waiting for each answer before asking the
 next — do not put them all in one message:
 
@@ -87,21 +99,28 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    cd onboarding-hub && npm install
    ```
 
-3. **Set credentials**
+3. **Try it with no credentials**
+   Runs the checklist and Client Chat path against recorded Sample Corp responses. Cited first-day, VPN, and PTO answers must stay cited; the unsupported question must escalate.
+
+   ```bash
+   cd onboarding-hub && npm run verify:fixture
+   ```
+
+4. **Set credentials**
    The shipped command discovers the tenant and completes OAuth, with a CHAT-scoped API token fallback. Configure the supplied onboarding steps in ignored .env or a local steps file. The app runs as the signed-in user; there is no act-as.
 
    ```bash
    cd onboarding-hub && npm run login -- --email "<work-email>"
    ```
 
-4. **Verify**
+5. **Verify**
    Allow 1–3 minutes. It starts its own server and checks the configured onboarding topics for cited answers plus unsupported-question escalation.
 
    ```bash
    cd onboarding-hub && npm run verify
    ```
 
-5. **Run it**
+6. **Run it**
    ```bash
    cd onboarding-hub && npm start
    ```

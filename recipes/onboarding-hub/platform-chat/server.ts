@@ -4,34 +4,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listenLocal } from './lib/cookbook-server.js';
+import { askClientChat, type ConversationTurn } from './lib/chat.js';
 
 // Path B: you own the UI; the server calls Client Chat and renders the answer
 // plus its citations.
-
-interface ChatCitationDocument {
-  title?: string;
-  url?: string;
-}
-
-interface ChatFragment {
-  text?: string;
-  citation?: { sourceDocument?: ChatCitationDocument };
-}
-
-interface ChatMessage {
-  author?: string;
-  messageType?: string;
-  fragments?: ChatFragment[];
-}
-
-interface ChatResponse {
-  messages?: ChatMessage[];
-}
-
-interface ConversationTurn {
-  author: 'USER' | 'GLEAN_AI';
-  text: string;
-}
 
 const MAX_CONVERSATION_TURNS = 10;
 const MAX_TURN_CHARS = 8_000;
@@ -56,12 +32,6 @@ const GROUPS = new Set<MilestoneGroup>(['it', 'hr', 'team', 'engineering']);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing required environment variable: ${name}`);
-  return value;
-}
 
 function parseSteps(raw: unknown): OnboardingStep[] {
   if (!Array.isArray(raw)) return [];
@@ -113,131 +83,6 @@ function loadChecklist(): ChecklistPayload {
   return { steps: [], source: 'empty' };
 }
 
-function isSafeHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
-function parseClientChatResponse(data: ChatResponse): {
-  answer: string;
-  citations: Array<{ title: string; url: string }>;
-} {
-  // The answer is the CONTENT messages from GLEAN_AI. The UPDATE messages are
-  // progress narration ("Searching company knowledge") and must not be treated
-  // as the answer. A trailing empty CONTENT message is normal, so take the text
-  // of all of them rather than the last one.
-  const fragments = (data.messages ?? [])
-    .filter(
-      (message) =>
-        message.messageType === 'CONTENT' && message.author === 'GLEAN_AI',
-    )
-    .flatMap((message) => message.fragments ?? []);
-
-  const answer = fragments
-    .map((fragment) => fragment.text ?? '')
-    .join('')
-    .trim();
-
-  // Citations hang off individual fragments, not off the message.
-  const rawCitations = fragments
-    .map((fragment) => fragment.citation?.sourceDocument)
-    .filter((document): document is ChatCitationDocument => Boolean(document));
-
-  const citations = Array.from(
-    new Map(
-      rawCitations
-        .filter(
-          (source) =>
-            source.title && source.url && isSafeHttpUrl(source.url as string),
-        )
-        .map((source) => [
-          source.url as string,
-          { title: source.title as string, url: source.url as string },
-        ]),
-    ).values(),
-  );
-
-  return { answer, citations };
-}
-
-function withEscalate(parsed: {
-  answer: string;
-  citations: Array<{ title: string; url: string }>;
-}): {
-  answer: string;
-  citations: Array<{ title: string; url: string }>;
-  escalate: boolean;
-} {
-  // Empty, thin, or uncited answers must escalate — inventing an onboarding
-  // step is worse than routing to HR/IT. Uncited prose is treated the same.
-  const escalate =
-    !parsed.answer.trim() ||
-    parsed.answer.trim().length < 20 ||
-    parsed.citations.length === 0;
-  return { ...parsed, escalate };
-}
-
-async function askClientChat(
-  input: string,
-  history: ConversationTurn[],
-  attempt = 1,
-): Promise<{
-  answer: string;
-  citations: Array<{ title: string; url: string }>;
-  escalate: boolean;
-}> {
-  // GLEAN_SERVER_URL rather than an instance name: deriving the backend as
-  // `https://${instance}-be.glean.com` only holds for the default naming, and
-  // silently points at nothing when a deployment differs. The docs use
-  // GLEAN_SERVER_URL throughout for the same reason.
-  // Auth is the caller's own token — no act-as / impersonation.
-  const backend = requireEnv('GLEAN_SERVER_URL').replace(/\/$/, '');
-  const token = requireEnv('GLEAN_API_TOKEN');
-
-  const response = await fetch(`${backend}/rest/api/v1/chat`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      saveChat: false,
-      messages: [...history, { author: 'USER' as const, text: input }].map(
-        (message) => ({
-          author: message.author,
-          messageType: 'CONTENT',
-          fragments: [{ text: message.text }],
-        }),
-      ),
-    }),
-  });
-
-  if (!response.ok) {
-    const body = await response.text();
-    console.error(
-      `POST /rest/api/v1/chat returned ${response.status}: ${body}`,
-    );
-    throw new Error(
-      `Chat request failed (${response.status}). Check that your token carries the CHAT scope.`,
-    );
-  }
-
-  const parsed = parseClientChatResponse(
-    (await response.json()) as ChatResponse,
-  );
-  if (!parsed.answer) {
-    if (attempt < 2) return askClientChat(input, history, attempt + 1);
-    throw new Error(
-      'Glean returned no answer text after two attempts. Check the server logs and try again.',
-    );
-  }
-  return withEscalate(parsed);
-}
-
 const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
     res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -282,7 +127,9 @@ const server = http.createServer(async (req, res) => {
       res.end(
         JSON.stringify({
           error: 'Could not answer that question.',
-          hint: 'Check credentials and the CHAT scope.',
+          hint: message.startsWith('No fixture recorded')
+            ? 'That question is not in the recorded demo fixtures.'
+            : 'Check credentials and the CHAT scope.',
         }),
       );
     }

@@ -1,0 +1,213 @@
+{
+  "What should I do on my first day?": {
+    "messages": [
+      {
+        "author": "GLEAN_AI",
+        "messageType": "UPDATE",
+        "fragments": [{ "text": "Searching company knowledge" }]
+      },
+      {
+        "author": "GLEAN_AI",
+        "messageType": "CONTENT",
+        "fragments": [
+          {
+            "text": "The onboarding checklist lists laptop provisioning, badge access, IT account setup, Slack/email access, and a team introduction as already completed. Still pending: security awareness training (due within two weeks of start), benefits enrollment (deadline 30 days from start), a 1:1 with manager Priya Natarajan, and a payments-service architecture walkthrough."
+          },
+          {
+            "text": "",
+            "citation": {
+              "sourceDocument": {
+                "title": "Onboarding Checklist — Alex Kim",
+                "url": "https://portal.sample.internal/hr/onboarding/alex-kim"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "How do I set up VPN?": {
+    "messages": [
+      {
+        "author": "GLEAN_AI",
+        "messageType": "UPDATE",
+        "fragments": [{ "text": "Searching company knowledge" }]
+      },
+      {
+        "author": "GLEAN_AI",
+        "messageType": "CONTENT",
+        "fragments": [
+          {
+            "text": "Install the Sample Corp VPN client from the IT portal's software catalog. Log in with SSO credentials; MFA is required on first connection per device. Split-tunneling is enabled by default, so only internal-network traffic routes through the VPN."
+          },
+          {
+            "text": "",
+            "citation": {
+              "sourceDocument": {
+                "title": "VPN Setup Guide",
+                "url": "https://portal.sample.internal/support/vpn-setup"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "What's our PTO policy?": {
+    "messages": [
+      {
+        "author": "GLEAN_AI",
+        "messageType": "UPDATE",
+        "fragments": [{ "text": "Searching company knowledge" }]
+      },
+      {
+        "author": "GLEAN_AI",
+        "messageType": "CONTENT",
+        "fragments": [
+          {
+            "text": "Sample Corp provides flexible PTO with no fixed accrual cap. Take at least 15 days per year and coordinate a week or longer with your manager at least two weeks in advance. Request PTO through the HR portal; unused PTO does not carry over."
+          },
+          {
+            "text": "",
+            "citation": {
+              "sourceDocument": {
+                "title": "Sample Corp PTO Policy",
+                "url": "https://portal.sample.internal/hr/pto-policy"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "Ask about a step your docs don't cover": {
+    "messages": [
+      {
+        "author": "GLEAN_AI",
+        "messageType": "CONTENT",
+        "fragments": [
+          {
+            "text": "I don't have a cited source in the onboarding docs for that step."
+          }
+        ]
+      }
+    ]
+  },
+  "What should I prioritize during my first week?": {
+    "messages": [
+      {
+        "author": "GLEAN_AI",
+        "messageType": "UPDATE",
+        "fragments": [{ "text": "Searching company knowledge" }]
+      },
+      {
+        "author": "GLEAN_AI",
+        "messageType": "CONTENT",
+        "fragments": [
+          {
+            "text": "The onboarding checklist still has security awareness training (due within two weeks of start), benefits enrollment (deadline 30 days from start), a 1:1 with manager Priya Natarajan, and a payments-service architecture walkthrough."
+          },
+          {
+            "text": "",
+            "citation": {
+              "sourceDocument": {
+                "title": "Onboarding Checklist — Alex Kim",
+                "url": "https://portal.sample.internal/hr/onboarding/alex-kim"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "How do I set up VPN and required software?": {
+    "messages": [
+      {
+        "author": "GLEAN_AI",
+        "messageType": "UPDATE",
+        "fragments": [{ "text": "Searching company knowledge" }]
+      },
+      {
+        "author": "GLEAN_AI",
+        "messageType": "CONTENT",
+        "fragments": [
+          {
+            "text": "Install the Sample Corp VPN client from the IT portal's software catalog. Log in with SSO; MFA is required on first connection per device. Split-tunneling is on by default, so only internal-network traffic (portal.sample.internal, internal APIs, and internal Git) routes through the VPN."
+          },
+          {
+            "text": "",
+            "citation": {
+              "sourceDocument": {
+                "title": "VPN Setup Guide",
+                "url": "https://portal.sample.internal/support/vpn-setup"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "Where can I find our benefits and time-off policies?": {
+    "messages": [
+      {
+        "author": "GLEAN_AI",
+        "messageType": "UPDATE",
+        "fragments": [{ "text": "Searching company knowledge" }]
+      },
+      {
+        "author": "GLEAN_AI",
+        "messageType": "CONTENT",
+        "fragments": [
+          {
+            "text": "Benefits are in the Employee Benefits Guide: medical, dental, and vision effective day one, a 401(k) with a 4% match, and a $1,500/year learning stipend. Time off is in the Sample Corp PTO Policy: flexible PTO with a request through the HR portal. Questions go to Dana Okafor."
+          },
+          {
+            "text": "",
+            "citation": {
+              "sourceDocument": {
+                "title": "Employee Benefits Guide",
+                "url": "https://portal.sample.internal/hr/benefits-guide"
+              }
+            }
+          },
+          {
+            "text": "",
+            "citation": {
+              "sourceDocument": {
+                "title": "Sample Corp PTO Policy",
+                "url": "https://portal.sample.internal/hr/pto-policy"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "Who should I meet during my first week?": {
+    "messages": [
+      {
+        "author": "GLEAN_AI",
+        "messageType": "UPDATE",
+        "fragments": [{ "text": "Searching company knowledge" }]
+      },
+      {
+        "author": "GLEAN_AI",
+        "messageType": "CONTENT",
+        "fragments": [
+          {
+            "text": "The onboarding checklist names Priya Natarajan as manager and includes a 1:1 plus a payments-service architecture walkthrough with the team."
+          },
+          {
+            "text": "",
+            "citation": {
+              "sourceDocument": {
+                "title": "Onboarding Checklist — Alex Kim",
+                "url": "https://portal.sample.internal/hr/onboarding/alex-kim"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

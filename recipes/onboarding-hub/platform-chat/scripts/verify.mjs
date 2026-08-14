@@ -1,8 +1,7 @@
 #!/usr/bin/env node
-// Live verify gate for onboarding-hub/platform-chat. Requires credentials and
-// fails closed without them — same pattern as company-answers/chat-api.
 // Loads .env from the package root so `npm run verify` works after
 // `cp .env.example .env` without exporting vars in the shell.
+// GLEAN_USE_FIXTURE=true skips credentials and uses fixtures/chat-responses.json.
 
 import 'dotenv/config';
 import { spawn } from 'node:child_process';
@@ -34,6 +33,7 @@ const DEMO_QUERIES = JSON.parse(
 );
 
 const OFF_CORPUS = "Ask about a step your docs don't cover";
+const useFixture = process.env.GLEAN_USE_FIXTURE === 'true';
 
 function requireEnv(name) {
   const value = process.env[name]?.trim();
@@ -85,6 +85,63 @@ const CHECKS = [
     },
   },
 ];
+
+function assertFixtureContract() {
+  const recorded = JSON.parse(
+    fs.readFileSync(path.join(root, 'fixtures', 'chat-responses.json'), 'utf8'),
+  );
+  const stepsFile = process.env.GLEAN_ONBOARDING_STEPS_FILE?.trim();
+  if (!stepsFile) {
+    throw new Error('fixture mode must set GLEAN_ONBOARDING_STEPS_FILE');
+  }
+  const steps = JSON.parse(fs.readFileSync(stepsFile, 'utf8'));
+  const required = [
+    ...CHECKS.map((check) => check.query),
+    ...steps.map((step) => step.askPrompt),
+  ];
+  const missing = required.filter((key) => !recorded[key]);
+  if (missing.length > 0) {
+    throw new Error(`fixtures missing keys: ${missing.join(', ')}`);
+  }
+  for (const [key, body] of Object.entries(recorded)) {
+    const messages = body.messages ?? [];
+    const contentMessages = messages.filter(
+      (message) =>
+        message.author === 'GLEAN_AI' && message.messageType === 'CONTENT',
+    );
+    if (contentMessages.length === 0) {
+      throw new Error(`${key}: no GLEAN_AI CONTENT message`);
+    }
+    const fragments = contentMessages.flatMap(
+      (message) => message.fragments ?? [],
+    );
+    const cited = fragments.some((fragment) => fragment.citation);
+    if (cited) {
+      const first = messages[0];
+      const second = messages[1];
+      if (
+        first?.author !== 'GLEAN_AI' ||
+        first?.messageType !== 'UPDATE' ||
+        second?.author !== 'GLEAN_AI' ||
+        second?.messageType !== 'CONTENT'
+      ) {
+        throw new Error(
+          `${key}: cited fixture must be GLEAN_AI UPDATE then GLEAN_AI CONTENT`,
+        );
+      }
+    }
+    for (const fragment of fragments) {
+      const document = fragment.citation?.sourceDocument;
+      if (!document) continue;
+      if (!document.title) {
+        throw new Error(`${key}: citation missing title`);
+      }
+      if (!/^https?:\/\//u.test(document.url ?? '')) {
+        throw new Error(`${key}: citation url must be http(s)`);
+      }
+    }
+  }
+}
 
 function assertCitationShape(citations) {
   for (const citation of citations) {
@@ -148,19 +205,28 @@ function evaluateCheck(check, result) {
 }
 
 async function main() {
-  requireEnv('GLEAN_API_TOKEN');
-  requireEnv('GLEAN_SERVER_URL');
-  if (
-    !process.env.GLEAN_ONBOARDING_STEPS_JSON?.trim() &&
-    !process.env.GLEAN_ONBOARDING_STEPS_FILE?.trim()
-  ) {
-    console.error(
-      'Set GLEAN_ONBOARDING_STEPS_JSON or GLEAN_ONBOARDING_STEPS_FILE so verify can load a checklist.',
+  if (useFixture) {
+    delete process.env.GLEAN_ONBOARDING_STEPS_JSON;
+    process.env.GLEAN_ONBOARDING_STEPS_FILE = path.join(
+      root,
+      'steps.example.json',
     );
-    process.exit(1);
+    assertFixtureContract();
+    console.log('Running verify against recorded Client Chat fixtures');
+  } else {
+    requireEnv('GLEAN_API_TOKEN');
+    requireEnv('GLEAN_SERVER_URL');
+    if (
+      !process.env.GLEAN_ONBOARDING_STEPS_JSON?.trim() &&
+      !process.env.GLEAN_ONBOARDING_STEPS_FILE?.trim()
+    ) {
+      console.error(
+        'Set GLEAN_ONBOARDING_STEPS_JSON or GLEAN_ONBOARDING_STEPS_FILE so verify can load a checklist.',
+      );
+      process.exit(1);
+    }
+    console.log('Running verify against live Client Chat');
   }
-
-  console.log('Running verify against live Client Chat');
 
   const checkQueries = CHECKS.map((c) => c.query);
   if (JSON.stringify(checkQueries) !== JSON.stringify(DEMO_QUERIES)) {
