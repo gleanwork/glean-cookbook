@@ -126,10 +126,10 @@ function stepRow(step: OnboardingStep): string {
     : '';
   const askButton = done
     ? ''
-    : `<button type="button" class="ask-btn" data-ask="${encodeURIComponent(step.askPrompt)}">Ask about this</button>`;
+    : `<button type="button" class="btn-secondary btn-sm" data-ask="${encodeURIComponent(step.askPrompt)}">Ask about this</button>`;
   const markButton = done
     ? ''
-    : `<button type="button" class="mark-btn" data-mark="${id}">Mark complete</button>`;
+    : `<button type="button" class="btn-primary btn-sm" data-mark="${id}">Mark complete</button>`;
   return `
     <li class="step${done ? ' done' : ''}" data-step="${id}">
       <span class="check" aria-hidden="true">${done ? '✓' : '○'}</span>

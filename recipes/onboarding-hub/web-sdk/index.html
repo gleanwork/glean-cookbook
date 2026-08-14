@@ -83,14 +83,19 @@
         gap: 16px;
         margin-bottom: 16px;
       }
+      .progress-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
       #progress-ring {
-        --progress: 56;
+        --progress: 0;
         width: 64px;
         height: 64px;
         border-radius: 50%;
         background: conic-gradient(
-          var(--primary) calc(var(--progress) * 1%),
-          #e7e8ed 0
+          var(--gdt-success) calc(var(--progress) * 1%),
+          var(--gdt-border-dark) 0
         );
         display: grid;
         place-items: center;
@@ -137,7 +142,7 @@
         text-decoration: line-through;
       }
       .check {
-        color: var(--success);
+        color: var(--gdt-text-secondary);
         font-weight: 700;
       }
       .due {
@@ -162,15 +167,6 @@
         background: #fff;
         padding: 6px 12px;
         font-size: 13px;
-      }
-      .ask-btn {
-        border-color: var(--primary);
-        color: var(--primary);
-      }
-      .mark-btn {
-        background: var(--primary);
-        color: #fff;
-        border: none;
       }
       ul {
         margin: 0;
@@ -308,8 +304,8 @@
         width: 72px;
         height: 72px;
         background: conic-gradient(
-          var(--gdt-primary) calc(var(--progress) * 1%),
-          var(--gdt-bg-mid) 0
+          var(--gdt-success) calc(var(--progress) * 1%),
+          var(--gdt-border-dark) 0
         );
       }
       #progress-ring::after {
@@ -328,10 +324,6 @@
       .step {
         padding: 13px 0;
       }
-      .mark-btn {
-        background: var(--gdt-primary);
-        box-shadow: 0 5px 14px rgba(52, 60, 237, 0.18);
-      }
       #chat-panel {
         display: flex;
         height: calc(100vh - 124px);
@@ -340,23 +332,6 @@
         flex-direction: column;
         overflow: hidden;
         padding: 0;
-      }
-      #chat-panel > h2 {
-        margin: 0;
-        padding: 17px 18px;
-        border-bottom: 1px solid var(--gdt-border-light);
-      }
-      #chat-panel > h2::before {
-        display: inline-grid;
-        width: 34px;
-        height: 34px;
-        margin-right: 10px;
-        place-items: center;
-        border-radius: 10px;
-        background: var(--gdt-primary);
-        color: white;
-        content: 'G';
-        vertical-align: middle;
       }
       #chat {
         flex: 1;
@@ -428,7 +403,7 @@
             <div id="progress-ring"></div>
             <span id="progress-label">0%</span>
           </div>
-          <div>
+          <div class="progress-copy">
             <div>Your onboarding progress</div>
             <div id="milestone-badges"></div>
           </div>
@@ -457,9 +432,12 @@
           <button type="button" data-reset>Reset demo</button>
         </div>
       </section>
-      <section class="card" id="chat-panel">
-        <h2>Ask Glean</h2>
-        <div id="chat"></div>
+      <section class="card assistant-shell" id="chat-panel">
+        <div class="assistant-header">
+          <div class="assistant-avatar">G</div>
+          <h2>Ask Glean</h2>
+        </div>
+        <div id="chat" class="sdk-embed"></div>
       </section>
     </main>
     <script type="module" src="/src/main.ts"></script>
