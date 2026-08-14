@@ -90,9 +90,11 @@ function assertFixtureContract() {
   const recorded = JSON.parse(
     fs.readFileSync(path.join(root, 'fixtures', 'chat-responses.json'), 'utf8'),
   );
-  const steps = JSON.parse(
-    fs.readFileSync(path.join(root, 'steps.example.json'), 'utf8'),
-  );
+  const stepsFile = process.env.GLEAN_ONBOARDING_STEPS_FILE?.trim();
+  if (!stepsFile) {
+    throw new Error('fixture mode must set GLEAN_ONBOARDING_STEPS_FILE');
+  }
+  const steps = JSON.parse(fs.readFileSync(stepsFile, 'utf8'));
   const required = [
     ...CHECKS.map((check) => check.query),
     ...steps.map((step) => step.askPrompt),
