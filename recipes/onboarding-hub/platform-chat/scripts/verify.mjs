@@ -103,19 +103,30 @@ function assertFixtureContract() {
   }
   for (const [key, body] of Object.entries(recorded)) {
     const messages = body.messages ?? [];
-    const content = messages.find(
+    const contentMessages = messages.filter(
       (message) =>
         message.author === 'GLEAN_AI' && message.messageType === 'CONTENT',
     );
-    if (!content) {
+    if (contentMessages.length === 0) {
       throw new Error(`${key}: no GLEAN_AI CONTENT message`);
     }
-    const fragments = content.fragments ?? [];
+    const fragments = contentMessages.flatMap(
+      (message) => message.fragments ?? [],
+    );
     const cited = fragments.some((fragment) => fragment.citation);
-    if (cited && messages[0]?.messageType !== 'UPDATE') {
-      throw new Error(
-        `${key}: cited fixture must start with UPDATE then CONTENT`,
-      );
+    if (cited) {
+      const first = messages[0];
+      const second = messages[1];
+      if (
+        first?.author !== 'GLEAN_AI' ||
+        first?.messageType !== 'UPDATE' ||
+        second?.author !== 'GLEAN_AI' ||
+        second?.messageType !== 'CONTENT'
+      ) {
+        throw new Error(
+          `${key}: cited fixture must be GLEAN_AI UPDATE then GLEAN_AI CONTENT`,
+        );
+      }
     }
     for (const fragment of fragments) {
       const document = fragment.citation?.sourceDocument;
@@ -193,15 +204,11 @@ function evaluateCheck(check, result) {
 
 async function main() {
   if (useFixture) {
-    if (
-      !process.env.GLEAN_ONBOARDING_STEPS_JSON?.trim() &&
-      !process.env.GLEAN_ONBOARDING_STEPS_FILE?.trim()
-    ) {
-      process.env.GLEAN_ONBOARDING_STEPS_FILE = path.join(
-        root,
-        'steps.example.json',
-      );
-    }
+    delete process.env.GLEAN_ONBOARDING_STEPS_JSON;
+    process.env.GLEAN_ONBOARDING_STEPS_FILE = path.join(
+      root,
+      'steps.example.json',
+    );
     assertFixtureContract();
     console.log('Running verify against recorded Client Chat fixtures');
   } else {

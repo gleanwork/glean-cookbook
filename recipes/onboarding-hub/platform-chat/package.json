@@ -10,7 +10,7 @@
     "start": "tsx server.ts",
     "test": "node --import tsx --test \"lib/**/*.test.ts\"",
     "verify": "node scripts/verify.mjs",
-    "verify:fixture": "npm test && GLEAN_USE_FIXTURE=true node scripts/verify.mjs",
+    "verify:fixture": "npm test && GLEAN_USE_FIXTURE=true GLEAN_ONBOARDING_STEPS_FILE=./steps.example.json node scripts/verify.mjs",
     "verify:context": "node scripts/verify-context.mjs",
     "lint": "eslint ."
   },

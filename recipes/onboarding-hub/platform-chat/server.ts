@@ -127,7 +127,9 @@ const server = http.createServer(async (req, res) => {
       res.end(
         JSON.stringify({
           error: 'Could not answer that question.',
-          hint: 'Check credentials and the CHAT scope.',
+          hint: message.startsWith('No fixture recorded')
+            ? 'That question is not in the recorded demo fixtures.'
+            : 'Check credentials and the CHAT scope.',
         }),
       );
     }
