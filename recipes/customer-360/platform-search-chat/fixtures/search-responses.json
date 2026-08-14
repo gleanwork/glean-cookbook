@@ -1,0 +1,53 @@
+{
+  "Globex account notes ARR seats contacts": {
+    "results": [
+      {
+        "url": "https://portal.sample.internal/sales/accounts/globex",
+        "title": "Globex — Account Notes",
+        "snippets": [
+          "Globex is Sample Corp's largest customer account, owned by Sam Reyes (Account Executive). Current ARR: $840,000, up from $620,000 at last renewal.",
+          "Primary contacts: VP of Engineering (executive sponsor) and a Director of IT Operations (day-to-day admin). Deployment: 1,200 licensed seats."
+        ],
+        "datasource": "sample_catalog"
+      }
+    ],
+    "has_more": false,
+    "next_cursor": null,
+    "request_id": "fixture-globex-account-notes",
+    "warnings": []
+  },
+  "Globex renewal status": {
+    "results": [
+      {
+        "url": "https://portal.sample.internal/sales/accounts/globex/renewal-q3-2026",
+        "title": "Globex — Renewal Status (Q3 2026)",
+        "snippets": [
+          "Globex's contract renews 2026-09-30. Status: on track, verbally committed to renew at current seat count with a discussion in progress about adding 300 seats for the newly onboarded business unit.",
+          "Open items: legal is finalizing an updated data processing addendum requested by Globex's security team; procurement wants a multi-year discount quote. Risk level: low."
+        ],
+        "datasource": "sample_catalog"
+      }
+    ],
+    "has_more": false,
+    "next_cursor": null,
+    "request_id": "fixture-globex-renewal",
+    "warnings": []
+  },
+  "Globex security questionnaire": {
+    "results": [
+      {
+        "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
+        "title": "Globex — Security Questionnaire Response Summary",
+        "snippets": [
+          "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only per Globex's requirement.",
+          "SSO/SAML supported, and a documented incident-response process with a 24-hour customer notification SLA for confirmed breaches. Globex's security team accepted all responses with no follow-up questions."
+        ],
+        "datasource": "sample_catalog"
+      }
+    ],
+    "has_more": false,
+    "next_cursor": null,
+    "request_id": "fixture-globex-security",
+    "warnings": []
+  }
+}

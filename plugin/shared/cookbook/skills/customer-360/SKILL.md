@@ -23,6 +23,8 @@ Build "Customer 360: an account page built from your own content" following http
 
 Path A — parallel Platform Search tiles + Client Chat synthesis
 
+{{> demo-mode}}
+
 {{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
@@ -42,21 +44,28 @@ Path A — parallel Platform Search tiles + Client Chat synthesis
    cd customer-360 && npm install
    ```
 
-3. **Set credentials**
+3. **Try it with no credentials**
+   Runs the Globex account tiles and Client Chat path against recorded Sample Corp responses. Overview counts must match the fixture result lengths, and the three demo queries must stay cited.
+
+   ```bash
+   cd customer-360 && npm run verify:fixture
+   ```
+
+4. **Set credentials**
    The shipped command discovers the tenant and completes OAuth, with a scoped API token fallback. Set GLEAN_ACCOUNT_NAME in the resulting ignored .env to the account the user supplied. Do not search for a different account.
 
    ```bash
    cd customer-360 && npm run login -- --email "<work-email>"
    ```
 
-4. **Verify**
+5. **Verify**
    Allow 1–3 minutes. It starts its own server, runs the demo queries against the supplied account, and asserts cited answers plus deterministic evidence coverage.
 
    ```bash
    cd customer-360 && npm run verify
    ```
 
-5. **Run it**
+6. **Run it**
    ```bash
    cd customer-360 && npm start
    ```

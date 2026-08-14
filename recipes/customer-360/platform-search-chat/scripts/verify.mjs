@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-// Live verify for customer-360/platform-search-chat. Requires credentials.
 // Loads .env from the package root so `npm run verify` works after
 // `cp .env.example .env` without exporting vars in the shell.
+// GLEAN_USE_FIXTURE=true skips credentials and uses fixtures/*.json.
 
 import 'dotenv/config';
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,6 +27,7 @@ const PORT = Number(process.env.PORT ?? (await availablePort()));
 const BASE_URL = `http://localhost:${PORT}`;
 const START_TIMEOUT_MS = 20_000;
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const useFixture = process.env.GLEAN_USE_FIXTURE === 'true';
 
 const CHAT_CHECKS = [
   {
@@ -60,6 +62,14 @@ const CHAT_CHECKS = [
   },
 ];
 
+function tileQueries(account) {
+  return [
+    `${account} account notes ARR seats contacts`,
+    `${account} renewal status`,
+    `${account} security questionnaire`,
+  ];
+}
+
 function requireEnv(name) {
   const value = process.env[name]?.trim();
   if (!value) {
@@ -67,6 +77,97 @@ function requireEnv(name) {
     process.exit(1);
   }
   return value;
+}
+
+function assertFixtureContract() {
+  const search = JSON.parse(
+    fs.readFileSync(
+      path.join(root, 'fixtures', 'search-responses.json'),
+      'utf8',
+    ),
+  );
+  const chat = JSON.parse(
+    fs.readFileSync(path.join(root, 'fixtures', 'chat-responses.json'), 'utf8'),
+  );
+  const account = process.env.GLEAN_ACCOUNT_NAME;
+  const missingSearch = tileQueries(account).filter((key) => !search[key]);
+  if (missingSearch.length > 0) {
+    throw new Error(
+      `search fixtures missing keys: ${missingSearch.join(', ')}`,
+    );
+  }
+  for (const [key, body] of Object.entries(search)) {
+    if (!Array.isArray(body.results)) {
+      throw new Error(`${key}: results must be an array`);
+    }
+    if (typeof body.has_more !== 'boolean') {
+      throw new Error(`${key}: has_more must be a boolean`);
+    }
+    if (body.next_cursor !== null && typeof body.next_cursor !== 'string') {
+      throw new Error(`${key}: next_cursor must be a string or null`);
+    }
+    if (typeof body.request_id !== 'string' || body.request_id.length === 0) {
+      throw new Error(`${key}: request_id must be a non-empty string`);
+    }
+    if (!Array.isArray(body.warnings) || body.warnings.length !== 0) {
+      throw new Error(`${key}: warnings must be an empty array`);
+    }
+    for (const result of body.results) {
+      if (!result.title || !result.url || !result.datasource) {
+        throw new Error(`${key}: result missing title, url, or datasource`);
+      }
+      if (
+        !Array.isArray(result.snippets) ||
+        !result.snippets.every((snippet) => typeof snippet === 'string')
+      ) {
+        throw new Error(`${key}: snippets must be a string array`);
+      }
+    }
+  }
+  const missingChat = CHAT_CHECKS.map((check) => check.query).filter(
+    (key) => !chat[key],
+  );
+  if (missingChat.length > 0) {
+    throw new Error(`chat fixtures missing keys: ${missingChat.join(', ')}`);
+  }
+  for (const [key, body] of Object.entries(chat)) {
+    const messages = body.messages ?? [];
+    const contentMessages = messages.filter(
+      (message) =>
+        message.author === 'GLEAN_AI' && message.messageType === 'CONTENT',
+    );
+    if (contentMessages.length === 0) {
+      throw new Error(`${key}: no GLEAN_AI CONTENT message`);
+    }
+    const fragments = contentMessages.flatMap(
+      (message) => message.fragments ?? [],
+    );
+    const cited = fragments.some((fragment) => fragment.citation);
+    if (cited) {
+      const first = messages[0];
+      const second = messages[1];
+      if (
+        first?.author !== 'GLEAN_AI' ||
+        first?.messageType !== 'UPDATE' ||
+        second?.author !== 'GLEAN_AI' ||
+        second?.messageType !== 'CONTENT'
+      ) {
+        throw new Error(
+          `${key}: cited fixture must be GLEAN_AI UPDATE then GLEAN_AI CONTENT`,
+        );
+      }
+    }
+    for (const fragment of fragments) {
+      const document = fragment.citation?.sourceDocument;
+      if (!document) continue;
+      if (!document.title) {
+        throw new Error(`${key}: citation missing title`);
+      }
+      if (!/^https?:\/\//u.test(document.url ?? '')) {
+        throw new Error(`${key}: citation url must be http(s)`);
+      }
+    }
+  }
 }
 
 function assertCitationShape(citations) {
@@ -110,11 +211,18 @@ async function waitForServer(deadline) {
 }
 
 async function main() {
-  requireEnv('GLEAN_API_TOKEN');
-  requireEnv('GLEAN_SERVER_URL');
-  requireEnv('GLEAN_ACCOUNT_NAME');
-
-  console.log('Running verify against live Platform Search + Chat');
+  if (useFixture) {
+    process.env.GLEAN_ACCOUNT_NAME = 'Globex';
+    assertFixtureContract();
+    console.log(
+      'Running verify against recorded Platform Search + Chat fixtures',
+    );
+  } else {
+    requireEnv('GLEAN_API_TOKEN');
+    requireEnv('GLEAN_SERVER_URL');
+    requireEnv('GLEAN_ACCOUNT_NAME');
+    console.log('Running verify against live Platform Search + Chat');
+  }
 
   const server = startServer();
   let failed = false;
@@ -134,6 +242,36 @@ async function main() {
       console.log(
         `✓ /api/account — ${account.account.name}, ${account.tiles.length} tiles`,
       );
+    }
+
+    if (useFixture && Array.isArray(account.tiles)) {
+      const search = JSON.parse(
+        fs.readFileSync(
+          path.join(root, 'fixtures', 'search-responses.json'),
+          'utf8',
+        ),
+      );
+      for (const tile of account.tiles) {
+        const recorded = search[tile.query];
+        if (!recorded) {
+          failed = true;
+          console.error(`✗ tile "${tile.id}": no fixture for ${tile.query}`);
+          continue;
+        }
+        if (tile.results.length !== recorded.results.length) {
+          failed = true;
+          console.error(
+            `✗ tile "${tile.id}": ${tile.results.length} results, fixture has ${recorded.results.length}`,
+          );
+        } else if (tile.results.length === 0) {
+          failed = true;
+          console.error(
+            `✗ tile "${tile.id}": expected a non-empty Globex tile`,
+          );
+        } else {
+          console.log(`✓ tile "${tile.id}" — ${tile.results.length} result(s)`);
+        }
+      }
     }
 
     for (const check of CHAT_CHECKS) {
