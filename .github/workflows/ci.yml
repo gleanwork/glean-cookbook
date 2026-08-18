@@ -52,6 +52,10 @@ jobs:
       - run: PORT=3211 npm --prefix recipes/oncall-copilot run verify:fixture
       - run: npm --prefix recipes/onboarding-hub/platform-chat run verify:context
       - run: PORT=3212 npm --prefix recipes/rfp-responder run verify:fixture
+      # The trigger recipes below boot their own receivers on ports they
+      # allocate themselves, so no PORT is pinned for any of them.
+      - run: npm --prefix recipes/github-pr-review-monitor ci
+      - run: npm --prefix recipes/github-pr-review-monitor run verify:fixture
 
   format-check:
     name: Format check

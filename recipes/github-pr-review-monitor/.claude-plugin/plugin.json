@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "glean-github-pr-review-monitor",
+  "displayName": "Glean GitHub Review Monitor",
+  "version": "1.0.0",
+  "description": "Turns signed Glean GitHub pull-request events into human-reviewed Claude Code review drafts.",
+  "author": {
+    "name": "Glean"
+  },
+  "experimental": {
+    "monitors": "./monitors/monitors.json"
+  }
+}

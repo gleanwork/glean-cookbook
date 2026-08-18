@@ -1,0 +1,19 @@
+{
+  "name": "glean-github-pr-review-monitor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "login": "node scripts/glean-auth.mjs login --scopes triggers",
+    "start": "node scripts/server.mjs",
+    "stream": "node scripts/stream.mjs",
+    "setup": "node scripts/setup-trigger.mjs",
+    "draft": "node scripts/draft-review.mjs",
+    "demo": "node scripts/demo.mjs",
+    "verify:fixture": "node scripts/verify.mjs",
+    "test": "node scripts/verify.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

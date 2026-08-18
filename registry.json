@@ -1064,6 +1064,189 @@
     }
   },
   {
+    "id": "github-pr-review-monitor",
+    "title": "Draft PR reviews with Glean Triggers and Claude Code Monitor",
+    "description": "Use Glean Triggers to send GitHub review events to Claude Code Monitor, which runs your local review skill against the diff and prepares a first-pass review draft.",
+    "sidebarLabel": "PR Review Trigger",
+    "surfaces": ["platform-api"],
+    "status": "showcase",
+    "category": "workflow",
+    "level": "Intermediate",
+    "levels": { "minimal": true, "wow": true },
+    "timeEstimate": "~45 min",
+    "icon": "claude",
+    "requiredScopes": ["TRIGGERS"],
+    "authMethod": ["client-api-oauth-or-token"],
+    "buildMethod": "scaffold",
+    "execution": {
+      "type": "hybrid-service",
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email? It is used once to discover your Glean tenant."
+        },
+        {
+          "id": "repository",
+          "prompt": "Which local GitHub repository should Claude Code review?"
+        },
+        {
+          "id": "webhook-url",
+          "prompt": "Which public HTTPS URL should receive Glean webhook delivery? If you do not have one, say so and the tunnel step prints one."
+        }
+      ],
+      "auth": [
+        {
+          "kind": "oauth-with-token-fallback",
+          "scopes": ["TRIGGERS"],
+          "setupCommand": "cd github-pr-review-monitor && npm run login -- --email \"<work-email>\"",
+          "configFile": ".env",
+          "backendVariable": "GLEAN_SERVER_URL",
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "automated",
+        "command": "cd github-pr-review-monitor && npm run verify:fixture",
+        "expectedDuration": "under 1 minute for signed fixture delivery; 5–15 minutes for a live indexed event",
+        "startsOwnServer": false
+      },
+      "run": {
+        "command": "cd github-pr-review-monitor && npm start",
+        "userBrowser": false,
+        "url": "the Local URL printed by the receiver"
+      }
+    },
+    "languages": ["javascript"],
+    "prerequisites": [
+      "Glean Triggers enabled with GitHub review presets available in your deployment",
+      "GitHub content indexed in Glean",
+      "A local checkout of the repository, with the GitHub CLI signed in as the reviewer",
+      "An interactive Claude Code session, or the terminal stream where Monitor is unavailable",
+      "Node 20+ and a public HTTPS tunnel to the receiver"
+    ],
+    "demoQueries": [
+      {
+        "query": "Request a review from the configured user on a pull request in the open local repository",
+        "expectedBehavior": "One signed event reaches the receiver and Claude drafts a review of the current diff. Nothing is posted to GitHub."
+      },
+      {
+        "query": "Explicitly approve copying the finished local draft to GitHub",
+        "expectedBehavior": "The helper creates or updates a pending review and reports that it remains unsubmitted."
+      }
+    ],
+    "codeAssets": [
+      {
+        "repoPath": "recipes/github-pr-review-monitor",
+        "language": "javascript",
+        "description": "Signed webhook receiver, durable monitor queue, Claude Code plugin, fixture test, and pending-review helper"
+      }
+    ],
+    "scaffoldActions": [],
+    "steps": [
+      {
+        "title": "Scaffold the receiver and plugin",
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/github-pr-review-monitor github-pr-review-monitor",
+        "kind": "scaffold"
+      },
+      {
+        "title": "Verify the local path with no credentials",
+        "command": "cd github-pr-review-monitor && npm run verify:fixture",
+        "description": "Verifies the signed receiver, event queue, and draft-review flow using recorded events.",
+        "kind": "verify-fixture"
+      },
+      {
+        "title": "Sign in to Glean",
+        "command": "cd github-pr-review-monitor && npm run login -- --email \"<work-email>\"",
+        "description": "Discovers your tenant and writes GLEAN_SERVER_URL and GLEAN_API_TOKEN to an ignored .env. An exported GLEAN_API_TOKEN outranks .env, and the scripts warn when it does.",
+        "kind": "authenticate"
+      },
+      {
+        "title": "Run the receiver",
+        "command": "cd github-pr-review-monitor && npm start",
+        "description": "Keep this running. It binds to loopback, verifies signatures, and queues each webhook id once.",
+        "kind": "run"
+      },
+      {
+        "title": "Expose the receiver over HTTPS",
+        "command": "cd github-pr-review-monitor && cloudflared tunnel --url http://127.0.0.1:8787",
+        "description": "Append /webhook to the printed origin and set GLEAN_WEBHOOK_URL before registering. Leave the tunnel running — the triggers outlive it, so a closed tunnel means deliveries to a dead address.",
+        "kind": "manual"
+      },
+      {
+        "title": "Register the review triggers",
+        "command": "cd github-pr-review-monitor && npm run setup",
+        "description": "Set GLEAN_TRIGGER_DATASOURCE and the preset ids you want to register. With no ids configured, setup lists the presets your deployment serves and stops. Presets that require inputs read them from GLEAN_TRIGGER_INPUT_<FIELD>.",
+        "kind": "configure"
+      },
+      {
+        "title": "Attach Claude Code Monitor",
+        "command": "cd github-pr-review-monitor && claude plugin validate . --strict",
+        "description": "Validate the plugin, then restart Claude Code from the repository being reviewed so Monitor starts with the session. Where Monitor is unavailable, run npm run stream to receive the same events in the terminal.",
+        "kind": "handoff"
+      },
+      {
+        "title": "Verify a real review request",
+        "description": "Request a review from yourself on a real pull request. Expect one queued event and one draft grounded in the current diff, with no GitHub write until you ask for one.",
+        "kind": "verify-live"
+      }
+    ],
+    "architecture": [
+      {
+        "label": "GitHub",
+        "caption": "Assignment, review request, or ready-for-review event",
+        "category": "workflow",
+        "icon": "github"
+      },
+      {
+        "label": "Glean Trigger",
+        "caption": "Permission-aware, signed, at-least-once delivery",
+        "category": "workflow",
+        "emphasized": true
+      },
+      {
+        "label": "Local receiver + Monitor",
+        "caption": "Verifies, deduplicates, queues, and wakes Claude Code",
+        "category": "workflow",
+        "icon": "claude"
+      },
+      {
+        "label": "Pending GitHub review",
+        "caption": "Human inspects and decides whether to submit",
+        "category": "workflow",
+        "icon": "spellcheck"
+      }
+    ],
+    "aiPrompt": "Scaffold the shipped receiver and Claude Code plugin. Run the fixture test before requesting credentials. Use the shipped login flow, start the receiver, create a public HTTPS tunnel, and store only the URL and returned secrets in ignored .env. Register the GitHub review presets selected from the deployment's live catalog. If none of the required review-event presets is available, stop rather than inventing an id. Validate and load the plugin in an interactive session opened in the target repository. Preserve the local-draft-first boundary: create a pending GitHub review only after explicit approval, and never submit it.",
+    "llmContext": "Glean webhook delivery uses Standard Webhooks and is at-least-once. The documented payload is snake_case: version, trigger_id, event_type, datasource, reason, doc_type, doc_id, view_url, title, and an optional event_time; webhook-id exists only in headers. Verify HMAC over webhook-id.timestamp.raw-body, reject stale timestamps, and deduplicate webhook-id. Claude Code monitors need an interactive CLI and emit one notification per stdout line. The external trigger catalog may omit GitHub even when agent content-trigger templates include it. A pending GitHub review is an external write requiring explicit approval; never submit it.",
+    "goDependency": false,
+    "featured": false,
+    "tags": ["github", "claude-code", "monitor", "content-trigger"],
+    "content": {
+      "problem": "You are already working in Claude Code, with the repository, local diff, and your review tools available in the same coding environment. But review requests arrive asynchronously, often while your attention is elsewhere, and preparing a thoughtful review still means noticing the event and reconstructing its context.\n\nGlean catches the GitHub review event and sends it to Claude Code Monitor where you are already coding. Claude runs your local review skill against the real diff and prepares an initial round of findings before you jump in manually. You verify and refine the review, then decide what gets submitted.",
+      "takeItFurther": [
+        "Teach the local review skill your repository's conventions and test commands, so the first pass reflects how your team already reviews.",
+        "Notify the reviewer when the first-pass draft is ready, so the queue is not something anyone has to remember to check.",
+        "Add inline pending-review comments once the body-only flow is reliable — line-level findings are what a reviewer acts on first."
+      ],
+      "guardrails": [
+        {
+          "title": "Draft is not submit",
+          "rule": "The monitor may prepare a local draft. A GitHub pending review requires explicit approval, and submission always remains manual."
+        },
+        {
+          "title": "Event payload is not the diff",
+          "rule": "Review the current local repository and GitHub head SHA; never infer findings from the thin trigger payload alone."
+        }
+      ],
+      "limitations": [
+        {
+          "title": "Claude Code Monitor requires an interactive host",
+          "description": "Monitor requires a supported interactive Claude Code session. Where Monitor is unavailable, use the terminal stream to receive the same events."
+        }
+      ]
+    }
+  },
+  {
     "id": "multi-step-agent",
     "title": "Multi-step agent with governed tools",
     "description": "Build a Glean agent that plans, retrieves, and acts through a governed custom tool — with a safe fallback when the tool is denied.",

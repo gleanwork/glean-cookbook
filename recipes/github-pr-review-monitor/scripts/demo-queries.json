@@ -1,0 +1,4 @@
+[
+  "Request a review from the configured user on a pull request in the open local repository",
+  "Explicitly approve copying the finished local draft to GitHub"
+]
