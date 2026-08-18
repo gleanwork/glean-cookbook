@@ -29,6 +29,15 @@ function executionTarget(recipe, execution) {
 
 async function oauthScaffolds({ repoRoot }) {
   const targets = new Set(['plugin/shared/cookbook']);
+  // Any scaffold already shipping the runtime is a target, whatever its auth
+  // kind says -- the web-sdk ones call `configure` but declare `browser-cookie`,
+  // so they held copies `artifacts:check` could not see.
+  for (const file of await fg('recipes/**/scripts/glean-auth.mjs', {
+    cwd: repoRoot,
+    ignore: ['**/node_modules/**'],
+  })) {
+    targets.add(path.dirname(path.dirname(file)));
+  }
   for (const file of await recipeFiles(repoRoot)) {
     const recipe = await fs.readJson(file);
     const contracts = [

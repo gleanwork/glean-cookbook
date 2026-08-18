@@ -23,7 +23,9 @@
     "test": "node --test \"scripts/**/*.test.mjs\" && npm run artifacts:check && npm run execution:check",
     "verify:login": "node scripts/verify-login.mjs",
     "artifacts:check": "node scripts/build-artifacts.mjs --check",
-    "execution:check": "node scripts/check-recipe-execution.mjs"
+    "execution:check": "node scripts/check-recipe-execution.mjs",
+    "recipe-questions:check": "node scripts/check-recipe-questions.mjs",
+    "mdx:check": "node scripts/check-recipe-mdx.mjs"
   },
   "devDependencies": {
     "@release-it/bumper": "^8.0.0",

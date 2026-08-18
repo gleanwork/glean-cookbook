@@ -32,6 +32,11 @@ next — do not put them all in one message:
 
 Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
 
+The recipe needs a secret issued by a third-party service. Tell the user which value to obtain and
+where it appears, then have them write it directly into the recipe's ignored `.env`. Never ask for
+the value in chat, never echo it, and never place it in a command. Confirm the file is filled and
+carry on — the shipped scripts read `.env` themselves.
+
 1. **Scaffold the project**
 
    ```bash
@@ -70,6 +75,11 @@ next — do not put them all in one message:
 - What topic should your account not be able to access?
 
 Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+
+The recipe needs a secret issued by a third-party service. Tell the user which value to obtain and
+where it appears, then have them write it directly into the recipe's ignored `.env`. Never ask for
+the value in chat, never echo it, and never place it in a command. Confirm the file is filled and
+carry on — the shipped scripts read `.env` themselves.
 
 1. **Scaffold the project**
 

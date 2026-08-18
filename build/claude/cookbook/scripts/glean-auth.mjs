@@ -55,7 +55,12 @@ export async function discoverBackend(email, request = requestJson) {
   } catch {
     fail('Glean tenant discovery returned an invalid queryURL.');
   }
-  const match = hostname.match(/^([a-z0-9-]+)\.(?:glean\.com|askscio\.com)$/u);
+  // Discovery returns either the backend host already (`acme-be.glean.com`) or
+  // the legacy frontend one (`acme.askscio.com`). Appending `-be` to the first
+  // would ask for `acme-be-be.glean.com`, which does not resolve.
+  const match = hostname.match(
+    /^([a-z0-9-]+?)(-be)?\.(?:glean\.com|askscio\.com)$/u,
+  );
   if (!match || match[1] === 'app') {
     fail(
       `No customer Glean tenant was found for ${normalized}. Check the email and try again.`,
@@ -207,7 +212,7 @@ async function exchange(metadata, body) {
   });
 }
 
-function persistTokens(backend, tokens) {
+export function persistTokens(backend, tokens, requestedScopes = []) {
   const state = readState(backend);
   const expiresAt =
     Math.floor(Date.now() / 1000) + (tokens.expires_in ?? 3600) - 60;
@@ -216,9 +221,41 @@ function persistTokens(backend, tokens) {
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token ?? state.refresh_token,
     expires_at: expiresAt,
-    scope: tokens.scope ?? state.scope,
+    // An absent `scope` means "as requested" (RFC 6749 §5.1). A refresh passes
+    // no scopes, so fall through to the stored one rather than blanking it.
+    scope: tokens.scope ?? (requestedScopes.join(' ') || state.scope),
   });
   return tokens.access_token;
+}
+
+/** The scopes a grant actually carries, or undefined when the server said nothing. */
+export function grantedScopes(tokens) {
+  if (tokens.scope === undefined || tokens.scope === null) return undefined;
+  return new Set(
+    String(tokens.scope).toLowerCase().split(/\s+/u).filter(Boolean),
+  );
+}
+
+/**
+ * Fails a login whose grant explicitly omits a required scope, so a narrowed
+ * grant surfaces here rather than as a 403 on the first API call. An absent
+ * `scope` means granted-as-requested (RFC 6749 §5.1), so it is not a failure.
+ */
+export function assertScopes(tokens, requiredScopes = []) {
+  if (requiredScopes.length === 0) return;
+  const granted = grantedScopes(tokens);
+  if (granted === undefined) return;
+  const missing = requiredScopes.filter(
+    (scope) => !granted.has(scope.toLowerCase()),
+  );
+  if (missing.length === 0) return;
+  throw new Error(
+    `Sign-in succeeded but the grant is missing ${missing.join(', ')}. ` +
+      `It carries: ${[...granted].join(', ') || '(nothing)'}. ` +
+      `This tenant's OAuth client cannot issue the scope this recipe needs, so ` +
+      `every call would fail with 403. Use a scoped Glean API token in .env as ` +
+      `GLEAN_API_TOKEN, or ask an admin for a pre-provisioned OAuth client.`,
+  );
 }
 
 function coversScopes(state, requiredScopes) {
@@ -282,7 +319,8 @@ async function interactiveLogin(backend, metadata, scopes) {
       client_id: clientId,
       code_verifier: verifier,
     });
-    return persistTokens(backend, tokens);
+    assertScopes(tokens, scopes);
+    return persistTokens(backend, tokens, scopes);
   } finally {
     server.close();
   }

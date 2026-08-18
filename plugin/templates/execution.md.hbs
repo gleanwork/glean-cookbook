@@ -19,6 +19,10 @@
 
 {{{pluginPartial "oauth-setup"}}}
 {{/if}}
+{{#if externalApiKey}}
+
+{{{pluginPartial "auth-external-api-key"}}}
+{{/if}}
 {{#if browserCookie}}
 
 {{{pluginPartial "browser-cookie-setup"}}}

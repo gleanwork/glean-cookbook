@@ -78,6 +78,8 @@ jobs:
       - run: npm run snippets:check
       - run: npm run skill-context:check
       - run: npm run recipe-commands:check
+      - run: npm run recipe-questions:check
+      - run: npm run mdx:check
 
   pinned-deps:
     name: Pinned SDK versions
