@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "trigger_id": "spec-7d2f1a8b3c9e0546",
+  "trigger_name": "b4c8e2a60d1f47539a7c3e5b1d8f0264",
+  "datasource": "GOOGLECALENDAR",
+  "doc_type": "event",
+  "event_type": "CONTENT_SCHEDULE",
+  "reason": "",
+  "doc_id": "GOOGLECALENDAR_Event_A1B2C3D4E5F60718293A4B5C6D7E8F90",
+  "title": "Platform weekly — metrics review",
+  "view_url": "https://www.google.com/calendar/event?eid=cGxhdGZvcm13ZWVrbHkwMV8yMDI2MDgyNVQxODMwMDBa",
+  "event_time": "2026-08-25T18:30:00Z",
+  "time_offset_seconds": 1800
+}

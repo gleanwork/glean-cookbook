@@ -1,0 +1,19 @@
+{
+  "name": "glean-pre-meeting-brief",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "demo": "node scripts/demo.mjs",
+    "login": "node scripts/glean-auth.mjs login --scopes triggers",
+    "verify": "node scripts/verify.mjs",
+    "verify:fixture": "node scripts/verify.mjs",
+    "test": "node scripts/verify.mjs",
+    "preview": "node scripts/preview-events.mjs",
+    "test:webhook": "node scripts/test-webhook.mjs",
+    "setup": "node scripts/setup-trigger.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

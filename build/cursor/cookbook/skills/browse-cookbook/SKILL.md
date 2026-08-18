@@ -29,6 +29,7 @@ before running its command. Full write-ups live at
 - **Onboarding Hub: a day-one checklist grounded in your own docs** (`/cookbook:onboarding-hub`) — A guided first-week hub for new hires: a checklist with progress, and every step able to answer itself from your own onboarding content.
 - **On-call Copilot** (`/cookbook:oncall-copilot`) — Triage an incident from your own runbooks and past incidents, propose one pre-registered action, and let a human approve it — where the gate refuses the wrong person, expiry escalates instead of auto-approving, and every attempt is audited.
 - **Ground your own LLM app in Glean** (`/cookbook:permissions-aware-retrieval`) — Use Glean's Platform API as the retrieval layer for your own LLM app — every result ACL-filtered for the caller before it ever reaches the model.
+- **Brief recurring meetings with Glean Triggers and Cursor Automations** (`/cookbook:pre-meeting-brief`) — Use a Glean calendar trigger to start Cursor Automations before a recurring meeting, summarize what changed, and update the project tracker.
 - **Answer an RFP or security questionnaire** (`/cookbook:rfp-responder`) — Turn a customer questionnaire into grounded, cited draft answers — where every claim carries a source, unsupported rows route to a human, and nothing reaches the customer without approval.
 
 <!-- pluginpack-generated:recipes:end -->

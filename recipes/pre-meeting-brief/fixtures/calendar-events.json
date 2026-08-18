@@ -1,0 +1,35 @@
+{
+  "results": [
+    {
+      "datasource": "GOOGLECALENDAR",
+      "doc_id": "GOOGLECALENDAR_Event_A1B2C3D4E5F60718293A4B5C6D7E8F90",
+      "doc_type": "event",
+      "event_time": "2026-08-25T18:30:00Z",
+      "event_type": "DOCUMENT_CHANGE",
+      "reason": "",
+      "title": "Platform weekly — metrics review",
+      "view_url": "https://www.google.com/calendar/event?eid=cGxhdGZvcm13ZWVrbHkwMV8yMDI2MDgyNVQxODMwMDBa"
+    },
+    {
+      "datasource": "GOOGLECALENDAR",
+      "doc_id": "GOOGLECALENDAR_Event_B2C3D4E5F60718293A4B5C6D7E8F90A1",
+      "doc_type": "event",
+      "event_time": "2026-08-25T18:30:00Z",
+      "event_type": "DOCUMENT_CHANGE",
+      "reason": "",
+      "title": "Infra triage",
+      "view_url": "https://www.google.com/calendar/event?eid=aW5mcmF0cmlhZ2UwMV8yMDI2MDgyNVQxNTQ1MDBa"
+    },
+    {
+      "datasource": "GOOGLECALENDAR",
+      "doc_id": "GOOGLECALENDAR_Event_C3D4E5F60718293A4B5C6D7E8F90A1B2",
+      "doc_type": "event",
+      "event_time": "2026-08-25T18:30:00Z",
+      "event_type": "DOCUMENT_CHANGE",
+      "reason": "",
+      "title": "Design review — alerting",
+      "view_url": "https://www.google.com/calendar/event?eid=ZGVzaWducmV2aWV3MV8yMDI2MDgyNVQwOTMwMDBa"
+    }
+  ],
+  "has_more": true
+}

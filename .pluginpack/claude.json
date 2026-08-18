@@ -25,6 +25,7 @@
     "build/claude/cookbook/skills/onboarding-hub/SKILL.md",
     "build/claude/cookbook/skills/oncall-copilot/SKILL.md",
     "build/claude/cookbook/skills/permissions-aware-retrieval/SKILL.md",
+    "build/claude/cookbook/skills/pre-meeting-brief/SKILL.md",
     "build/claude/cookbook/skills/rfp-responder/SKILL.md"
   ]
 }

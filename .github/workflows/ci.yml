@@ -59,6 +59,8 @@ jobs:
       # Executes the shipped n8n workflow's own Code nodes; no server, no port.
       - run: npm --prefix recipes/gong-call-follow-up-n8n ci
       - run: npm --prefix recipes/gong-call-follow-up-n8n run verify:fixture
+      - run: npm --prefix recipes/pre-meeting-brief ci
+      - run: npm --prefix recipes/pre-meeting-brief run verify:fixture
 
   format-check:
     name: Format check
