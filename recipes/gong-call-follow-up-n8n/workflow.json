@@ -1,0 +1,275 @@
+{
+  "name": "Gong call follow-up (Glean)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Set these two before running\\n\\n**Glean Chat** node -> replace `YOUR-INSTANCE-be.glean.com` in the URL with your Glean backend.\\n\\n**Resolve channel** node -> paste your Slack channel id into `SLACK_CHANNEL` at the top, or fill `ACCOUNT_CHANNELS` to route per account.\\n\\nn8n Variables are a paid feature, so neither is required. Where they exist, `GLEAN_SERVER_URL`, `GONG_SLACK_CHANNEL` and `GONG_ACCOUNT_CHANNELS` override both.\\n\\nCredentials: Glean Trigger (TRIGGERS), Glean Client (SEARCH + CHAT), Salesforce, Slack.\\n\\nDocs: https://developers.glean.com/cookbook/gong-call-follow-up-n8n",
+        "height": 320,
+        "width": 460,
+        "color": 4
+      },
+      "id": "setup-note",
+      "name": "Start here",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-560, -40]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "preset": {
+          "__rl": true,
+          "value": "GONG_2",
+          "mode": "list",
+          "cachedResultName": "New call with participant as me"
+        },
+        "inputs": {}
+      },
+      "type": "@gleanwork/n8n-nodes-gleanclient.gleanClientTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "glean-trigger",
+      "name": "Glean Trigger",
+      "notes": "GONG_2 — a new call the trigger creator took part in. The node registers the trigger on activation and removes it on deactivation.",
+      "credentials": {
+        "gleanOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Glean OAuth2 account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Normalizes one Glean trigger delivery. The Trigger node emits only the parsed\n// body, so `webhook-id` is unreachable and the key is doc_id plus event_time.\n//\n// Static data is absent in manual runs, so this fails OPEN: no store, no gate.\n// Failing closed would drop real calls to prevent a duplicate.\nconst staticData = () => {\n  try {\n    return typeof $getWorkflowStaticData === 'function'\n      ? $getWorkflowStaticData('global')\n      : {};\n  } catch {\n    return {};\n  }\n};\n\nconst deliveries = $input.all();\nif (deliveries.length > 1) {\n  throw new Error(\n    `One delivery carried ${deliveries.length} events. The nodes below resolve a single call, so a batch would attach one call's summary to another account. Nothing is written.`,\n  );\n}\n\nconst out = [];\nfor (const item of deliveries) {\n  const event = item.json.body ?? item.json;\n\n  if (event.datasource !== 'GONG') {\n    throw new Error(\n      `Expected a GONG delivery, got ${event.datasource}. The trigger is registered against the wrong preset.`,\n    );\n  }\n\n  const callId = event.doc_id ?? '';\n  const eventTime = event.event_time ?? '';\n  if (!callId) {\n    throw new Error(\n      'Delivery carried no doc_id, so the call cannot be identified and nothing below can be deduplicated.',\n    );\n  }\n\n  const deliveryId = eventTime ? `${callId}:${eventTime}` : callId;\n\n  // Delivery is at-least-once and both writes below are irreversible. n8n saves\n  // static data only on a successful execution, so a failed run leaves the key\n  // unrecorded and its retry does the work.\n  const state = staticData();\n  const seen = Array.isArray(state.seenDeliveries) ? state.seenDeliveries : [];\n  if (seen.includes(deliveryId)) {\n    continue;\n  }\n  // Bounded: static data must stay small, and only a recent delivery is retried.\n  state.seenDeliveries = [...seen, deliveryId].slice(-200);\n\n  out.push({\n    json: {\n      deliveryId,\n      triggerId: event.trigger_id ?? event.trigger_name ?? '',\n      callId,\n      title: (event.title ?? '').trim(),\n      viewUrl: event.view_url ?? '',\n      eventTime,\n    },\n  });\n}\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "id": "code-Extract call",
+      "name": "Extract call"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.GLEAN_SERVER_URL || 'https://YOUR-INSTANCE-be.glean.com' }}/rest/api/v1/chat",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gleanClientApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ saveChat: false, messages: [ { author: 'USER', fragments: [ { text: 'Summarise this sales call for the account record in four sentences or fewer. Use ONLY the retrieved company documents below and the call itself as evidence. State next steps and owners if they were agreed. Do not infer commitments, dates, or pricing that were not stated. Then, on a final line by itself, write ACCOUNT: followed by the customer organisation the call was with — the external company, never a person and never our own side. Write ACCOUNT: UNKNOWN if the evidence does not say. Otherwise write only the summary: no preamble, and no closing question or offer of further help.\\n\\nCall: ' + $('Extract call').first().json.title + '\\nLink: ' + $('Extract call').first().json.viewUrl + '\\n\\nPermission-aware Glean results:\\n' + JSON.stringify($('Search Glean for call context').all().map(i => i.json)) } ] } ] }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "id": "glean-chat",
+      "name": "Glean Chat",
+      "notes": "An HTTP Request, not a node: the Glean n8n package ships a Trigger and a Search action, and no Chat node. Runs as the credential owner, so the summary can only cite what that user can see."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Reads the Glean Chat HTTP response. Chat streams a plan as CONTENT before its\n// tool work, so the answer is the CONTENT after the last UPDATE — taking every\n// CONTENT glues the plan onto the summary.\nconst call = $('Extract call').first().json;\nconst response = $input.first().json ?? {};\nconst messages = response.messages ?? [];\n\n// Chat signs off by offering to do more. A Salesforce Task and a customer Slack\n// channel have nobody to answer that, so strip it.\nconst withoutSignOff = (value) => {\n  const offer = /^(?:would you like|should i|do you want|let me know|i can also|shall i)\\b/iu;\n  return value\n    .split(/\\n\\s*(?:-{3,}|\\*{3,})\\s*\\n/u)\n    .filter((block, index) => index === 0 || !offer.test(block.trim()))\n    .join('\\n\\n')\n    .replace(/\\n[^\\n]*\\?\\s*$/u, (line) => (offer.test(line.trim()) ? '' : line))\n    .trim();\n};\n\nconst lastUpdate = messages.map((m) => m.messageType).lastIndexOf('UPDATE');\nconst answerMessages = messages\n  .slice(lastUpdate + 1)\n  .filter((m) => m.messageType === 'CONTENT' && m.author === 'GLEAN_AI');\n\n// Fragments within one message are a stream and concatenate directly; separate\n// messages are separate paragraphs.\nconst text = withoutSignOff(\n  answerMessages\n    .map((m) => (m.fragments ?? []).map((f) => f.text ?? '').join(''))\n    .join('\\n\\n'),\n);\n\nconst citations = [\n  ...new Map(\n    answerMessages\n      .flatMap((m) => m.fragments ?? [])\n      .map((f) => f.citation?.sourceDocument)\n      .filter((d) => d && d.title && d.url)\n      .map((d) => [d.url, { title: d.title, url: d.url }]),\n  ).values(),\n];\n\n// A 200 with no answer text is an unfinished run, not an empty call. Writing\n// \"no summary available\" into Salesforce would record a transport failure as\n// a fact about the customer conversation.\nif (text === '') {\n  throw new Error(\n    `Glean Chat returned no answer text for call ${call.callId}. That is an unfinished run, not an empty call; retry rather than writing this to Salesforce.`,\n  );\n}\n\n// The account the call was with, named by Chat rather than parsed out of the\n// title. Real Gong titles are \"people <> people : topic : Account\" — the part\n// before the separator is a participant, so reading the account from there\n// picks a person's name. Free-form titles have no convention at all.\n//\n// Chat reads the call, so it can say who the customer is. It is not trusted to\n// be right: Resolve account still requires exactly one exact Salesforce match,\n// so a plausible-but-wrong name resolves to nothing and halts. The model\n// proposes; deterministic matching disposes.\nconst accountLine = text.match(/^ACCOUNT:\\s*(.+)$/mu);\nconst accountName = (accountLine?.[1] ?? '').trim();\nconst summary = text.replace(/^ACCOUNT:.*$/mu, '').trim();\n\nreturn [\n  {\n    json: {\n      call,\n      summary,\n      citations,\n      accountName: /^unknown$/iu.test(accountName) ? '' : accountName,\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0],
+      "id": "code-Parse summary",
+      "name": "Parse summary"
+    },
+    {
+      "parameters": {
+        "resource": "search",
+        "query": "=SELECT Id, Name, OwnerId FROM Account",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [880, 0],
+      "id": "salesforce-accounts",
+      "name": "Salesforce: list accounts",
+      "notes": "Narrow this with a WHERE clause once the flow is working. It is unfiltered here so the resolution step below is the only thing deciding which account matches."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Requires exactly one matching Account, and halts otherwise: \"Acme Corp\" and\n// \"Acme Corporation\" are different customers, so writing to the wrong one is a\n// disclosure, not a degraded result. Ambiguity goes to a human, never to ranking.\n//\n// $input is the Salesforce rows; the call and summary come back by node name.\nconst normalize = (value) =>\n  (value ?? '')\n    .toLowerCase()\n    .replace(/[^a-z0-9\\s]/g, ' ')\n    .replace(/\\b(inc|llc|ltd|corp|corporation|co|plc|gmbh|sa|bv)\\b/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n\nconst { call, summary, citations, accountName } = $('Parse summary').first().json;\nconst accounts = $input.all().map((item) => item.json);\n\n// The account is named by Glean Chat, not parsed from the title: Gong titles put\n// participants before the separator, so splitting picks a person's name.\n\nconst rawName = accountName ?? '';\nconst wanted = normalize(rawName);\n\nif (!wanted) {\n  throw new Error(\n    `Glean Chat could not name the customer for \"${call.title}\". Nothing is written; route this call to a human.`,\n  );\n}\n\nconst matches = accounts.filter((account) => normalize(account.Name) === wanted);\n\nif (matches.length === 0) {\n  throw new Error(\n    `No Salesforce account matches \"${rawName}\". Nothing is written; create the account or route this call to a human.`,\n  );\n}\nif (matches.length > 1) {\n  throw new Error(\n    `\"${rawName}\" matches ${matches.length} Salesforce accounts: ${matches\n      .map((a) => `${a.Name} (${a.Id})`)\n      .join(', ')}. Nothing is written; resolve the ambiguity by hand.`,\n  );\n}\n\nreturn [{ json: { call, summary, citations, account: matches[0] } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 0],
+      "id": "code-Resolve account",
+      "name": "Resolve account"
+    },
+    {
+      "parameters": {
+        "resource": "task",
+        "operation": "create",
+        "status": "Completed",
+        "additionalFields": {
+          "whatId": "={{ $json.account.Id }}",
+          "description": "={{ $json.summary }}\n\n{{ $json.call.viewUrl }}",
+          "subject": "=Gong call: {{ $json.call.title }}",
+          "owner": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $json.account.OwnerId }}"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [1320, 0],
+      "id": "salesforce-task",
+      "name": "Salesforce: log call",
+      "notes": "Salesforce is written before Slack on purpose. The Slack message says the account was updated; posting first would let it say so when the write then fails."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Routes to one central channel or a per-account map. Once a map exists, an\n// unmapped account halts rather than falling back — quietly widening one\n// customer's audience is the disclosure this node prevents.\n// ─── paste your Slack channel id here ────────────────────────────────────\n// One central channel is the simplest start; leave the map empty.\nconst SLACK_CHANNEL = ''; // e.g. 'C0123456789'\n// Or route per account: Salesforce Account id -> Slack channel id.\nconst ACCOUNT_CHANNELS = {}; // e.g. { '001Ab00000XyZ12ABC': 'C0123456789' }\n// ─────────────────────────────────────────────────────────────────────────\n//\n// n8n Variables are a paid feature, so these are plain constants and the\n// workflow runs on any plan. If you do have Variables, GONG_SLACK_CHANNEL and\n// GONG_ACCOUNT_CHANNELS override what is pasted above, so the same file works\n// unedited across environments.\nconst vars = typeof $vars === 'undefined' ? {} : $vars;\nconst CHANNEL_BY_ACCOUNT_ID = vars.GONG_ACCOUNT_CHANNELS\n  ? JSON.parse(vars.GONG_ACCOUNT_CHANNELS)\n  : ACCOUNT_CHANNELS;\nconst CENTRAL_CHANNEL = vars.GONG_SLACK_CHANNEL || SLACK_CHANNEL;\nconst routesPerAccount = Object.keys(CHANNEL_BY_ACCOUNT_ID).length > 0;\n\nconst slackText = (value) =>\n  String(value ?? '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n\nconst { call, summary, citations, account } = $('Resolve account').first().json;\nconst channel = routesPerAccount\n  ? CHANNEL_BY_ACCOUNT_ID[account.Id]\n  : CENTRAL_CHANNEL;\n\nif (!channel) {\n  throw new Error(\n    routesPerAccount\n      ? `Account ${account.Name} (${account.Id}) has no entry in GONG_ACCOUNT_CHANNELS. Salesforce was updated; no Slack post was made. Add the mapping — this does not fall back to GONG_SLACK_CHANNEL, because per-account routing exists to keep audiences apart.`\n      : `No Slack channel is configured. Paste a channel id into SLACK_CHANNEL at the top of this node, or fill ACCOUNT_CHANNELS to route per account. Salesforce was updated; no Slack post was made.`,\n  );\n}\n\nconst lines = [\n  `*${slackText(account.Name)}* — new Gong call: <${call.viewUrl}|${slackText(call.title)}>`,\n  '',\n  slackText(summary),\n];\nif (citations.length > 0) {\n  lines.push(\n    '',\n    `Sources: ${citations.map((c) => `<${c.url}|${slackText(c.title)}>`).join(' · ')}`,\n  );\n}\n\nreturn [{ json: { call, account, channel, text: lines.join('\\n') } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 0],
+      "id": "code-Resolve channel",
+      "name": "Resolve channel"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": "={{ $json.channel }}",
+        "text": "={{ $json.text }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1760, 0],
+      "id": "slack-post",
+      "name": "Slack: heads-up",
+      "notes": "Only ever the account's own channel. There is no default; an unmapped account stops at the node before this one."
+    },
+    {
+      "parameters": {
+        "resource": "searchGlean",
+        "operation": "post",
+        "query": "={{ 'Gong call ' + ($json.title || '') + ' ' + ($json.viewUrl || '') }}"
+      },
+      "type": "@gleanwork/n8n-nodes-gleanclient.gleanClient",
+      "typeVersion": 1,
+      "position": [-420, 0],
+      "id": "90568857-d96f-4310-8794-35b529cdfbda",
+      "name": "Search Glean for call context"
+    }
+  ],
+  "connections": {
+    "Glean Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract call": {
+      "main": [
+        [
+          {
+            "node": "Search Glean for call context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Glean Chat": {
+      "main": [
+        [
+          {
+            "node": "Parse summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse summary": {
+      "main": [
+        [
+          {
+            "node": "Salesforce: list accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salesforce: list accounts": {
+      "main": [
+        [
+          {
+            "node": "Resolve account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve account": {
+      "main": [
+        [
+          {
+            "node": "Salesforce: log call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salesforce: log call": {
+      "main": [
+        [
+          {
+            "node": "Resolve channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve channel": {
+      "main": [
+        [
+          {
+            "node": "Slack: heads-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Glean for call context": {
+      "main": [
+        [
+          {
+            "node": "Glean Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

@@ -48,6 +48,7 @@ the coding agent must not substitute its isolated browser for your Glean SSO ses
 | **Build a customer email agent with Glean Headless Agent Builder** | Intermediate | ~30 min           | `/cookbook:customer-email-draft-agent`  |
 | **Embed search & chat in an internal app**                         | Beginner     | ~15 min (minimal) | `/cookbook:embed-search-chat`           |
 | **Draft PR reviews with Glean Triggers and Claude Code Monitor**   | Intermediate | ~45 min           | `/cookbook:github-pr-review-monitor`    |
+| **Automate Gong call follow-up with Glean Triggers in n8n**        | Advanced     | ~1.5 hr           | `/cookbook:gong-call-follow-up-n8n`     |
 | **Multi-step agent with governed tools**                           | Advanced     | ~2 hr             | `/cookbook:multi-step-agent`            |
 | **IT helpdesk deflection page — no code, on Lovable**              | Beginner     | ~45 min           | `/cookbook:no-code-it-helpdesk-lovable` |
 | **PTO & benefits lookup — no code, on Replit**                     | Beginner     | ~45 min           | `/cookbook:no-code-pto-lookup-replit`   |

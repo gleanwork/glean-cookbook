@@ -1,0 +1,12 @@
+{
+  "name": "glean-gong-call-follow-up-n8n",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "demo": "node scripts/demo.mjs",
+    "verify": "node scripts/verify.mjs",
+    "verify:fixture": "node scripts/verify.mjs",
+    "test": "node scripts/verify.mjs"
+  }
+}

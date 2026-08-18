@@ -1,0 +1,14 @@
+{
+  "messages": [
+    {
+      "author": "GLEAN_AI",
+      "messageType": "UPDATE",
+      "fragments": [{ "text": "Searching company knowledge" }]
+    },
+    {
+      "author": "GLEAN_AI",
+      "messageType": "CONTENT",
+      "fragments": [{ "text": "" }]
+    }
+  ]
+}
