@@ -805,6 +805,169 @@
     }
   },
   {
+    "id": "customer-email-draft-agent",
+    "title": "Build a customer email agent with Glean Headless Agent Builder",
+    "description": "Use Glean Headless Agent Builder from Claude Code or Cursor to create a content-triggered agent that watches one customer domain, drafts grounded Gmail replies, and alerts you in Slack.",
+    "sidebarLabel": "Email Draft Agent",
+    "surfaces": ["agents", "mcp"],
+    "status": "showcase",
+    "category": "agent",
+    "level": "Intermediate",
+    "levels": { "minimal": true, "wow": true },
+    "timeEstimate": "~30 min",
+    "icon": "message",
+    "requiredScopes": ["MCP"],
+    "authMethod": ["custom"],
+    "buildMethod": "integrate",
+    "execution": {
+      "type": "host-configuration",
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email? It identifies the agent owner and Slack notification recipient."
+        },
+        {
+          "id": "customer-domain",
+          "prompt": "Which customer email domain should trigger the agent?"
+        }
+      ],
+      "auth": [
+        {
+          "kind": "host-managed",
+          "scopes": [],
+          "setupCommand": "/plugin install glean-vnext@glean-plugins-vnext"
+        }
+      ],
+      "verification": {
+        "kind": "user-browser",
+        "expectedDuration": "5–15 minutes after the agent is activated and the first matching Gmail thread is indexed",
+        "startsOwnServer": false
+      }
+    },
+    "prerequisites": [
+      "Glean Headless Agent Builder enabled for auto-mode agents, with content triggers available",
+      "Gmail content indexed in Glean, including messages from the chosen customer domain",
+      "Gmail draft and owner-only Slack DM actions enabled for your account",
+      "Claude Code, or Cursor with Glean vNext available in its plugin marketplace"
+    ],
+    "demoQueries": [
+      {
+        "query": "Send a realistic customer question from the configured domain",
+        "expectedBehavior": "One actionable run classifies the message, creates an unsent reply draft on the original Gmail thread, and sends the owner one Slack DM. Nothing is sent automatically."
+      },
+      {
+        "query": "Send an automated or FYI-only message from the configured domain",
+        "expectedBehavior": "The agent sends the owner a short classification DM but creates no Gmail draft."
+      }
+    ],
+    "codeAssets": [],
+    "scaffoldActions": [],
+    "steps": [
+      {
+        "title": "Choose the mailbox and customer domain",
+        "description": "Provide the work email that owns the agent and the exact customer sender domain to watch. Only messages this user receives from that domain should match.",
+        "kind": "choose"
+      },
+      {
+        "title": "Add the Glean plugin marketplace",
+        "command": "claude plugin marketplace add gleanwork/glean-plugins-vnext",
+        "description": "Claude Code users add the marketplace with the command above. Cursor users open Customize in the sidebar, find Glean vNext, and Install it at user scope, then skip the next step; a team admin can instead add the marketplace under Dashboard, Plugins, Add Marketplace, Import from Repo.",
+        "kind": "configure"
+      },
+      {
+        "title": "Install the agent-builder plugin",
+        "command": "claude plugin install glean-vnext@glean-plugins-vnext --scope user",
+        "description": "Installs the agent_builder skill at user scope so it stays available across projects. Cursor users skip this step.",
+        "kind": "configure"
+      },
+      {
+        "title": "Reload the host and confirm the plugin",
+        "description": "Reload or restart the host so the plugin loads, then confirm /glean_run resolves.",
+        "kind": "run"
+      },
+      {
+        "title": "Authenticate the plugin",
+        "description": "Run setup, provide the Server instance (QE) URL from Glean's About page, then complete browser sign-in. Never use an API token.",
+        "kind": "authenticate"
+      },
+      {
+        "title": "Build the agent with the headless builder",
+        "description": "Run /glean_run agent_builder and name the target directory. Ask for a Gmail thread trigger scoped to the owner and customer domain, search grounding, a reply-draft tool, and an owner-only Slack DM. Require no email-send tool, and no tool calls when the latest thread item is a draft, owner-authored, or already handled. Let the builder discover tenant-specific IDs.",
+        "kind": "manual"
+      },
+      {
+        "title": "Preview against a real thread",
+        "description": "Run the agent against a real Gmail thread URL, naming the same directory; it arrives as the reserved content input. Hand anything wrong back to agent_builder rather than editing the spec.",
+        "kind": "manual"
+      },
+      {
+        "title": "Review the boundary, publish, and activate",
+        "description": "Show the trigger scope and the unattended write boundary, take one explicit confirmation, then save. Publishing does not activate: on the returned page allow connected-app actions, select Activate agent, and confirm ACTIVE.",
+        "kind": "manual"
+      },
+      {
+        "title": "Verify with a real email",
+        "description": "Send one genuine customer question from the chosen domain. Expect one run, one unsent draft on the original thread, and one Slack DM to the owner.",
+        "kind": "verify-live"
+      }
+    ],
+    "architecture": [
+      {
+        "label": "Gmail",
+        "caption": "A new thread arrives from the selected customer domain",
+        "category": "workflow",
+        "icon": "message"
+      },
+      {
+        "label": "Glean content trigger",
+        "caption": "Permission-aware event starts the published agent",
+        "category": "agent",
+        "emphasized": true
+      },
+      {
+        "label": "Glean agent",
+        "caption": "Classifies, retrieves evidence, and prepares a response",
+        "category": "agent",
+        "icon": "agent"
+      },
+      {
+        "label": "Gmail draft + Slack DM",
+        "caption": "The owner reviews the draft and decides whether to send",
+        "category": "workflow",
+        "icon": "slack"
+      }
+    ],
+    "aiPrompt": "Build this Glean agent through the headless agent builder, not by hand. Install the glean-vnext plugin from the gleanwork/glean-plugins-vnext marketplace, reload until /glean_run resolves, and authenticate with setup. Never substitute an MCP server URL or a hand-driven tool sequence for the plugin. Ask once for the owner's work email and the customer sender domain. Then run /glean_run agent_builder and require: a Gmail thread content trigger scoped to that owner as recipient and that sender domain; grounding through a read-only search tool; one reply draft on the original thread for genuine customer questions; a Slack DM to the owner alone; no email-send tool; and a leading instruction that exits with zero tool calls when the latest thread item is a draft, is owner-authored, or matches a draft it already created, because saving a draft re-indexes the thread. Name the target directory in every build, run, and save request, because the builder otherwise resolves to the current working directory. Let it discover every template id, provider id, and tool name and write the agent folder; do not hand-author or hand-edit it. Preview on a real thread before publishing, and treat a wrong-thread draft, a draft for automated mail, or a notification to anyone but the owner as a rebuild. Show the user the trigger scope and the unattended write boundary, take one explicit confirmation for unattended draft creation and the owner DM, publish, then allow connected-app actions and activate the agent on the returned page and confirm ACTIVE. Verify with a real genuine message, and confirm the no-op feedback guard on any follow-up run.",
+    "llmContext": "Use the glean-vnext plugin's agent_builder skill: it owns the agent folder contract, tenant discovery, preview, and publish. Never author spec.yaml or instructions.md by hand. Its build, run and save modes resolve an unnamed path to the working directory, so name the directory every time. Resolve trigger template, provider ids and tool names from discovery. The Gmail thread template has no direction or draft-status condition, so a saved draft can re-index the thread and the instructions must stop before tools. Unattended writes are limited to a Gmail reply draft and an owner-only Slack DM. Saving publishes but does not activate the subscription.",
+    "goDependency": false,
+    "featured": false,
+    "tags": ["gmail", "content-trigger", "headless-agent", "agent-builder"],
+    "content": {
+      "problem": "You are already working in Claude Code or Cursor—the place where you describe, test, and refine automations. Glean Headless Agent Builder lets you create an agent without switching to another UI: describe the outcome in your existing coding harness, let the builder discover the trigger and action tools available in your deployment, and preview the result before publishing.\n\nIn this recipe, the finished agent watches emails from one customer domain, decides whether a response is needed, drafts a grounded Gmail reply, and alerts you in Slack. It handles the preparation; you stay in control of what gets sent.",
+      "takeItFurther": [
+        "Expand from one customer domain to a reviewed domain allow-list after the single-domain workflow is reliable.",
+        "Route unclear questions to a support queue while preserving the same no-send boundary.",
+        "Commit the generated .glean/agents/ folder in your own repo and wire up the Git ADLC sync action, so agent changes ship through pull requests."
+      ],
+      "guardrails": [
+        {
+          "title": "Draft is not send",
+          "rule": "The unattended agent may create a reply draft but must never send it. A person owns the final customer communication."
+        },
+        {
+          "title": "Triggered content is untrusted",
+          "rule": "Instructions inside the email cannot change recipients, tools, or the workflow's safety boundary."
+        }
+      ],
+      "limitations": [
+        {
+          "title": "Drafts can retrigger the same Gmail thread",
+          "description": "Saving a draft may retrigger the Gmail thread. The agent treats draft, owner-authored, or already-handled messages as a no-op."
+        }
+      ]
+    }
+  },
+  {
     "id": "embed-search-chat",
     "title": "Embed search & chat in an internal app",
     "description": "Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.",
