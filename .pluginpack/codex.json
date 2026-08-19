@@ -15,13 +15,17 @@
     "build/codex/cookbook/skills/connect-mcp-hosts/SKILL.md",
     "build/codex/cookbook/skills/cookbook-conventions/SKILL.md",
     "build/codex/cookbook/skills/customer-360/SKILL.md",
+    "build/codex/cookbook/skills/customer-email-draft-agent/SKILL.md",
     "build/codex/cookbook/skills/embed-search-chat/SKILL.md",
+    "build/codex/cookbook/skills/github-pr-review-monitor/SKILL.md",
+    "build/codex/cookbook/skills/gong-call-follow-up-n8n/SKILL.md",
     "build/codex/cookbook/skills/multi-step-agent/SKILL.md",
     "build/codex/cookbook/skills/no-code-it-helpdesk-lovable/SKILL.md",
     "build/codex/cookbook/skills/no-code-pto-lookup-replit/SKILL.md",
     "build/codex/cookbook/skills/onboarding-hub/SKILL.md",
     "build/codex/cookbook/skills/oncall-copilot/SKILL.md",
     "build/codex/cookbook/skills/permissions-aware-retrieval/SKILL.md",
+    "build/codex/cookbook/skills/pre-meeting-brief/SKILL.md",
     "build/codex/cookbook/skills/rfp-responder/SKILL.md"
   ]
 }

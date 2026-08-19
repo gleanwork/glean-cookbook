@@ -1,0 +1,65 @@
+{
+  "results": [
+    {
+      "preset_id": "GCAL_1",
+      "datasource": "googlecalendar",
+      "display_name": "Before an event starts (choose window)",
+      "description": "Fires a chosen number of minutes before an event starts",
+      "inputs": [
+        {
+          "display_name": "",
+          "field": "organizer",
+          "is_required": false,
+          "is_truncated": false,
+          "type": "PICKLIST"
+        },
+        {
+          "display_name": "Participant Domain",
+          "field": "participantdomain",
+          "is_required": false,
+          "is_truncated": false,
+          "type": "PICKLIST"
+        },
+        {
+          "display_name": "",
+          "field": "participants",
+          "is_required": false,
+          "is_truncated": false,
+          "type": "PICKLIST"
+        },
+        {
+          "display_name": "",
+          "field": "type",
+          "is_required": false,
+          "is_truncated": false,
+          "type": "PICKLIST"
+        },
+        {
+          "display_name": "Time offset",
+          "field": "time_offset",
+          "is_required": true,
+          "is_truncated": false,
+          "type": "PICKLIST",
+          "values": [
+            {
+              "display_name": "30 minutes before",
+              "value": "1800"
+            },
+            {
+              "display_name": "1 hour before",
+              "value": "3600"
+            },
+            {
+              "display_name": "90 minutes before",
+              "value": "5400"
+            },
+            {
+              "display_name": "2 hours before",
+              "value": "7200"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

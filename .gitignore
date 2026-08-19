@@ -8,3 +8,12 @@ __pycache__/
 dist/
 *.log
 .answer-library.json
+
+# Agent folders written by the Glean headless builder when a recipe is run
+# from inside this repo. Tenant-specific ids; never cookbook content.
+.glean/
+
+# Local Claude Code session state (enabled plugins, etc.). Only the .local
+# half — .claude/settings.json is the shared, committable one, and ignoring the
+# whole directory would silently keep project hooks out of the repo.
+.claude/settings.local.json

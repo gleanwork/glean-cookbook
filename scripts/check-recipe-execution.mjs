@@ -130,7 +130,12 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
         `${recipe.id} ${location}: demo availability must come from GLEAN_COOKBOOK_DEMO, not a setup question`,
       );
     }
-    if (!execution.run?.command || !execution.run?.url) {
+    // An `existing-app` recipe runs inside software the user already operates, so
+    // it has no run command to name.
+    if (
+      execution.type !== 'existing-app' &&
+      (!execution.run?.command || !execution.run?.url)
+    ) {
       errors.push(
         `${recipe.id} ${location}: fixture-backed demo must declare a persistent run command and URL`,
       );
@@ -144,8 +149,14 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
       const demoSource = fs.existsSync(demoEntry)
         ? fs.readFileSync(demoEntry, 'utf8')
         : '';
+      // The demo entry point is environment-gated, not a particular runtime: a
+      // zero-dependency JavaScript recipe needs plain node, not tsx.
+      const demoEntryPoints = new Set([
+        'node scripts/demo.mjs',
+        'node --import tsx scripts/demo.mjs',
+      ]);
       if (
-        scripts.demo !== 'node --import tsx scripts/demo.mjs' ||
+        !demoEntryPoints.has(scripts.demo) ||
         !demoSource.includes("process.env.GLEAN_COOKBOOK_DEMO = 'true'") ||
         !demoSource.includes("process.env.GLEAN_USE_FIXTURE = 'true'")
       ) {

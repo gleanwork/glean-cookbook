@@ -1,0 +1,28 @@
+{
+  "results": [
+    {
+      "preset_id": "GITHUB_1",
+      "datasource": "github",
+      "display_name": "Review requested from me",
+      "description": "A review is requested from the trigger creator on a pull request",
+      "inputs": null
+    },
+    {
+      "preset_id": "GITHUB_2",
+      "datasource": "github",
+      "display_name": "Pull request assigned to me",
+      "description": "A pull request is assigned to the trigger creator",
+      "inputs": null
+    },
+    {
+      "preset_id": "GITHUB_3",
+      "datasource": "github",
+      "display_name": "Pull request I review marked ready for review",
+      "description": "A draft pull request the trigger creator is a requested reviewer on is switched to ready for review",
+      "inputs": null
+    }
+  ],
+  "has_more": false,
+  "next_cursor": null,
+  "request_id": "fixture-presets"
+}

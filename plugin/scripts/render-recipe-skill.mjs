@@ -95,6 +95,11 @@ function executionView(execution, steps = []) {
     oauth: execution.auth.some(
       (auth) => auth.kind === 'oauth-with-token-fallback',
     ),
+    // Keyed on the auth kind, not authMethod: `custom` also covers n8n credentials
+    // and plugin-managed OAuth, so keying on it would be wrong for most recipes.
+    externalApiKey: execution.auth.some(
+      (auth) => auth.kind === 'external-api-key',
+    ),
     browserCookie,
     demo: steps.some((step) => step.kind === 'verify-fixture'),
     handoffPartial,

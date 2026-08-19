@@ -52,6 +52,15 @@ jobs:
       - run: PORT=3211 npm --prefix recipes/oncall-copilot run verify:fixture
       - run: npm --prefix recipes/onboarding-hub/platform-chat run verify:context
       - run: PORT=3212 npm --prefix recipes/rfp-responder run verify:fixture
+      # The trigger recipes below boot their own receivers on ports they
+      # allocate themselves, so no PORT is pinned for any of them.
+      - run: npm --prefix recipes/github-pr-review-monitor ci
+      - run: npm --prefix recipes/github-pr-review-monitor run verify:fixture
+      # Executes the shipped n8n workflow's own Code nodes; no server, no port.
+      - run: npm --prefix recipes/gong-call-follow-up-n8n ci
+      - run: npm --prefix recipes/gong-call-follow-up-n8n run verify:fixture
+      - run: npm --prefix recipes/pre-meeting-brief ci
+      - run: npm --prefix recipes/pre-meeting-brief run verify:fixture
 
   format-check:
     name: Format check
@@ -78,6 +87,8 @@ jobs:
       - run: npm run snippets:check
       - run: npm run skill-context:check
       - run: npm run recipe-commands:check
+      - run: npm run recipe-questions:check
+      - run: npm run mdx:check
 
   pinned-deps:
     name: Pinned SDK versions

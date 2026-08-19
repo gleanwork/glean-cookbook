@@ -1,0 +1,61 @@
+{
+  "messages": [
+    {
+      "author": "GLEAN_AI",
+      "messageType": "CONTENT",
+      "fragments": [
+        {
+          "text": "I’ll review the call and the linked documents, then summarise."
+        }
+      ]
+    },
+    {
+      "author": "GLEAN_AI",
+      "messageType": "UPDATE",
+      "fragments": [
+        {
+          "text": "Searching company knowledge"
+        }
+      ]
+    },
+    {
+      "author": "GLEAN_AI",
+      "messageType": "CONTENT",
+      "fragments": [
+        {
+          "text": "Globex reviewed Q3 usage, which is up 40% quarter over quarter, and raised seat-count headroom before the November renewal. ",
+          "citation": {
+            "sourceDocument": {
+              "title": "Globex — account plan FY26",
+              "url": "https://portal.sample.internal/sales/accounts/globex/plan"
+            }
+          }
+        },
+        {
+          "text": "They asked for EU data residency confirmation in writing, and Dana agreed to send the current architecture note by Friday. No pricing was discussed.",
+          "citation": {
+            "sourceDocument": {
+              "title": "Data residency options",
+              "url": "https://portal.sample.internal/product/data-residency"
+            }
+          }
+        },
+        {
+          "text": "",
+          "citation": {
+            "sourceDocument": {
+              "title": "Globex — account plan FY26",
+              "url": "https://portal.sample.internal/sales/accounts/globex/plan"
+            }
+          }
+        },
+        {
+          "text": "\n\nACCOUNT: Globex"
+        },
+        {
+          "text": "\n\n---\nWould you like me to search other documents or add more evidence to the account?"
+        }
+      ]
+    }
+  ]
+}

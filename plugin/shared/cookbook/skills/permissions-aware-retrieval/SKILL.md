@@ -30,6 +30,8 @@ Platform API search.query → snippets → LLM with citations
 
 {{> oauth-setup}}
 
+{{> auth-external-api-key}}
+
 1. **Scaffold the project**
 
    ```bash
@@ -66,6 +68,8 @@ Same flow in TypeScript
 - What topic should your account not be able to access?
 
 {{> oauth-setup}}
+
+{{> auth-external-api-key}}
 
 1. **Scaffold the project**
 

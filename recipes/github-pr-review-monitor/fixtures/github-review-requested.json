@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "trigger_id": "2f8a9b0c1d2e4f5a6b7c8d9e0f1a2b3c",
+  "datasource": "GITHUB",
+  "reason": "REVIEW_REQUESTED",
+  "doc_type": "pull",
+  "event_type": "DOCUMENT_CHANGE",
+  "doc_id": "github-pull-42",
+  "view_url": "https://github.com/gleanwork/example/pull/42",
+  "title": "Add retry budget to webhook delivery",
+  "event_time": "2026-08-15T09:00:00Z"
+}

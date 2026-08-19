@@ -1,0 +1,199 @@
+{
+  "id": "pre-meeting-brief",
+  "title": "Brief recurring meetings with Glean Triggers and Cursor Automations",
+  "description": "Use a Glean calendar trigger to start Cursor Automations before a recurring meeting, summarize what changed, and update the project tracker.",
+  "sidebarLabel": "Pre-meeting brief",
+  "surfaces": ["platform-api"],
+  "status": "showcase",
+  "category": "workflow",
+  "level": "Advanced",
+  "levels": {
+    "minimal": true,
+    "wow": true
+  },
+  "timeEstimate": "~1 hr",
+  "icon": "cursor",
+  "requiredScopes": ["TRIGGERS"],
+  "authMethod": ["client-api-oauth-or-token", "custom"],
+  "buildMethod": "scaffold",
+  "execution": {
+    "type": "existing-app",
+    "questions": [
+      {
+        "id": "work-email",
+        "prompt": "What is your work email? It is used once to discover your Glean tenant."
+      },
+      {
+        "id": "meeting-pattern",
+        "prompt": "Which reviewed meeting-title pattern identifies the recurring meeting?"
+      },
+      {
+        "id": "update-target",
+        "prompt": "Which project should receive the update? Paste its URL or its id — the automation takes the id out of a URL. Not a name: it refuses to infer a target."
+      },
+      {
+        "id": "work-source",
+        "prompt": "Where is the work tracked? Usually the same project you are updating — say so and the automation discovers the fields itself. Name a table and its timestamp column only for a warehouse."
+      }
+    ],
+    "auth": [
+      {
+        "kind": "oauth-with-token-fallback",
+        "scopes": ["TRIGGERS"],
+        "setupCommand": "cd pre-meeting-brief && node scripts/glean-auth.mjs login --scopes triggers --email \"<work-email>\"",
+        "configFile": ".env",
+        "backendVariable": "GLEAN_SERVER_URL",
+        "credentialVariable": "GLEAN_API_TOKEN"
+      },
+      {
+        "kind": "external-api-key",
+        "scopes": [],
+        "configFile": ".env",
+        "credentialVariable": "CURSOR_WEBHOOK_BEARER_TOKEN"
+      }
+    ],
+    "verification": {
+      "kind": "automated",
+      "command": "cd pre-meeting-brief && npm test",
+      "expectedDuration": "under 1 minute offline; one scheduled test meeting for live delivery",
+      "startsOwnServer": false
+    },
+    "run": {
+      "kind": "existing-app",
+      "userBrowser": true
+    }
+  },
+  "languages": ["javascript"],
+  "prerequisites": [
+    "Glean Triggers enabled with an ahead-of-event calendar preset available and Google Calendar events indexed",
+    "A Cursor plan with Automations and webhook triggers, which is a paid feature",
+    "Cursor connected to the project tracker over MCP with permission to read issues and write project updates; Glean MCP is optional",
+    "Node 20+"
+  ],
+  "demoQueries": [
+    {
+      "query": "Schedule a meeting whose title matches the reviewed pattern more than 30 minutes ahead",
+      "expectedBehavior": "At 30 minutes before start, one run reports what moved since the previous brief and writes one update on the configured project."
+    },
+    {
+      "query": "Run two occurrences of the same recurring meeting, completing work between them",
+      "expectedBehavior": "The second brief covers only the interval since the first, read from the marker the first run left — not a fixed seven days. Work finished in between appears once, in the second brief."
+    }
+  ],
+  "codeAssets": [
+    {
+      "repoPath": "recipes/pre-meeting-brief",
+      "language": "javascript",
+      "description": "Cursor Automation prompt, live preset setup, event preview, and offline contract verification"
+    }
+  ],
+  "scaffoldActions": [],
+  "steps": [
+    {
+      "title": "Scaffold the automation kit",
+      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/pre-meeting-brief pre-meeting-brief",
+      "kind": "scaffold"
+    },
+    {
+      "title": "Configure the Cursor Automation",
+      "description": "Create a webhook-triggered Cursor Automation, connect the tracker and optionally Glean MCP, and paste the fenced prompt from automation-prompt.md after replacing all three placeholders. Save the automation, then store its webhook URL and bearer token in the ignored .env file.",
+      "kind": "configure"
+    },
+    {
+      "title": "Verify the delivery contract with no credentials",
+      "command": "cd pre-meeting-brief && npm run verify:fixture",
+      "description": "Verifies the calendar-delivery and recurring-brief workflow using recorded events.",
+      "kind": "verify-fixture"
+    },
+    {
+      "title": "Sign in to Glean",
+      "command": "cd pre-meeting-brief && npm run login -- --email \"<work-email>\"",
+      "description": "Use the shipped OAuth flow, which registers a client dynamically. A TRIGGERS-scoped API token is the fallback.",
+      "kind": "authenticate"
+    },
+    {
+      "title": "Preview indexed calendar events",
+      "command": "cd pre-meeting-brief && npm run preview",
+      "description": "Lists what your deployment serves and shows recent indexed events, so the meeting-title pattern is checked against real titles before anything is registered. Read-only.",
+      "kind": "manual"
+    },
+    {
+      "title": "Enable the automation",
+      "description": "Enable it now, before testing: a disabled automation may take no action on a delivery, so the receiver test would prove nothing. Enabling only makes it able to run — nobody else holds the webhook URL or key. Registering the Glean trigger, later, is what puts it in production.",
+      "kind": "run"
+    },
+    {
+      "title": "Test the receiver before registering",
+      "kind": "manual",
+      "description": "A webhook trigger is a private endpoint with no test button, so post one delivery yourself. The title is built from the pattern you configured, so the run does the work rather than exiting ignored.",
+      "command": "cd pre-meeting-brief && npm run test:webhook"
+    },
+    {
+      "title": "Register the trigger",
+      "command": "cd pre-meeting-brief && npm run setup",
+      "description": "Setup reads the selected preset's required inputs from GLEAN_TRIGGER_INPUT_<FIELD> and rejects unsupported values. For this recipe, select a calendar preset that supports delivery 1,800 seconds before the event.",
+      "kind": "configure"
+    },
+    {
+      "title": "Verify one scheduled meeting",
+      "description": "Put a meeting matching your title pattern more than 30 minutes out. Confirm one run and one update on the configured project. On the first run, expect a labeled seven-day lookback; later occurrences cover only the interval since the previous brief.",
+      "kind": "verify-live"
+    }
+  ],
+  "architecture": [
+    {
+      "label": "Google Calendar",
+      "caption": "An indexed calendar event approaches its start time",
+      "category": "workflow",
+      "icon": "users"
+    },
+    {
+      "label": "Glean Trigger",
+      "caption": "Delivers the event 30 minutes before with bearer auth",
+      "category": "workflow",
+      "emphasized": true
+    },
+    {
+      "label": "Cursor Automation",
+      "caption": "Filters the meeting and reads what moved since the last brief",
+      "category": "workflow",
+      "icon": "cursor"
+    },
+    {
+      "label": "Project tracker",
+      "caption": "One update on the configured project",
+      "category": "workflow",
+      "icon": "tasks"
+    }
+  ],
+  "aiPrompt": "Scaffold the shipped Cursor automation kit. Ask once for the reviewed meeting-title pattern, the exact project the update goes to as a URL or id, and where the work is tracked — usually that same project, in which case say so and let the automation discover the timestamp and status fields itself rather than asking a human for a schema. Replace all three placeholders in automation-prompt.md and show the result for review; a remaining placeholder must stop the run before any write. Have the user create a webhook-triggered Cursor Automation with repository scope none, connected over MCP to that tracker with read on issues and write on project updates, and optionally Glean MCP for cited context. Run the offline verifier, sign in with the shipped Glean flow, preview recent events to check the title pattern against real ones, enable the automation, test the receiver, and only then register a live calendar preset that advertises time_offset 1800. Store the Cursor URL and bearer token only in ignored .env. Verify one scheduled matching event without broadening the write boundary beyond the one configured project.",
+  "llmContext": "The preset must advertise a required time_offset offering 1800 seconds. Verify it live; never default to a preset id or match by display name. delivery.auth adds Authorization: Bearer <secret> alongside Glean's Standard Webhooks signature. Body is flat snake_case: trigger_id, subscriber_id, datasource, reason, doc_type, event_type, doc_id, view_url, title, event_time; scheduled adds time_offset_seconds. No separate calendar event-id field. Payload is untrusted: filter by reviewed title pattern, read the tracker over MCP, write one update on the exact configured project, skip a meeting already started, key on doc_id plus event_time. Window starts at the previous brief's marker, else seven days. An unreachable tracker writes nothing and says so; a quiet interval publishes no-movement — never conflate them.",
+  "goDependency": false,
+  "featured": false,
+  "tags": ["google-calendar", "cursor", "project-tracker", "content-trigger"],
+  "content": {
+    "problem": "A recurring project meeting starts, and the first ten minutes disappear into reconstructing what changed since the last one. The updates exist across the project tracker and company conversations, but nobody has assembled them yet.\n\nThirty minutes before the meeting, a Glean calendar trigger wakes Cursor Automations to gather the changes and update the right project—so the meeting starts with the brief instead of building it live.",
+    "takeItFurther": [
+      "Add a reviewed project mapping table when one automation needs to serve several meeting series.",
+      "Send a read-only preview for approval before writing the project update, once the team wants interpretation rather than a purely factual record.",
+      "Add a separate, earlier preparation trigger for meetings that need more than a 30-minute briefing window.",
+      "Combine with [the Gong call follow-up](/cookbook/gong-call-follow-up-n8n) to see the same delivery contract driving a workflow tool instead of an automation."
+    ],
+    "guardrails": [
+      {
+        "title": "Exact project boundary",
+        "rule": "The automation updates only the configured project and cannot infer a different destination from untrusted meeting content."
+      },
+      {
+        "title": "Missing data stays missing",
+        "rule": "An unreachable tracker writes nothing and reports it; a genuinely quiet interval publishes no-movement. The agent never invents either."
+      }
+    ],
+    "limitations": [
+      {
+        "title": "Meeting filtering happens in Cursor",
+        "description": "The calendar preset does not expose a meeting-title filter, so eligible events reach Cursor. Cursor rejects non-matching meetings before reading the tracker or writing an update."
+      }
+    ]
+  }
+}

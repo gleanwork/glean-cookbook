@@ -1,0 +1,8 @@
+[
+  {
+    "name": "glean-github-review-events",
+    "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/stream.mjs\"",
+    "description": "Signed GitHub pull-request events delivered by Glean",
+    "when": "always"
+  }
+]

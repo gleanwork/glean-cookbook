@@ -1,0 +1,10 @@
+{
+  "datasource": "GONG",
+  "doc_id": "GONG_call_100200300400500",
+  "doc_type": "call",
+  "event_time": "2026-08-14T07:14:56.547Z",
+  "event_type": "DOCUMENT_CHANGE",
+  "reason": "CREATED",
+  "title": "Acme Corp <> us — Q3 QBR",
+  "view_url": "https://example.app.gong.io/call?id=100200300400500"
+}

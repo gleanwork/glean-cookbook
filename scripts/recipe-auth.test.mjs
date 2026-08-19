@@ -8,9 +8,12 @@ import test from 'node:test';
 import { pathToFileURL } from 'node:url';
 
 import {
+  assertScopes,
   awaitRedirect,
   createPkce,
   discoverBackend,
+  grantedScopes,
+  persistTokens,
   run,
   storedToken,
   updateEnvFile,
@@ -44,6 +47,29 @@ test('discovers and normalizes a customer backend', async () => {
   assert.deepEqual(result, {
     instance: 'acme',
     backend: 'https://acme-be.glean.com',
+  });
+});
+
+// Discovery returns the backend host directly for most tenants, and the legacy
+// frontend host for others. Both must land on the same backend.
+test('discovers a backend from either discovery host form', async () => {
+  const discover = (queryURL) =>
+    discoverBackend('person@example.com', async () => ({
+      search_config: { queryURL },
+    }));
+  for (const queryURL of [
+    'https://acme-be.glean.com/',
+    'https://acme.askscio.com/search',
+    'https://acme.glean.com/search',
+  ]) {
+    assert.deepEqual(await discover(queryURL), {
+      instance: 'acme',
+      backend: 'https://acme-be.glean.com',
+    });
+  }
+  assert.deepEqual(await discover('https://my-corp-be.glean.com/'), {
+    instance: 'my-corp',
+    backend: 'https://my-corp-be.glean.com',
   });
 });
 
@@ -201,4 +227,43 @@ test('rejects an OAuth callback with the wrong state', async () => {
   await fetch(`http://127.0.0.1:${port}/callback?code=code&state=wrong-state`);
   await rejected;
   server.close();
+});
+
+// A narrowed grant must fail the login, not surface as a 403 later.
+test('a grant missing a required scope fails the login', () => {
+  assert.throws(
+    () => assertScopes({ scope: 'offline_access' }, ['triggers']),
+    /missing triggers/u,
+  );
+});
+
+test('a grant carrying the required scope passes', () => {
+  assert.doesNotThrow(() =>
+    assertScopes({ scope: 'offline_access TRIGGERS' }, ['triggers']),
+  );
+});
+
+// RFC 6749 §5.1 makes the response `scope` optional when it matches the
+// request, so a conforming server that echoes nothing must not be failed.
+test('a response with no scope is treated as granted-as-requested', () => {
+  assert.doesNotThrow(() => assertScopes({ access_token: 'x' }, ['triggers']));
+  assert.equal(grantedScopes({ access_token: 'x' }), undefined);
+});
+
+// A refresh omits `scope` and supplies none, so the stored value must survive.
+test('a refresh with no scope in the response keeps the stored scope', () => {
+  const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'scope-'));
+  process.env.XDG_STATE_HOME = stateDir;
+  const backend = 'https://keep-scope.example.com';
+  updateEnvFile(path.join(stateDir, '.env'), {});
+  persistTokens(backend, { access_token: 'a', scope: 'triggers' }, [
+    'triggers',
+  ]);
+  persistTokens(backend, { access_token: 'b' });
+  const file = path.join(
+    stateDir,
+    'glean-cookbook',
+    'keep-scope.example.com.json',
+  );
+  assert.equal(JSON.parse(fs.readFileSync(file, 'utf8')).scope, 'triggers');
 });
