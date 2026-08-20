@@ -11,16 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       # registry.json is built from recipes/<id>/recipe.json and committed,
       # since the dev site and the plugin both consume it as one file.
       - name: Check registry.json is not stale
         run: node scripts/build-registry.mjs --check
-      - run: npm run validate:registry
+      - run: pnpm validate:registry
       - name: Report recipe verification freshness (informational)
         run: node scripts/check-recipe-freshness.mjs
 
@@ -28,15 +31,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       # The verify harness owns an OAuth flow; state validation and PKCE
       # derivation are not things to leave untested. No credentials needed --
       # the live-discovery test skips itself without GLEAN_INSTANCE.
-      - run: npm test
+      - run: pnpm test
 
   recipe-fixtures:
     name: Recipe fixture verification
@@ -67,28 +73,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run format:check
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
 
   snippets-check:
     name: Prose/code snippets in sync
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run snippets:check
-      - run: npm run skill-context:check
-      - run: npm run recipe-commands:check
-      - run: npm run recipe-questions:check
-      - run: npm run mdx:check
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm snippets:check
+      - run: pnpm skill-context:check
+      - run: pnpm recipe-commands:check
+      - run: pnpm recipe-questions:check
+      - run: pnpm mdx:check
 
   pinned-deps:
     name: Pinned SDK versions
@@ -111,21 +123,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            plugin/package-lock.json
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - working-directory: plugin
         run: npm ci
       # Standalone recipe scaffolds carry generated runtime and brand assets.
       # The token sync against glean-developer-site stays manual because that
       # repository is not available here.
       - name: Check generated cookbook artifacts are not stale
-        run: npm run artifacts:check
+        run: pnpm artifacts:check
       - name: Check generated commands/skill are not stale
         working-directory: plugin
         run: npm run generate:commands -- --check
@@ -156,7 +168,7 @@ jobs:
       - name: No unexpanded partials in emitted plugin content
         run: |
           if grep -rn '{{>' build/; then
-            echo "::error::Unexpanded pluginpack partials in build/ (above). Run 'npm run build:plugin' and commit the result."
+            echo "::error::Unexpanded pluginpack partials in build/ (above). Run 'pnpm build:plugin' and commit the result."
             exit 1
           fi
       - name: Validate all plugin targets
