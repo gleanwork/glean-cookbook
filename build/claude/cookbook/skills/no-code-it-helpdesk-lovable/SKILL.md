@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 - Required API scopes (for paths that use API credentials): `CHAT`
 - A Lovable account
-- A Glean API token with the CHAT scope (kept as a Lovable backend secret; every request uses this one token owner's access)
+- A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, then keep it as a Lovable backend secret; every request uses this one token owner's access
 - A private Lovable project — multi-user deployments require authenticated per-user Glean OAuth
 
 Ask these before running commands. Ask one at a time, waiting for each answer before asking the

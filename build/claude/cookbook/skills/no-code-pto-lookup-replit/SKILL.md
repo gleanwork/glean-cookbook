@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 - Required API scopes (for paths that use API credentials): `CHAT`
 - A Replit account with Agent access
-- A Glean API token with the CHAT scope (kept in Replit Secrets; every request uses this one token owner's access)
+- A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, then keep it in Replit Secrets; every request uses this one token owner's access
 - A private Repl — multi-user deployments require authenticated per-user Glean OAuth
 
 Ask these before running commands. Ask one at a time, waiting for each answer before asking the
