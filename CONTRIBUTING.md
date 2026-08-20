@@ -159,9 +159,9 @@ literal when you do.
 
 Two sources, both at the repo root:
 
-| File                  | Owner                                                            |
-| --------------------- | ---------------------------------------------------------------- |
-| `styles/cookbook.css` | **Authored.** Edit this.                                         |
+| File                  | Owner                                                         |
+| --------------------- | ------------------------------------------------------------- |
+| `styles/cookbook.css` | **Authored.** Edit this.                                      |
 | `styles/tokens.css`   | **Generated** by `mise exec -- pnpm sync:tokens`. Never edit. |
 
 `mise exec -- pnpm build:artifacts` materializes them into every UI scaffold discovered by
@@ -204,7 +204,7 @@ Every PR runs:
    Codex), its generated skills and the README recipe table are checked against `registry.json` for
    drift, the committed output under `build/` is checked against a fresh render, and every generated
    standalone-scaffold artifact is checked against the declarative artifact plan.
-6. **`harness-tests`** — `mise exec -- npm test`, covering the verify harness's OAuth state validation and PKCE
+6. **`harness-tests`** — `mise exec -- pnpm test`, covering the verify harness's OAuth state validation and PKCE
    derivation.
 7. **`snippets-check`** — recipe prose and the code it embeds stay in sync.
 

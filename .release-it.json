@@ -9,7 +9,7 @@
   },
   "npm": false,
   "hooks": {
-    "after:bump": "npm run build:plugin"
+    "after:bump": "pnpm build:plugin"
   },
   "plugins": {
     "@release-it/conventional-changelog": {
