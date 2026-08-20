@@ -26,8 +26,9 @@ For live use, run `npm run login`. It creates `.env` and fills in `GLEAN_SERVER_
 with a token that has the SEARCH and CHAT scopes. Then set `WATCHED_SERVICES` to the catalog
 name of the service this copilot watches.
 
-If an existing Glean agent should own the plan, run `npm run login:agent` so the token also
-has the AGENTS scope, then set `GLEAN_AGENT_ID`.
+If an existing Glean agent should do the planning, run `npm run login:agent` so the token also
+has the AGENTS scope, then set `GLEAN_AGENT_ID`. Both planners ship in this one app; the
+dashboard dropdown switches between them and greys out the agent option until that ID is set.
 
 ## Two things to try immediately
 

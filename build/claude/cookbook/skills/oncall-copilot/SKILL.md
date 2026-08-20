@@ -28,7 +28,7 @@ Ask these before running commands. Ask one at a time, waiting for each answer be
 next — do not put them all in one message:
 
 - Which service has a catalog entry, runbook, and past incident in Glean?
-- Use direct Search + Chat or an existing Glean agent?
+- Should the Glean-agent planner be enabled as well, or just direct Search + Chat? Both render into the same dashboard.
 - What is your work email?
 
 Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
@@ -62,8 +62,8 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
 5. **Name the service this copilot watches**
    Signing in does not pick a service for you. Open .env and set WATCHED_SERVICES to the catalog name of the service you named up front. If you watch more than one, use a comma-separated list.
 
-6. **Point at an existing Glean agent, if you chose that path**
-   Skip this step if you are using Search and Chat directly. If an existing Glean agent should own the plan, run login:agent so the token also has the AGENTS scope, then set GLEAN_AGENT_ID in .env to that agent's ID.
+6. **Optional: let a Glean agent do the planning**
+   The app ships with two planners and a dropdown to switch between them. Search and Chat works with the token you already have. The Glean agent planner stays greyed out until you point the app at an agent. To turn it on, run this command so your token also carries the AGENTS scope, then set GLEAN_AGENT_ID in .env to that agent's ID.
 
    ```bash
    cd oncall-copilot && npm run login:agent -- --email "<work-email>"
