@@ -111,13 +111,14 @@
       "label": "Gong",
       "caption": "A new indexed call involving the trigger owner",
       "category": "workflow",
-      "icon": "voice"
+      "icon": "gong"
     },
     {
       "label": "Glean Trigger",
       "caption": "Registers and verifies signed delivery to n8n",
       "category": "workflow",
-      "emphasized": true
+      "emphasized": true,
+      "icon": "glean-trigger"
     },
     {
       "label": "n8n",
