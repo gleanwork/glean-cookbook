@@ -110,6 +110,24 @@ export function updateEnvFile(file, values) {
   fs.chmodSync(file, 0o600);
 }
 
+export function blankEnvKeys(contents) {
+  return contents
+    .split('\n')
+    .map((line) => line.match(/^([A-Za-z_][A-Za-z0-9_]*)=[ \t]*$/u)?.[1])
+    .filter((key) => key !== undefined);
+}
+
+export function unfilledRequiredKeys(contents, required) {
+  const present = new Set(
+    contents.split('\n').flatMap((line) => {
+      const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=/u);
+      return match ? [match[1]] : [];
+    }),
+  );
+  const blank = new Set(blankEnvKeys(contents));
+  return required.filter((key) => !present.has(key) || blank.has(key));
+}
+
 export function createPkce() {
   const verifier = crypto.randomBytes(32).toString('base64url');
   const challenge = crypto
@@ -307,7 +325,9 @@ async function interactiveLogin(backend, metadata, scopes) {
     }).toString();
 
     console.log(
-      `Opening your browser to sign in to ${new URL(backend).host}...`,
+      scopes.length > 0
+        ? `Opening your browser to sign in to ${new URL(backend).host} and approve ${scopes.join(', ')}...`
+        : `Opening your browser to sign in to ${new URL(backend).host}...`,
     );
     console.log(`If it does not open, visit:\n${authorizeUrl}\n`);
     openBrowser(authorizeUrl.toString());
@@ -330,6 +350,7 @@ function parseArgs(argv) {
   const result = {
     command: argv[0] ?? 'login',
     scopes: [],
+    required: [],
     envFile: '.env',
     backendVariable: 'GLEAN_SERVER_URL',
   };
@@ -338,6 +359,8 @@ function parseArgs(argv) {
     else if (argv[index] === '--backend') result.backend = argv[++index];
     else if (argv[index] === '--scopes')
       result.scopes = argv[++index].split(',').filter(Boolean);
+    else if (argv[index] === '--require')
+      result.required = argv[++index].split(',').filter(Boolean);
     else if (argv[index] === '--config-file') result.envFile = argv[++index];
     else if (argv[index] === '--backend-variable')
       result.backendVariable = argv[++index];
@@ -427,7 +450,16 @@ export async function run(argv = process.argv.slice(2), cwd = process.cwd()) {
     (await interactiveLogin(backend, metadata, args.scopes));
   updateEnvFile(envPath, { GLEAN_API_TOKEN: accessToken });
   console.log(
-    `Configured ${envPath}. You are ready to verify and run the recipe.`,
+    `Signed in. Wrote ${args.backendVariable} and GLEAN_API_TOKEN to ${envPath}.`,
+  );
+  const unfilledRequired = unfilledRequiredKeys(
+    fs.readFileSync(envPath, 'utf8'),
+    args.required,
+  );
+  console.log(
+    unfilledRequired.length === 0
+      ? 'You are ready to verify and run the recipe.'
+      : `Signing in cannot fill these in for you. Open ${args.envFile}, set ${unfilledRequired.join(' and ')}, then verify and run the recipe.`,
   );
 }
 
@@ -436,9 +468,9 @@ if (
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
   run().catch((error) => {
-    console.error(`Authentication failed: ${error.message}`);
+    console.error(`Sign-in failed: ${error.message}`);
     console.error(
-      'If OAuth is unavailable for your tenant, put a scoped Glean API token in .env as GLEAN_API_TOKEN.',
+      'If your tenant cannot use OAuth, you can skip this command: copy .env.example to .env, then fill in the Glean server URL and a Glean API token scoped for this recipe.',
     );
     process.exitCode = 1;
   });

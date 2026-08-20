@@ -11,8 +11,17 @@ npm install
 npm run login
 ```
 
-The login command discovers your tenant and uses OAuth. Set `GLEAN_ACCOUNT_NAME` in the generated
-`.env`. Platform Search uses `X_GLEAN_INCLUDE_EXPERIMENTAL=true`.
+`npm run login` finds your Glean tenant from your work email, opens a browser
+for you to approve access, and writes `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`
+into a new `.env`. If your tenant cannot use OAuth, skip that command: copy
+`.env.example` to `.env` and fill in those two values yourself, using a Glean
+API token that carries the **SEARCH** and **CHAT** scopes.
+
+Signing in does not choose an account. Open `.env` and set `GLEAN_ACCOUNT_NAME`
+to one of your own customers, spelled the way your Glean documents spell it —
+that name is what the page searches for. It is not your Glean instance name.
+
+Platform Search calls set `X_GLEAN_INCLUDE_EXPERIMENTAL=true` for you.
 
 ## Verify, then run
 

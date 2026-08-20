@@ -10,7 +10,9 @@ import { pathToFileURL } from 'node:url';
 import {
   assertScopes,
   awaitRedirect,
+  blankEnvKeys,
   createPkce,
+  unfilledRequiredKeys,
   discoverBackend,
   grantedScopes,
   persistTokens,
@@ -104,6 +106,39 @@ test('updates an env file without deleting customer configuration', () => {
     '# customer setting\nGLEAN_API_TOKEN=new\nCUSTOM=value\nGLEAN_SERVER_URL=https://acme-be.glean.com\n',
   );
   assert.equal(fs.statSync(file).mode & 0o777, 0o600);
+});
+
+test('names the env keys sign-in cannot fill, and only those', () => {
+  const contents = [
+    '# The customer this page is about',
+    'GLEAN_ACCOUNT_NAME=',
+    'GLEAN_SERVER_URL=https://acme-be.glean.com',
+    'GLEAN_AGENT_ID=   ',
+    '# PORT=3000',
+    '',
+  ].join('\n');
+  assert.deepEqual(blankEnvKeys(contents), [
+    'GLEAN_ACCOUNT_NAME',
+    'GLEAN_AGENT_ID',
+  ]);
+  assert.deepEqual(
+    unfilledRequiredKeys(contents, [
+      'GLEAN_ACCOUNT_NAME',
+      'GLEAN_AGENT_ID',
+      'GLEAN_SERVER_URL',
+    ]),
+    ['GLEAN_ACCOUNT_NAME', 'GLEAN_AGENT_ID'],
+  );
+});
+
+test('a required key that is absent is unfilled', () => {
+  assert.deepEqual(
+    unfilledRequiredKeys('GLEAN_SERVER_URL=https://acme-be.glean.com\n', [
+      'GLEAN_ACCOUNT_NAME',
+      'GLEAN_SERVER_URL',
+    ]),
+    ['GLEAN_ACCOUNT_NAME'],
+  );
 });
 
 test('creates an RFC 7636 S256 PKCE pair', () => {
