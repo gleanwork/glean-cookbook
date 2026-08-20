@@ -30,6 +30,25 @@ If an existing Glean agent should do the planning, run `npm run login:agent` so 
 has the AGENTS scope, then set `GLEAN_AGENT_ID`. Both planners ship in this one app; the
 dashboard dropdown switches between them and greys out the agent option until that ID is set.
 
+### Triggering an alarm for your own service
+
+The two buttons on the page fire the bundled `payments-service` samples, and `passesFilter`
+drops them once `WATCHED_SERVICES` names something else. There is no UI for composing a
+custom alarm, so post one to the webhook yourself:
+
+```bash
+curl -X POST "http://localhost:<port>/webhook/pagerduty" \
+  -H "Content-Type: application/json" \
+  -d '{"id":"TEST-1","service":"your-service","kind":"canary","metric":"error rate",
+       "summary":"Error rate rose sharply during rollout","severity":"Sev2",
+       "firedAt":"2026-01-01T00:00:00Z"}'
+```
+
+`service` has to match `WATCHED_SERVICES`, and `severity` has to be `Sev1` or `Sev2`, since
+`MIN_SEVERITY` defaults to `Sev2`. That service also needs a catalog entry in your index with
+an on-call engineer and a tech lead, or `resolve()` stops triage rather than letting anyone
+approve.
+
 ## Two things to try immediately
 
 **Fire the second alarm.** `PAY-2232` is ledger queue saturation with no deploy in
