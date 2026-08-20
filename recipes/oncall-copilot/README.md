@@ -17,8 +17,9 @@ npm run verify:fixture   # 58 checks, no credentials, no network
 npm start                # open the Local URL printed by the server
 ```
 
-Run `verify:fixture` first. It replays recorded responses and asserts the
-governance, so you can watch the guarantees hold before wiring up a token.
+Run `verify:fixture` first. It runs the whole flow against recorded responses and
+checks the approval gate, expiry, and audit behavior, so you can see those guarantees
+hold before wiring up a token.
 
 For live use, run `npm run login`. It creates `.env` and fills in `GLEAN_SERVER_URL` and
 `GLEAN_API_TOKEN`. If OAuth is off, copy `.env.example` to `.env` and fill those two yourself

@@ -34,8 +34,8 @@ Build "On-call Copilot" following https://developers.glean.com/cookbook/oncall-c
    cd oncall-copilot && npm install
    ```
 
-3. **Watch the governance hold, with no credentials**
-   Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited.
+3. **See it work before you connect anything**
+   Runs the whole flow against recorded responses. It checks that the approval gate refuses the wrong actor, expiry escalates without executing, unregistered actions are refused, and every attempt is audited. This needs no Glean credentials.
 
    ```bash
    cd oncall-copilot && npm run verify:fixture
