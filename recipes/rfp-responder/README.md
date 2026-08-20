@@ -22,8 +22,10 @@ npm start                # open the Local URL printed by the server
 responses and asserts the contract, so you can see the guarantees before wiring up
 a token.
 
-For live use, run `npm run login`, then set `RFP_APPROVED_SOURCE_PREFIXES` in `.env` to the
-comma-separated Glean URL prefixes cleared for customer-facing answers.
+For live use, run `npm run login`. It creates `.env` and fills in `GLEAN_SERVER_URL` and
+`GLEAN_API_TOKEN`. If OAuth is off, copy `.env.example` to `.env` and fill those two yourself
+with a CHAT-scoped token. Then set `RFP_APPROVED_SOURCE_PREFIXES` to the comma-separated Glean
+URL prefixes cleared for customer-facing answers. Signing in does not pick those prefixes.
 
 ## Auth: this app runs as you
 

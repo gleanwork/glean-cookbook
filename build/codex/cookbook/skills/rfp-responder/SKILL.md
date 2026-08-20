@@ -51,14 +51,18 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    cd rfp-responder && npm run verify:fixture
    ```
 
-4. **Set credentials**
-   Only for a live run. Use the shipped login flow, then configure the approved source prefixes supplied up front. The app runs as the signed-in user; there is no act-as.
+4. **Sign in to Glean**
+   Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the CHAT scope.
 
    ```bash
    cd rfp-responder && npm run login -- --email "<work-email>"
    ```
 
-5. **Run it**
+5. **Name the sources that may be quoted to a customer**
+   Signing in does not pick approved evidence for you. Open .env and set RFP_APPROVED_SOURCE_PREFIXES to comma-separated Glean URL prefixes your security team has cleared for customer-facing answers.
+
+6. **Open the page**
+   Starts the server and prints a Local URL. Open that URL in your browser.
 
    ```bash
    cd rfp-responder && npm start
@@ -68,5 +72,5 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
    the first verification action.
 
-6. **Verify**
-   Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered.
+7. **Check it against your own content**
+   Load a questionnaire your own documents can speak to, confirm the column mapping, and draft. A row your docs cover should come back cited. A row they do not cover should stay blank and route to an SME.
