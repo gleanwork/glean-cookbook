@@ -10,13 +10,17 @@ agent chat.
 
 ## Prerequisites
 
-1. Create an **Account Brief** agent in Agent Builder with template sections
-   (Overview, Renewal, Risks, Security) and retrieval on your company sales docs.
+1. Create a **conversational** Account Brief agent in Agent Builder with
+   template sections (Overview, Renewal, Risks, Security) and retrieval on your
+   company sales docs. It must be conversational: this page sends a question and
+   reads the reply, so a form-triggered agent will not work here.
 2. Copy the agent id into `GLEAN_AGENT_ID` (server-only — never expose to the browser).
-3. Token needs **SEARCH + AGENTS** scopes (tiles still call Platform Search;
-   briefs call Platform Agents). Set `X_GLEAN_INCLUDE_EXPERIMENTAL=true`.
+3. Your token needs the **SEARCH** and **AGENTS** scopes, because tiles still
+   call Platform Search while briefs call Platform Agents.
 4. Instruct the Account Brief agent to cite sources as markdown links
    (`[title](url)`); the recipe also falls back to bare `https://` URLs.
+
+Platform calls set `X_GLEAN_INCLUDE_EXPERIMENTAL=true` for you.
 
 Expected input: conversational `messages` with a USER text block (not a form
 `input` object). A form-triggered agent rejects that with
@@ -53,8 +57,15 @@ npm install
 npm run login
 ```
 
-The login command discovers your tenant and uses OAuth. Set `GLEAN_ACCOUNT_NAME` and
-`GLEAN_AGENT_ID` in the generated `.env`.
+`npm run login` finds your Glean tenant from your work email, opens a browser
+for you to approve access, and writes `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`
+into a new `.env`. If your tenant cannot use OAuth, skip that command: copy
+`.env.example` to `.env` and fill in those two values yourself, using a Glean
+API token that carries the **SEARCH** and **AGENTS** scopes.
+
+Signing in fills in neither the account nor the agent. Open `.env` and set
+`GLEAN_ACCOUNT_NAME` to one of your own customers, spelled the way your Glean
+documents spell it, and `GLEAN_AGENT_ID` to the agent you built above.
 
 ## Verify, then run
 

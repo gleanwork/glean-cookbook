@@ -5,7 +5,7 @@
   "description": "Customer 360 — Platform Search tiles + Client Chat synthesis.",
   "type": "module",
   "scripts": {
-    "login": "node scripts/glean-auth.mjs login --scopes search,chat",
+    "login": "node scripts/glean-auth.mjs login --scopes search,chat --require GLEAN_ACCOUNT_NAME",
     "demo": "node --import tsx scripts/demo.mjs",
     "start": "tsx server.ts",
     "test": "node --import tsx --test \"lib/**/*.test.ts\"",

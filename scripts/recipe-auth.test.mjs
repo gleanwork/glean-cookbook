@@ -10,6 +10,7 @@ import { pathToFileURL } from 'node:url';
 import {
   assertScopes,
   awaitRedirect,
+  blankEnvKeys,
   createPkce,
   discoverBackend,
   grantedScopes,
@@ -104,6 +105,22 @@ test('updates an env file without deleting customer configuration', () => {
     '# customer setting\nGLEAN_API_TOKEN=new\nCUSTOM=value\nGLEAN_SERVER_URL=https://acme-be.glean.com\n',
   );
   assert.equal(fs.statSync(file).mode & 0o777, 0o600);
+});
+
+test('names the env keys sign-in cannot fill, and only those', () => {
+  assert.deepEqual(
+    blankEnvKeys(
+      [
+        '# The customer this page is about',
+        'GLEAN_ACCOUNT_NAME=',
+        'GLEAN_SERVER_URL=https://acme-be.glean.com',
+        'GLEAN_AGENT_ID=   ',
+        '# PORT=3000',
+        '',
+      ].join('\n'),
+    ),
+    ['GLEAN_ACCOUNT_NAME', 'GLEAN_AGENT_ID'],
+  );
 });
 
 test('creates an RFC 7636 S256 PKCE pair', () => {
