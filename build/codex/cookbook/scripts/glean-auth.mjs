@@ -110,12 +110,22 @@ export function updateEnvFile(file, values) {
   fs.chmodSync(file, 0o600);
 }
 
-/** Keys the env file declares but leaves empty, in file order. */
 export function blankEnvKeys(contents) {
   return contents
     .split('\n')
     .map((line) => line.match(/^([A-Za-z_][A-Za-z0-9_]*)=[ \t]*$/u)?.[1])
     .filter((key) => key !== undefined);
+}
+
+export function unfilledRequiredKeys(contents, required) {
+  const present = new Set(
+    contents.split('\n').flatMap((line) => {
+      const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=/u);
+      return match ? [match[1]] : [];
+    }),
+  );
+  const blank = new Set(blankEnvKeys(contents));
+  return required.filter((key) => !present.has(key) || blank.has(key));
 }
 
 export function createPkce() {
@@ -442,15 +452,14 @@ export async function run(argv = process.argv.slice(2), cwd = process.cwd()) {
   console.log(
     `Signed in. Wrote ${args.backendVariable} and GLEAN_API_TOKEN to ${envPath}.`,
   );
-  // Only the keys the recipe declares required: several scaffolds ship blanks
-  // that are meant to stay blank, so reporting every empty key would send
-  // customers off to fill in settings they do not need.
-  const blank = new Set(blankEnvKeys(fs.readFileSync(envPath, 'utf8')));
-  const missing = args.required.filter((key) => blank.has(key));
+  const unfilledRequired = unfilledRequiredKeys(
+    fs.readFileSync(envPath, 'utf8'),
+    args.required,
+  );
   console.log(
-    missing.length === 0
+    unfilledRequired.length === 0
       ? 'You are ready to verify and run the recipe.'
-      : `Signing in cannot fill these in for you. Open ${args.envFile}, set ${missing.join(' and ')}, then verify and run the recipe.`,
+      : `Signing in cannot fill these in for you. Open ${args.envFile}, set ${unfilledRequired.join(' and ')}, then verify and run the recipe.`,
   );
 }
 
