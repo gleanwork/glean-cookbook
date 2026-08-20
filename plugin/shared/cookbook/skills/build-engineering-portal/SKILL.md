@@ -7,7 +7,7 @@ disable-model-invocation: true
 ## Before you start
 
 - A Glean instance where you can add a custom datasource
-- A Glean-issued Indexing API token, created in Admin Console Token Management (Indexing Tokens)
+- A Glean-issued Indexing API token, created in Admin Console → API access → Indexing API tokens
 - Node.js 18+ to run the portal app locally
 
 {{> ask-setup-questions}}
