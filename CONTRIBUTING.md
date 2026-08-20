@@ -2,13 +2,15 @@
 
 ## Toolchain
 
-This repo pins Node, pnpm, Python, and uv in `mise.toml`. Run repository commands through mise so a
-global package-manager version cannot rewrite a lockfile or use different dependency semantics:
+This repo pins Node, pnpm, Python, and uv in `mise.toml`. The root package is a pnpm project
+(`pnpm-lock.yaml`). Recipe scaffolds and `plugin/` stay on npm, because those directories are
+copied or installed on their own. Run repository commands through mise so a global package-manager
+version cannot rewrite a lockfile or use different dependency semantics:
 
 ```bash
 mise install
-mise exec -- npm install
-mise exec -- npm test
+mise exec -- pnpm install
+mise exec -- pnpm test
 ```
 
 Open a PR against `main`; one approving review is required.
@@ -16,18 +18,18 @@ Open a PR against `main`; one approving review is required.
 Before pushing, run:
 
 ```bash
-mise exec -- npm run format
-mise exec -- npm run validate:registry
-mise exec -- npm run build
+mise exec -- pnpm format
+mise exec -- pnpm validate:registry
+mise exec -- pnpm build
 ```
 
-`npm run build` refreshes both `registry.json` and the plugin's committed output, and CI fails if
+`pnpm build` refreshes both `registry.json` and the plugin's committed output, and CI fails if
 either is stale.
 
 ## Setup
 
 ```bash
-mise exec -- npm ci
+mise exec -- pnpm install --frozen-lockfile
 mise exec -- npm --prefix plugin ci   # once — the plugin is its own npm project with its own lockfile
 ```
 
@@ -36,10 +38,10 @@ mise exec -- npm --prefix plugin ci   # once — the plugin is its own npm proje
 Adding a recipe means adding all three:
 
 1. `recipes/{id}/` with the runnable code (or a short README explaining why there isn't any)
-2. `recipes/{id}/recipe.json`, then `mise exec -- npm run build`
+2. `recipes/{id}/recipe.json`, then `mise exec -- pnpm build`
 3. a prose page at `docs/cookbook/{id}.mdx` in [glean-developer-site](https://github.com/gleanwork/glean-developer-site)
 
-Use `mise exec -- npm run build`, not `npm run build:registry` alone. The plugin's skills are generated from
+Use `mise exec -- pnpm build`, not `pnpm build:registry` alone. The plugin's skills are generated from
 `registry.json` and its output is committed, so a registry-only build leaves `/cookbook:{id}`
 describing the previous state of the recipe — which is what users actually get.
 
@@ -113,7 +115,7 @@ one's `expectedBehavior` actually holds — not that the prose still reads corre
 
 ### The verify gate
 
-`mise exec -- npm run verify:recipe <recipe-id>` is the executable form of a recipe's `## Verify`
+`mise exec -- pnpm verify:recipe <recipe-id>` is the executable form of a recipe's `## Verify`
 section. It reads
 the queries from `recipes/<id>/recipe.json`'s `demoQueries` — never restates them — so adding a query
 to the registry adds it to verification. `expectedBehavior` stays prose for humans; the executable
@@ -131,7 +133,7 @@ build on, not a reader's integration. If those fail, the recipe is pointing peop
 doesn't work.
 
 Once you've verified, set `lastVerified` to that date in the recipe's registry entry.
-`mise exec -- npm run check:freshness` (also runs in CI, informational only) reports which recipes
+`mise exec -- pnpm check:freshness` (also runs in CI, informational only) reports which recipes
 have never been
 verified this way, or haven't been re-checked in 90+ days — treat either as the trigger to schedule a
 fresh-build pass.
@@ -157,12 +159,12 @@ literal when you do.
 
 Two sources, both at the repo root:
 
-| File                  | Owner                                                            |
-| --------------------- | ---------------------------------------------------------------- |
-| `styles/cookbook.css` | **Authored.** Edit this.                                         |
-| `styles/tokens.css`   | **Generated** by `mise exec -- npm run sync:tokens`. Never edit. |
+| File                  | Owner                                                         |
+| --------------------- | ------------------------------------------------------------- |
+| `styles/cookbook.css` | **Authored.** Edit this.                                      |
+| `styles/tokens.css`   | **Generated** by `mise exec -- pnpm sync:tokens`. Never edit. |
 
-`mise exec -- npm run build:artifacts` materializes them into every UI scaffold discovered by
+`mise exec -- pnpm build:artifacts` materializes them into every UI scaffold discovered by
 `scripts/artifacts.config.mjs` and copies the logomark alongside. The same declarative artifact plan
 distributes the shared authentication and local-server runtimes. Those copies are committed—a recipe
 is scaffolded one directory at a time with `tiged`, so root files would never reach it. CI evaluates
@@ -179,9 +181,9 @@ block in [glean-developer-site](https://github.com/gleanwork/glean-developer-sit
 and the Cookbook page describing it look like one product.
 
 ```bash
-mise exec -- npm run sync:tokens                       # expects ../glean-developer-site
-mise exec -- npm run sync:tokens -- --site <path>      # or GLEAN_DEVELOPER_SITE=<path>
-mise exec -- npm run sync:tokens -- --check            # report drift without writing
+mise exec -- pnpm sync:tokens                       # expects ../glean-developer-site
+mise exec -- pnpm sync:tokens -- --site <path>      # or GLEAN_DEVELOPER_SITE=<path>
+mise exec -- pnpm sync:tokens -- --check            # report drift without writing
 ```
 
 This is a deliberate manual sync, not a CI check — the dev site isn't available in CI. Re-run it when
@@ -202,14 +204,14 @@ Every PR runs:
    Codex), its generated skills and the README recipe table are checked against `registry.json` for
    drift, the committed output under `build/` is checked against a fresh render, and every generated
    standalone-scaffold artifact is checked against the declarative artifact plan.
-6. **`harness-tests`** — `mise exec -- npm test`, covering the verify harness's OAuth state validation and PKCE
+6. **`harness-tests`** — `mise exec -- pnpm test`, covering the verify harness's OAuth state validation and PKCE
    derivation.
 7. **`snippets-check`** — recipe prose and the code it embeds stay in sync.
 
 ## Releasing the plugin
 
 ```bash
-mise exec -- npm run release
+mise exec -- pnpm release
 ```
 
 That's [release-it](https://github.com/release-it/release-it), configured in `.release-it.json`. It
@@ -224,7 +226,7 @@ version from that file via its `in` option and writes the bumped one back, along
 
 Everything else carrying a version is generated from there and needs no entry in the bumper config:
 `plugin/pluginpack.config.ts` reads `version` out of `plugin/package.json`, so the `after:bump` hook
-running `mise exec -- npm run build:plugin` is what propagates it into the three committed marketplace manifests
+running `mise exec -- pnpm build:plugin` is what propagates it into the three committed marketplace manifests
 (`.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`) and each emitted
 `build/*/cookbook/*/plugin.json`. release-it stages tracked modifications before committing, so those
 land in the release commit. Skip the rebuild and CI's `pluginpack diff` guard fails on the next PR
