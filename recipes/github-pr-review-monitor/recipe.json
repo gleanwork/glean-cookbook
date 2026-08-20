@@ -139,7 +139,8 @@
       "label": "Glean Trigger",
       "caption": "Permission-aware, signed, at-least-once delivery",
       "category": "workflow",
-      "emphasized": true
+      "emphasized": true,
+      "icon": "glean-trigger"
     },
     {
       "label": "Local receiver + Monitor",

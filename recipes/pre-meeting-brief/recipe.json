@@ -145,13 +145,14 @@
       "label": "Google Calendar",
       "caption": "An indexed calendar event approaches its start time",
       "category": "workflow",
-      "icon": "users"
+      "icon": "google-calendar"
     },
     {
       "label": "Glean Trigger",
       "caption": "Delivers the event 30 minutes before with bearer auth",
       "category": "workflow",
-      "emphasized": true
+      "emphasized": true,
+      "icon": "glean-trigger"
     },
     {
       "label": "Cursor Automation",

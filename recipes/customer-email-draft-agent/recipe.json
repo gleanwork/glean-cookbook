@@ -113,13 +113,14 @@
       "label": "Gmail",
       "caption": "A new thread arrives from the selected customer domain",
       "category": "workflow",
-      "icon": "message"
+      "icon": "gmail"
     },
     {
-      "label": "Glean content trigger",
+      "label": "Glean Trigger",
       "caption": "Permission-aware event starts the published agent",
       "category": "agent",
-      "emphasized": true
+      "emphasized": true,
+      "icon": "glean-trigger"
     },
     {
       "label": "Glean agent",
