@@ -42,14 +42,22 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
    cd onboarding-hub && npm install
    ```
 
-3. **Configure the backend and checklist**
-   Enter the user's work email when prompted; tenant discovery writes VITE_GLEAN_BACKEND to .env.local. Replace public/steps.json with the onboarding steps the user supplied and keep every id unique.
+3. **Point the app at your Glean instance**
+   Your email is used once to find which Glean tenant you belong to. The command creates .env.local and fills in VITE_GLEAN_BACKEND. If you would rather skip it, copy .env.example to .env.local and set VITE_GLEAN_BACKEND to the Glean web app URL from the About page, for example https://acme.glean.com.
 
    ```bash
-   cd onboarding-hub && npm run configure -- --email "<work-email>" && cp public/steps.example.json public/steps.json
+   cd onboarding-hub && npm run configure -- --email "<work-email>"
    ```
 
-4. **Run it**
+4. **Fill in your checklist**
+   Copying the example gives you a runnable file. Open public/steps.json and replace the sample steps with your own first-week tasks. Every id must be unique.
+
+   ```bash
+   cd onboarding-hub && cp public/steps.example.json public/steps.json
+   ```
+
+5. **Open the page**
+   Starts Vite and prints a Local URL. Open that URL in the same browser where you are already signed in to Glean.
 
    ```bash
    cd onboarding-hub && npm run dev
@@ -60,8 +68,8 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
    are already signed in to Glean and confirm the page is ready. Then give the first verification
    action.
 
-5. **Verify**
-   After the user confirms the app is open in their normal signed-in browser, ask them to confirm the configured checklist renders. Have them click Ask about this and verify a cited first-day answer. Do not open or drive their browser.
+6. **Check it against your own content**
+   Confirm your checklist renders. Click Ask about this on a first-week step and check that the answer cites one of your documents.
 
 ### Client Chat
 
@@ -106,21 +114,25 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    cd onboarding-hub && npm run verify:fixture
    ```
 
-4. **Set credentials**
-   The shipped command discovers the tenant and completes OAuth, with a CHAT-scoped API token fallback. Configure the supplied onboarding steps in ignored .env or a local steps file. The app runs as the signed-in user; there is no act-as.
+4. **Sign in to Glean**
+   Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the CHAT scope.
 
    ```bash
    cd onboarding-hub && npm run login -- --email "<work-email>"
    ```
 
-5. **Verify**
-   Allow 1–3 minutes. It starts its own server and checks the configured onboarding topics for cited answers plus unsupported-question escalation.
+5. **Point the app at your onboarding steps**
+   Signing in does not pick a checklist for you. Open .env and keep GLEAN_ONBOARDING_STEPS_FILE pointed at a JSON file of your first-week tasks. The included ./steps.example.json is enough to run the app. Edit that file, or point the variable at one of your own.
+
+6. **Check it against your own content**
+   Takes 1 to 3 minutes. It starts its own server, asks your Glean instance about the steps in that file, and fails if a supported question comes back without a citation or if an unsupported question does not escalate.
 
    ```bash
    cd onboarding-hub && npm run verify
    ```
 
-6. **Run it**
+7. **Open the page**
+   Starts the server and prints a Local URL. Open that URL in your browser.
    ```bash
    cd onboarding-hub && npm start
    ```

@@ -13,10 +13,12 @@ npm run configure
 cp public/steps.example.json public/steps.json
 ```
 
-The configure command discovers your tenant from your work email and writes `.env.local`.
-Customize `public/steps.json` with your checklist before running the app. Each step needs a unique
-`id`, a `title`, a `group` (`it`, `hr`, `team`, or `engineering`), a boolean `initiallyDone`, and an
-`askPrompt`.
+`npm run configure` discovers your tenant from your work email and writes `.env.local` with
+`VITE_GLEAN_BACKEND`. If you skip it, copy `.env.example` to `.env.local` and set that URL yourself
+from the About page.
+
+Then customize `public/steps.json`. Each step needs a unique `id`, a `title`, a `group` (`it`, `hr`,
+`team`, or `engineering`), a boolean `initiallyDone`, and an `askPrompt`.
 
 Optional completion links come from `public/resources.json`:
 

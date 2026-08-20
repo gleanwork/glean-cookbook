@@ -91,7 +91,7 @@
     }
   ],
   "aiPrompt": "Build an Onboarding Hub following https://developers.glean.com/cookbook/onboarding-hub. Ask whether to use (A) Web SDK or (B) Client Chat, then collect the selected path's configuration before starting it. Path A requires VITE_GLEAN_BACKEND and public/steps.json, uses renderChat and re-mounts with initialMessage to seed a step question, and must be opened by the user in their normal signed-in browser—never by browser automation. Path B calls Client Chat server-side, parses CONTENT messages and citations, retries empty output once, and owns the escalation UI. Keep secrets server-side. Verify cited supported answers on both paths and unsupported-answer escalation only on Client Chat.",
-  "llmContext": "Path A requires an explicit VITE_GLEAN_BACKEND, validated public/steps.json, and the user's existing Glean SSO session. Start Vite, report its exact URL, and wait for the user to open it in their normal signed-in browser; never open or automate it. Seed a step question by re-mounting with initialMessage. Do not pass chatId to continue a thread: it makes the widget treat that chat as selected and look for a message in its own frame URL instead of using initialMessage, so nothing is sent. Each ask starts a fresh thread; renderChat exposes no imperative send. Path B uses server-side Client Chat with saveChat:false, CONTENT messages, fragment citations, one empty-output retry, and an application-owned escalation state.",
+  "llmContext": "Path A requires an explicit VITE_GLEAN_BACKEND, validated public/steps.json, and the user's existing Glean SSO session. Start Vite, report its exact URL, and wait for the user to open it in their normal signed-in browser; never open or automate it. Do not open or drive their browser. Seed a step question by re-mounting with initialMessage. Do not pass chatId to continue a thread: it makes the widget treat that chat as selected and look for a message in its own frame URL instead of using initialMessage, so nothing is sent. Each ask starts a fresh thread; renderChat exposes no imperative send. Path B uses server-side Client Chat with saveChat:false, CONTENT messages, fragment citations, one empty-output retry, and an application-owned escalation state. Signing in does not configure the checklist; Path A uses public/steps.json and Path B uses GLEAN_ONBOARDING_STEPS_FILE.",
   "lastVerified": "2026-08-07",
   "goDependency": false,
   "featured": false,
@@ -145,19 +145,26 @@
           "kind": "install"
         },
         {
-          "title": "Configure the backend and checklist",
-          "command": "cd onboarding-hub && npm run configure -- --email \"<work-email>\" && cp public/steps.example.json public/steps.json",
-          "description": "Enter the user's work email when prompted; tenant discovery writes VITE_GLEAN_BACKEND to .env.local. Replace public/steps.json with the onboarding steps the user supplied and keep every id unique.",
+          "title": "Point the app at your Glean instance",
+          "command": "cd onboarding-hub && npm run configure -- --email \"<work-email>\"",
+          "description": "Your email is used once to find which Glean tenant you belong to. The command creates .env.local and fills in VITE_GLEAN_BACKEND. If you would rather skip it, copy .env.example to .env.local and set VITE_GLEAN_BACKEND to the Glean web app URL from the About page, for example https://acme.glean.com.",
+          "kind": "authenticate"
+        },
+        {
+          "title": "Fill in your checklist",
+          "command": "cd onboarding-hub && cp public/steps.example.json public/steps.json",
+          "description": "Copying the example gives you a runnable file. Open public/steps.json and replace the sample steps with your own first-week tasks. Every id must be unique.",
           "kind": "configure"
         },
         {
-          "title": "Run it",
+          "title": "Open the page",
           "command": "cd onboarding-hub && npm run dev",
-          "kind": "run"
+          "kind": "run",
+          "description": "Starts Vite and prints a Local URL. Open that URL in the same browser where you are already signed in to Glean."
         },
         {
-          "title": "Verify",
-          "description": "After the user confirms the app is open in their normal signed-in browser, ask them to confirm the configured checklist renders. Have them click Ask about this and verify a cited first-day answer. Do not open or drive their browser.",
+          "title": "Check it against your own content",
+          "description": "Confirm your checklist renders. Click Ask about this on a first-week step and check that the answer cites one of your documents.",
           "kind": "verify-live"
         }
       ]
@@ -218,21 +225,27 @@
           "kind": "verify-fixture"
         },
         {
-          "title": "Set credentials",
+          "title": "Sign in to Glean",
           "command": "cd onboarding-hub && npm run login -- --email \"<work-email>\"",
-          "description": "The shipped command discovers the tenant and completes OAuth, with a CHAT-scoped API token fallback. Configure the supplied onboarding steps in ignored .env or a local steps file. The app runs as the signed-in user; there is no act-as.",
+          "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the CHAT scope.",
           "kind": "authenticate"
         },
         {
-          "title": "Verify",
+          "title": "Point the app at your onboarding steps",
+          "description": "Signing in does not pick a checklist for you. Open .env and keep GLEAN_ONBOARDING_STEPS_FILE pointed at a JSON file of your first-week tasks. The included ./steps.example.json is enough to run the app. Edit that file, or point the variable at one of your own.",
+          "kind": "configure"
+        },
+        {
+          "title": "Check it against your own content",
           "command": "cd onboarding-hub && npm run verify",
-          "description": "Allow 1–3 minutes. It starts its own server and checks the configured onboarding topics for cited answers plus unsupported-question escalation.",
+          "description": "Takes 1 to 3 minutes. It starts its own server, asks your Glean instance about the steps in that file, and fails if a supported question comes back without a citation or if an unsupported question does not escalate.",
           "kind": "verify-live"
         },
         {
-          "title": "Run it",
+          "title": "Open the page",
           "command": "cd onboarding-hub && npm start",
-          "kind": "run"
+          "kind": "run",
+          "description": "Starts the server and prints a Local URL. Open that URL in your browser."
         }
       ]
     }

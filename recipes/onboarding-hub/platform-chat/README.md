@@ -9,16 +9,21 @@ The app runs as you; there is no act-as / impersonation.
 ```bash
 npm install
 npm run login
-# Customize steps.example.json, or point GLEAN_ONBOARDING_STEPS_FILE at your own file.
+# Then keep GLEAN_ONBOARDING_STEPS_FILE pointed at a JSON checklist.
 npm run verify
 npm start
 ```
 
-Open the Local URL printed by the server. The server holds your API token — never expose it in the browser.
+`npm run login` creates `.env` and fills in `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`. If OAuth is
+off, copy `.env.example` to `.env` and fill those two yourself with a CHAT-scoped token.
 
-- **Live steps:** `.env.example` selects the included multi-step `steps.example.json`. Customize it,
-  point `GLEAN_ONBOARDING_STEPS_FILE` at another file, or set `GLEAN_ONBOARDING_STEPS_JSON`.
-- **Empty:** without those env vars, `/api/checklist` returns `{ steps: [], source: "empty" }` and the UI asks you to configure steps.
+Signing in does not pick a checklist. Keep `GLEAN_ONBOARDING_STEPS_FILE` pointed at
+`./steps.example.json`, edit that file, or point it at one of your own. You can also set
+`GLEAN_ONBOARDING_STEPS_JSON` instead. Without either, `/api/checklist` returns
+`{ steps: [], source: "empty" }` and the UI asks you to configure steps.
+
+Open the Local URL printed by the server. The server holds your API token. Never expose it in the
+browser.
 
 ## Verify
 
