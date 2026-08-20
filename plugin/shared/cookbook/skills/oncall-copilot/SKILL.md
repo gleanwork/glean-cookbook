@@ -8,7 +8,6 @@ disable-model-invocation: true
 
 - For configured runs: a Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review
 - For configured runs: a work email for tenant discovery and OAuth sign-in; a scoped API token is the fallback
-- For configured runs: X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)
 - Node 20+
 
 Build "On-call Copilot" following https://developers.glean.com/cookbook/oncall-copilot
@@ -42,14 +41,25 @@ Build "On-call Copilot" following https://developers.glean.com/cookbook/oncall-c
    cd oncall-copilot && npm run verify:fixture
    ```
 
-4. **Set credentials**
-   Only for a live run. Use npm run login for direct Search + Chat, or npm run login:agent when the user selected an existing Glean agent. Set WATCHED_SERVICES to the service already supplied and GLEAN_AGENT_ID only for the agent path.
+4. **Sign in to Glean**
+   Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the SEARCH and CHAT scopes.
 
    ```bash
    cd oncall-copilot && npm run login -- --email "<work-email>"
    ```
 
-5. **Run it**
+5. **Name the service this copilot watches**
+   Signing in does not pick a service for you. Open .env and set WATCHED_SERVICES to the catalog name of the service you named up front. If you watch more than one, use a comma-separated list.
+
+6. **Point at an existing Glean agent, if you chose that path**
+   Skip this step if you are using Search and Chat directly. If an existing Glean agent should own the plan, run login:agent so the token also has the AGENTS scope, then set GLEAN_AGENT_ID in .env to that agent's ID.
+
+   ```bash
+   cd oncall-copilot && npm run login:agent -- --email "<work-email>"
+   ```
+
+7. **Open the page**
+   Starts the server and prints a Local URL. Open that URL in your browser.
 
    ```bash
    cd oncall-copilot && npm start
@@ -57,5 +67,5 @@ Build "On-call Copilot" following https://developers.glean.com/cookbook/oncall-c
 
    {{> run-local-web}}
 
-6. **Verify**
-   Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything.
+8. **Check it against your own content**
+   Fire an alarm for the service you named. Check that a probable cause cites a past incident from your own corpus rather than a runbook, that approving as someone who is not on call returns 403, and that forcing expiry escalates without executing anything.

@@ -20,8 +20,13 @@ npm start                # open the Local URL printed by the server
 Run `verify:fixture` first. It replays recorded responses and asserts the
 governance, so you can watch the guarantees hold before wiring up a token.
 
-For live use, run `npm run login`; it discovers your tenant from your work email and uses OAuth.
-Add `GLEAN_AGENT_ID` for the agent-orchestrated path.
+For live use, run `npm run login`. It creates `.env` and fills in `GLEAN_SERVER_URL` and
+`GLEAN_API_TOKEN`. If OAuth is off, copy `.env.example` to `.env` and fill those two yourself
+with a token that has the SEARCH and CHAT scopes. Then set `WATCHED_SERVICES` to the catalog
+name of the service this copilot watches.
+
+If an existing Glean agent should own the plan, run `npm run login:agent` so the token also
+has the AGENTS scope, then set `GLEAN_AGENT_ID`.
 
 ## Two things to try immediately
 
