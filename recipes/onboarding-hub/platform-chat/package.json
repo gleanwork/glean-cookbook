@@ -2,7 +2,7 @@
   "name": "onboarding-hub-platform-chat",
   "version": "0.0.0",
   "private": true,
-  "description": "Onboarding Hub — Client Chat path with a custom UI.",
+  "description": "Onboarding Hub — Platform Chat path with a custom UI.",
   "type": "module",
   "scripts": {
     "login": "node scripts/glean-auth.mjs login --scopes chat",
@@ -15,13 +15,14 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@gleanwork/api-client": "^0.19.0",
     "dotenv": "17.4.2"
   },
   "devDependencies": {
-    "typescript": "6.0.3",
-    "tsx": "4.23.1",
     "@types/node": "26.1.1",
     "eslint": "10.8.0",
+    "tsx": "4.23.1",
+    "typescript": "6.0.3",
     "typescript-eslint": "8.65.0"
   }
 }

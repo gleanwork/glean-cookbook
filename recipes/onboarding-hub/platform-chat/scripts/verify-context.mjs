@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-// Credential-free contract check for the custom Client Chat path. A local fake
+// Credential-free contract check for the custom Platform Chat path. A local fake
 // backend records the exact requests so this can prove two properties that a
 // response-shape fixture cannot: unfinished output is retried, and a follow-up
-// carries the bounded transcript while saveChat remains off.
+// carries the bounded transcript while storage remains off.
 
 import { spawn } from 'node:child_process';
 import http from 'node:http';
@@ -14,43 +14,80 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const requests = [];
 
 const answer = (text) => ({
-  messages: [
+  id: `resp_${requests.length}`,
+  object: 'RESPONSE',
+  created_at: '2026-08-21T21:31:00Z',
+  status: 'COMPLETED',
+  output: [
     {
-      author: 'GLEAN_AI',
-      messageType: 'CONTENT',
-      fragments: [
-        { text },
+      type: 'MESSAGE',
+      role: 'ASSISTANT',
+      content: [
         {
-          citation: {
-            sourceDocument: {
-              title: 'Onboarding guide',
-              url: 'https://example.test/onboarding',
+          type: 'OUTPUT_TEXT',
+          text,
+          annotations: [
+            {
+              type: 'CITATION',
+              sources: [
+                {
+                  type: 'DOCUMENT',
+                  document_id: 'onboarding-guide',
+                  title: 'Onboarding guide',
+                  url: 'https://example.test/onboarding',
+                },
+              ],
             },
-          },
+          ],
         },
       ],
     },
   ],
+  store: false,
+  request_id: `req_${requests.length}`,
+});
+
+const unfinished = () => ({
+  id: `resp_${requests.length}`,
+  object: 'RESPONSE',
+  created_at: '2026-08-21T21:31:00Z',
+  status: 'COMPLETED',
+  output: [
+    {
+      type: 'MESSAGE',
+      role: 'ASSISTANT',
+      content: [
+        {
+          type: 'OUTPUT_TEXT',
+          text: '',
+          annotations: [],
+        },
+      ],
+    },
+  ],
+  store: false,
+  request_id: `req_${requests.length}`,
 });
 
 const fakeGlean = http.createServer((req, res) => {
+  if (req.url !== '/api/chat') {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  if (req.headers['x-glean-include-experimental'] !== 'true') {
+    res.writeHead(400);
+    res.end('missing experimental header');
+    return;
+  }
   let raw = '';
   req.on('data', (chunk) => (raw += chunk));
   req.on('end', () => {
     requests.push(JSON.parse(raw));
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    // First call is the known unfinished shape. The recipe must retry it.
     const body =
       requests.length === 1
-        ? {
-            messages: [
-              {
-                author: 'GLEAN_AI',
-                messageType: 'CONTENT',
-                fragments: [{ text: '' }],
-              },
-            ],
-          }
+        ? unfinished()
         : answer(
             requests.length === 2
               ? 'Install the VPN client from the onboarding portal.'
@@ -138,10 +175,13 @@ try {
   });
 
   const sent = requests.at(-1);
-  if (sent.saveChat !== false) throw new Error('saveChat must remain false');
-  const turns = sent.messages.map((message) => ({
-    author: message.author,
-    text: message.fragments?.[0]?.text,
+  if (sent.store !== false) throw new Error('store must remain false');
+  if (sent.stream !== false) throw new Error('stream must remain false');
+  if ('conversation_id' in sent)
+    throw new Error('ephemeral replay must not set conversation_id');
+  const turns = sent.input.map((message) => ({
+    author: message.role === 'ASSISTANT' ? 'GLEAN_AI' : 'USER',
+    text: message.content,
   }));
   const expected = [
     ...olderTurns.slice(2),

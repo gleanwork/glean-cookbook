@@ -4,9 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listenLocal } from './lib/cookbook-server.js';
-import { askClientChat, type ConversationTurn } from './lib/chat.js';
+import { askPlatformChat, type ConversationTurn } from './lib/chat.js';
 
-// Path B: you own the UI; the server calls Client Chat and renders the answer
+// Path B: you own the UI; the server calls Platform Chat and renders the answer
 // plus its citations.
 
 const MAX_CONVERSATION_TURNS = 10;
@@ -127,7 +127,7 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: 'question is required' }));
         return;
       }
-      const result = await askClientChat(question, parseHistory(body.history));
+      const result = await askPlatformChat(question, parseHistory(body.history));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
     } catch (error) {
