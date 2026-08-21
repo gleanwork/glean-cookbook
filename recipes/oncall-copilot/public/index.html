@@ -701,10 +701,19 @@
           );
         }
 
-        const summary = el('input', { value: inc.proposed.summary });
-        const detail = el('textarea', {}, [
-          document.createTextNode(inc.proposed.detail),
-        ]);
+        const summary = el('input', {
+          name: 'proposal-summary',
+          'aria-label': 'Proposal summary',
+          value: inc.proposed.summary,
+        });
+        const detail = el(
+          'textarea',
+          {
+            name: 'proposal-detail',
+            'aria-label': 'Proposal detail',
+          },
+          [document.createTextNode(inc.proposed.detail)],
+        );
         const terminal = [
           'executed',
           'action-failed',
@@ -742,6 +751,8 @@
         }
 
         const rejectWhy = el('input', {
+          name: 'rejection-reason',
+          'aria-label': 'Reason for rejection',
           value: '',
           placeholder: 'Reason for rejection',
         });
