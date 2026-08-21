@@ -12,8 +12,6 @@ disable-model-invocation: true
 
 Build "Answer an RFP or security questionnaire" following https://developers.glean.com/cookbook/rfp-responder
 
-{{> demo-mode}}
-
 1. **Copy the project onto your machine**
    Creates an rfp-responder folder containing the local server, review app, sample questionnaire, and recorded Chat responses. Stay in the same parent directory for the remaining commands.
 

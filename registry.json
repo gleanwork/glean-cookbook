@@ -2677,7 +2677,7 @@
         "title": "See what it refuses before connecting anything",
         "command": "cd rfp-responder && npm run verify:fixture",
         "description": "Replays the recorded responses through the full questionnaire and checks that every draft has a citation, unsupported rows stay blank, weak evidence is flagged, and export stays behind approval. The command needs no credentials and makes no network calls.",
-        "kind": "verify-fixture"
+        "kind": "manual"
       },
       {
         "title": "Open the review app",
