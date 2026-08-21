@@ -1,7 +1,7 @@
 [
   "Fire the sample canary alarm",
   "Triage an alert with no matching past incident",
-  "Approve the proposed action as someone who is not on call",
+  "Approve the proposed action as the outsider",
   "Let the approval window expire",
   "Have the Glean agent propose an action that is not registered"
 ]

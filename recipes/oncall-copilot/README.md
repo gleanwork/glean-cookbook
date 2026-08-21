@@ -1,25 +1,29 @@
 # On-call Copilot
 
-Walk through incident triage against a recorded service catalog, runbook, and
-incident history. The copilot proposes exactly one registered action and puts a
-human in front of it.
+An on-call dashboard that takes an alarm to a proposed action and puts a person
+in front of that action. It runs on a recorded service catalog, runbook, and
+incident history, so you can watch it work before connecting it to anything.
 
-The useful part is what it refuses. The gate turns away the wrong person. An
-unapproved proposal expires and escalates instead of executing. The registry
-refuses an action id it does not know. The audit log records every attempt,
-including refusals.
+The useful part is what it refuses. It names a cause only when a past incident
+backs it. The gate turns away an approver who is neither on call nor the service
+owner. A proposal nobody approves in time escalates instead of executing. An
+action the planner invented never reaches the approval card. The audit log
+records each of those decisions.
 
 ## Run it
 
+You need Node 20 or newer, and nothing else. The walkthrough replays recorded
+Glean responses, so it needs no credentials and makes no network calls.
+
 ```bash
 npm install
-npm run verify:fixture   # no credentials, no network
-npm start                # fixtures by default; open the printed Local URL
+npm run verify:fixture
+npm start
 ```
 
-Both commands replay recorded responses. `verify:fixture` asserts the governance.
-`npm start` lets you exercise the same paths in the dashboard. Neither command
-reads credentials or calls Glean.
+`verify:fixture` drives the whole flow from the command line and asserts each
+refusal. `npm start` gives you the same paths in a browser, where you can click
+through them yourself.
 
 Live mode is an adaptation step, not a second demo. It will not triage these
 sample alarms against an arbitrary Glean instance. See
@@ -30,21 +34,23 @@ Quiet presentation mode (`npm run demo`) is for hosts that already have
 
 ## Three things to try immediately
 
-**Fire the second alarm.** Click **No-precedent alarm · PAY-2232**. On the
-recorded corpus, ledger queue saturation with no deploy in flight retrieves the
-deploy runbook as the highest-scoring document. A relevance-ranked copilot
-would blame a deploy. This one asserts no cause, and downgrades the proposed
-fix to "file a ticket" in the in-app channel and the audit log.
+**Fire the second alarm.** Click **No-precedent alarm · PAY-2232**. Ledger queue
+saturation with no deploy in flight has no matching past incident, so the triage
+card asserts no probable cause. The deploy runbook still sits at the top of the
+evidence table, tagged `procedure`. The proposed action drops from **Draft fix
+PR** to **File tracking ticket**, and `#eng-oncall` and the audit log both say
+why.
 
-**Try to approve something you're not allowed to.** Fire an alarm, choose
-`not.on.call@sample.example.com` under **Acting as**, and approve. The gate
-returns 403, audits the attempt against that actor, and leaves the incident
-unchanged. The allowed set comes from the recorded service catalog.
+**Try to approve something you're not allowed to.** Fire an alarm, switch
+**Acting as** to the person who is neither on call nor the owner, and click
+**Approve & execute**. The card warns you first, and the approval returns 403.
+The audit log records the attempt against that actor, and the incident stays at
+`awaiting-approval`. Who may approve comes from the recorded service catalog.
 
 **Let the agent go off script.** Click **Off-script agent · PAY-2233**. The
 recorded agent reply proposes `rollback-production-now`, which is not in the
-action registry. The gate refuses it before showing an approval card and records
-the refusal.
+action registry. In place of an approval card you get a note saying no action
+was offered, and the refusal is in the audit log.
 
 ## Point it at your own corpus
 
@@ -85,17 +91,17 @@ causes, and it does so structurally rather than occasionally.
 
 A canary alarm on `payments-service` retrieves the deploy-and-rollback runbook
 at or near the top of any ranking, because that runbook is _dense with the
-alarm's own vocabulary_ — canary, rollout, error rate, authorization failure
+alarm's own vocabulary_: canary, rollout, error rate, authorization failure
 rate, rollback. It is genuinely the most relevant document in the corpus. It
 also contains no information whatsoever about why this particular deploy broke.
 It is procedure.
 
 Measured on the sample corpus:
 
-| Alarm                       | Top-scoring document          | Score    | Matching precedent            |
-| --------------------------- | ----------------------------- | -------- | ----------------------------- |
-| `PAY-2231` canary           | PAY-2114 incident review      | 1.00     | yes — cause asserted          |
-| `PAY-2232` queue saturation | **Deploy & Rollback Runbook** | **0.40** | no (0.20) — no cause asserted |
+| Alarm                       | Top-scoring document          | Score    | Matching precedent           |
+| --------------------------- | ----------------------------- | -------- | ---------------------------- |
+| `PAY-2231` canary           | PAY-2114 incident review      | 1.00     | yes, cause asserted          |
+| `PAY-2232` queue saturation | **Deploy & Rollback Runbook** | **0.40** | no (0.20), no cause asserted |
 
 On the second alarm the runbook outranks everything. An LLM handed that ranking
 will tell your on-call engineer, at 3am, that a deploy caused an incident that
@@ -110,7 +116,8 @@ So documents carry an **evidentiary role**, and roles have different powers:
 | `context`   | service catalog, rotation, architecture          | ownership and topology  |
 
 Only a precedent can license a cause, because only a precedent records one. No
-matching precedent means no cause is asserted — a correct outcome, not a gap.
+matching precedent means no cause is asserted, which is a correct outcome rather
+than a gap.
 
 Role is derived from where a document lives (`/incidents/`, `/runbooks/`), not
 from what it says. Inferring a document's evidentiary standing from its prose is
@@ -147,11 +154,11 @@ Watch the interesting ones with `SIMULATE_ACTION_FAILURE=draft-fix-pr` and the
 Both orchestrators live in `lib/orchestrators/` and render into the same
 dashboard, so the only difference is _who owns planning_:
 
-- **app-orchestrated** (default) — this code runs a deterministic sequence and
+- **app-orchestrated** (default). This code runs a deterministic sequence and
   uses the model for one thing: turning selected evidence into a sentence. It
   never chooses the action or grades its own evidence.
-- **glean-agent** — a Glean agent owns the plan via the Agent API. It proposes
-  an action by id.
+- **glean-agent**. A Glean agent owns the plan via the Agent API. It proposes an
+  action by id.
 
 What does **not** move: evidence classification and the approval gate. Asking
 the planner to grade its own evidence is asking the wrong entity, and an agent
