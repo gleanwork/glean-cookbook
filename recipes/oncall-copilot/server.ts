@@ -5,7 +5,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { Alarm } from './lib/evidence.ts';
-import { resolve, approvers, mayApprove } from './lib/registry.ts';
+import {
+  resolve,
+  approvers,
+  mayApprove,
+  outsiderActor,
+} from './lib/registry.ts';
 import { describeEvidence } from './lib/triage.ts';
 import { appOrchestrated } from './lib/orchestrators/app-orchestrated.ts';
 import { gleanAgent } from './lib/orchestrators/glean-agent.ts';
@@ -36,7 +41,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * claim to be the on-call engineer.
  */
 /**
- * Demo affordances, off unless INCIDENT_DEMO_MODE=true.
+ * Demo affordances for live mode, off unless INCIDENT_DEMO_MODE=true.
  *
  * Two things here are useful in a demo and dangerous in a deployment: the
  * x-incident-actor header, which lets a caller claim to be anyone so you can
@@ -45,16 +50,28 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * control -- a reader who copies this and skims the comment ships an approval
  * gate that anyone can walk through by setting a header.
  *
- * One flag, checked in code, is a switch they have to find. It costs nothing in
- * the demo and it fails closed.
+ * Fixture mode also accepts an asserted actor. It has no credentials, remote
+ * calls, or real actions, so the assertion cannot cross a trust boundary.
  */
 export function demoMode(): boolean {
   return process.env.INCIDENT_DEMO_MODE === 'true';
 }
 
+function fixtureMode(): boolean {
+  return process.env.GLEAN_USE_FIXTURE === 'true';
+}
+
+/**
+ * Fixture mode has no real credentials, remote calls, or actions, so asserting an
+ * actor cannot reach anything. Live mode requires the explicit demo flag.
+ */
+function mayAssertActor(): boolean {
+  return fixtureMode() || demoMode();
+}
+
 function actorOf(req: http.IncomingMessage): string {
   const asserted = req.headers['x-incident-actor'];
-  if (demoMode() && typeof asserted === 'string' && asserted.length > 0) {
+  if (mayAssertActor() && typeof asserted === 'string' && asserted.length > 0) {
     return asserted;
   }
   return process.env.INCIDENT_ACTOR ?? 'marcus.webb@sample.example.com';
@@ -194,6 +211,12 @@ const SHARED_ASSETS: Record<string, string> = {
   '/glean-logomark.svg': 'image/svg+xml',
 };
 
+const SAMPLE_ALARMS: Record<string, string> = {
+  default: 'pagerduty-alarm.json',
+  novel: 'pagerduty-alarm-novel.json',
+  offscript: 'pagerduty-alarm-offscript.json',
+};
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', 'http://localhost');
   try {
@@ -226,22 +249,28 @@ const server = http.createServer(async (req, res) => {
           label: orchestrator.label,
           available: orchestrator.available(),
         })),
-        fixtureMode: process.env.GLEAN_USE_FIXTURE === 'true',
+        fixtureMode: fixtureMode(),
         cookbookDemo: process.env.GLEAN_COOKBOOK_DEMO === 'true',
         impersonation: false,
+        mayAssertActor: mayAssertActor(),
+        outsiderActor: outsiderActor(),
       });
       return;
     }
 
     if (req.method === 'GET' && url.pathname === '/api/sample-alarm') {
+      const file = SAMPLE_ALARMS[url.searchParams.get('alarm') ?? 'default'];
+      if (!file) {
+        json(res, 404, {
+          error: `Unknown sample alarm. Available: ${Object.keys(SAMPLE_ALARMS).join(', ')}.`,
+        });
+        return;
+      }
       json(
         res,
         200,
         JSON.parse(
-          fs.readFileSync(
-            path.join(__dirname, 'fixtures', 'pagerduty-alarm.json'),
-            'utf8',
-          ),
+          fs.readFileSync(path.join(__dirname, 'fixtures', file), 'utf8'),
         ),
       );
       return;
@@ -280,7 +309,7 @@ const server = http.createServer(async (req, res) => {
         refuseDemoAffordance(res, 'simulateFailure');
         return;
       }
-      if (req.headers['x-incident-actor'] && !demoMode()) {
+      if (req.headers['x-incident-actor'] && !mayAssertActor()) {
         refuseDemoAffordance(res, 'the x-incident-actor header');
         return;
       }
@@ -290,7 +319,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/reject') {
       const body = await readBody<{ id: string; why?: string }>(req);
-      if (req.headers['x-incident-actor'] && !demoMode()) {
+      if (req.headers['x-incident-actor'] && !mayAssertActor()) {
         refuseDemoAffordance(res, 'the x-incident-actor header');
         return;
       }

@@ -1,79 +1,82 @@
 # On-call Copilot
 
-An incident copilot that triages from your own runbooks and past incidents,
-proposes one action, and will not run it without an authorized approver.
+Walk through incident triage against a recorded service catalog, runbook, and
+incident history. The copilot proposes exactly one registered action and puts a
+human in front of it.
 
-The useful part is what it refuses. The gate turns away anyone who is not on
-call. An unapproved proposal expires and escalates instead of executing. The
-registry refuses an action id it does not know. The audit log records every
-unauthorized approval, execution, and expiration.
+The useful part is what it refuses. The gate turns away the wrong person. An
+unapproved proposal expires and escalates instead of executing. The registry
+refuses an action id it does not know. The audit log records every attempt,
+including refusals.
 
 ## Run it
 
-See the refusals first. No credentials, no network:
-
 ```bash
 npm install
-npm run verify:fixture
+npm run verify:fixture   # no credentials, no network
+npm start                # fixtures by default; open the printed Local URL
 ```
 
-`verify:fixture` replays recorded sample-corpus responses. It is the only path
-that proves the PAY-2231 / PAY-2232 evidence story end to end. To go straight
-to your own content, skip it.
+Both commands replay recorded responses. `verify:fixture` asserts the governance.
+`npm start` lets you exercise the same paths in the dashboard. Neither command
+reads credentials or calls Glean.
 
-Live retrieval against your Glean instance:
-
-```bash
-npm run login -- --email "<work-email>"
-# or npm run login:agent, then set GLEAN_AGENT_ID
-npm start
-```
-
-`npm start` prints a Local URL. Live Search, Chat, and optional Agents calls hit
-your index. Both alarm buttons fire `payments-service` and the webhook ignores
-anything else, so a live run needs a catalog entry for that name whose URL
-contains `/services/` and whose body names `Tech lead` and `On-call this week`.
-Without it, the alarm is filtered or triage stops. Evidence roles come from
-`/incidents/` and `/runbooks/` in URLs. Catalog names are mapped to
-`@sample.example.com`, and the three registered actions stay in-process
-simulations, so nothing is written back to your instance.
+Live mode is an adaptation step, not a second demo. It will not triage these
+sample alarms against an arbitrary Glean instance. See
+[Point it at your own corpus](#point-it-at-your-own-corpus) before authenticating.
 
 Quiet presentation mode (`npm run demo`) is for hosts that already have
 `GLEAN_COOKBOOK_DEMO=true`. Do not offer it during a normal run.
 
-## Two things to try immediately
-
-These buttons use the bundled sample alarms. On a live instance they still fire
-`payments-service`. If that catalog entry is missing, the alarm is filtered or
-triage stops.
+## Three things to try immediately
 
 **Fire the second alarm.** Click **No-precedent alarm · PAY-2232**. On the
-sample corpus, ledger queue saturation with no deploy in flight retrieves the
+recorded corpus, ledger queue saturation with no deploy in flight retrieves the
 deploy runbook as the highest-scoring document. A relevance-ranked copilot
 would blame a deploy. This one asserts no cause, and downgrades the proposed
 fix to "file a ticket" in the in-app channel and the audit log.
 
-**Try to approve something you're not allowed to.** Set `INCIDENT_ACTOR` in
-`.env` to anyone who is not on call for the service, restart, and fire
-PAY-2231. The card names who may approve and leaves **Approve & execute**
-disabled. The allowed set is the on-call engineer and service owner parsed
-from the catalog, not a config file.
+**Try to approve something you're not allowed to.** Fire an alarm, choose
+`not.on.call@sample.example.com` under **Acting as**, and approve. The gate
+returns 403, audits the attempt against that actor, and leaves the incident
+unchanged. The allowed set comes from the recorded service catalog.
 
-That is the refusal you can see. The 403 itself only comes back over the API,
-because the disabled button never sends a request. To read the status code,
-start with `INCIDENT_DEMO_MODE=true` (incidents are in-memory, so do this
-before you fire an alarm), fire PAY-2231, copy the new incident id, then:
+**Let the agent go off script.** Click **Off-script agent · PAY-2233**. The
+recorded agent reply proposes `rollback-production-now`, which is not in the
+action registry. The gate refuses it before showing an approval card and records
+the refusal.
+
+## Point it at your own corpus
+
+`npm run start:live` calls Platform Search and Client Chat with the credentials
+in `.env`. It cannot infer how your service catalog is organized. Adapt these
+assumptions first:
+
+1. `lib/registry.ts` searches for `"<service> service catalog entry"` and only
+   accepts a result whose URL contains `/services/`. Its parser expects the
+   snippet to include `Tech lead:`, `On-call this week:`, `Tier:`,
+   `Dependencies:`, and an escalation sentence. Change the query, URL rule, and
+   parser to match your catalog.
+2. The recorded catalog stores display names rather than directory identities.
+   `APPROVER_EMAIL_DOMAIN` converts a name such as `Priya Natarajan` to an email.
+   Parse real email addresses or person entities before using this gate.
+3. `lib/evidence.ts` treats URLs containing `/incidents/` as precedents and
+   `/runbooks/` as procedures. Map those rules to your document types.
+4. Set `WATCHED_SERVICES` to the services the webhook may accept. The dashboard
+   buttons remain sample alarms for `payments-service`. Send an alarm for your
+   service to `POST /webhook/pagerduty`.
+
+Then authenticate and start live mode:
 
 ```bash
-curl -sS -i -X POST "http://127.0.0.1:<port>/api/approve" \
-  -H "Content-Type: application/json" \
-  -H "X-Incident-Actor: outsider@example.com" \
-  -d '{"id":"<incident-id>"}'
+npm run login -- --email "you@company.com"
+# Add GLEAN_AGENT_ID and use npm run login:agent for the agent path.
+npm run start:live
 ```
 
-The response is 403 and the refusal is audited, as long as that address is not
-on the card's allow-list. Live still trusts the asserted actor until you add
-authentication.
+The three registered actions are inert in both modes. Replace them with real
+integrations only after preserving the registry, approval, expiry, and audit
+checks.
 
 ## The design argument: relevance is not evidence
 
@@ -153,20 +156,16 @@ dashboard, so the only difference is _who owns planning_:
 What does **not** move: evidence classification and the approval gate. Asking
 the planner to grade its own evidence is asking the wrong entity, and an agent
 that can describe arbitrary actions into existence is an agent with production
-access whatever its prompt says. Try the fixture alarm `PAY-2233`, where the
-agent proposes `rollback-production-now` and gets refused.
+access whatever its prompt says. Click **Off-script agent · PAY-2233** to replay
+an agent proposing `rollback-production-now` and watch the gate refuse it.
 
 ## Authorization, not authentication
 
-**This recipe does not authenticate anyone.** The acting user is _asserted_
-via `INCIDENT_ACTOR`. `X-Incident-Actor` can override that only when the
-process was started with `INCIDENT_DEMO_MODE=true`. Otherwise the header is
-refused. Incidents live in memory, so changing the flag means starting a new
-process and firing a new alarm.
-
-That header, and `simulateFailure`, are refused unless `INCIDENT_DEMO_MODE=true`.
-The example configuration leaves this false. Enable it only while exercising
-the demo paths, then turn it off.
+**This recipe does not authenticate anyone.** The acting user is _asserted_ via
+`INCIDENT_ACTOR` or an `X-Incident-Actor` header. Fixture mode accepts the header
+because it has no credentials, network calls, or real actions. A live run
+refuses it unless `INCIDENT_DEMO_MODE=true`. Leave that flag false when
+connecting to a real instance.
 
 Authorization (who may approve) and authentication (proving you are that
 person) are different problems. This solves the first. A deployment must solve

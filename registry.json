@@ -1986,7 +1986,7 @@
   {
     "id": "oncall-copilot",
     "title": "On-call Copilot",
-    "description": "An incident copilot that triages from your own runbooks and past incidents, proposes one action, and will not run it without an authorized approver.",
+    "description": "Walk through evidence-grounded incident triage on recorded runbooks and past incidents, then adapt the same gate to your corpus, with wrong-person refusal, expiry without auto-approval, a closed action registry, and a complete audit trail.",
     "sidebarLabel": "On-call Copilot",
     "preview": {
       "path": "recipes/oncall-copilot/assets/preview.webp",
@@ -2005,30 +2005,11 @@
     "buildMethod": "scaffold",
     "execution": {
       "type": "local-web",
-      "questions": [
-        {
-          "id": "service",
-          "prompt": "The alarm buttons fire a service named payments-service. Does your Glean content cover it with a catalog page, a runbook, and at least one past incident review?"
-        },
-        {
-          "id": "orchestrator",
-          "prompt": "Should the app plan the triage itself, or should one of your Glean agents plan it?"
-        },
-        { "id": "email", "prompt": "What is your work email?" }
-      ],
-      "auth": [
-        {
-          "kind": "oauth-with-token-fallback",
-          "scopes": ["SEARCH", "CHAT"],
-          "setupCommand": "cd oncall-copilot && npm run login -- --email \"<work-email>\"",
-          "configFile": ".env",
-          "backendVariable": "GLEAN_SERVER_URL",
-          "credentialVariable": "GLEAN_API_TOKEN"
-        }
-      ],
+      "questions": [],
+      "auth": [{ "kind": "none" }],
       "verification": {
         "kind": "user-browser",
-        "expectedDuration": "under 1 minute for fixtures; 1–3 minutes live",
+        "expectedDuration": "under 1 minute",
         "startsOwnServer": false
       },
       "run": {
@@ -2039,74 +2020,58 @@
     },
     "languages": ["typescript"],
     "prerequisites": [
-      "Node 20 or newer",
-      "Your work email, so the sign-in command can find your Glean tenant. If your tenant cannot use OAuth, you need a Glean API token instead, scoped to SEARCH and CHAT, plus AGENTS if you want a Glean agent to plan the triage",
-      "Content in Glean about the service you want triaged. The alarm buttons on the dashboard fire a service named payments-service, so you need a catalog page for that name, filed under /services/, whose text says who the tech lead is and who is on call this week",
-      "Runbooks filed under /runbooks/ and past incident reviews filed under /incidents/ for that same service. The copilot decides what a document is allowed to support from those paths: a runbook can justify a procedure, and only a past incident can justify a cause"
+      "Node 20+",
+      "Optional live adaptation: a Glean instance with a service catalog, runbooks, and incident reviews, plus a work email for OAuth sign-in or a scoped API token"
     ],
     "demoQueries": [
       {
-        "query": "Triage a real alert from one of your services",
-        "expectedBehavior": "The copilot acknowledges in the in-app channel, resolves payments-service (or VERIFY_SERVICE) to an on-call engineer and owner from a catalog entry whose URL contains /services/, fans out Search, and posts a triage card that reaches the approval gate. If it claims a cause, that claim cites a past incident, not a runbook."
+        "query": "Fire the sample canary alarm",
+        "expectedBehavior": "The fixture-backed copilot acknowledges in the channel, resolves the service to its on-call engineer and owner from the recorded catalog, fans out retrieval, and posts a triage card. A matching past incident supports the probable cause; the runbook supports the proposed action."
       },
       {
         "query": "Triage an alert with no matching past incident",
-        "expectedBehavior": "The copilot does not offer a code-changing action such as draft-fix-pr unless a matching past incident supports a cause. A runbook may support a procedure. It must not license a cause."
+        "expectedBehavior": "The highest-scoring retrieved document will often be a runbook, so a relevance-ranked copilot would confidently blame whatever that runbook is about. With no matching signature and nothing in flight, this copilot asserts no cause. Ranking is not evidence."
       },
       {
         "query": "Approve the proposed action as someone who is not on call",
-        "expectedBehavior": "Refused with 403 and audited against that actor. The allowed set is the on-call engineer and service owner parsed from the catalog, not a config file. The incident stays awaiting approval. The recipe implements this authorization itself. Live still trusts the asserted actor until you add authentication.",
+        "expectedBehavior": "Choose the outsider under Acting as, then approve. The gate refuses the request with 403 and audits it against that actor. The allowed set is the on-call engineer and service owner read from the recorded service catalog. The incident stays awaiting approval.",
         "permissionDifferentiated": true
       },
       {
         "query": "Let the approval window expire",
-        "expectedBehavior": "The proposal escalates to the target named in the catalog and is not executed. The escalation is audited and posted to the in-app channel."
+        "expectedBehavior": "The proposal escalates to the target named in the recorded service catalog and is NOT executed. Auto-approving on timeout would invert the point of a gate. The escalation is audited and posted to the channel."
       },
       {
         "query": "Have the Glean agent propose an action that is not registered",
-        "expectedBehavior": "Needs GLEAN_AGENT_ID; otherwise this check is skipped. If the agent names an unregistered action, it is refused at proposal time, audited, and no approval card is offered. If it names a registered action, the card reaches the same approval gate."
+        "expectedBehavior": "Click Off-script agent · PAY-2233. The action is refused at proposal time and audited, with no approval card offered. An agent that can describe arbitrary actions into existence has production access, whatever its prompt says."
       }
     ],
     "steps": [
       {
-        "title": "Copy the project onto your machine",
+        "title": "Scaffold the project",
         "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/oncall-copilot oncall-copilot",
-        "description": "Creates an oncall-copilot folder in whatever directory you run this from. Every command after this one runs inside that folder. Inside it you get the webhook that receives alarms, the triage logic, the approval gate, and the dashboard you watch it all from.",
         "kind": "scaffold"
       },
       {
         "title": "Install dependencies",
         "command": "cd oncall-copilot && npm install",
-        "description": "Installs the Glean API client and the small local server that runs the dashboard and receives alarms.",
         "kind": "install"
       },
       {
-        "title": "See what it refuses before you connect anything",
+        "title": "Watch the governance hold, with no credentials",
         "command": "cd oncall-copilot && npm run verify:fixture",
-        "description": "Runs the whole flow against recorded answers for a made-up service called payments-service, so you can watch the safety rules work before you connect anything. This needs no Glean credentials and makes no network calls. Four refusals go past: someone who is not on call is turned away, a proposal nobody approved in time escalates instead of running, an action the copilot made up is rejected, and a proposed code change with no past incident behind it is downgraded to filing a ticket. If you would rather go straight to your own content, skip this.",
-        "kind": "verify-fixture"
+        "description": "Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited.",
+        "kind": "manual"
       },
       {
-        "title": "Sign in to Glean",
-        "command": "cd oncall-copilot && npm run login -- --email \"<work-email>\"",
-        "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the SEARCH and CHAT scopes.",
-        "kind": "authenticate"
-      },
-      {
-        "title": "Make sure Glean covers the service",
-        "description": "Both alarm buttons on the dashboard fire a service named payments-service, and the webhook ignores alarms for anything else, so this is the one name your content has to cover. Triage reads the owner and the on-call engineer off a catalog page for that name, and stops if it cannot find one. If you want one of your Glean agents to plan the triage instead of the app doing it, open .env and set GLEAN_AGENT_ID to that agent's ID. Leave it blank and the app plans the triage itself and says so on the page.",
-        "kind": "configure"
-      },
-      {
-        "title": "Open the dashboard",
+        "title": "Run it",
         "command": "cd oncall-copilot && npm start",
-        "description": "Starts the server and prints a Local URL. Open that URL in your browser. The page starts empty, because nothing happens until you fire an alarm.",
         "kind": "run"
       },
       {
-        "title": "Watch it triage, and watch it stop",
-        "description": "Click Fire canary alarm · PAY-2231. The card that appears should name the on-call engineer and the owner it read from your own catalog, then wait for your approval instead of acting on its own. Click Force expiry → escalate to see what happens when nobody approves in time: the proposal goes to the escalation target and nothing runs. To watch the gate turn you away, open .env, set INCIDENT_ACTOR to anyone who is not on call for that service, restart, and fire the alarm again. The card now tells you who is allowed to approve and leaves the buttons disabled.",
-        "kind": "verify-live"
+        "title": "Exercise the gate",
+        "description": "Fire all three sample alarms. Confirm the first cause cites a past incident, the second asserts no cause and offers an investigation ticket, the off-script agent action is refused before an approval card appears, choosing the outsider under Acting as produces an audited 403, and forcing expiry escalates without execution.",
+        "kind": "manual"
       }
     ],
     "combines": [
@@ -2157,8 +2122,8 @@
         "category": "agent"
       }
     ],
-    "aiPrompt": "Build the On-call Copilot following the oncall-copilot recipe. For a live run, resolve the alarming service from an indexed catalog whose URL contains /services/, retrieve runbooks and past incidents, and classify evidence by URL path. Only a matching past incident may support a cause; a runbook may support a procedure. Do not offer a code-changing action without a supported cause. Gate actions behind authorized human approval, expiry, a closed action registry, and an audit log. The acting user is asserted, not authenticated. Actions are simulated in-process. Optional npm run verify:fixture proves those gates against recorded sample data without calling Glean.",
-    "llmContext": "Use Platform Search for retrieval, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. The app runs as the caller, so its approval check is application policy, not impersonation. Classify precedent from /incidents/ and procedure from /runbooks/ in URLs. Only a matching past incident may support a cause. A mutating action needs a supported cause, an authorized approver, a registered action id, and an unexpired proposal. Unauthorized approvals, executions, and expirations are audited. Invalid-state requests and disabled demo affordances are not. Registered actions are in-process simulations, and catalog names map to @sample.example.com. Skip verify:fixture unless the reader asks or GLEAN_COOKBOOK_DEMO is true. Set saveChat:false for verification and treat empty chat output as retryable.",
+    "aiPrompt": "Build the On-call Copilot following the oncall-copilot recipe. Start with the recorded fixtures; they are the supported demo path. Only a matching past incident may support a cause, while a runbook may support a procedure. Do not offer a code-changing action without a supported cause. Gate actions behind authorized human approval, expiry, a closed action registry, and an audit log. The acting user is asserted, not authenticated. Actions are simulated in-process. Treat live mode as a corpus adaptation that requires changing the catalog query, parser, identity mapping, and evidence URL rules.",
+    "llmContext": "Use the recorded Search, Chat, and Agent responses for the default run. The app runs as the caller, so its approval check is application policy, not impersonation. Classify precedent from /incidents/ and procedure from /runbooks/ in URLs. Only a matching past incident may support a cause. A mutating action needs a supported cause, an authorized approver, a registered action id, and an unexpired proposal. Unauthorized approvals, executions, and expirations are audited. Registered actions are in-process simulations. Fixture mode permits actor assertion so the dashboard can demonstrate the 403. Live mode refuses it unless INCIDENT_DEMO_MODE is true. Do not claim that npm run start:live works against an arbitrary Glean corpus without adapting the parsers.",
     "goDependency": false,
     "featured": true,
     "tags": [
