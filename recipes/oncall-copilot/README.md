@@ -41,8 +41,8 @@ evidence table, tagged `procedure`. The proposed action drops from **Draft fix
 PR** to **File tracking ticket**, and `#eng-oncall` and the audit log both say
 why.
 
-**Try to approve something you're not allowed to.** Fire an alarm, choose
-`not.on.call@sample.example.com` under **Acting as**, and click **Approve &
+**Try to approve something you're not allowed to.** Fire an alarm, pick the
+**Acting as** option labeled `neither: expect a refusal`, and click **Approve &
 execute**. The card warns you before you click, and the approval comes back 403.
 The audit log records the attempt against that actor, and the incident stays at
 `awaiting-approval`. Who may approve comes from the recorded service catalog.

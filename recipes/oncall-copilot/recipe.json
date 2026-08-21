@@ -53,7 +53,7 @@
     },
     {
       "query": "Approve the proposed action as the outsider",
-      "expectedBehavior": "Fire an alarm, choose not.on.call@sample.example.com under Acting as, then click Approve & execute. The approval card warns before you click that this person is not on call and does not own the service, and names who may approve. The request comes back 403, the audit log gains a refused row against that actor, and the incident stays at awaiting-approval.",
+      "expectedBehavior": "Fire an alarm, pick the Acting as option labeled neither: expect a refusal, then click Approve & execute. The approval card warns before you click that this person is not on call and does not own the service, and names who may approve. The request comes back 403, the audit log gains a refused row against that actor, and the incident stays at awaiting-approval.",
       "permissionDifferentiated": true
     },
     {
@@ -92,7 +92,7 @@
     },
     {
       "title": "Fire the three alarms",
-      "description": "Fire canary alarm · PAY-2231 shows a probable cause with the past incident it rests on. No-precedent alarm · PAY-2232 shows the copilot declining to name a cause and dropping the proposed fix to a ticket. Off-script agent · PAY-2233 shows an unregistered action refused before any approval card appears. Click PAY-2231 or PAY-2232 in the queue so an approval card is on screen again, then choose not.on.call@sample.example.com under Acting as and approve to get an audited 403. Click Force expiry → escalate on that same incident to watch a proposal hand off without executing.",
+      "description": "Fire canary alarm · PAY-2231 shows a probable cause with the past incident it rests on. No-precedent alarm · PAY-2232 shows the copilot declining to name a cause and dropping the proposed fix to a ticket. Off-script agent · PAY-2233 shows an unregistered action refused before any approval card appears. Click PAY-2231 or PAY-2232 in the queue so an approval card is on screen again, then pick the Acting as option labeled neither: expect a refusal and approve to get an audited 403. Click Force expiry → escalate on that same incident to watch a proposal hand off without executing.",
       "kind": "manual"
     }
   ],
