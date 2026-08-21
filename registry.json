@@ -2044,11 +2044,11 @@
     "demoQueries": [
       {
         "query": "Fire the sample canary alarm",
-        "expectedBehavior": "Click Fire canary alarm · PAY-2231. The incident joins the on-call queue, and the triage card names the service, its tier, the engineer on call, and the owner, all read from the recorded catalog. Probable cause appears with a supported badge and links to the past incident review it came from. In the evidence table that review is tagged precedent and the deploy runbook is tagged procedure. The approval gate offers Draft fix PR, and #eng-oncall shows the acknowledgement and the request for approval."
+        "expectedBehavior": "Fire the canary alarm, PAY-2231. The incident joins the on-call queue, and the triage card names the service, its tier, the engineer on call, and the owner, all read from the recorded catalog. Probable cause appears with a supported badge and links to the past incident review it came from. In the evidence table that review is tagged precedent and the deploy runbook is tagged procedure. The approval gate offers Draft fix PR, and #eng-oncall shows the acknowledgement and the request for approval."
       },
       {
         "query": "Triage an alert with no matching past incident",
-        "expectedBehavior": "Click No-precedent alarm · PAY-2232. The triage card says no probable cause was asserted, because no past incident matches this alarm signature, and no Probable cause section appears. The deploy runbook still ranks highest in the evidence table, tagged procedure. The proposed action drops from Draft fix PR to File tracking ticket, and both #eng-oncall and the audit log record that downgrade and why."
+        "expectedBehavior": "Fire the no-precedent alarm, PAY-2232. The triage card says no probable cause was asserted, because no past incident matches this alarm signature, and no Probable cause section appears. The deploy runbook still ranks highest in the evidence table, tagged procedure. The proposed action drops from Draft fix PR to File tracking ticket, and both #eng-oncall and the audit log record that downgrade and why."
       },
       {
         "query": "Approve the proposed action as the outsider",
@@ -2057,11 +2057,11 @@
       },
       {
         "query": "Let the approval window expire",
-        "expectedBehavior": "With an incident awaiting approval, click Force expiry → escalate. The status changes to escalated, the approve and reject buttons are disabled, and no action runs. #eng-oncall gets a message naming the escalation target from the recorded catalog and saying the action was not executed. The audit log records the same handoff."
+        "expectedBehavior": "With an incident awaiting approval, force the approval to expire. The status changes to escalated, the approve and reject buttons are disabled, and no action runs. #eng-oncall gets a message naming the escalation target from the recorded catalog and saying the action was not executed. The audit log records the same handoff."
       },
       {
         "query": "Have the Glean agent propose an action that is not registered",
-        "expectedBehavior": "Click Off-script agent · PAY-2233. The recorded agent proposes rollback-production-now, which is not in the action registry. Where the approval card would be, the dashboard says no action was offered and explains that the planner named an unregistered action. There are no approve or reject buttons, and the audit log records the refusal with glean-agent as the actor."
+        "expectedBehavior": "Fire the off-script agent alarm, PAY-2233. The recorded agent proposes rollback-production-now, which is not in the action registry. Where the approval card would be, the dashboard says no action was offered and explains that the planner named an unregistered action. There are no approve or reject buttons, and the audit log records the refusal with glean-agent as the actor."
       }
     ],
     "steps": [
