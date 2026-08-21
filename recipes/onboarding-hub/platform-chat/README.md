@@ -37,7 +37,7 @@ credentials.
 ## Platform Chat contract
 
 - Request: `glean.chat.create({ input, stream: false, store: false })` with
-  `includeExperimental: true`
+  `X_GLEAN_INCLUDE_EXPERIMENTAL=true`
 - Answer text: `ASSISTANT` messages with `OUTPUT_TEXT` content
 - Citations: `OUTPUT_TEXT.annotations[].sources[]`
 - Auth: caller credential only (`GLEAN_SERVER_URL` + `GLEAN_API_TOKEN`); no act-as

@@ -157,10 +157,10 @@ export async function askChat(
     return parsed;
   }
 
+  process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = 'true';
   const glean = new Glean({
     apiToken: requireEnv('GLEAN_API_TOKEN'),
     serverURL: requireEnv('GLEAN_SERVER_URL').replace(/\/$/u, ''),
-    includeExperimental: true,
   });
   let response: Awaited<ReturnType<typeof glean.chat.create>>;
   try {

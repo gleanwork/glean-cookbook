@@ -227,10 +227,10 @@ export async function chat(
     return parseChat(all[fixtureKey] ?? {});
   }
 
+  process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = 'true';
   const glean = new Glean({
     apiToken: requireEnv('GLEAN_API_TOKEN'),
     serverURL: backend(),
-    includeExperimental: true,
   });
   let response: Awaited<ReturnType<typeof glean.chat.create>>;
   try {
