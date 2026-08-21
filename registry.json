@@ -2003,7 +2003,7 @@
   {
     "id": "oncall-copilot",
     "title": "On-call Copilot",
-    "description": "Walk through evidence-grounded incident triage on recorded runbooks and past incidents, then adapt the same gate to your corpus, with wrong-person refusal, expiry without auto-approval, a closed action registry, and a complete audit trail.",
+    "description": "An on-call dashboard that takes an alarm to a proposed action and puts a person in front of that action. It names a cause only when a past incident backs it, turns away an approver who is neither on call nor the service owner, and escalates instead of approving itself when nobody answers. It runs on recorded incidents, so you can watch it refuse things before connecting it to anything.",
     "sidebarLabel": "On-call Copilot",
     "preview": {
       "path": "recipes/oncall-copilot/assets/preview.webp",
@@ -2037,57 +2037,61 @@
     },
     "languages": ["typescript"],
     "prerequisites": [
-      "Node 20+",
-      "Optional live adaptation: a Glean instance with a service catalog, runbooks, and incident reviews, plus a work email for OAuth sign-in or a scoped API token"
+      "Node 20 or newer",
+      "Nothing else. The walkthrough replays recorded Glean responses, so it needs no credentials and makes no network calls",
+      "Only if you later point it at your own instance: an indexed service catalog, runbooks, and incident reviews, plus a work email for sign-in or a Glean API token with the SEARCH and CHAT scopes. The agent planner also needs the AGENTS scope and a conversational agent ID. Plan on editing the catalog query and parser first, since they read the sample corpus's layout"
     ],
     "demoQueries": [
       {
         "query": "Fire the sample canary alarm",
-        "expectedBehavior": "The fixture-backed copilot acknowledges in the channel, resolves the service to its on-call engineer and owner from the recorded catalog, fans out retrieval, and posts a triage card. A matching past incident supports the probable cause; the runbook supports the proposed action."
+        "expectedBehavior": "Click Fire canary alarm · PAY-2231. The incident joins the on-call queue, and the triage card names the service, its tier, the engineer on call, and the owner, all read from the recorded catalog. Probable cause appears with a supported badge and links to the past incident review it came from. In the evidence table that review is tagged precedent and the deploy runbook is tagged procedure. The approval gate offers Draft fix PR, and #eng-oncall shows the acknowledgement and the request for approval."
       },
       {
         "query": "Triage an alert with no matching past incident",
-        "expectedBehavior": "The highest-scoring retrieved document will often be a runbook, so a relevance-ranked copilot would confidently blame whatever that runbook is about. With no matching signature and nothing in flight, this copilot asserts no cause. Ranking is not evidence."
+        "expectedBehavior": "Click No-precedent alarm · PAY-2232. The triage card says no probable cause was asserted, because no past incident matches this alarm signature, and no Probable cause section appears. The deploy runbook still ranks highest in the evidence table, tagged procedure. The proposed action drops from Draft fix PR to File tracking ticket, and both #eng-oncall and the audit log record that downgrade and why."
       },
       {
-        "query": "Approve the proposed action as someone who is not on call",
-        "expectedBehavior": "Choose the outsider under Acting as, then approve. The gate refuses the request with 403 and audits it against that actor. The allowed set is the on-call engineer and service owner read from the recorded service catalog. The incident stays awaiting approval.",
+        "query": "Approve the proposed action as the outsider",
+        "expectedBehavior": "Fire an alarm, choose not.on.call@sample.example.com under Acting as, then click Approve & execute. The approval card warns before you click that this person is not on call and does not own the service, and names who may approve. The request comes back 403, the audit log gains a refused row against that actor, and the incident stays at awaiting-approval.",
         "permissionDifferentiated": true
       },
       {
         "query": "Let the approval window expire",
-        "expectedBehavior": "The proposal escalates to the target named in the recorded service catalog and is NOT executed. Auto-approving on timeout would invert the point of a gate. The escalation is audited and posted to the channel."
+        "expectedBehavior": "With an incident awaiting approval, click Force expiry → escalate. The status changes to escalated, the approve and reject buttons are disabled, and no action runs. #eng-oncall gets a message naming the escalation target from the recorded catalog and saying the action was not executed. The audit log records the same handoff."
       },
       {
         "query": "Have the Glean agent propose an action that is not registered",
-        "expectedBehavior": "Click Off-script agent · PAY-2233. The action is refused at proposal time and audited, with no approval card offered. An agent that can describe arbitrary actions into existence has production access, whatever its prompt says."
+        "expectedBehavior": "Click Off-script agent · PAY-2233. The recorded agent proposes rollback-production-now, which is not in the action registry. Where the approval card would be, the dashboard says no action was offered and explains that the planner named an unregistered action. There are no approve or reject buttons, and the audit log records the refusal with glean-agent as the actor."
       }
     ],
     "steps": [
       {
-        "title": "Scaffold the project",
+        "title": "Copy the project onto your machine",
         "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/oncall-copilot oncall-copilot",
+        "description": "Creates an oncall-copilot folder in whatever directory you are in, holding the server, the dashboard, and the recorded incidents. Stay in that same directory for the rest of the steps, since each command changes into the folder itself.",
         "kind": "scaffold"
       },
       {
         "title": "Install dependencies",
         "command": "cd oncall-copilot && npm install",
+        "description": "Installs the few packages the TypeScript server needs. Everything runs on your machine, and nothing is deployed anywhere.",
         "kind": "install"
       },
       {
-        "title": "Watch the governance hold, with no credentials",
+        "title": "See what it refuses before connecting anything",
         "command": "cd oncall-copilot && npm run verify:fixture",
-        "description": "Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited.",
+        "description": "Runs the unit tests, then replays the recorded incidents through the whole flow and checks the refusals: the gate turns away an actor who is neither on call nor the service owner, an unapproved proposal escalates without executing, an action the planner invented is refused, and a code-changing action with no supported cause drops to filing a ticket. The audit log records each of those decisions. The command reads no credentials and makes no network calls.",
         "kind": "manual"
       },
       {
-        "title": "Run it",
+        "title": "Open the dashboard",
         "command": "cd oncall-copilot && npm start",
+        "description": "Starts the local server and prints a Local URL. Open that URL in a browser. The dashboard replays the same recorded Glean responses, so there is nothing to sign in to.",
         "kind": "run"
       },
       {
-        "title": "Exercise the gate",
-        "description": "Fire all three sample alarms. Confirm the first cause cites a past incident, the second asserts no cause and offers an investigation ticket, the off-script agent action is refused before an approval card appears, choosing the outsider under Acting as produces an audited 403, and forcing expiry escalates without execution.",
+        "title": "Fire the three alarms",
+        "description": "Fire canary alarm · PAY-2231 shows a probable cause with the past incident it rests on. No-precedent alarm · PAY-2232 shows the copilot declining to name a cause and dropping the proposed fix to a ticket. Off-script agent · PAY-2233 shows an unregistered action refused before any approval card appears. Click PAY-2231 or PAY-2232 in the queue so an approval card is on screen again, then choose not.on.call@sample.example.com under Acting as and approve to get an audited 403. Click Force expiry → escalate on that same incident to watch a proposal hand off without executing.",
         "kind": "manual"
       }
     ],
@@ -2159,7 +2163,7 @@
       }
     ],
     "content": {
-      "problem": "An alarm fires at 3am. The runbook, the review of the last time this happened, who owns the service, and what it depends on all exist in Glean already. They just sit in different systems, and you search them one at a time while the graphs get worse.\n\nThe retrieval is the easy part. What makes a copilot safe to point at a production service is what it refuses to do, so that is what you build here. The gate turns away anyone who is not on call. A proposal nobody approves in time escalates instead of quietly approving itself. An action the planner invented never reaches a human. Every attempt lands in the audit log, including the refused ones.\n\nKnow the edges before you point it anywhere real. Live Search, Chat, and optional Agents calls hit your instance. The bundled alarm buttons always fire payments-service. Catalog and evidence lookups expect the sample URL layout under /services/, /runbooks/, and /incidents/. The three registered actions are simulated in-process, and the acting user is asserted rather than authenticated.",
+      "problem": "An alarm fires at 3am. The runbook, the review of the last time this happened, who owns the service, and what it depends on all exist in Glean already. They just sit in different systems, and you search them one at a time while the graphs get worse.\n\nThe retrieval is the easy part. What makes a copilot safe to point at a production service is what it refuses to do, so that is what you build here. The gate turns away anyone who is neither on call nor the service owner. A proposal nobody approves in time escalates instead of quietly approving itself. An action the planner invented never reaches a human. The audit log records approvals, refusals, executions, failures, rejections, and escalations.\n\nKnow the edges before you point it anywhere real. Live Search, Chat, and optional Agents calls hit your instance. The bundled alarm buttons always fire payments-service. Catalog and evidence lookups expect the sample URL layout under /services/, /runbooks/, and /incidents/. The three registered actions are simulated in-process, and the acting user is asserted rather than authenticated.",
       "takeItFurther": [
         "Persist incidents and the audit log. An audit log you can lose by restarting a process is not an audit log.",
         "Add the rest of the dashboard: response-time rollups, an expiring-soon lane, and an end-of-shift handoff summary.",
