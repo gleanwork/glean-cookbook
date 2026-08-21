@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 ## Before you start
 
-- Node 20.19 or 22.12+
+- Node 20.19+ or 22.12+
 - Your work email, so setup can find your Glean tenant
 - Onboarding content already indexed in Glean, because the checklist answers from your own docs
 - Web SDK path only: you are already signed in to Glean in your normal browser
