@@ -12,8 +12,7 @@ npm install
 npm run configure
 ```
 
-`npm run configure` finds your Glean tenant from your work email and writes `.env.local`. This path
-uses the Glean session already in your browser, so there is no `login` command.
+`npm run configure` finds your Glean tenant from your work email and writes `.env.local`.
 
 `public/steps.json` is already in the project. Customize it with your checklist before running the
 app, or keep the sample steps. Each step needs a unique `id`, a `title`, a `group` (`it`, `hr`,

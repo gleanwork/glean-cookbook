@@ -44,7 +44,7 @@ Web SDK variant — checklist + renderChat
    ```
 
 3. **Find your Glean tenant**
-   This path uses the Glean session already in your browser, so there is no sign-in command. Your email is used once to find which Glean tenant you belong to. The command creates .env.local and fills in VITE_GLEAN_BACKEND.
+   Your email is used once to find which Glean tenant you belong to. The command creates .env.local and fills in VITE_GLEAN_BACKEND.
 
    ```bash
    cd onboarding-hub && npm run configure -- --email "<work-email>"

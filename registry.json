@@ -1887,7 +1887,7 @@
           {
             "title": "Find your Glean tenant",
             "command": "cd onboarding-hub && npm run configure -- --email \"<work-email>\"",
-            "description": "This path uses the Glean session already in your browser, so there is no sign-in command. Your email is used once to find which Glean tenant you belong to. The command creates .env.local and fills in VITE_GLEAN_BACKEND.",
+            "description": "Your email is used once to find which Glean tenant you belong to. The command creates .env.local and fills in VITE_GLEAN_BACKEND.",
             "kind": "configure"
           },
           {
