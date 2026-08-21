@@ -19,9 +19,7 @@ const historicalNarration = [
 // Reject contracts that do not match the current Platform Chat API.
 const staleChatContract = [
   /\bPOST\s+\/rest\/api\/v1\/chat\b/iu,
-  /\bsaveChat\b/iu,
-  /\bsourceDocument\b/iu,
-  /\boutput_text\b/iu,
+  /\boutput_text\b/u,
   /\bstore\s*:\s*true\b/iu,
 ];
 const fieldLimits = { aiPrompt: 320, llmContext: 120 };

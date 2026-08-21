@@ -20,7 +20,7 @@ Build "Customer 360: an account page built from your own content" following http
 
 ### Platform Search Chat
 
-Path A — parallel Platform Search tiles + Client Chat synthesis
+Path A — parallel Platform Search tiles + Platform Chat synthesis
 
 {{> demo-mode}}
 
