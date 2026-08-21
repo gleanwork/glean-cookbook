@@ -6,9 +6,6 @@ import { fileURLToPath } from 'node:url';
 import { listenLocal } from './lib/cookbook-server.js';
 import { askPlatformChat, type ConversationTurn } from './lib/chat.js';
 
-// Path B: you own the UI; the server calls Platform Chat and renders the answer
-// plus its citations.
-
 const MAX_CONVERSATION_TURNS = 10;
 const MAX_TURN_CHARS = 8_000;
 

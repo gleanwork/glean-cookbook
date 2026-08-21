@@ -66,6 +66,18 @@ function headers(): Record<string, string> {
   };
 }
 
+function safeHttpUrl(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:'
+      ? value
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function readFixture<T>(name: string): T {
   return JSON.parse(
     fs.readFileSync(path.join(fixtureDir(), name), 'utf8'),
@@ -185,8 +197,9 @@ export function parseChat(data: unknown): Cited {
     for (const source of annotation.sources ?? []) {
       const title = sourceTitle(source);
       if (!title) continue;
+      const url = safeHttpUrl(source.url);
       const key =
-        source.url ??
+        url ??
         source.document_id ??
         source.person_id ??
         source.file_id ??
@@ -194,7 +207,7 @@ export function parseChat(data: unknown): Cited {
       if (key && !citations.has(key)) {
         citations.set(key, {
           title,
-          ...(source.url ? { url: source.url } : {}),
+          ...(url ? { url } : {}),
         });
       }
     }

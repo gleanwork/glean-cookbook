@@ -53,6 +53,8 @@ export interface ChatAnswer {
   citations: ChatCitation[];
 }
 
+const MIN_ANSWER_CHARS = 20;
+
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
@@ -128,11 +130,9 @@ export function parsePlatformChatResponse(data: unknown): ChatAnswer {
 export function withEscalate(parsed: ChatAnswer): ChatAnswer & {
   escalate: boolean;
 } {
-  // Empty, thin, or uncited answers must escalate — inventing an onboarding
-  // step is worse than routing to HR/IT. Uncited prose is treated the same.
   const escalate =
     !parsed.answer.trim() ||
-    parsed.answer.trim().length < 20 ||
+    parsed.answer.trim().length < MIN_ANSWER_CHARS ||
     parsed.citations.length === 0;
   return { ...parsed, escalate };
 }
@@ -187,7 +187,7 @@ export async function askPlatformChat(
     const parsed = parsePlatformChatResponse(recorded);
     if (!parsed.answer) {
       throw new Error(
-        'Glean returned no answer text after two attempts. Check the server logs and try again.',
+        'The recorded Platform Chat fixture contains no answer text.',
       );
     }
     return withEscalate(parsed);

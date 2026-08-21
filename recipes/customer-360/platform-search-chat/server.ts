@@ -7,10 +7,6 @@ import { listenLocal } from './lib/cookbook-server.js';
 import { askPlatformChat } from './lib/chat.js';
 import { loadAccount } from './lib/search.js';
 
-// Path A: Platform Search tiles + Platform Chat synthesis.
-// Search: glean.search.query (POST /api/search) — @gleanwork/api-client@0.18.0
-// Chat: SDK call to POST /api/chat.
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
 

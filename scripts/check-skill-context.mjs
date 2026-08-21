@@ -16,8 +16,7 @@ const historicalNarration = [
   /\bas[- ]of\b/iu,
   /\blive[- ]test\b/iu,
 ];
-// Reject contracts that do not match the current Platform Chat API.
-const staleChatContract = [
+const forbiddenRecipeChatPatterns = [
   /\bPOST\s+\/rest\/api\/v1\/chat\b/iu,
   /\boutput_text\b/u,
   /\bstore\s*:\s*true\b/iu,
@@ -45,7 +44,7 @@ for (const entry of fs.readdirSync(recipesDir, { withFileTypes: true })) {
         );
       }
     }
-    for (const pattern of staleChatContract) {
+    for (const pattern of forbiddenRecipeChatPatterns) {
       if (pattern.test(value)) {
         failures.push(
           `${recipe.id}: ${field} contains the stale Platform Chat contract (${pattern.source})`,

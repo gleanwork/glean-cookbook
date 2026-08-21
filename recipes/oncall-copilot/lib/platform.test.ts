@@ -75,3 +75,65 @@ test('parseChat rejects a Client Chat envelope', () => {
     /did not return a completed response/,
   );
 });
+
+test('parseChat joins output, deduplicates links, and retains id-only evidence', () => {
+  const result = parseChat({
+    object: 'RESPONSE',
+    status: 'COMPLETED',
+    output: [
+      {
+        type: 'MESSAGE',
+        role: 'ASSISTANT',
+        content: [
+          {
+            type: 'OUTPUT_TEXT',
+            text: 'Canary failures match ',
+            annotations: [],
+          },
+          {
+            type: 'OUTPUT_TEXT',
+            text: 'the prior incident.',
+            annotations: [
+              {
+                type: 'CITATION',
+                sources: [
+                  {
+                    type: 'DOCUMENT',
+                    document_id: 'PAY-2114',
+                    title: 'PAY-2114 incident review',
+                    url: 'https://example.test/incidents/PAY-2114',
+                  },
+                  {
+                    type: 'DOCUMENT',
+                    document_id: 'PAY-2114-copy',
+                    title: 'Duplicate link',
+                    url: 'https://example.test/incidents/PAY-2114',
+                  },
+                  {
+                    type: 'DOCUMENT',
+                    document_id: 'runbook-only-id',
+                  },
+                  {
+                    type: 'DOCUMENT',
+                    document_id: 'unsafe',
+                    title: 'Unsafe link',
+                    url: 'javascript:alert(1)',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  assert.equal(result.text, 'Canary failures match the prior incident.');
+  assert.deepEqual(result.citations, [
+    {
+      title: 'PAY-2114 incident review',
+      url: 'https://example.test/incidents/PAY-2114',
+    },
+    { title: 'runbook-only-id' },
+    { title: 'Unsafe link' },
+  ]);
+});
