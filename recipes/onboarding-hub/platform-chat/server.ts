@@ -127,7 +127,10 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: 'question is required' }));
         return;
       }
-      const result = await askPlatformChat(question, parseHistory(body.history));
+      const result = await askPlatformChat(
+        question,
+        parseHistory(body.history),
+      );
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
     } catch (error) {
@@ -176,7 +179,7 @@ function parseHistory(raw: unknown): ConversationTurn[] {
         Boolean(turn) &&
         typeof turn === 'object' &&
         ((turn as ConversationTurn).author === 'USER' ||
-          (turn as ConversationTurn).author === 'GLEAN_AI') &&
+          (turn as ConversationTurn).author === 'ASSISTANT') &&
         typeof (turn as ConversationTurn).text === 'string',
     )
     .map((turn) => ({
@@ -186,4 +189,4 @@ function parseHistory(raw: unknown): ConversationTurn[] {
     .filter((turn) => turn.text.length > 0);
 }
 
-listenLocal(server, 'Onboarding Hub (Client Chat)');
+listenLocal(server, 'Onboarding Hub (Platform Chat)');

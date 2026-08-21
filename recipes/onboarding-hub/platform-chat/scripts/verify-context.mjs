@@ -162,7 +162,7 @@ try {
 
   const followUp = 'Where is that portal?';
   const olderTurns = Array.from({ length: 10 }, (_, index) => ({
-    author: index % 2 === 0 ? 'USER' : 'GLEAN_AI',
+    author: index % 2 === 0 ? 'USER' : 'ASSISTANT',
     text: `older turn ${index}`,
   }));
   await post(base, {
@@ -170,7 +170,7 @@ try {
     history: [
       ...olderTurns,
       { author: 'USER', text: firstQuestion },
-      { author: 'GLEAN_AI', text: first.answer },
+      { author: 'ASSISTANT', text: first.answer },
     ],
   });
 
@@ -180,13 +180,13 @@ try {
   if ('conversation_id' in sent)
     throw new Error('ephemeral replay must not set conversation_id');
   const turns = sent.input.map((message) => ({
-    author: message.role === 'ASSISTANT' ? 'GLEAN_AI' : 'USER',
+    author: message.role,
     text: message.content,
   }));
   const expected = [
     ...olderTurns.slice(2),
     { author: 'USER', text: firstQuestion },
-    { author: 'GLEAN_AI', text: first.answer },
+    { author: 'ASSISTANT', text: first.answer },
     { author: 'USER', text: followUp },
   ];
   if (JSON.stringify(turns) !== JSON.stringify(expected)) {

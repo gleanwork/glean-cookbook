@@ -8,7 +8,7 @@
     "alt": "On-call Copilot triaging an alert with evidence and an approval gate",
     "caption": "Evidence-ranked triage with a human approval gate before action."
   },
-  "surfaces": ["platform-api", "client-api", "agents", "tools"],
+  "surfaces": ["platform-api", "agents", "tools"],
   "status": "showcase",
   "category": "agent",
   "level": "Advanced",
@@ -145,7 +145,7 @@
     }
   ],
   "aiPrompt": "Build the On-call Copilot following the oncall-copilot recipe. Start with the recorded fixtures; they are the supported demo path. Only a matching past incident may support a cause, while a runbook may support a procedure. Do not offer a code-changing action without a supported cause. Gate actions behind authorized human approval, expiry, a closed action registry, and an audit log. The acting user is asserted, not authenticated. Actions are simulated in-process. Treat live mode as a corpus adaptation that requires changing the catalog query, parser, identity mapping, and evidence URL rules.",
-  "llmContext": "Use the recorded Search, Chat, and Agent responses for the default run. The app runs as the caller, so its approval check is application policy, not impersonation. Classify precedent from /incidents/ and procedure from /runbooks/ in URLs. Only a matching past incident may support a cause. A mutating action needs a supported cause, an authorized approver, a registered action id, and an unexpired proposal. Unauthorized approvals, executions, and expirations are audited. Registered actions are in-process simulations. Fixture mode permits actor assertion so the dashboard can demonstrate the 403. Live mode refuses it unless INCIDENT_DEMO_MODE is true. Do not claim that npm run start:live works against an arbitrary Glean corpus without adapting the parsers.",
+  "llmContext": "Use the recorded Search, Platform Chat, and Agent responses for the default run. Live Platform Chat uses glean.chat.create with stream:false, store:false, and includeExperimental:true. The app runs as the caller, so its approval check is application policy, not impersonation. Classify precedent from /incidents/ and procedure from /runbooks/ in URLs. Only a matching past incident may support a cause. A mutating action needs a supported cause, an authorized approver, a registered action id, and an unexpired proposal. Unauthorized approvals, executions, and expirations are audited. Registered actions are in-process simulations. Fixture mode permits actor assertion so the dashboard can demonstrate the 403. Live mode refuses it unless INCIDENT_DEMO_MODE is true. Do not claim that npm run start:live works against an arbitrary Glean corpus without adapting the parsers.",
   "goDependency": false,
   "featured": true,
   "tags": [

@@ -123,8 +123,7 @@ function assertChatFixtureContract() {
     if (body.store !== false) throw new Error(`${key}: store must be false`);
     const contents = (body.output ?? [])
       .filter(
-        (message) =>
-          message.type === 'MESSAGE' && message.role === 'ASSISTANT',
+        (message) => message.type === 'MESSAGE' && message.role === 'ASSISTANT',
       )
       .flatMap((message) => message.content ?? [])
       .filter((content) => content.type === 'OUTPUT_TEXT');

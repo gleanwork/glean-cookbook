@@ -40,7 +40,7 @@ bucket. Each row says why its evidence needs review.
 
 ## Point it at your own content
 
-Live mode calls Client Chat with your credential. It also needs a reviewed list
+Live mode calls Platform Chat with your credential. It also needs a reviewed list
 of document URL prefixes that may support customer-facing answers. Do not use
 the sample questionnaire to test your company content. Its questions and
 recorded answers describe a company that does not exist.
@@ -111,8 +111,18 @@ security control.
 - **none** means there is nothing citable. The app leaves the answer blank and
   routes the question to a subject matter expert.
 
+`classify()` controls the answer text and citations a row may display. Rows routed
+to a human must have an empty answer and no citations, even when Platform Chat
+returns fluent prose. The fixture suite enforces this boundary with a response
+that contains a plausible answer for an unsupported attachment request.
+
 Approval is declared through reviewed URL prefixes. The app does not infer it
 from wording.
+
+Platform Chat can complete before a run produces a text block. Treat that as
+an unfinished call, not evidence that the corpus lacks an answer. Retry once; if
+the response is still unfinished, set `status: 'failed'` and `confidence: null`,
+and show a retry action. Keep explicit refusals as settled answers.
 
 ## Boundaries to address before deployment
 
@@ -132,7 +142,7 @@ from wording.
 | ------------------------- | ---------------------------------------------------------- |
 | `server.ts`               | Routes and streamed progress for the drafting run          |
 | `lib/questionnaire.ts`    | CSV parsing, column mapping, and exact deduplication       |
-| `lib/chat.ts`             | Client Chat request and response parsing                   |
+| `lib/chat.ts`             | Platform Chat request and response parsing                 |
 | `lib/grounding.ts`        | Evidence classification                                    |
 | `lib/approved-sources.ts` | Sources cleared for customer-facing answers                |
 | `lib/answer-library.ts`   | Local reuse of accepted answers                            |

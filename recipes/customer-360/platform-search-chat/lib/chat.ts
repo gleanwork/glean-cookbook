@@ -186,7 +186,9 @@ export async function askPlatformChat(question: string): Promise<ChatAnswer> {
     );
   }
   if (typeof response === 'string') {
-    throw new Error('Platform Chat returned a stream for a non-stream request.');
+    throw new Error(
+      'Platform Chat returned a stream for a non-stream request.',
+    );
   }
   return requireAnswer(parsePlatformChatResponse(response));
 }

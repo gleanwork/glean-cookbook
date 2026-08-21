@@ -72,9 +72,7 @@ test('parsePlatformChatResponse keeps refusal distinct from unfinished', () => {
       {
         type: 'MESSAGE',
         role: 'ASSISTANT',
-        content: [
-          { type: 'OUTPUT_TEXT', text: '', annotations: [] },
-        ],
+        content: [{ type: 'OUTPUT_TEXT', text: '', annotations: [] }],
       },
     ],
   };

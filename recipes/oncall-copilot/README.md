@@ -54,7 +54,7 @@ was offered, and the refusal is in the audit log.
 
 ## Point it at your own corpus
 
-`npm run start:live` calls Platform Search and Client Chat with the credentials
+`npm run start:live` calls Platform Search and Platform Chat with the credentials
 in `.env`. It cannot infer how your service catalog is organized. Adapt these
 assumptions first:
 

@@ -5,7 +5,7 @@ knows about that customer. It keeps a grounded assistant above the fold beside
 compact evidence sections and deterministic source-coverage counts. Built two ways:
 
 - **[`platform-search-chat/`](platform-search-chat/)** — parallel Platform Search tiles plus
-  Client Chat synthesis.
+  Platform Chat synthesis.
 - **[`platform-agents/`](platform-agents/)** — same page UX; journey / saved prompts /
   follow-ups via `glean.agents.createRun`.
 

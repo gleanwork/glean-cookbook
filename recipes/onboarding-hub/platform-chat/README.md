@@ -1,6 +1,6 @@
-# Onboarding Hub — Client Chat path
+# Onboarding Hub — Platform Chat path
 
-Checklist + progress + Glean Client Chat. Steps are server-owned through env/file configuration.
+Checklist + progress + Glean Platform Chat. Steps are server-owned through env/file configuration.
 The app runs as you; there is no act-as / impersonation.
 
 ## Setup
@@ -34,11 +34,12 @@ browser.
 `npm run verify:fixture` runs the same checks against recorded Sample Corp answers and needs no
 credentials.
 
-## Client Chat contract
+## Platform Chat contract
 
-- Request: `POST /rest/api/v1/chat` with `saveChat: false` and a USER message fragment
-- Answer text: `CONTENT` messages from `GLEAN_AI`
-- Citations: `fragments[].citation.sourceDocument`
+- Request: `glean.chat.create({ input, stream: false, store: false })` with
+  `includeExperimental: true`
+- Answer text: `ASSISTANT` messages with `OUTPUT_TEXT` content
+- Citations: `OUTPUT_TEXT.annotations[].sources[]`
 - Auth: caller credential only (`GLEAN_SERVER_URL` + `GLEAN_API_TOKEN`); no act-as
 - Empty answer text retries once, then returns a transport error
 

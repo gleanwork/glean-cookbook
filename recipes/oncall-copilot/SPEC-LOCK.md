@@ -16,9 +16,10 @@ catalog lookup, identity parsing, and evidence roles to their corpus.
 
 ## Contracts
 
-- Platform Search retrieves evidence; Client Chat synthesizes; Platform Agents is an optional
+- Platform Search retrieves evidence; Platform Chat synthesizes; Platform Agents is an optional
   orchestration path.
-- Client Chat verification sets `saveChat: false`; empty output is a retryable failure.
+- Platform Chat verification sets `stream: false` and `store: false`; empty output is a retryable
+  failure.
 - Approval is limited to the resolved on-call engineer and service owners.
 - Fixture mode may assert an acting user so the dashboard can demonstrate a 403.
   Live mode refuses that header unless the explicit demo flag is enabled.

@@ -16,13 +16,12 @@ const historicalNarration = [
   /\bas[- ]of\b/iu,
   /\blive[- ]test\b/iu,
 ];
-// These are the stale Platform Chat contract that prompted this guard. Recipe
-// skills now teach Client Chat; letting any of these back into either field
-// would make a fresh build target the known-unavailable endpoint again.
+// Reject contracts that do not match the current Platform Chat API.
 const staleChatContract = [
-  /\bPOST\s+\/api\/chat\b/iu,
+  /\bPOST\s+\/rest\/api\/v1\/chat\b/iu,
+  /\bsaveChat\b/iu,
+  /\bsourceDocument\b/iu,
   /\boutput_text\b/iu,
-  /annotations\[\]\.sources/iu,
   /\bstore\s*:\s*true\b/iu,
 ];
 const fieldLimits = { aiPrompt: 320, llmContext: 120 };

@@ -39,7 +39,7 @@ export interface PlatformChatResponse {
 }
 
 export interface ConversationTurn {
-  author: 'USER' | 'GLEAN_AI';
+  author: 'USER' | 'ASSISTANT';
   text: string;
 }
 
@@ -153,7 +153,7 @@ export function buildPlatformChatRequest(
     store: false,
     input: [...history, { author: 'USER' as const, text: input }].map(
       (message) => ({
-        role: message.author === 'GLEAN_AI' ? 'ASSISTANT' : 'USER',
+        role: message.author,
         content: message.text,
       }),
     ),
@@ -201,7 +201,9 @@ export async function askPlatformChat(
 
   let response: Awaited<ReturnType<typeof glean.chat.create>>;
   try {
-    response = await glean.chat.create(buildPlatformChatRequest(input, history));
+    response = await glean.chat.create(
+      buildPlatformChatRequest(input, history),
+    );
   } catch (error) {
     if (error instanceof PlatformProblemDetailError) {
       console.error(
@@ -215,7 +217,9 @@ export async function askPlatformChat(
   }
 
   if (typeof response === 'string') {
-    throw new Error('Platform Chat returned a stream for a non-stream request.');
+    throw new Error(
+      'Platform Chat returned a stream for a non-stream request.',
+    );
   }
   const parsed = parsePlatformChatResponse(response);
   if (!parsed.answer) {

@@ -55,7 +55,7 @@ frame URL instead of using `initialMessage`, so the chat visibly reloads and sen
 against `@gleanwork/web-sdk` 2.4.0.
 
 If you need the history to carry, own the transcript yourself — that is what the
-[Client Chat variant](../platform-chat/) does.
+[Platform Chat variant](../platform-chat/) does.
 
-The Client Chat variant owns the response UI and can also show an application-level escalation state;
+The Platform Chat variant owns the response UI and can also show an application-level escalation state;
 see [`../platform-chat/`](../platform-chat/).

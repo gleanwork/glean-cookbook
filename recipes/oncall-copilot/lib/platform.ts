@@ -167,8 +167,7 @@ export function parseChat(data: unknown): Cited {
 
   const contents = (response.output ?? [])
     .filter(
-      (message) =>
-        message.type === 'MESSAGE' && message.role === 'ASSISTANT',
+      (message) => message.type === 'MESSAGE' && message.role === 'ASSISTANT',
     )
     .flatMap((message) => message.content ?? [])
     .filter((content) => content.type === 'OUTPUT_TEXT');
@@ -178,10 +177,7 @@ export function parseChat(data: unknown): Cited {
     .join('')
     .trim();
 
-  const citations = new Map<
-    string,
-    { title: string; url?: string }
-  >();
+  const citations = new Map<string, { title: string; url?: string }>();
   for (const annotation of contents.flatMap(
     (content) => content.annotations ?? [],
   )) {
@@ -240,7 +236,9 @@ export async function chat(
     throw error;
   }
   if (typeof response === 'string') {
-    throw new Error('Platform Chat returned a stream for a non-stream request.');
+    throw new Error(
+      'Platform Chat returned a stream for a non-stream request.',
+    );
   }
   const parsed = parseChat(response);
   if (parsed.text) return parsed;

@@ -25,7 +25,7 @@ test('buildPlatformChatRequest keeps history ephemeral and maps assistant roles'
   assert.deepEqual(
     buildPlatformChatRequest('How do I set up VPN?', [
       { author: 'USER', text: 'What should I do on my first day?' },
-      { author: 'GLEAN_AI', text: 'Start with the checklist.' },
+      { author: 'ASSISTANT', text: 'Start with the checklist.' },
     ]),
     {
       stream: false,
