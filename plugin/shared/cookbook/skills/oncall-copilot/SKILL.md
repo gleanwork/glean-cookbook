@@ -42,5 +42,5 @@ Build "On-call Copilot" following https://developers.glean.com/cookbook/oncall-c
 
    {{> run-local-web}}
 
-5. **Fire the three alarms**
-   Fire canary alarm · PAY-2231 shows a probable cause with the past incident it rests on. No-precedent alarm · PAY-2232 shows the copilot declining to name a cause and dropping the proposed fix to a ticket. Off-script agent · PAY-2233 shows an unregistered action refused before any approval card appears. Click PAY-2231 or PAY-2232 in the queue so an approval card is on screen again, then pick the Acting as option labeled neither: expect a refusal and approve to get an audited 403. Click Force expiry → escalate on that same incident to watch a proposal hand off without executing.
+5. **Fire the alarms and test the gate**
+   The trigger row has one button per alarm. PAY-2231 gets a probable cause and the past incident it rests on. PAY-2232 gets no cause, because no past incident matches it, and its proposed fix drops to filing a ticket. PAY-2233 has the agent name an action that is not in the registry, so it is refused before any approval card appears. For a refused approval, select PAY-2231 or PAY-2232 in the queue, switch Acting as to the person who is neither on call nor the owner, and approve anyway: the request comes back 403 and the audit log records it. To watch a proposal hand off without executing, force the approval on that same incident to expire.
