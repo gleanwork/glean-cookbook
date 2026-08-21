@@ -112,7 +112,30 @@ const incident = async (id) =>
 
 const reset = () => post('/api/reset');
 
+function assertChatFixtureContract() {
+  const recorded = JSON.parse(
+    fs.readFileSync(path.join(root, 'fixtures', 'chat-responses.json'), 'utf8'),
+  );
+  for (const [key, body] of Object.entries(recorded)) {
+    if (body.object !== 'RESPONSE' || body.status !== 'COMPLETED') {
+      throw new Error(`${key}: expected a completed Platform Chat response`);
+    }
+    if (body.store !== false) throw new Error(`${key}: store must be false`);
+    const contents = (body.output ?? [])
+      .filter(
+        (message) =>
+          message.type === 'MESSAGE' && message.role === 'ASSISTANT',
+      )
+      .flatMap((message) => message.content ?? [])
+      .filter((content) => content.type === 'OUTPUT_TEXT');
+    if (contents.length === 0) {
+      throw new Error(`${key}: no ASSISTANT OUTPUT_TEXT content`);
+    }
+  }
+}
+
 async function main() {
+  if (useFixture) assertChatFixtureContract();
   const child = boot();
   try {
     if (!(await waitUp())) {
