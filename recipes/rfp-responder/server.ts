@@ -177,6 +177,13 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'GET' && req.url === '/api/config') {
+      json(res, 200, {
+        fixtureMode: process.env.GLEAN_USE_FIXTURE === 'true',
+      });
+      return;
+    }
+
     // Convenience for the demo: load the committed questionnaire fixture.
     if (req.method === 'GET' && req.url === '/api/sample') {
       const csv = fs.readFileSync(
@@ -380,7 +387,7 @@ if (
   !process.env.RFP_APPROVED_SOURCE_PREFIXES?.trim()
 ) {
   throw new Error(
-    'RFP_APPROVED_SOURCE_PREFIXES is required for live use; list the Glean URL prefixes cleared for customer-facing answers.',
+    'RFP_APPROVED_SOURCE_PREFIXES is required by npm run start:live. Add the comma-separated Glean URL prefixes cleared for customer-facing answers to .env, or use npm start for the recorded walkthrough.',
   );
 }
 listenLocal(server, 'RFP responder', () => {

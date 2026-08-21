@@ -154,19 +154,35 @@ async function readSse(response, onEvent) {
 }
 
 async function main() {
-  if (useFixture) assertFixtureContract();
+  if (useFixture) {
+    assertFixtureContract();
+    const scripts = JSON.parse(
+      fs.readFileSync(path.join(root, 'package.json'), 'utf8'),
+    ).scripts;
+    check(
+      'npm start selects fixture mode',
+      scripts.start === 'GLEAN_USE_FIXTURE=true tsx server.ts',
+    );
+    check(
+      'npm run start:live selects live mode',
+      scripts['start:live'] === 'GLEAN_USE_FIXTURE=false tsx server.ts',
+    );
+    await checkLiveModeGate();
+  }
 
   console.log(`\nBooting server (${useFixture ? 'fixture' : 'live'} mode)`);
+  const childEnv = {
+    ...process.env,
+    PORT: String(PORT),
+  };
+  delete childEnv.GLEAN_USE_FIXTURE;
+  if (useFixture) childEnv.RFP_APPROVED_SOURCE_PREFIXES = '';
   const child = spawn(
-    process.execPath,
-    [path.join(root, 'node_modules/tsx/dist/cli.mjs'), 'server.ts'],
+    'npm',
+    useFixture ? ['start'] : ['run', 'start:live'],
     {
       cwd: root,
-      env: {
-        ...process.env,
-        PORT: String(PORT),
-        GLEAN_USE_FIXTURE: String(useFixture),
-      },
+      env: childEnv,
       stdio: ['ignore', 'pipe', 'pipe'],
       detached: true,
     },
@@ -181,6 +197,11 @@ async function main() {
       return;
     }
     check('server started', true);
+    const config = await (await fetch(`${BASE}/api/config`)).json();
+    check(
+      `server reports ${useFixture ? 'fixture' : 'live'} mode`,
+      config.fixtureMode === useFixture,
+    );
 
     // ---- Step 1 + 2: parse, map, dedup -------------------------------------
     console.log('\nParse and dedup');
@@ -499,6 +520,40 @@ async function main() {
   if (useFixture) await checkUnfinishedRun();
 }
 
+async function checkLiveModeGate() {
+  console.log('\nLive mode requires approved source prefixes');
+  const port = await availablePort();
+  const child = spawn('npm', ['run', 'start:live'], {
+    cwd: root,
+    env: {
+      ...process.env,
+      PORT: String(port),
+      RFP_APPROVED_SOURCE_PREFIXES: '',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+    detached: true,
+  });
+  let output = '';
+  child.stdout.on('data', (chunk) => (output += chunk));
+  child.stderr.on('data', (chunk) => (output += chunk));
+
+  const exitCode = await Promise.race([
+    new Promise((resolve) => child.once('close', resolve)),
+    new Promise((resolve) => setTimeout(() => resolve('timeout'), 10_000)),
+  ]);
+  if (exitCode === 'timeout') await stopProcessGroup(child);
+
+  check(
+    'npm run start:live fails without approved source prefixes',
+    typeof exitCode === 'number' && exitCode !== 0,
+    `exit ${exitCode}`,
+  );
+  check(
+    'live-mode failure names RFP_APPROVED_SOURCE_PREFIXES',
+    output.includes('RFP_APPROVED_SOURCE_PREFIXES'),
+  );
+}
+
 /**
  * Replays the questionnaire with SEC-08 recorded as an unfinished run, and
  * asserts the row reports a failed call rather than absent evidence. Runs
@@ -507,17 +562,14 @@ async function main() {
 async function checkUnfinishedRun() {
   const port = PORT + 3;
   const base = `http://127.0.0.1:${port}`;
-  const child = spawn('npx', ['tsx', 'server.ts'], {
+  const child = spawn('npm', ['start'], {
     cwd: root,
     env: {
       ...process.env,
       PORT: String(port),
-      GLEAN_USE_FIXTURE: 'true',
       RFP_CHAT_FIXTURES: path.join(root, 'fixtures', 'chat-unfinished.json'),
     },
     stdio: ['ignore', 'pipe', 'pipe'],
-    // Own process group, so the kill below reaches the tsx grandchild. Killing
-    // only `npx` leaves the server holding the port.
     detached: true,
   });
   let stderr = '';
