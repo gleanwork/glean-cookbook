@@ -1,30 +1,45 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Glean } from '@gleanwork/api-client';
+import { PlatformProblemDetailError } from '@gleanwork/api-client/models/errors';
 
-export interface ChatCitationDocument {
+interface CitationSource {
+  type?: string;
+  document_id?: string;
+  person_id?: string;
+  file_id?: string;
+  entity_id?: string;
   title?: string;
+  name?: string;
   url?: string;
 }
 
-export interface ChatFragment {
-  text?: string;
-  citation?: { sourceDocument?: ChatCitationDocument };
+interface PlatformChatResponse {
+  object?: string;
+  status?: string;
+  output?: Array<{
+    type?: string;
+    role?: string;
+    content?: Array<{
+      type?: string;
+      text?: string;
+      annotations?: Array<{
+        type?: string;
+        sources?: CitationSource[];
+      }>;
+    }>;
+  }>;
 }
 
-export interface ChatMessageEnvelope {
-  author?: string;
-  messageType?: string;
-  fragments?: ChatFragment[];
-}
-
-export interface ClientChatResponse {
-  messages?: ChatMessageEnvelope[];
+export interface ChatCitation {
+  title: string;
+  url?: string;
 }
 
 export interface ChatAnswer {
   answer: string;
-  citations: Array<{ title: string; url: string }>;
+  citations: ChatCitation[];
 }
 
 function requireEnv(name: string): string {
@@ -37,8 +52,27 @@ function accountName(): string {
   return requireEnv('GLEAN_ACCOUNT_NAME');
 }
 
+function isSafeHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function sourceTitle(source: CitationSource): string | undefined {
+  return (
+    source.title ??
+    source.name ??
+    source.document_id ??
+    source.person_id ??
+    source.file_id ??
+    source.entity_id
+  );
+}
+
 export function frameAccountPrompt(question: string): string {
-  // Name the account without inventing a persona or company identity.
   return (
     `Answer about the ${accountName()} account using only this company's own ` +
     `indexed knowledge. Cite every claim. If the sources do not cover it, say so ` +
@@ -46,48 +80,56 @@ export function frameAccountPrompt(question: string): string {
   );
 }
 
-export function parseClientChatResponse(data: ClientChatResponse): ChatAnswer {
-  // CONTENT messages from GLEAN_AI are the answer; UPDATE messages are progress
-  // narration. A trailing empty CONTENT message is normal, so join across all of
-  // them rather than reading the last one.
-  const fragments = (data.messages ?? [])
-    .filter(
-      (message) =>
-        message.messageType === 'CONTENT' && message.author === 'GLEAN_AI',
-    )
-    .flatMap((message) => message.fragments ?? []);
+export function parsePlatformChatResponse(data: unknown): ChatAnswer {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Platform Chat returned an invalid response.');
+  }
+  const response = data as PlatformChatResponse;
+  if (response.object !== 'RESPONSE' || response.status !== 'COMPLETED') {
+    throw new Error('Platform Chat did not return a completed response.');
+  }
 
-  const answer = fragments
-    .map((fragment) => fragment.text ?? '')
+  const contents = (response.output ?? [])
+    .filter(
+      (message) => message.type === 'MESSAGE' && message.role === 'ASSISTANT',
+    )
+    .flatMap((message) => message.content ?? [])
+    .filter((content) => content.type === 'OUTPUT_TEXT');
+  const answer = contents
+    .map((content) => content.text ?? '')
     .join('')
     .trim();
 
-  // Citations hang off individual fragments, not off the message.
-  const rawCitations = fragments
-    .map((fragment) => fragment.citation?.sourceDocument)
-    .filter((document): document is ChatCitationDocument => Boolean(document));
-  const citations = Array.from(
-    new Map(
-      rawCitations
-        .filter((source) => source.title && source.url)
-        .map((source) => [
-          source.url as string,
-          { title: source.title as string, url: source.url as string },
-        ]),
-    ).values(),
-  );
-
-  return { answer, citations };
+  const citationsByKey = new Map<string, ChatCitation>();
+  for (const annotation of contents.flatMap(
+    (content) => content.annotations ?? [],
+  )) {
+    if (annotation.type !== 'CITATION') continue;
+    for (const source of annotation.sources ?? []) {
+      const title = sourceTitle(source);
+      if (!title) continue;
+      const url =
+        source.url && isSafeHttpUrl(source.url) ? source.url : undefined;
+      const key =
+        url ??
+        source.document_id ??
+        source.person_id ??
+        source.file_id ??
+        source.entity_id;
+      if (key && !citationsByKey.has(key)) {
+        citationsByKey.set(key, { title, ...(url ? { url } : {}) });
+      }
+    }
+  }
+  return { answer, citations: [...citationsByKey.values()] };
 }
 
-export function buildChatRequest(text: string): {
-  saveChat: false;
-  messages: Array<{ author: 'USER'; fragments: Array<{ text: string }> }>;
+export function buildPlatformChatRequest(input: string): {
+  input: string;
+  stream: false;
+  store: false;
 } {
-  return {
-    saveChat: false,
-    messages: [{ author: 'USER', fragments: [{ text }] }],
-  };
+  return { input, stream: false, store: false };
 }
 
 function fixtureDir(): string {
@@ -98,60 +140,53 @@ function fixtureDir(): string {
   );
 }
 
-export function loadFixtureResponses(): Record<string, ClientChatResponse> {
+export function loadFixtureResponses(): Record<string, PlatformChatResponse> {
   return JSON.parse(
     fs.readFileSync(path.join(fixtureDir(), 'chat-responses.json'), 'utf8'),
-  ) as Record<string, ClientChatResponse>;
+  ) as Record<string, PlatformChatResponse>;
 }
 
-export async function askClientChat(question: string): Promise<ChatAnswer> {
+function requireAnswer(parsed: ChatAnswer): ChatAnswer {
+  if (!parsed.answer.trim()) {
+    throw new Error(
+      'Glean returned no answer text. The request completed without a usable output. Retrying usually works.',
+    );
+  }
+  return parsed;
+}
+
+export async function askPlatformChat(question: string): Promise<ChatAnswer> {
   if (process.env.GLEAN_USE_FIXTURE === 'true') {
     const recorded = loadFixtureResponses()[question];
     if (!recorded) {
       throw new Error(`No fixture recorded for question: ${question}`);
     }
-    const parsed = parseClientChatResponse(recorded);
-    if (!parsed.answer.trim()) {
-      throw new Error(
-        'Glean returned no answer text. This happens when a chat run ends while ' +
-          'a server tool is still pending; the request succeeded but the answer ' +
-          'was never produced. Retrying usually works.',
+    return requireAnswer(parsePlatformChatResponse(recorded));
+  }
+
+  const glean = new Glean({
+    apiToken: requireEnv('GLEAN_API_TOKEN'),
+    serverURL: requireEnv('GLEAN_SERVER_URL').replace(/\/$/, ''),
+    includeExperimental: true,
+  });
+  let response: Awaited<ReturnType<typeof glean.chat.create>>;
+  try {
+    response = await glean.chat.create(
+      buildPlatformChatRequest(frameAccountPrompt(question)),
+    );
+  } catch (error) {
+    if (error instanceof PlatformProblemDetailError) {
+      console.error(
+        `POST /api/chat returned ${error.status} (${error.code}), request ${error.request_id}`,
       );
     }
-    return parsed;
-  }
-
-  const backend = requireEnv('GLEAN_SERVER_URL').replace(/\/$/, '');
-  const token = requireEnv('GLEAN_API_TOKEN');
-
-  const response = await fetch(`${backend}/rest/api/v1/chat`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(buildChatRequest(frameAccountPrompt(question))),
-  });
-
-  if (!response.ok) {
-    const body = await response.text();
-    console.error(
-      `POST /rest/api/v1/chat returned ${response.status}: ${body}`,
-    );
     throw new Error(
-      `Chat request failed (${response.status}). Check that your token carries the CHAT scope.`,
+      'Chat request failed. Check that your token carries the CHAT scope and that experimental APIs are enabled.',
+      { cause: error },
     );
   }
-
-  const data = (await response.json()) as ClientChatResponse;
-  const parsed = parseClientChatResponse(data);
-  // Empty answer text is a transport failure, not a blank success.
-  if (!parsed.answer.trim()) {
-    throw new Error(
-      'Glean returned no answer text. This happens when a chat run ends while ' +
-        'a server tool is still pending; the request succeeded but the answer ' +
-        'was never produced. Retrying usually works.',
-    );
+  if (typeof response === 'string') {
+    throw new Error('Platform Chat returned a stream for a non-stream request.');
   }
-  return parsed;
+  return requireAnswer(parsePlatformChatResponse(response));
 }

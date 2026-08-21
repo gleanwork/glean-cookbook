@@ -1,101 +1,113 @@
 {
   "What's the status of our renewal with that account?": {
-    "messages": [
+    "id": "resp_customer_renewal",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "UPDATE",
-        "fragments": [{ "text": "Searching company knowledge" }]
-      },
-      {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Globex's contract renews 2026-09-30. Status is on track: they are verbally committed to renew at the current seat count, with a discussion in progress about adding 300 seats for the newly onboarded business unit. Open items are an updated data processing addendum and a multi-year discount quote. Risk level is low, with no competitive evaluation in progress."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Renewal Status (Q3 2026)",
-                "url": "https://portal.sample.internal/sales/accounts/globex/renewal-q3-2026"
+            "type": "OUTPUT_TEXT",
+            "text": "Globex's contract renews 2026-09-30. Status is on track: they are verbally committed to renew at the current seat count, with a discussion in progress about adding 300 seats for the newly onboarded business unit. Open items are an updated data processing addendum and a multi-year discount quote. Risk level is low, with no competitive evaluation in progress.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "globex-renewal",
+                    "title": "Globex — Renewal Status (Q3 2026)",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/renewal-q3-2026"
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_customer_renewal"
   },
   "Give me a customer summary": {
-    "messages": [
+    "id": "resp_customer_summary",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "UPDATE",
-        "fragments": [{ "text": "Searching company knowledge" }]
-      },
-      {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Globex is Sample Corp's largest customer account, owned by Sam Reyes. Current ARR is $840,000 across 1,200 licensed seats, up from $620,000 at last renewal. The contract renews 2026-09-30 and is on track, with a discussion about adding 300 seats for a second business unit onboarded in Q2 2026. A June 2026 security questionnaire was accepted with no follow-up questions."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Account Notes",
-                "url": "https://portal.sample.internal/sales/accounts/globex"
+            "type": "OUTPUT_TEXT",
+            "text": "Globex is Sample Corp's largest customer account, owned by Sam Reyes. Current ARR is $840,000 across 1,200 licensed seats, up from $620,000 at last renewal. The contract renews 2026-09-30 and is on track, with a discussion about adding 300 seats for a second business unit onboarded in Q2 2026. A June 2026 security questionnaire was accepted with no follow-up questions.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "globex-account",
+                    "title": "Globex — Account Notes",
+                    "url": "https://portal.sample.internal/sales/accounts/globex"
+                  },
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "globex-renewal",
+                    "title": "Globex — Renewal Status (Q3 2026)",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/renewal-q3-2026"
+                  },
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "globex-security",
+                    "title": "Globex — Security Questionnaire Response Summary",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06"
+                  }
+                ]
               }
-            }
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Renewal Status (Q3 2026)",
-                "url": "https://portal.sample.internal/sales/accounts/globex/renewal-q3-2026"
-              }
-            }
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Security Questionnaire Response Summary",
-                "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06"
-              }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_customer_summary"
   },
   "What are the renewal risks?": {
-    "messages": [
+    "id": "resp_customer_risks",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "UPDATE",
-        "fragments": [{ "text": "Searching company knowledge" }]
-      },
-      {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Recorded risk level is low, with no competitive evaluation in progress. Open items that could still slow the 2026-09-30 renewal are legal finalizing an updated data processing addendum requested by Globex's security team, and procurement wanting a multi-year discount quote."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Renewal Status (Q3 2026)",
-                "url": "https://portal.sample.internal/sales/accounts/globex/renewal-q3-2026"
+            "type": "OUTPUT_TEXT",
+            "text": "Recorded risk level is low, with no competitive evaluation in progress. Open items that could still slow the 2026-09-30 renewal are legal finalizing an updated data processing addendum requested by Globex's security team, and procurement wanting a multi-year discount quote.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "globex-renewal",
+                    "title": "Globex — Renewal Status (Q3 2026)",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/renewal-q3-2026"
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_customer_risks"
   }
 }

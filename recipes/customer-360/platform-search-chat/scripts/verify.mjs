@@ -131,39 +131,32 @@ function assertFixtureContract() {
     throw new Error(`chat fixtures missing keys: ${missingChat.join(', ')}`);
   }
   for (const [key, body] of Object.entries(chat)) {
-    const messages = body.messages ?? [];
-    const contentMessages = messages.filter(
-      (message) =>
-        message.author === 'GLEAN_AI' && message.messageType === 'CONTENT',
-    );
-    if (contentMessages.length === 0) {
-      throw new Error(`${key}: no GLEAN_AI CONTENT message`);
+    if (body.object !== 'RESPONSE' || body.status !== 'COMPLETED') {
+      throw new Error(`${key}: expected a completed Platform Chat response`);
     }
-    const fragments = contentMessages.flatMap(
-      (message) => message.fragments ?? [],
-    );
-    const cited = fragments.some((fragment) => fragment.citation);
-    if (cited) {
-      const first = messages[0];
-      const second = messages[1];
-      if (
-        first?.author !== 'GLEAN_AI' ||
-        first?.messageType !== 'UPDATE' ||
-        second?.author !== 'GLEAN_AI' ||
-        second?.messageType !== 'CONTENT'
-      ) {
-        throw new Error(
-          `${key}: cited fixture must be GLEAN_AI UPDATE then GLEAN_AI CONTENT`,
-        );
-      }
+    if (body.store !== false) {
+      throw new Error(`${key}: store must be false`);
     }
-    for (const fragment of fragments) {
-      const document = fragment.citation?.sourceDocument;
-      if (!document) continue;
-      if (!document.title) {
+    const contents = (body.output ?? [])
+      .filter(
+        (message) =>
+          message.type === 'MESSAGE' && message.role === 'ASSISTANT',
+      )
+      .flatMap((message) => message.content ?? [])
+      .filter((content) => content.type === 'OUTPUT_TEXT');
+    if (contents.length === 0) {
+      throw new Error(`${key}: no ASSISTANT OUTPUT_TEXT content`);
+    }
+    const sources = contents.flatMap((content) =>
+      (content.annotations ?? [])
+        .filter((annotation) => annotation.type === 'CITATION')
+        .flatMap((annotation) => annotation.sources ?? []),
+    );
+    for (const source of sources) {
+      if (!source.title && !source.name) {
         throw new Error(`${key}: citation missing title`);
       }
-      if (!/^https?:\/\//u.test(document.url ?? '')) {
+      if (source.url && !/^https?:\/\//u.test(source.url)) {
         throw new Error(`${key}: citation url must be http(s)`);
       }
     }
