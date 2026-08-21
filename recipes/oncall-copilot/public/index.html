@@ -205,12 +205,22 @@
                 Fire canary alarm · PAY-2231
               </button>
               <button id="fire-novel">No-precedent alarm · PAY-2232</button>
+              <button id="fire-offscript">Off-script agent · PAY-2233</button>
               <button id="reset">Reset</button>
             </div>
           </div>
         </div>
+        <div class="trigger-row" id="actor-row" style="margin-top: 14px" hidden>
+          <label
+            ><span class="trigger-label">Acting as</span
+            ><select id="actor" style="width: 300px"></select
+          ></label>
+          <div class="muted" id="actor-note"></div>
+        </div>
         <div class="muted" style="margin-top: 8px" id="filter-note"></div>
       </section>
+
+      <div id="notice" hidden></div>
 
       <div class="grid split">
         <div>
@@ -225,7 +235,12 @@
 
     <script type="module">
       const $ = (id) => document.getElementById(id);
-      let state = { incidents: [], selected: null, config: null };
+      let state = {
+        incidents: [],
+        selected: null,
+        config: null,
+        actor: null,
+      };
 
       const el = (tag, props = {}, kids = []) => {
         const n = document.createElement(tag);
@@ -256,16 +271,106 @@
         });
       }
 
-      async function boot() {
-        state.config = await (await fetch('/api/config')).json();
+      function clearNotice() {
+        $('notice').hidden = true;
+        $('notice').replaceChildren();
+      }
+
+      function showNotice(kind, title, detail) {
+        const notice = $('notice');
+        notice.className = `note ${kind === 'danger' ? 'note-danger' : 'note-info'}`;
+        notice.replaceChildren(
+          el('strong', { text: title }),
+          document.createTextNode(detail ? ` ${detail}` : ''),
+        );
+        notice.hidden = false;
+      }
+
+      async function errorFrom(response) {
+        try {
+          const body = await response.json();
+          return body.error ?? `HTTP ${response.status}`;
+        } catch {
+          return `HTTP ${response.status}`;
+        }
+      }
+
+      function actorHeaders(extra = {}) {
+        if (!state.config?.mayAssertActor || !state.actor) return extra;
+        return { ...extra, 'X-Incident-Actor': state.actor };
+      }
+
+      function renderBanner() {
         const c = state.config;
+        const expiry = `Default approval expiry ${Math.round(c.defaultExpiryMs / 60000)} min (per-service, from the catalog).`;
+        const mode = c.fixtureMode
+          ? 'Fixture mode: no credentials, no network.'
+          : 'Live corpus adaptation.';
         $('banner').textContent = c.cookbookDemo
-          ? `Sample environment · Default approval expiry ${Math.round(c.defaultExpiryMs / 60000)} min (per-service, from the catalog).`
-          : `Signed in as ${c.actor}. Default approval expiry ${Math.round(c.defaultExpiryMs / 60000)} min ` +
-            `(per-service, from the catalog). ` +
-            (c.fixtureMode
-              ? 'Fixture mode — no credentials, no network.'
-              : 'Live mode.');
+          ? `Sample environment. ${expiry}`
+          : `Acting as ${state.actor ?? c.actor}. ${expiry} ${mode}`;
+      }
+
+      function renderActorPicker() {
+        const row = $('actor-row');
+        row.hidden = !state.config.mayAssertActor;
+        if (row.hidden) return;
+
+        const incident = state.incidents.find((i) => i.id === state.selected);
+        const choices = incident
+          ? [
+              { value: incident.service.onCall, label: 'on-call engineer' },
+              { value: incident.service.techLead, label: 'service owner' },
+              {
+                value: state.config.outsiderActor,
+                label: 'neither: expect a refusal',
+              },
+            ]
+          : [{ value: state.actor, label: 'configured actor' }];
+
+        const unique = [];
+        for (const choice of choices) {
+          if (!unique.some((entry) => entry.value === choice.value)) {
+            unique.push(choice);
+          }
+        }
+        if (!unique.some((entry) => entry.value === state.actor)) {
+          unique.unshift({ value: state.actor, label: 'configured actor' });
+        }
+
+        $('actor').replaceChildren(
+          ...unique.map((choice) =>
+            el('option', {
+              value: choice.value,
+              text: `${choice.value} · ${choice.label}`,
+              ...(choice.value === state.actor ? { selected: 'selected' } : {}),
+            }),
+          ),
+        );
+        $('actor-note').textContent =
+          'Asserted, not authenticated. The gate checks this identity against the catalog.';
+      }
+
+      async function boot() {
+        const configResponse = await fetch('/api/config');
+        if (!configResponse.ok) {
+          showNotice(
+            'danger',
+            'Could not load the dashboard configuration.',
+            await errorFrom(configResponse),
+          );
+          return;
+        }
+        state.config = await configResponse.json();
+        const c = state.config;
+        state.actor = c.actor;
+        renderBanner();
+        $('actor').addEventListener('change', async (event) => {
+          state.actor = event.target.value;
+          clearNotice();
+          renderBanner();
+          await refresh();
+        });
         $('orchestrator').replaceChildren(
           ...c.orchestrators.map((o) =>
             el('option', {
@@ -284,54 +389,85 @@
         await refresh();
       }
 
-      async function fire(file) {
-        const alarm = await (await fetch(`/api/sample-alarm${file}`)).json();
-        const o = $('orchestrator').value;
-        const res = await fetch(`/webhook/pagerduty?orchestrator=${o}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(alarm),
-        });
+      async function fire(query, forcedOrchestrator) {
+        clearNotice();
+        const alarmResponse = await fetch(`/api/sample-alarm${query}`);
+        if (!alarmResponse.ok) {
+          showNotice(
+            'danger',
+            'Could not load the sample alarm.',
+            await errorFrom(alarmResponse),
+          );
+          return;
+        }
+        const alarm = await alarmResponse.json();
+        const orchestrator = forcedOrchestrator ?? $('orchestrator').value;
+        if (forcedOrchestrator) $('orchestrator').value = forcedOrchestrator;
+        const res = await fetch(
+          `/webhook/pagerduty?orchestrator=${orchestrator}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(alarm),
+          },
+        );
+        if (!res.ok) {
+          showNotice(
+            'danger',
+            'The alarm could not be triaged.',
+            await errorFrom(res),
+          );
+          return;
+        }
         const body = await res.json();
         if (body.filtered) {
-          alert(`Filtered: ${body.reason}`);
+          showNotice('info', 'Alarm filtered.', body.reason);
           return;
+        }
+        if (body.refused) {
+          showNotice(
+            'danger',
+            'The proposed action was refused.',
+            body.refused,
+          );
         }
         state.selected = body.incident?.id ?? null;
         await refresh();
       }
 
       $('fire').addEventListener('click', () => fire(''));
-      $('fire-novel').addEventListener('click', async () => {
-        // Second fixture alarm: same service, a failure with no precedent.
-        const alarm = {
-          id: 'PAY-2232',
-          service: 'payments-service',
-          kind: 'saturation',
-          metric: 'ledger write queue depth',
-          summary:
-            'Ledger write queue depth growing unbounded; no deploy in flight',
-          severity: 'Sev2',
-          firedAt: new Date().toISOString(),
-        };
-        const o = $('orchestrator').value;
-        const res = await fetch(`/webhook/pagerduty?orchestrator=${o}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(alarm),
-        });
-        const body = await res.json();
-        state.selected = body.incident?.id ?? null;
-        await refresh();
-      });
+      $('fire-novel').addEventListener('click', () => fire('?alarm=novel'));
+      $('fire-offscript').addEventListener('click', () =>
+        fire('?alarm=offscript', 'agent'),
+      );
       $('reset').addEventListener('click', async () => {
-        await fetch('/api/reset', { method: 'POST' });
+        clearNotice();
+        const response = await fetch('/api/reset', { method: 'POST' });
+        if (!response.ok) {
+          showNotice(
+            'danger',
+            'Could not reset incidents.',
+            await errorFrom(response),
+          );
+          return;
+        }
         state.selected = null;
         await refresh();
       });
 
       async function refresh() {
-        const data = await (await fetch('/api/incidents')).json();
+        const response = await fetch('/api/incidents', {
+          headers: actorHeaders(),
+        });
+        if (!response.ok) {
+          showNotice(
+            'danger',
+            'Could not refresh incidents.',
+            await errorFrom(response),
+          );
+          return;
+        }
+        const data = await response.json();
         state.incidents = data.incidents;
         state.approvers = data.approvers;
         if (
@@ -340,6 +476,7 @@
           state.selected = state.incidents[0]?.id ?? null;
         }
         renderQueue();
+        renderActorPicker();
         renderDetail();
       }
 
@@ -447,14 +584,14 @@
           ]),
         );
 
-        if (inc.hypotheses.length > 0) {
+        if (supported.length > 0) {
           kids.push(
             el('h2', {
               style: 'margin-top:16px',
-              text: 'Probable cause, ranked by evidence',
+              text: 'Probable cause',
             }),
           );
-          for (const h of inc.hypotheses) {
+          for (const h of supported) {
             kids.push(
               el('div', { style: 'margin-bottom:10px' }, [
                 el('div', { class: 'actions' }, [
@@ -564,10 +701,19 @@
           );
         }
 
-        const summary = el('input', { value: inc.proposed.summary });
-        const detail = el('textarea', {}, [
-          document.createTextNode(inc.proposed.detail),
-        ]);
+        const summary = el('input', {
+          name: 'proposal-summary',
+          'aria-label': 'Proposal summary',
+          value: inc.proposed.summary,
+        });
+        const detail = el(
+          'textarea',
+          {
+            name: 'proposal-detail',
+            'aria-label': 'Proposal detail',
+          },
+          [document.createTextNode(inc.proposed.detail)],
+        );
         const terminal = [
           'executed',
           'action-failed',
@@ -596,11 +742,20 @@
             el('div', {
               class: 'note note-danger',
               style: 'margin-top:10px',
-              text: `You (${state.config.actor}) may not approve this. Restricted to ${meta ? meta.allowed.join(' or ') : 'the service owners'}. Set INCIDENT_ACTOR to one of them.`,
+              text:
+                `${state.actor} is not on call for this service and does not own it. ` +
+                `Approval will return 403 and record the attempt. Allowed: ` +
+                `${meta ? meta.allowed.join(' or ') : 'the service owners'}.`,
             }),
           );
         }
 
+        const rejectWhy = el('input', {
+          name: 'rejection-reason',
+          'aria-label': 'Reason for rejection',
+          value: '',
+          placeholder: 'Reason for rejection',
+        });
         const approve = el('button', {
           class: 'btn-primary btn-sm',
           text: 'Approve & execute',
@@ -610,45 +765,62 @@
           class: 'btn-danger btn-sm',
           text: 'Force expiry → escalate',
         });
-        if (terminal || !meta?.youMayApprove) {
+        if (terminal) {
           approve.disabled = true;
           rejectBtn.disabled = true;
+          rejectWhy.disabled = true;
         }
         if (inc.status !== 'awaiting-approval') expire.disabled = true;
 
         approve.addEventListener('click', async () => {
+          clearNotice();
           const res = await fetch('/api/approve', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: actorHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({
               id: inc.id,
               summary: summary.value,
               detail: detail.value,
             }),
           });
-          if (!res.ok) alert((await res.json()).error);
+          if (!res.ok) {
+            showNotice('danger', 'Approval refused.', await errorFrom(res));
+          }
           await refresh();
         });
         rejectBtn.addEventListener('click', async () => {
-          const why =
-            prompt('Why are you rejecting this?') ?? 'no reason given';
+          clearNotice();
           const res = await fetch('/api/reject', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: inc.id, why }),
+            headers: actorHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({
+              id: inc.id,
+              why: rejectWhy.value || 'no reason given',
+            }),
           });
-          if (!res.ok) alert((await res.json()).error);
+          if (!res.ok) {
+            showNotice('danger', 'Rejection refused.', await errorFrom(res));
+          }
           await refresh();
         });
         expire.addEventListener('click', async () => {
-          await fetch('/api/force-expiry', {
+          clearNotice();
+          const res = await fetch('/api/force-expiry', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: inc.id }),
           });
+          if (!res.ok) {
+            showNotice(
+              'danger',
+              'Could not force expiry.',
+              await errorFrom(res),
+            );
+          }
           await refresh();
         });
 
+        kids.push(el('div', { style: 'margin-top:10px' }, [rejectWhy]));
         kids.push(
           el('div', { class: 'actions', style: 'margin-top:12px' }, [
             approve,
@@ -677,11 +849,19 @@
             text: 'Draft postmortem timeline',
           });
           pm.addEventListener('click', async () => {
-            await fetch('/api/postmortem', {
+            clearNotice();
+            const response = await fetch('/api/postmortem', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ id: inc.id }),
             });
+            if (!response.ok) {
+              showNotice(
+                'danger',
+                'Could not draft the postmortem.',
+                await errorFrom(response),
+              );
+            }
             await refresh();
           });
           kids.push(

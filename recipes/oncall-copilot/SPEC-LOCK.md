@@ -1,7 +1,9 @@
 # On-call Copilot — spec lock
 
-Triage an alert using the reader's service catalog, runbooks, and incident history. Propose only
-pre-registered actions and require explicit human approval before execution.
+Triage an alert using a recorded service catalog, runbooks, and incident history.
+Propose only pre-registered actions and require explicit human approval before
+execution. The default run uses fixtures. Live mode requires the reader to adapt
+catalog lookup, identity parsing, and evidence roles to their corpus.
 
 ## Evidence model
 
@@ -18,6 +20,8 @@ pre-registered actions and require explicit human approval before execution.
   orchestration path.
 - Client Chat verification sets `saveChat: false`; empty output is a retryable failure.
 - Approval is limited to the resolved on-call engineer and service owners.
+- Fixture mode may assert an acting user so the dashboard can demonstrate a 403.
+  Live mode refuses that header unless the explicit demo flag is enabled.
 - Proposals expire into escalation without execution.
 - Every request, refusal, approval, expiry, execution, and failure is audited.
 - The app runs as the caller. Approval identity is an application policy check, not impersonation.

@@ -1,51 +1,94 @@
 # On-call Copilot
 
-Triage an incident from your own runbooks and past incidents, propose exactly one
-pre-registered action, and put a human in front of it.
+Walk through incident triage against a recorded service catalog, runbook, and
+incident history. The copilot proposes exactly one registered action and puts a
+human in front of it.
 
-The retrieval is the easy part. What makes this runnable in front of a production
-service is everything that refuses: a gate that turns away the wrong person, an
-expiry that escalates instead of quietly approving itself, an action registry the
-planner cannot talk its way out of, and an audit entry for every attempt including
-the ones that were refused.
+The useful part is what it refuses. The gate turns away the wrong person. An
+unapproved proposal expires and escalates instead of executing. The registry
+refuses an action id it does not know. The audit log records every attempt,
+including refusals.
 
 ## Run it
 
 ```bash
 npm install
-npm run verify:fixture   # 58 checks, no credentials, no network
-npm start                # open the Local URL printed by the server
+npm run verify:fixture   # no credentials, no network
+npm start                # fixtures by default; open the printed Local URL
 ```
 
-Run `verify:fixture` first. It replays recorded responses and asserts the
-governance, so you can watch the guarantees hold before wiring up a token.
+Both commands replay recorded responses. `verify:fixture` asserts the governance.
+`npm start` lets you exercise the same paths in the dashboard. Neither command
+reads credentials or calls Glean.
 
-For live use, run `npm run login`; it discovers your tenant from your work email and uses OAuth.
-Add `GLEAN_AGENT_ID` for the agent-orchestrated path.
+Live mode is an adaptation step, not a second demo. It will not triage these
+sample alarms against an arbitrary Glean instance. See
+[Point it at your own corpus](#point-it-at-your-own-corpus) before authenticating.
 
-## Two things to try immediately
+Quiet presentation mode (`npm run demo`) is for hosts that already have
+`GLEAN_COOKBOOK_DEMO=true`. Do not offer it during a normal run.
 
-**Fire the second alarm.** `PAY-2232` is ledger queue saturation with no deploy in
-flight. The deploy runbook is the highest-scoring document retrieved, so a
-relevance-ranked copilot blames a deploy. This one asserts no cause at all, and
-downgrades the proposed fix to "file a ticket" — visibly, in the channel and the
-audit log.
+## Three things to try immediately
 
-**Try to approve something you're not allowed to.** Set
-`INCIDENT_ACTOR=alex.kim@sample.example.com` and approve. 403, audited against you,
-incident unchanged. The allowed set is the on-call engineer and service owner read
-from the indexed service catalog, not a config file.
+**Fire the second alarm.** Click **No-precedent alarm · PAY-2232**. On the
+recorded corpus, ledger queue saturation with no deploy in flight retrieves the
+deploy runbook as the highest-scoring document. A relevance-ranked copilot
+would blame a deploy. This one asserts no cause, and downgrades the proposed
+fix to "file a ticket" in the in-app channel and the audit log.
+
+**Try to approve something you're not allowed to.** Fire an alarm, choose
+`not.on.call@sample.example.com` under **Acting as**, and approve. The gate
+returns 403, audits the attempt against that actor, and leaves the incident
+unchanged. The allowed set comes from the recorded service catalog.
+
+**Let the agent go off script.** Click **Off-script agent · PAY-2233**. The
+recorded agent reply proposes `rollback-production-now`, which is not in the
+action registry. The gate refuses it before showing an approval card and records
+the refusal.
+
+## Point it at your own corpus
+
+`npm run start:live` calls Platform Search and Client Chat with the credentials
+in `.env`. It cannot infer how your service catalog is organized. Adapt these
+assumptions first:
+
+1. `lib/registry.ts` searches for `"<service> service catalog entry"` and only
+   accepts a result whose URL contains `/services/`. Its parser expects the
+   snippet to include `Tech lead:`, `On-call this week:`, `Tier:`,
+   `Dependencies:`, and an escalation sentence. Change the query, URL rule, and
+   parser to match your catalog.
+2. The recorded catalog stores display names rather than directory identities.
+   `APPROVER_EMAIL_DOMAIN` converts a name such as `Priya Natarajan` to an email.
+   Parse real email addresses or person entities before using this gate.
+3. `lib/evidence.ts` treats URLs containing `/incidents/` as precedents and
+   `/runbooks/` as procedures. Map those rules to your document types.
+4. Set `WATCHED_SERVICES` to the services the webhook may accept. The dashboard
+   buttons remain sample alarms for `payments-service`. Send an alarm for your
+   service to `POST /webhook/pagerduty`.
+
+Then authenticate and start live mode:
+
+```bash
+npm run login -- --email "you@company.com"
+# Add GLEAN_AGENT_ID and use npm run login:agent for the agent path.
+npm run start:live
+```
+
+The three registered actions are inert in both modes. Replace them with real
+integrations only after preserving the registry, approval, expiry, and audit
+checks.
 
 ## The design argument: relevance is not evidence
 
-Ranking probable cause by retrieval relevance produces confident wrong root causes,
-and it does so structurally rather than occasionally.
+Ranking probable cause by retrieval relevance produces confident wrong root
+causes, and it does so structurally rather than occasionally.
 
-A canary alarm on `payments-service` retrieves the deploy-and-rollback runbook at or
-near the top of any ranking, because that runbook is _dense with the alarm's own
-vocabulary_ — canary, rollout, error rate, authorization failure rate, rollback. It
-is genuinely the most relevant document in the corpus. It also contains no
-information whatsoever about why this particular deploy broke. It is procedure.
+A canary alarm on `payments-service` retrieves the deploy-and-rollback runbook
+at or near the top of any ranking, because that runbook is _dense with the
+alarm's own vocabulary_ — canary, rollout, error rate, authorization failure
+rate, rollback. It is genuinely the most relevant document in the corpus. It
+also contains no information whatsoever about why this particular deploy broke.
+It is procedure.
 
 Measured on the sample corpus:
 
@@ -54,9 +97,9 @@ Measured on the sample corpus:
 | `PAY-2231` canary           | PAY-2114 incident review      | 1.00     | yes — cause asserted          |
 | `PAY-2232` queue saturation | **Deploy & Rollback Runbook** | **0.40** | no (0.20) — no cause asserted |
 
-On the second alarm the runbook outranks everything. An LLM handed that ranking will
-tell your on-call engineer, at 3am, that a deploy caused an incident that happened
-while nothing was deploying.
+On the second alarm the runbook outranks everything. An LLM handed that ranking
+will tell your on-call engineer, at 3am, that a deploy caused an incident that
+happened while nothing was deploying.
 
 So documents carry an **evidentiary role**, and roles have different powers:
 
@@ -69,80 +112,84 @@ So documents carry an **evidentiary role**, and roles have different powers:
 Only a precedent can license a cause, because only a precedent records one. No
 matching precedent means no cause is asserted — a correct outcome, not a gap.
 
-Role is derived from where a document lives (`/incidents/`, `/runbooks/`), not from
-what it says. Inferring a document's evidentiary standing from its prose is exactly
-the inference this whole module exists to avoid. Map your own document types in
-`lib/evidence.ts`.
+Role is derived from where a document lives (`/incidents/`, `/runbooks/`), not
+from what it says. Inferring a document's evidentiary standing from its prose is
+exactly the inference this whole module exists to avoid. Map your own document
+types in `lib/evidence.ts`.
+
+Live verification cannot assert PAY-2114 or any other named document. It only
+checks that a claimed cause cites a precedent, and that a code-changing action
+is not offered without a supported cause.
 
 ### Mutating actions require supported causes
 
-You cannot draft a fix
-for a cause nobody established. Without a supported cause the action is downgraded to
-filing a ticket, posted to the channel and audited as a refusal. This lives in
-`approval.ts` rather than in either orchestrator, so neither planner can negotiate it
-away.
+You cannot draft a fix for a cause nobody established. Without a supported
+cause the action is downgraded to filing a ticket, posted to the channel and
+audited as a refusal. This lives in `approval.ts` rather than in either
+orchestrator, so neither planner can negotiate it away.
 
 ## What the gate actually enforces
 
-| Property                                  | How                                                                                                                                                                                |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Only on-call + service owners may approve | Read from the indexed service catalog. 403 and audited otherwise.                                                                                                                  |
-| Unapproved proposals expire               | Timer, on the window from the catalog → escalate to the catalog's target. **Nothing executes.**                                                                                    |
-| Only pre-registered actions run           | The planner names an action _by id_. An unknown id is refused at proposal time, so a card offering an impossible action is never shown.                                            |
-| Mutating actions need a cause             | See above.                                                                                                                                                                         |
-| Everything is audited                     | Requests, approvals, edits, rejections, executions, failures, refusals, escalations — with the actor.                                                                              |
-| Failures are loud                         | Action failures post to the channel with the error. A governed action that fails silently is worse than one that never ran, because the channel now believes the ticket was filed. |
+| Property                                  | How                                                                                                                                                                                       |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Only on-call + service owners may approve | Read from the indexed service catalog. 403 and audited otherwise.                                                                                                                         |
+| Unapproved proposals expire               | Timer, on the window from the catalog → escalate to the catalog's target. **Nothing executes.**                                                                                           |
+| Only pre-registered actions run           | The planner names an action _by id_. An unknown id is refused at proposal time, so a card offering an impossible action is never shown.                                                   |
+| Mutating actions need a cause             | See above.                                                                                                                                                                                |
+| Gate decisions are audited                | Unauthorized approvals, executions, failures, rejections, and escalations record the actor. Invalid-state requests and disabled demo affordances return errors without an audit row.      |
+| Failures are loud                         | Action failures post to the in-app channel with the error. A governed action that fails silently is worse than one that never ran, because the channel now believes the ticket was filed. |
 
 Watch the interesting ones with `SIMULATE_ACTION_FAILURE=draft-fix-pr` and the
-"Force expiry" button.
+**Force expiry → escalate** button.
 
 ## Two orchestrators, one shell
 
-Both orchestrators live in `lib/orchestrators/` and render into the same dashboard,
-so the only difference is _who owns planning_:
+Both orchestrators live in `lib/orchestrators/` and render into the same
+dashboard, so the only difference is _who owns planning_:
 
-- **app-orchestrated** (default) — this code runs a deterministic sequence and uses
-  the model for one thing: turning selected evidence into a sentence. It never
-  chooses the action or grades its own evidence.
-- **glean-agent** — a Glean agent owns the plan via the Agent API. It proposes an
-  action by id.
+- **app-orchestrated** (default) — this code runs a deterministic sequence and
+  uses the model for one thing: turning selected evidence into a sentence. It
+  never chooses the action or grades its own evidence.
+- **glean-agent** — a Glean agent owns the plan via the Agent API. It proposes
+  an action by id.
 
-What does **not** move: evidence classification and the approval gate. Asking the
-planner to grade its own evidence is asking the wrong entity, and an agent that can
-describe arbitrary actions into existence is an agent with production access whatever
-its prompt says. Try the fixture alarm `PAY-2233`, where the agent proposes
-`rollback-production-now` and gets refused.
+What does **not** move: evidence classification and the approval gate. Asking
+the planner to grade its own evidence is asking the wrong entity, and an agent
+that can describe arbitrary actions into existence is an agent with production
+access whatever its prompt says. Click **Off-script agent · PAY-2233** to replay
+an agent proposing `rollback-production-now` and watch the gate refuse it.
 
 ## Authorization, not authentication
 
-**This recipe does not authenticate anyone.** The acting user is _asserted_, via
-`INCIDENT_ACTOR` or an `X-Incident-Actor` header, so you can watch the gate refuse
-you without restarting anything.
+**This recipe does not authenticate anyone.** The acting user is _asserted_ via
+`INCIDENT_ACTOR` or an `X-Incident-Actor` header. Fixture mode accepts the header
+because it has no credentials, network calls, or real actions. A live run
+refuses it unless `INCIDENT_DEMO_MODE=true`. Leave that flag false when
+connecting to a real instance.
 
-That header, and `simulateFailure`, are refused unless `INCIDENT_DEMO_MODE=true`.
-The example configuration leaves this false. Enable it only while exercising the
-demo paths, then turn it off.
-
-Authorization (who may approve) and authentication (proving you are that person) are
-different problems. This solves the first. A deployment must solve the second before
-trusting the first — otherwise you have shipped an approval gate anyone can walk
-through by setting a header.
+Authorization (who may approve) and authentication (proving you are that
+person) are different problems. This solves the first. A deployment must solve
+the second before trusting the first. Otherwise you have shipped an approval
+gate anyone can walk through by setting a header.
 
 Actions do **not** execute as the approving user. The executor is the app's own
 credential and the gate is an app-level policy check. `/api/config` reports
-`impersonation: false`; this recipe does not claim per-person permission enforcement
-for action execution.
+`impersonation: false`; this recipe does not claim per-person permission
+enforcement for action execution.
 
 ## Deliberately not solved
 
-- **Persistence.** Incidents and the audit log are in-process. An audit log you can
-  lose by restarting a process is not an audit log.
+- **Persistence.** Incidents and the audit log are in-process. An audit log you
+  can lose by restarting a process is not an audit log.
 - **The rest of the dashboard.** No MTTA/MTTR rollup, expiring-soon lane,
   end-of-shift handoff, or two-way channel sync.
-- **Real integrations.** The three registered actions are inert, so the recipe is
-  safe to run against a live instance. The registry boundary is the real part.
+- **Real integrations.** The three registered actions are inert, so the recipe
+  is safe to run against a live instance. The registry boundary is the real
+  part.
 - **Writing the postmortem back** to the knowledge base.
-- **Exposing the copilot over A2A**, which would let another agent trigger triage.
+- **Exposing the copilot over Agent-to-Agent (A2A)**, which would let another
+  agent trigger triage. See
+  [A2A Client](https://developers.glean.com/cookbook/a2a-client).
 
 ## Layout
 

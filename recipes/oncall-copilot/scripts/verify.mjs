@@ -13,8 +13,9 @@
 // precedent yields no asserted cause at all -- checked on a second alarm built
 // specifically so the highest-relevance document is the one that must not be used.
 //
-// GLEAN_USE_FIXTURE=false with real credentials verifies live; grounding-specific
-// assertions relax there, since a reader's corpus is not this one.
+// GLEAN_USE_FIXTURE=false verifies an adapted live integration. It is not a
+// generic switch: the reader must first map catalog and evidence rules to their
+// corpus. Grounding-specific assertions relax because that corpus is not this one.
 
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -28,7 +29,7 @@ const useFixture = process.env.GLEAN_USE_FIXTURE !== 'false';
 
 const ONCALL = 'marcus.webb@sample.example.com';
 const OWNER = 'priya.natarajan@sample.example.com';
-const OUTSIDER = 'alex.kim@sample.example.com';
+const OUTSIDER = 'not.on.call@sample.example.com';
 
 const failures = [];
 const check = (label, ok, detail = '') => {
@@ -128,6 +129,10 @@ async function main() {
     check(
       'action registry is closed and advertised',
       config.actions.length === 3,
+    );
+    check(
+      'fixture mode permits actor switching without enabling live impersonation',
+      config.fixtureMode === true && config.mayAssertActor === true,
     );
 
     // ---- Webhook filtering -------------------------------------------------
@@ -384,6 +389,12 @@ async function main() {
         inc5.proposed.actionId,
       );
       check(
+        'the downgraded proposal asks for investigation, not a draft fix',
+        /investigate/iu.test(inc5.proposed.summary) &&
+          !/draft fix/iu.test(inc5.proposed.summary),
+        inc5.proposed.summary,
+      );
+      check(
         'the downgrade is visible in the channel',
         inc5.channel.some((p) => /Downgraded to filing a ticket/.test(p.text)),
       );
@@ -423,13 +434,7 @@ async function main() {
     }
 
     const offScript = await (
-      await fire(
-        {
-          ...alarm('pagerduty-alarm.json'),
-          id: 'PAY-2233',
-        },
-        'agent',
-      )
+      await fire(alarm('pagerduty-alarm-offscript.json'), 'agent')
     ).json();
     if (useFixture) {
       check(
@@ -454,6 +459,14 @@ async function main() {
 
     // ---- Postmortem is built from recorded facts --------------------------
     console.log('\nPostmortem');
+    const approvedForPostmortem = await (
+      await post('/api/approve', { id: r6.incident.id }, ONCALL)
+    ).json();
+    check(
+      'the postmortem starts from a terminal outcome',
+      approvedForPostmortem.status === 'executed',
+      approvedForPostmortem.status,
+    );
     const pm = await (
       await post('/api/postmortem', { id: r6.incident.id })
     ).json();
@@ -477,25 +490,27 @@ async function main() {
 
 await main();
 
-// The demo affordances must be refused when the flag is unset, on a server booted
-// without it. Asserting this on the main server is not possible: everything above
-// depends on per-request actors, so it runs with the flag on.
-async function checkDemoAffordancesAreOff() {
+// A live run must refuse identity assertion and forced failures unless the
+// explicit demo flag is set. Fixture mode may assert an actor because it has no
+// credentials, remote calls, or real actions.
+async function checkLiveDemoAffordancesAreOff() {
   const port = PORT + 1;
   const base = `http://localhost:${port}`;
-  const child = boot({ PORT: String(port), INCIDENT_DEMO_MODE: '' });
+  const child = boot({
+    PORT: String(port),
+    GLEAN_USE_FIXTURE: 'false',
+    INCIDENT_DEMO_MODE: '',
+  });
   try {
     if (!(await waitUp(base))) {
-      check('second server booted for the demo-mode check', false);
+      check('live-mode server booted for the affordance check', false);
       return;
     }
-    const { incident } = await (
-      await fetch(`${base}/webhook/pagerduty`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(alarm('pagerduty-alarm.json')),
-      })
-    ).json();
+    const liveConfig = await (await fetch(`${base}/api/config`)).json();
+    check(
+      'live mode does not permit asserted actors by default',
+      liveConfig.fixtureMode === false && liveConfig.mayAssertActor === false,
+    );
 
     const spoofed = await fetch(`${base}/api/approve`, {
       method: 'POST',
@@ -503,7 +518,7 @@ async function checkDemoAffordancesAreOff() {
         'Content-Type': 'application/json',
         'X-Incident-Actor': OUTSIDER,
       },
-      body: JSON.stringify({ id: incident.id }),
+      body: JSON.stringify({ id: 'PAY-live-check' }),
     });
     check(
       'the x-incident-actor header is refused when INCIDENT_DEMO_MODE is unset',
@@ -518,7 +533,7 @@ async function checkDemoAffordancesAreOff() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        id: incident.id,
+        id: 'PAY-live-check',
         simulateFailure: 'draft-fix-pr',
       }),
     });
@@ -526,18 +541,12 @@ async function checkDemoAffordancesAreOff() {
       'simulateFailure is refused when INCIDENT_DEMO_MODE is unset',
       forced.status === 403,
     );
-
-    const after = await (await fetch(`${base}/api/incidents`)).json();
-    check(
-      'a refused demo affordance leaves the incident untouched',
-      after.incidents[0].status === 'awaiting-approval',
-    );
   } finally {
     shutdown(child);
   }
 }
 
-await checkDemoAffordancesAreOff();
+await checkLiveDemoAffordancesAreOff();
 
 console.log('');
 if (failures.length > 0) {

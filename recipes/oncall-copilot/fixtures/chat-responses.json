@@ -86,7 +86,7 @@
         "messageType": "CONTENT",
         "fragments": [
           {
-            "text": "PAY-2231 fired when a payments-service canary rollout drove the authorization failure rate from 0.2% to 3.8%. The copilot matched PAY-2114 as a precedent and proposed a draft fix PR, which the on-call engineer approved. The connection-pool floor remains the leading suspect; confirmation is still open."
+            "text": "PAY-2231 fired when a payments-service canary rollout drove the authorization failure rate from 0.2% to 3.8%. The copilot matched PAY-2114 as a precedent and proposed a draft fix PR. The recorded timeline below identifies the approver and execution result."
           },
           {
             "text": "",
@@ -117,7 +117,7 @@
         "messageType": "CONTENT",
         "fragments": [
           {
-            "text": "PAY-2232 fired on ledger write queue depth with no deploy in flight. No precedent matched, so no cause was asserted and a tracking ticket was filed for investigation."
+            "text": "PAY-2232 fired on ledger write queue depth with no deploy in flight. No precedent matched, so no cause was asserted and a tracking ticket was proposed for investigation."
           },
           {
             "text": "",

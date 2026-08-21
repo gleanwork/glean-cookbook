@@ -150,7 +150,13 @@ export function awaitApproval(
       to: FALLBACK_ACTION_ID,
       why,
     };
-    proposed = { ...proposed, actionId: FALLBACK_ACTION_ID };
+    proposed = {
+      ...proposed,
+      actionId: FALLBACK_ACTION_ID,
+      summary:
+        `${incident.service.service}: investigate ${incident.alarm.kind} alarm ` +
+        `on ${incident.alarm.metric}`,
+    };
   }
 
   incident.proposed = proposed;

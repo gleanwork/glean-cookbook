@@ -1,38 +1,15 @@
 ---
 name: oncall-copilot
-description: 'Triage an incident from your own runbooks and past incidents, propose one pre-registered action, and let a human approve it — where the gate refuses the wrong person, expiry escalates instead of auto-approving, and every attempt is audited.'
+description: 'Walk through evidence-grounded incident triage on recorded runbooks and past incidents, then adapt the same gate to your corpus, with wrong-person refusal, expiry without auto-approval, a closed action registry, and a complete audit trail.'
 disable-model-invocation: true
 ---
 
 ## Before you start
 
-- For configured runs: a Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review
-- For configured runs: a work email for tenant discovery and OAuth sign-in; a scoped API token is the fallback
-- For configured runs: X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)
 - Node 20+
+- Optional live adaptation: a Glean instance with a service catalog, runbooks, and incident reviews, plus a work email for OAuth sign-in or a scoped API token
 
 Build "On-call Copilot" following https://developers.glean.com/cookbook/oncall-copilot
-
-### Select the run mode
-
-Before asking setup questions, silently check whether `GLEAN_COOKBOOK_DEMO` is exactly `true`; do
-not print the environment or the variable value.
-
-- When it is `true`, use the bundled sample-data path: skip all setup questions, authentication,
-  and fixture verification output; after scaffolding and installing, run `npm run demo` and follow
-  the standard browser handoff.
-- Otherwise, never mention or offer demo, sample, or fixture mode. Skip the fixture-only step and
-  follow the normal configured run, including its setup questions, authentication, and live
-  verification.
-
-Ask these before running commands. Ask one at a time, waiting for each answer before asking the
-next — do not put them all in one message:
-
-- Which service has a catalog entry, runbook, and past incident in Glean?
-- Use direct Search + Chat or an existing Glean agent?
-- What is your work email?
-
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
 
 1. **Scaffold the project**
 
@@ -53,14 +30,7 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    cd oncall-copilot && npm run verify:fixture
    ```
 
-4. **Set credentials**
-   Only for a live run. Use npm run login for direct Search + Chat, or npm run login:agent when the user selected an existing Glean agent. Set WATCHED_SERVICES to the service already supplied and GLEAN_AGENT_ID only for the agent path.
-
-   ```bash
-   cd oncall-copilot && npm run login -- --email "<work-email>"
-   ```
-
-5. **Run it**
+4. **Run it**
 
    ```bash
    cd oncall-copilot && npm start
@@ -70,5 +40,5 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
    the first verification action.
 
-6. **Verify**
-   Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything.
+5. **Exercise the gate**
+   Fire all three sample alarms. Confirm the first cause cites a past incident, the second asserts no cause and offers an investigation ticket, the off-script agent action is refused before an approval card appears, choosing the outsider under Acting as produces an audited 403, and forcing expiry escalates without execution.

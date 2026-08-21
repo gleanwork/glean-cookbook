@@ -19,9 +19,18 @@ export interface ServiceRecord {
   catalogUrl: string;
 }
 
+function approverDomain(): string {
+  return process.env.APPROVER_EMAIL_DOMAIN ?? 'sample.example.com';
+}
+
 /** Maps a display name in the catalog prose to the directory identity. */
 function toEmail(name: string): string {
-  return `${name.trim().toLowerCase().replace(/\s+/gu, '.')}@sample.example.com`;
+  return `${name.trim().toLowerCase().replace(/\s+/gu, '.')}@${approverDomain()}`;
+}
+
+/** A stable fixture identity that is neither owner nor on call. */
+export function outsiderActor(): string {
+  return `not.on.call@${approverDomain()}`;
 }
 
 function firstMatch(text: string, pattern: RegExp): string | undefined {
