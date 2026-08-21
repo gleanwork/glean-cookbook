@@ -10,20 +10,38 @@ and route to an SME. The API refuses to accept them. Export leaves them empty. A
 fluent answer with no citation is the worst thing this app could produce, so it is
 structurally prevented rather than discouraged by a prompt.
 
-## Run it
+## Setup
 
 ```bash
 npm install
-npm run verify:fixture   # whole flow, no credentials, no network
-npm start                # open the Local URL printed by the server
+npm run verify:fixture
 ```
 
-`verify:fixture` is the interesting one to run first. It replays recorded Chat
-responses and asserts the contract, so you can see the guarantees before wiring up
-a token.
+`npm run verify:fixture` replays recorded Chat responses and asserts the
+contract, so you can see what the app produces before you connect anything. It
+needs no Glean credentials.
 
-For live use, run `npm run login`, then set `RFP_APPROVED_SOURCE_PREFIXES` in `.env` to the
-comma-separated Glean URL prefixes cleared for customer-facing answers.
+## Sign in for a live run
+
+```bash
+npm run login
+```
+
+`npm run login` finds your Glean tenant from your work email, opens a browser
+for you to approve access, and writes `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`
+into a new `.env`. If your tenant cannot use OAuth, skip that command: copy
+`.env.example` to `.env` and fill in those two values yourself, using a Glean
+API token that carries the **CHAT** scope.
+
+Signing in does not pick approved evidence. Open `.env` and set
+`RFP_APPROVED_SOURCE_PREFIXES` to the comma-separated Glean URL prefixes your
+security team has cleared for customer-facing answers.
+
+```bash
+npm start
+```
+
+Open the Local URL printed by the server.
 
 ## Auth: this app runs as you
 
