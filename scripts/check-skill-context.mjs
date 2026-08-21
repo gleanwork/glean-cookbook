@@ -47,7 +47,7 @@ for (const entry of fs.readdirSync(recipesDir, { withFileTypes: true })) {
     for (const pattern of forbiddenRecipeChatPatterns) {
       if (pattern.test(value)) {
         failures.push(
-          `${recipe.id}: ${field} contains the stale Platform Chat contract (${pattern.source})`,
+          `${recipe.id}: ${field} contains a forbidden chat contract (${pattern.source})`,
         );
       }
     }
