@@ -5,8 +5,8 @@ Build an account page from the reader's own indexed content. The reader supplies
 
 ## Paths
 
-- **Search + Chat:** Platform Search powers account, renewal, and security tiles. Client Chat
-  (`POST /rest/api/v1/chat`) produces cited summaries and follow-ups.
+- **Search + Chat:** Platform Search powers account, renewal, and security tiles. Platform Chat
+  (`POST /api/chat`) produces cited summaries and follow-ups.
 - **Agents:** Platform Search powers the same tiles; a configured Account Brief agent produces
   synthesis through `GLEAN_AGENT_ID`.
 
@@ -15,8 +15,8 @@ Build an account page from the reader's own indexed content. The reader supplies
 - Environment: `GLEAN_SERVER_URL`, `GLEAN_API_TOKEN`, `GLEAN_ACCOUNT_NAME`; Agents also requires
   `GLEAN_AGENT_ID`.
 - Platform calls use `X_GLEAN_INCLUDE_EXPERIMENTAL=true`.
-- Client Chat verification sets `saveChat: false`, reads answer text from `CONTENT` messages by
-  `GLEAN_AI`, and reads citations from `fragments[].citation.sourceDocument`.
+- Platform Chat verification sets `stream: false` and `store: false`, reads answer text from
+  `ASSISTANT` `OUTPUT_TEXT` content, and reads citations from `annotations[].sources[]`.
 - Tokens remain server-side. There is no act-as or impersonation.
 - The overview shows the supplied account name and deterministic Search result counts; it never
   invents CRM fields from loosely matching documents.

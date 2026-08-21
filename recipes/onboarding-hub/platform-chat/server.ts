@@ -4,10 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listenLocal } from './lib/cookbook-server.js';
-import { askClientChat, type ConversationTurn } from './lib/chat.js';
-
-// Path B: you own the UI; the server calls Client Chat and renders the answer
-// plus its citations.
+import { askPlatformChat, type ConversationTurn } from './lib/chat.js';
 
 const MAX_CONVERSATION_TURNS = 10;
 const MAX_TURN_CHARS = 8_000;
@@ -127,7 +124,10 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: 'question is required' }));
         return;
       }
-      const result = await askClientChat(question, parseHistory(body.history));
+      const result = await askPlatformChat(
+        question,
+        parseHistory(body.history),
+      );
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
     } catch (error) {
@@ -176,7 +176,7 @@ function parseHistory(raw: unknown): ConversationTurn[] {
         Boolean(turn) &&
         typeof turn === 'object' &&
         ((turn as ConversationTurn).author === 'USER' ||
-          (turn as ConversationTurn).author === 'GLEAN_AI') &&
+          (turn as ConversationTurn).author === 'ASSISTANT') &&
         typeof (turn as ConversationTurn).text === 'string',
     )
     .map((turn) => ({
@@ -186,4 +186,4 @@ function parseHistory(raw: unknown): ConversationTurn[] {
     .filter((turn) => turn.text.length > 0);
 }
 
-listenLocal(server, 'Onboarding Hub (Client Chat)');
+listenLocal(server, 'Onboarding Hub (Platform Chat)');

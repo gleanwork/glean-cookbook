@@ -4,7 +4,7 @@ A first-week checklist grounded in your indexed onboarding content, with local p
 contextual Glean chat. Choose one implementation:
 
 - [`web-sdk/`](web-sdk/) embeds Glean chat and uses the viewer's existing browser SSO session.
-- [`platform-chat/`](platform-chat/) calls Client Chat from a server with your token and renders a
+- [`platform-chat/`](platform-chat/) calls Platform Chat from a server with your token and renders a
   custom answer, citations, and escalation state.
 
 Start with the README inside the implementation you choose. The Web SDK path must be opened by the

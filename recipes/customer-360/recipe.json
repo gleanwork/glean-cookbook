@@ -8,7 +8,7 @@
     "alt": "Customer 360 workspace with account evidence and an assistant conversation",
     "caption": "Account context, cited evidence, and follow-up chat in one workspace."
   },
-  "surfaces": ["platform-api", "client-api"],
+  "surfaces": ["platform-api"],
   "status": "showcase",
   "category": "workflow",
   "level": "Intermediate",
@@ -46,7 +46,7 @@
     {
       "repoPath": "recipes/customer-360/platform-search-chat",
       "language": "typescript",
-      "description": "Path A — parallel Platform Search tiles + Client Chat synthesis",
+      "description": "Path A — parallel Platform Search tiles + Platform Chat synthesis",
       "execution": {
         "type": "local-web",
         "questions": [
@@ -227,8 +227,8 @@
       "language": "typescript"
     },
     {
-      "title": "Client Chat synthesis",
-      "surface": "Client Chat",
+      "title": "Platform Chat synthesis",
+      "surface": "Platform Chat",
       "category": "workflow",
       "language": "typescript"
     },
@@ -247,7 +247,7 @@
     },
     {
       "label": "Path A: Search + Chat",
-      "caption": "glean.search.query + Client Chat",
+      "caption": "glean.search.query + glean.chat.create",
       "category": "search"
     },
     {
@@ -261,13 +261,13 @@
       "emphasized": true
     }
   ],
-  "aiPrompt": "Build a Customer 360 account workspace following https://developers.glean.com/cookbook/customer-360. Ask whether to use (A) Platform Search plus Client Chat or (B) Platform Agents, then ask for the account name and the selected path's required configuration. Do not research another account unless the user explicitly asks for help; if they do, run one bounded search and offer at most three choices. Keep the assistant above the fold, display only cited account claims, and derive overview counts directly from Search results. Use the scaffold's shipped login command rather than implementing authentication. Verify before leaving the app running.",
-  "llmContext": "Use Platform Search for evidence sections, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. Client Chat answers are CONTENT messages from GLEAN_AI; citations are fragment.citation.sourceDocument. Set saveChat:false for verification and keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME. The overview may show the supplied account name and deterministic Search result counts; never infer CRM facts from loosely matching documents. Use GLEAN_SERVER_URL directly.",
+  "aiPrompt": "Build a Customer 360 account workspace following https://developers.glean.com/cookbook/customer-360. Ask whether to use (A) Platform Search plus experimental Platform Chat or (B) Platform Agents, then ask for the account name and the selected path's required configuration. Do not research another account unless the user explicitly asks for help; if they do, run one bounded search and offer at most three choices. Keep the assistant above the fold, display only cited account claims, and derive overview counts directly from Search results. Use the scaffold's shipped login command rather than implementing authentication. Verify before leaving the app running.",
+  "llmContext": "Use Platform Search for evidence sections, experimental Platform Chat through glean.chat.create for synthesis, and Platform Agents for the optional agent path. Set stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Read ASSISTANT OUTPUT_TEXT content and citations from annotations[].sources. Keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME. The overview may show the supplied account name and deterministic Search result counts; never infer CRM facts from loosely matching documents. Use GLEAN_SERVER_URL directly.",
   "goDependency": false,
   "featured": false,
   "tags": ["dual-implementation", "sales", "platform-api"],
   "content": {
-    "problem": "Account executives jump between CRM notes, renewal docs, and security\npackets to prep a single customer conversation. This puts those sources in\none account workspace with evidence coverage, compact source sections, and\nan above-the-fold assistant thread — so the next call needs one tab, not nine.\n\nEverything displayed comes from what your instance already knows about that\naccount. The overview shows only the account name you set and counts taken\nstraight from the Search results; assistant claims remain cited rather than\nturning loose search matches into unsupported CRM facts.\n\nThis recipe builds the page two ways: Platform Search plus Client Chat for an\nopen-ended dashboard, or Agents `createRun` for a prescriptive QBR-ready brief.",
+    "problem": "Account executives jump between CRM notes, renewal docs, and security\npackets to prep a single customer conversation. This puts those sources in\none account workspace with evidence coverage, compact source sections, and\nan above-the-fold assistant thread — so the next call needs one tab, not nine.\n\nEverything displayed comes from what your instance already knows about that\naccount. The overview shows only the account name you set and counts taken\nstraight from the Search results; assistant claims remain cited rather than\nturning loose search matches into unsupported CRM facts.\n\nThis recipe builds the page two ways: Platform Search plus Platform Chat for an\nopen-ended dashboard, or Agents `createRun` for a prescriptive QBR-ready brief.",
     "takeItFurther": [
       "Add a portfolio dashboard across a rep's whole book of business, with health and renewal countdown tiles per account.",
       "Schedule a weekly headless job that re-runs the account's queries, diffs against the last run, and posts only what changed to Slack.",

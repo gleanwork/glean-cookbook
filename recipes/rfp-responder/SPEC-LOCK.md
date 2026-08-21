@@ -7,17 +7,17 @@ approval before export.
 
 1. Parse CSV, XLSX, or DOCX input into rows while preserving tabs, sections, and ordering.
 2. Merge exact duplicate questions only. Surface near-duplicates for human review.
-3. Call Client Chat once per unique question with evidence-only instructions.
+3. Call Platform Chat once per unique question with evidence-only instructions.
 4. Classify citation topicality separately from approval for external use.
 5. Leave unsupported rows blank with `needs-sme` status.
 6. Require explicit approval and record the approval before export.
 
 ## Contracts
 
-- Client Chat uses `POST /rest/api/v1/chat` with the caller's credential.
-- Verification sets `saveChat: false`.
-- Answer text comes from `CONTENT` messages; citations come from
-  `fragments[].citation.sourceDocument`.
+- Platform Chat uses `POST /api/chat` with the caller's credential and experimental opt-in.
+- Verification sets `stream: false` and `store: false`.
+- Answer text comes from `ASSISTANT` `OUTPUT_TEXT` content; citations come from
+  `annotations[].sources[]`, with snippets from `annotations[].snippets[]`.
 - Every non-empty answer has at least one citation.
 - Empty Chat output is a retryable transport failure, not evidence that the corpus is silent.
 - Tokens remain server-side; there is no impersonation.

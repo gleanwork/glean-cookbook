@@ -2,7 +2,7 @@
   "name": "customer-360-platform-search-chat",
   "version": "0.0.0",
   "private": true,
-  "description": "Customer 360 — Platform Search tiles + Client Chat synthesis.",
+  "description": "Customer 360 — Platform Search tiles + Platform Chat synthesis.",
   "type": "module",
   "scripts": {
     "login": "node scripts/glean-auth.mjs login --scopes search,chat --require GLEAN_ACCOUNT_NAME",
@@ -14,7 +14,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@gleanwork/api-client": "0.18.0",
+    "@gleanwork/api-client": "0.19.0",
     "dotenv": "17.4.2"
   },
   "devDependencies": {

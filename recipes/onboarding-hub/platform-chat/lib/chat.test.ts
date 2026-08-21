@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { afterEach, test } from 'node:test';
 import {
-  askClientChat,
-  buildChatRequest,
-  parseClientChatResponse,
+  askPlatformChat,
+  buildPlatformChatRequest,
+  parsePlatformChatResponse,
   withEscalate,
 } from './chat.ts';
 
@@ -21,56 +21,63 @@ afterEach(() => {
   }
 });
 
-test('buildChatRequest keeps saveChat false and CONTENT on every turn', () => {
+test('buildPlatformChatRequest keeps history ephemeral and maps assistant roles', () => {
   assert.deepEqual(
-    buildChatRequest('How do I set up VPN?', [
+    buildPlatformChatRequest('How do I set up VPN?', [
       { author: 'USER', text: 'What should I do on my first day?' },
-      { author: 'GLEAN_AI', text: 'Start with the checklist.' },
+      { author: 'ASSISTANT', text: 'Start with the checklist.' },
     ]),
     {
-      saveChat: false,
-      messages: [
+      stream: false,
+      store: false,
+      input: [
         {
-          author: 'USER',
-          messageType: 'CONTENT',
-          fragments: [{ text: 'What should I do on my first day?' }],
+          role: 'USER',
+          content: 'What should I do on my first day?',
         },
         {
-          author: 'GLEAN_AI',
-          messageType: 'CONTENT',
-          fragments: [{ text: 'Start with the checklist.' }],
+          role: 'ASSISTANT',
+          content: 'Start with the checklist.',
         },
         {
-          author: 'USER',
-          messageType: 'CONTENT',
-          fragments: [{ text: 'How do I set up VPN?' }],
+          role: 'USER',
+          content: 'How do I set up VPN?',
         },
       ],
     },
   );
 });
 
-test('parseClientChatResponse ignores UPDATE progress and reads fragment citations', () => {
-  const parsed = parseClientChatResponse({
-    messages: [
+test('parsePlatformChatResponse joins output text and reads annotation sources', () => {
+  const parsed = parsePlatformChatResponse({
+    object: 'RESPONSE',
+    status: 'COMPLETED',
+    output: [
       {
-        author: 'GLEAN_AI',
-        messageType: 'UPDATE',
-        fragments: [{ text: 'Searching company knowledge' }],
-      },
-      {
-        author: 'GLEAN_AI',
-        messageType: 'CONTENT',
-        fragments: [
-          { text: 'Install the Sample Corp VPN client from the IT portal.' },
+        type: 'MESSAGE',
+        role: 'ASSISTANT',
+        content: [
           {
-            text: '',
-            citation: {
-              sourceDocument: {
-                title: 'VPN Setup Guide',
-                url: 'https://portal.sample.internal/support/vpn-setup',
+            type: 'OUTPUT_TEXT',
+            text: 'Install the Sample Corp VPN client ',
+            annotations: [],
+          },
+          {
+            type: 'OUTPUT_TEXT',
+            text: 'from the IT portal.',
+            annotations: [
+              {
+                type: 'CITATION',
+                sources: [
+                  {
+                    type: 'DOCUMENT',
+                    document_id: 'vpn-guide',
+                    title: 'VPN Setup Guide',
+                    url: 'https://portal.sample.internal/support/vpn-setup',
+                  },
+                ],
               },
-            },
+            ],
           },
         ],
       },
@@ -86,6 +93,49 @@ test('parseClientChatResponse ignores UPDATE progress and reads fragment citatio
       url: 'https://portal.sample.internal/support/vpn-setup',
     },
   ]);
+});
+
+test('parsePlatformChatResponse retains document-id-only evidence', () => {
+  const parsed = parsePlatformChatResponse({
+    object: 'RESPONSE',
+    status: 'COMPLETED',
+    output: [
+      {
+        type: 'MESSAGE',
+        role: 'ASSISTANT',
+        content: [
+          {
+            type: 'OUTPUT_TEXT',
+            text: 'Use the onboarding checklist.',
+            annotations: [
+              {
+                type: 'CITATION',
+                sources: [
+                  { type: 'DOCUMENT', document_id: 'onboarding-checklist' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  assert.deepEqual(parsed.citations, [{ title: 'onboarding-checklist' }]);
+});
+
+test('parsePlatformChatResponse rejects legacy and incomplete envelopes', () => {
+  assert.throws(
+    () => parsePlatformChatResponse({ messages: [] }),
+    /did not return a completed response/,
+  );
+  assert.throws(
+    () =>
+      parsePlatformChatResponse({
+        object: 'RESPONSE',
+        status: 'IN_PROGRESS',
+      }),
+    /did not return a completed response/,
+  );
 });
 
 test('withEscalate flags empty, thin, and uncited answers', () => {
@@ -114,27 +164,27 @@ test('withEscalate flags empty, thin, and uncited answers', () => {
   );
 });
 
-test('askClientChat throws when the fixture key is missing', async () => {
+test('askPlatformChat throws when the fixture key is missing', async () => {
   process.env.GLEAN_USE_FIXTURE = 'true';
   delete process.env.GLEAN_API_TOKEN;
   delete process.env.GLEAN_SERVER_URL;
   await assert.rejects(
-    askClientChat('a question with no recorded fixture', []),
+    askPlatformChat('a question with no recorded fixture', []),
     /No fixture recorded for question: a question with no recorded fixture/,
   );
 });
 
-test('askClientChat serves a recorded cited answer without credentials', async () => {
+test('askPlatformChat serves a recorded cited answer without credentials', async () => {
   process.env.GLEAN_USE_FIXTURE = 'true';
   delete process.env.GLEAN_API_TOKEN;
   delete process.env.GLEAN_SERVER_URL;
-  const result = await askClientChat('How do I set up VPN?', []);
+  const result = await askPlatformChat('How do I set up VPN?', []);
   assert.ok(result.answer.length >= 20);
   assert.ok(result.citations.length > 0);
   assert.equal(result.escalate, false);
 });
 
-test('askClientChat posts buildChatRequest and retries empty CONTENT once', async (t) => {
+test('askPlatformChat posts an ephemeral request and retries empty output once', async (t) => {
   let requests = 0;
   const bodies: unknown[] = [];
   const server = http.createServer(async (request, response) => {
@@ -145,13 +195,19 @@ test('askClientChat posts buildChatRequest and retries empty CONTENT once', asyn
     response.writeHead(200, { 'Content-Type': 'application/json' });
     response.end(
       JSON.stringify({
-        messages: [
+        id: `resp-${requests}`,
+        object: 'RESPONSE',
+        created_at: '2026-08-21T21:31:00Z',
+        status: 'COMPLETED',
+        output: [
           {
-            author: 'GLEAN_AI',
-            messageType: 'CONTENT',
-            fragments: [{ text: '   ' }],
+            type: 'MESSAGE',
+            role: 'ASSISTANT',
+            content: [{ type: 'OUTPUT_TEXT', text: '   ', annotations: [] }],
           },
         ],
+        store: false,
+        request_id: `request-${requests}`,
       }),
     );
   });
@@ -165,9 +221,12 @@ test('askClientChat posts buildChatRequest and retries empty CONTENT once', asyn
   delete process.env.GLEAN_USE_FIXTURE;
 
   await assert.rejects(
-    askClientChat('How do I set up VPN?', []),
+    askPlatformChat('How do I set up VPN?', []),
     /no answer text after two attempts/,
   );
   assert.equal(requests, 2);
-  assert.deepEqual(bodies[0], buildChatRequest('How do I set up VPN?', []));
+  assert.deepEqual(
+    bodies[0],
+    buildPlatformChatRequest('How do I set up VPN?', []),
+  );
 });

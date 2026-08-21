@@ -660,13 +660,13 @@
           const refusal =
             "I don't have enough information to answer that confidently.";
           appendMessage('assistant', refusal);
-          remember('GLEAN_AI', refusal);
+          remember('ASSISTANT', refusal);
           escalate.hidden = false;
           return;
         }
 
         appendMessage('assistant', answer, data.citations ?? []);
-        remember('GLEAN_AI', answer);
+        remember('ASSISTANT', answer);
       }
 
       function rerender() {

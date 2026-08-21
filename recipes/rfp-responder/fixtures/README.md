@@ -2,7 +2,7 @@
 
 - `sample-security-questionnaire.csv` contains 20 rows across four tabs. The app reads `tab` and
   `question`; the remaining columns are the verification oracle.
-- `chat-responses.json` contains Client Chat responses keyed by question id.
+- `chat-responses.json` contains Platform Chat responses keyed by question id.
 - `chat-unfinished.json` replaces one answer with an empty response to verify that transport
   failure is not classified as insufficient evidence.
 

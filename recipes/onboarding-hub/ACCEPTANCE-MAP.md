@@ -1,6 +1,6 @@
 # Onboarding Hub acceptance map
 
-| Behavior               | Web SDK                                                   | Client Chat                                                    |
+| Behavior               | Web SDK                                                   | Platform Chat                                                  |
 | ---------------------- | --------------------------------------------------------- | -------------------------------------------------------------- |
 | Checklist source       | Validated `public/steps.json`                             | `GLEAN_ONBOARDING_STEPS_JSON` or `GLEAN_ONBOARDING_STEPS_FILE` |
 | Authentication         | Viewer SSO in their normal browser, with explicit backend | Server-side token                                              |
@@ -12,4 +12,4 @@
 | Done state             | Configured resource links or an empty state               | Completion summary                                             |
 
 Verify cited first-day, VPN, and PTO answers on both paths. Verify the unsupported-answer escalation
-only on Client Chat.
+only on Platform Chat.

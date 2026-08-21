@@ -21,7 +21,7 @@ below, asking its questions one at a time.
 
 ### Platform Search Chat
 
-Path A — parallel Platform Search tiles + Client Chat synthesis
+Path A — parallel Platform Search tiles + Platform Chat synthesis
 
 ### Select the run mode
 

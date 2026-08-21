@@ -9,11 +9,13 @@
     "demo": "node --import tsx scripts/demo.mjs",
     "start": "GLEAN_USE_FIXTURE=true tsx server.ts",
     "start:live": "GLEAN_USE_FIXTURE=false tsx server.ts",
+    "test": "node --import tsx --test \"lib/**/*.test.ts\"",
     "verify": "node scripts/verify.mjs",
-    "verify:fixture": "GLEAN_USE_FIXTURE=true node scripts/verify.mjs",
+    "verify:fixture": "npm test && GLEAN_USE_FIXTURE=true node scripts/verify.mjs",
     "lint": "eslint ."
   },
   "dependencies": {
+    "@gleanwork/api-client": "0.19.0",
     "dotenv": "17.4.2"
   },
   "devDependencies": {

@@ -112,7 +112,29 @@ const incident = async (id) =>
 
 const reset = () => post('/api/reset');
 
+function assertChatFixtureContract() {
+  const recorded = JSON.parse(
+    fs.readFileSync(path.join(root, 'fixtures', 'chat-responses.json'), 'utf8'),
+  );
+  for (const [key, body] of Object.entries(recorded)) {
+    if (body.object !== 'RESPONSE' || body.status !== 'COMPLETED') {
+      throw new Error(`${key}: expected a completed Platform Chat response`);
+    }
+    if (body.store !== false) throw new Error(`${key}: store must be false`);
+    const contents = (body.output ?? [])
+      .filter(
+        (message) => message.type === 'MESSAGE' && message.role === 'ASSISTANT',
+      )
+      .flatMap((message) => message.content ?? [])
+      .filter((content) => content.type === 'OUTPUT_TEXT');
+    if (contents.length === 0) {
+      throw new Error(`${key}: no ASSISTANT OUTPUT_TEXT content`);
+    }
+  }
+}
+
 async function main() {
+  if (useFixture) assertChatFixtureContract();
   const child = boot();
   try {
     if (!(await waitUp())) {
@@ -162,6 +184,14 @@ async function main() {
     const r1 = await (await fire(a1)).json();
     const inc1 = r1.incident;
     check('acked before triage', inc1.channel[0]?.kind === 'ack');
+    if (!useFixture) {
+      check(
+        'live triage used Platform Chat instead of the local fallback',
+        !(r1.notes ?? []).some((note) =>
+          note.includes('Chat synthesis produced no answer'),
+        ),
+      );
+    }
     check(
       'service registry resolved the on-call engineer',
       inc1.service.onCall === ONCALL,
@@ -482,6 +512,12 @@ async function main() {
       'the timeline is built from audited events',
       /\[audit\]/.test(pm.postmortem ?? ''),
     );
+    if (!useFixture) {
+      check(
+        'live postmortem used Platform Chat narrative',
+        !/Narrative unavailable/u.test(pm.postmortem ?? ''),
+      );
+    }
     check('the incident is resolved after the draft', pm.status === 'resolved');
   } finally {
     shutdown(child);

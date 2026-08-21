@@ -14,7 +14,7 @@ disable-model-invocation: true
 Build "Onboarding Hub: a day-one checklist grounded in your own docs" following https://developers.glean.com/cookbook/onboarding-hub
 
 1. **Pick a path**
-   Both paths build the same first-week checklist. Choose Web SDK if you want Glean's chat UI and the Glean session already in your browser. Choose Client Chat if you want to own the answer UI and call Glean from your backend.
+   Both paths build the same first-week checklist. Choose Web SDK if you want Glean's chat UI and the Glean session already in your browser. Choose Platform Chat if you want to own the answer UI and call Glean from your backend.
 
 Ask which variant to build first, on its own, and wait for the answer. Then follow only that variant
 below, asking its questions one at a time.
@@ -70,9 +70,9 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
 6. **Check it against your own content**
    Once the page is open in your signed-in browser, confirm your checklist renders. Click **Ask about this** on a step and check that Glean returns a cited first-day answer.
 
-### Client Chat
+### Platform Chat
 
-Client Chat variant — server-side API call, custom UI
+Platform Chat variant — server-side API call, custom UI
 
 ### Select the run mode
 

@@ -4,12 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listenLocal } from './lib/cookbook-server.js';
-import { askClientChat } from './lib/chat.js';
+import { askPlatformChat } from './lib/chat.js';
 import { loadAccount } from './lib/search.js';
-
-// Path A: Platform Search tiles + Client Chat synthesis.
-// Search: glean.search.query (POST /api/search) — @gleanwork/api-client@0.18.0
-// Chat: fetch POST /rest/api/v1/chat.
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
@@ -63,7 +59,7 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: 'question is required' }));
         return;
       }
-      const { answer, citations } = await askClientChat(question);
+      const { answer, citations } = await askPlatformChat(question);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ answer, citations }));
     } catch (error) {

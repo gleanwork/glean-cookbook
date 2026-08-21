@@ -2,10 +2,10 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { afterEach, test } from 'node:test';
 import {
-  askClientChat,
-  buildChatRequest,
+  askPlatformChat,
+  buildPlatformChatRequest,
   frameAccountPrompt,
-  parseClientChatResponse,
+  parsePlatformChatResponse,
 } from './chat.ts';
 
 const originalEnv = {
@@ -22,44 +22,46 @@ afterEach(() => {
   }
 });
 
-test('buildChatRequest keeps saveChat false and omits USER messageType', () => {
+test('buildPlatformChatRequest keeps synthesis ephemeral', () => {
   process.env.GLEAN_ACCOUNT_NAME = 'Globex';
-  const request = buildChatRequest(
-    frameAccountPrompt('Give me a customer summary'),
-  );
-  assert.equal(request.saveChat, false);
-  assert.equal(request.messages.length, 1);
-  assert.equal(request.messages[0].author, 'USER');
-  assert.deepEqual(request.messages[0].fragments, [
-    { text: frameAccountPrompt('Give me a customer summary') },
-  ]);
-  assert.equal(
-    Object.prototype.hasOwnProperty.call(request.messages[0], 'messageType'),
-    false,
-  );
+  const prompt = frameAccountPrompt('Give me a customer summary');
+  assert.deepEqual(buildPlatformChatRequest(prompt), {
+    input: prompt,
+    stream: false,
+    store: false,
+  });
 });
 
-test('parseClientChatResponse ignores UPDATE progress and reads fragment citations', () => {
-  const parsed = parseClientChatResponse({
-    messages: [
+test('parsePlatformChatResponse joins output and normalizes citations', () => {
+  const parsed = parsePlatformChatResponse({
+    object: 'RESPONSE',
+    status: 'COMPLETED',
+    output: [
       {
-        author: 'GLEAN_AI',
-        messageType: 'UPDATE',
-        fragments: [{ text: 'Searching company knowledge' }],
-      },
-      {
-        author: 'GLEAN_AI',
-        messageType: 'CONTENT',
-        fragments: [
-          { text: 'Globex renews 2026-09-30 and is on track.' },
+        type: 'MESSAGE',
+        role: 'ASSISTANT',
+        content: [
           {
-            text: '',
-            citation: {
-              sourceDocument: {
-                title: 'Globex — Renewal Status (Q3 2026)',
-                url: 'https://portal.sample.internal/sales/accounts/globex/renewal-q3-2026',
+            type: 'OUTPUT_TEXT',
+            text: 'Globex renews 2026-09-30 ',
+            annotations: [],
+          },
+          {
+            type: 'OUTPUT_TEXT',
+            text: 'and is on track.',
+            annotations: [
+              {
+                type: 'CITATION',
+                sources: [
+                  {
+                    type: 'DOCUMENT',
+                    document_id: 'globex-renewal',
+                    title: 'Globex — Renewal Status (Q3 2026)',
+                    url: 'https://portal.sample.internal/sales/accounts/globex/renewal-q3-2026',
+                  },
+                ],
               },
-            },
+            ],
           },
         ],
       },
@@ -74,42 +76,61 @@ test('parseClientChatResponse ignores UPDATE progress and reads fragment citatio
   ]);
 });
 
-test('askClientChat looks up the inbound question, not the framed prompt', async () => {
+test('parsePlatformChatResponse rejects a Client Chat envelope', () => {
+  assert.throws(
+    () => parsePlatformChatResponse({ messages: [] }),
+    /did not return a completed response/,
+  );
+});
+
+test('askPlatformChat looks up the inbound question, not the framed prompt', async () => {
   process.env.GLEAN_USE_FIXTURE = 'true';
   process.env.GLEAN_ACCOUNT_NAME = 'Globex';
   delete process.env.GLEAN_API_TOKEN;
   delete process.env.GLEAN_SERVER_URL;
-  const result = await askClientChat('Give me a customer summary');
+  const result = await askPlatformChat('Give me a customer summary');
   assert.ok(result.answer.length > 0);
   assert.ok(result.citations.length > 0);
 });
 
-test('askClientChat throws when the fixture key is missing', async () => {
+test('askPlatformChat throws when the fixture key is missing', async () => {
   process.env.GLEAN_USE_FIXTURE = 'true';
-  delete process.env.GLEAN_API_TOKEN;
-  delete process.env.GLEAN_SERVER_URL;
   await assert.rejects(
-    askClientChat('a question with no recorded fixture'),
+    askPlatformChat('a question with no recorded fixture'),
     /No fixture recorded for question: a question with no recorded fixture/,
   );
 });
 
-test('askClientChat posts the framed prompt without messageType', async (t) => {
+test('askPlatformChat posts the framed prompt to /api/chat', async (t) => {
   const bodies: unknown[] = [];
   const server = http.createServer(async (request, response) => {
+    assert.equal(request.url, '/api/chat');
+    assert.equal(request.headers['x-glean-include-experimental'], 'true');
     const chunks: Buffer[] = [];
     for await (const chunk of request) chunks.push(chunk as Buffer);
     bodies.push(JSON.parse(Buffer.concat(chunks).toString()));
     response.writeHead(200, { 'Content-Type': 'application/json' });
     response.end(
       JSON.stringify({
-        messages: [
+        id: 'resp_customer_360',
+        object: 'RESPONSE',
+        created_at: '2026-08-21T21:31:00Z',
+        status: 'COMPLETED',
+        output: [
           {
-            author: 'GLEAN_AI',
-            messageType: 'CONTENT',
-            fragments: [{ text: 'Globex renews 2026-09-30 and is on track.' }],
+            type: 'MESSAGE',
+            role: 'ASSISTANT',
+            content: [
+              {
+                type: 'OUTPUT_TEXT',
+                text: 'Globex renews 2026-09-30 and is on track.',
+                annotations: [],
+              },
+            ],
           },
         ],
+        store: false,
+        request_id: 'req_customer_360',
       }),
     );
   });
@@ -123,14 +144,11 @@ test('askClientChat posts the framed prompt without messageType', async (t) => {
   process.env.GLEAN_ACCOUNT_NAME = 'Globex';
   delete process.env.GLEAN_USE_FIXTURE;
 
-  const result = await askClientChat(
-    "What's the status of our renewal with that account?",
-  );
+  const question = "What's the status of our renewal with that account?";
+  const result = await askPlatformChat(question);
   assert.equal(result.answer, 'Globex renews 2026-09-30 and is on track.');
   assert.deepEqual(
     bodies[0],
-    buildChatRequest(
-      frameAccountPrompt("What's the status of our renewal with that account?"),
-    ),
+    buildPlatformChatRequest(frameAccountPrompt(question)),
   );
 });

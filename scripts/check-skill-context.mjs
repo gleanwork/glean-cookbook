@@ -16,13 +16,9 @@ const historicalNarration = [
   /\bas[- ]of\b/iu,
   /\blive[- ]test\b/iu,
 ];
-// These are the stale Platform Chat contract that prompted this guard. Recipe
-// skills now teach Client Chat; letting any of these back into either field
-// would make a fresh build target the known-unavailable endpoint again.
-const staleChatContract = [
-  /\bPOST\s+\/api\/chat\b/iu,
-  /\boutput_text\b/iu,
-  /annotations\[\]\.sources/iu,
+const forbiddenRecipeChatPatterns = [
+  /\bPOST\s+\/rest\/api\/v1\/chat\b/iu,
+  /\boutput_text\b/u,
   /\bstore\s*:\s*true\b/iu,
 ];
 const fieldLimits = { aiPrompt: 320, llmContext: 120 };
@@ -48,10 +44,10 @@ for (const entry of fs.readdirSync(recipesDir, { withFileTypes: true })) {
         );
       }
     }
-    for (const pattern of staleChatContract) {
+    for (const pattern of forbiddenRecipeChatPatterns) {
       if (pattern.test(value)) {
         failures.push(
-          `${recipe.id}: ${field} contains the stale Platform Chat contract (${pattern.source})`,
+          `${recipe.id}: ${field} contains a forbidden chat contract (${pattern.source})`,
         );
       }
     }

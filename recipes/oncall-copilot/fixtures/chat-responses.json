@@ -1,135 +1,140 @@
 {
   "triage:PAY-2231": {
-    "messages": [
+    "id": "resp_triage_pay_2231",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "UPDATE",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "**Searching company knowledge**"
-          }
-        ]
-      },
-      {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
-          {
-            "text": "A canary rollout of payments-service tripped the authorization failure rate alarm, rising from 0.2% to 3.8% at 5% traffic. PAY-2114 records the same signature on 2026-06-28, caused by a Stripe connection-pool floor too aggressive for the canary pod's lower traffic share."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "PAY-2114: Canary Alarms During Deploy — Incident Review",
-                "url": "https://portal.sample.internal/incidents/PAY-2114"
+            "type": "OUTPUT_TEXT",
+            "text": "A canary rollout of payments-service tripped the authorization failure rate alarm, rising from 0.2% to 3.8% at 5% traffic. PAY-2114 records the same signature on 2026-06-28, caused by a Stripe connection-pool floor too aggressive for the canary pod's lower traffic share.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "PAY-2114",
+                    "title": "PAY-2114: Canary Alarms During Deploy — Incident Review",
+                    "url": "https://portal.sample.internal/incidents/PAY-2114"
+                  },
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "payments-deploy-runbook",
+                    "title": "payments-service — Deploy & Rollback Runbook",
+                    "url": "https://portal.sample.internal/runbooks/payments-service-deploy"
+                  }
+                ]
               }
-            }
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "payments-service — Deploy & Rollback Runbook",
-                "url": "https://portal.sample.internal/runbooks/payments-service-deploy"
-              }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_triage_pay_2231"
   },
   "triage:PAY-2232": {
-    "messages": [
+    "id": "resp_triage_pay_2232",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "UPDATE",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "**Searching company knowledge**"
-          }
-        ]
-      },
-      {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
-          {
-            "text": "Ledger write queue depth on payments-service is growing with no deploy in flight. No indexed incident matches this signature, so the cause is not yet established."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Engineering Incident Response Runbook",
-                "url": "https://portal.sample.internal/runbooks/incident-response"
+            "type": "OUTPUT_TEXT",
+            "text": "Ledger write queue depth on payments-service is growing with no deploy in flight. No indexed incident matches this signature, so the cause is not yet established.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "incident-response-runbook",
+                    "title": "Engineering Incident Response Runbook",
+                    "url": "https://portal.sample.internal/runbooks/incident-response"
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_triage_pay_2232"
   },
   "postmortem:PAY-2231": {
-    "messages": [
+    "id": "resp_postmortem_pay_2231",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "UPDATE",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "**Searching company knowledge**"
-          }
-        ]
-      },
-      {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
-          {
-            "text": "PAY-2231 fired when a payments-service canary rollout drove the authorization failure rate from 0.2% to 3.8%. The copilot matched PAY-2114 as a precedent and proposed a draft fix PR. The recorded timeline below identifies the approver and execution result."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "PAY-2114: Canary Alarms During Deploy — Incident Review",
-                "url": "https://portal.sample.internal/incidents/PAY-2114"
+            "type": "OUTPUT_TEXT",
+            "text": "PAY-2231 fired when a payments-service canary rollout drove the authorization failure rate from 0.2% to 3.8%. The copilot matched PAY-2114 as a precedent and proposed a draft fix PR. The recorded timeline below identifies the approver and execution result.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "PAY-2114",
+                    "title": "PAY-2114: Canary Alarms During Deploy — Incident Review",
+                    "url": "https://portal.sample.internal/incidents/PAY-2114"
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_postmortem_pay_2231"
   },
   "postmortem:PAY-2232": {
-    "messages": [
+    "id": "resp_postmortem_pay_2232",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "UPDATE",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "**Searching company knowledge**"
-          }
-        ]
-      },
-      {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
-          {
-            "text": "PAY-2232 fired on ledger write queue depth with no deploy in flight. No precedent matched, so no cause was asserted and a tracking ticket was proposed for investigation."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Engineering Incident Response Runbook",
-                "url": "https://portal.sample.internal/runbooks/incident-response"
+            "type": "OUTPUT_TEXT",
+            "text": "PAY-2232 fired on ledger write queue depth with no deploy in flight. No precedent matched, so no cause was asserted and a tracking ticket was proposed for investigation.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "incident-response-runbook",
+                    "title": "Engineering Incident Response Runbook",
+                    "url": "https://portal.sample.internal/runbooks/incident-response"
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_postmortem_pay_2232"
   }
 }

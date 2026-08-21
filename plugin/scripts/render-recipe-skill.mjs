@@ -28,7 +28,7 @@ const LABEL_WORDS = {
   typescript: 'TypeScript',
   javascript: 'JavaScript',
 };
-const VARIANT_LABELS = { 'platform-chat': 'Client Chat' };
+const VARIANT_LABELS = { 'platform-chat': 'Platform Chat' };
 
 Handlebars.registerHelper(
   'pluginPartial',
