@@ -1,9 +1,9 @@
 # Onboarding Hub — Web SDK
 
 A first-week checklist with progress tracking and Glean chat via `renderChat`. The Web SDK uses the
-identity from the viewer's existing Glean browser session; it does not need an API token.
+identity from your existing Glean browser session; it does not need an API token.
 
-## Configure
+## Setup
 
 Requires Node 20.19+ or 22.12+.
 
@@ -13,10 +13,14 @@ npm run configure
 cp public/steps.example.json public/steps.json
 ```
 
-The configure command discovers your tenant from your work email and writes `.env.local`.
-Customize `public/steps.json` with your checklist before running the app. Each step needs a unique
-`id`, a `title`, a `group` (`it`, `hr`, `team`, or `engineering`), a boolean `initiallyDone`, and an
-`askPrompt`.
+`npm run configure` finds your Glean tenant from your work email and writes `VITE_GLEAN_BACKEND`
+into a new `.env.local`. If you skip that command, copy `.env.example` to `.env.local` and fill in
+that URL yourself. It is your Glean backend, for example `https://acme-be.glean.com`.
+
+Configuring the backend does not fill in the checklist. Copy `public/steps.example.json` to
+`public/steps.json`, then replace the sample steps with your own first-week tasks. Each step needs a
+unique `id`, a `title`, a `group` (`it`, `hr`, `team`, or `engineering`), a boolean `initiallyDone`,
+and an `askPrompt`.
 
 Optional completion links come from `public/resources.json`:
 
@@ -30,15 +34,15 @@ cp public/resources.example.json public/resources.json
 npm run dev
 ```
 
-Copy the exact local URL printed by Vite and open it yourself in your normal browser where you are
-already signed in to Glean. Do not use a private/incognito window or an agent-controlled browser;
-those browsers do not share your Glean SSO session.
+Copy the exact local URL printed by Vite and open it in the same browser where you are already
+signed in to Glean. A private or incognito window does not share that session.
 
 ## Verify
 
-1. Confirm your configured steps, groups, and progress render without a configuration message.
+1. Confirm your checklist shows the first-week tasks you set, with groups and progress, and without
+   a configuration message.
 2. Ask **What should I do on my first day?** and confirm Glean returns a cited answer from your
-   instance.
+   own onboarding documents.
 3. Click **Ask about this** on a step and confirm the chat submits that step's question and answers
    it. Each click starts a fresh thread — see the note below.
 4. Complete every step. Confirm the completion panel appears, then reset the demo and confirm the
