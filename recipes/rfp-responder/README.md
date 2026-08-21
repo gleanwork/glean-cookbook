@@ -19,11 +19,18 @@ npm start                # open the Local URL printed by the server
 ```
 
 `verify:fixture` is the interesting one to run first. It replays recorded Chat
-responses and asserts the contract, so you can see the guarantees before wiring up
-a token.
+responses and asserts the contract, so you can see the guarantees before you
+connect anything.
 
-For live use, run `npm run login`, then set `RFP_APPROVED_SOURCE_PREFIXES` in `.env` to the
-comma-separated Glean URL prefixes cleared for customer-facing answers.
+For a live run, `npm run login` finds your Glean tenant from your work email,
+opens a browser for you to approve access, and writes `GLEAN_SERVER_URL` and
+`GLEAN_API_TOKEN` into a new `.env`. If your tenant cannot use OAuth, skip that
+command: copy `.env.example` to `.env` and fill in those two values yourself,
+using a Glean API token that carries the **CHAT** scope.
+
+Signing in does not choose approved sources. Open `.env` and set
+`RFP_APPROVED_SOURCE_PREFIXES` to the comma-separated Glean URL prefixes
+cleared for customer-facing answers.
 
 ## Auth: this app runs as you
 
