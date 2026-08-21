@@ -1,149 +1,144 @@
-# RFP & questionnaire responder
+# RFP and questionnaire responder
 
-Turn a customer questionnaire into grounded, cited draft answers — where every claim
-carries a source, unsupported rows route to a human, and nothing reaches the
-customer without approval.
+A review app that drafts cited answers to an RFP or security questionnaire,
+leaves unsupported questions blank, and requires a person to approve each
+answer.
 
-Everyone has seen an RFP bot. The difference here is the **failure contract**: what
-the app does when it _cannot_ answer. Rows with no supporting evidence render blank
-and route to an SME. The API refuses to accept them. Export leaves them empty. A
-fluent answer with no citation is the worst thing this app could produce, so it is
-structurally prevented rather than discouraged by a prompt.
+The default walkthrough uses a sample questionnaire and recorded Chat
+responses. You can inspect every evidence path before connecting the app to
+Glean.
 
 ## Run it
 
+You need Node 20 or newer, and nothing else. The walkthrough needs no
+credentials and makes no network calls.
+
 ```bash
 npm install
-npm run verify:fixture   # whole flow, no credentials, no network
-npm start                # open the Local URL printed by the server
+npm run verify:fixture
+npm start
 ```
 
-`verify:fixture` is the interesting one to run first. It replays recorded Chat
-responses and asserts the contract, so you can see the guarantees before wiring up
-a token.
+`verify:fixture` runs the questionnaire from the command line and checks the
+evidence and approval rules. `npm start` prints a Local URL where you can walk
+through the same sample in a browser.
 
-For live use, run `npm run login`, then set `RFP_APPROVED_SOURCE_PREFIXES` in `.env` to the
-comma-separated Glean URL prefixes cleared for customer-facing answers.
+## Three things to try
 
-## Auth: this app runs as you
+**Draft the bundled questionnaire.** Click **Try the bundled sample**, then
+**Confirm and draft answers**. The app parses 20 rows across four tabs, merges
+one exact duplicate, and asks 19 questions. The review summary shows 10 strongly
+grounded answers, two weak answers to verify, and eight questions that need a
+subject matter expert.
 
-There is no impersonation and no act-as. Your own token is the permission boundary,
-which makes the app single-user — and makes the guarantee real: **content you cannot
-see can never reach the customer's document.** Retrieval that returns nothing
-produces a refusal, not an answer from model knowledge.
+**Inspect an unsupported question.** Find ACC-04 or CMP-01. The row stays blank,
+has no citations, and offers assignment to a subject matter expert.
 
-The sample corpus proves it. `sales-globex-security-questionnaire` is restricted to
-the `Sample-Sales` group. Run as someone outside that group and every security row
-collapses to "needs SME" instead of quietly answering from a different source.
+**Compare strong and weak evidence.** SEC-01 and SEC-02 have cited drafts backed
+by approved sources. ACC-02 and ACC-03 have drafts but stay in the weak evidence
+bucket. Each row says why its evidence needs review.
 
-## The flow
+## Point it at your own content
 
-1. **Load and map.** Upload your own CSV, paste one, or fall back to the
-   bundled sample. Prefer your own: the argument this app makes is about _your_
-   evidence, and the sample drafts answers about a company that does not exist.
-   Enumerate tabs, confirm which column holds the questions.
-2. **Dedup and confirm.** Merge exact repeats, propose the rest, before any API call.
-3. **Draft.** One Chat call per unique question, batched, progress streamed.
-4. **Review.** Per row: the draft, its citations, and an evidence classification.
-5. **Decide.** Accept, edit inline, regenerate with steering, or assign to an SME.
-6. **Export.** Structure-preserving, behind an explicit confirm, with an approval log.
-7. **Reuse.** Accepted pairs land in the answer library and pre-fill the next one.
+Live mode calls Client Chat with your credential. It also needs a reviewed list
+of document URL prefixes that may support customer-facing answers. Do not use
+the sample questionnaire to test your company content. Its questions and
+recorded answers describe a company that does not exist.
 
-## Two findings worth stealing
+1. Copy `.env.example` to `.env`.
+2. Run the login flow:
 
-Both came out of building against a real questionnaire, and both are the kind of
-thing that looks fine in a demo and fails in production.
+   ```bash
+   npm run login -- --email "you@company.com"
+   ```
 
-### Lexical similarity cannot deduplicate a security questionnaire
+3. Set `RFP_APPROVED_SOURCE_PREFIXES` in `.env` to a comma-separated list of
+   Glean document URL prefixes that your team has cleared for customer-facing
+   use.
+4. Start live mode:
 
-The obvious design is to score question similarity and auto-merge above a
-threshold. Measured on `fixtures/sample-security-questionnaire.csv`:
+   ```bash
+   npm run start:live
+   ```
 
-| Pair                                                                                               | Score    | Reality                          |
-| -------------------------------------------------------------------------------------------------- | -------- | -------------------------------- |
-| "encrypted **at rest**?" vs "encrypted **in transit**?"                                            | **0.60** | Different controls. Never merge. |
-| "Is customer data encrypted at rest?" vs "Describe your at-rest encryption, including key length." | 0.29     | Same question. Should merge.     |
-| "Do you support SSO via SAML 2.0?" (Security tab) vs same question (Access tab)                    | 1.00     | Same question. Safe to merge.    |
+5. Open the printed Local URL and upload a questionnaire your own content can
+   answer.
 
-The false positive outranks the true positive, by a wide margin. The two questions
-that must never be merged differ by one token; the two that should be merged share
-almost no vocabulary. **No threshold works** — any cutoff that catches the real
-duplicate also merges at-rest with in-transit encryption, which means telling a
-customer the wrong thing about their own security controls, in writing, over your
-signature.
+There is no impersonation or act-as behavior. Your token is the permission
+boundary. Content you cannot see cannot reach a draft. Run the same
+questionnaire separately as two people to check how their access changes the
+results.
 
-So the app auto-merges **only** normalized-exact matches, and uses similarity
-purely to _order_ a manual-merge list. The score is never a verdict. The
-cross-tab exact repeat — the most common real-world case — is still handled
-automatically, which is most of the value anyway.
+## How the review flow works
 
-### Topicality and approval are independent axes
+1. Upload or paste a CSV. The bundled sample is available for the recorded
+   walkthrough.
+2. Confirm the detected columns. Exact repeats merge before any Chat call.
+3. Draft one answer per unique question.
+4. Review the answer, its citations, and its evidence classification.
+5. Accept the answer, edit it, regenerate it with an instruction, or assign the
+   question to a subject matter expert.
+6. Confirm the export. Unaccepted rows remain blank.
+7. Reuse accepted answers from the local answer library on the next run.
 
-The second obvious design is "cited means grounded." Consider:
+## Why similarity does not decide duplicates
 
-> **Q:** Describe your self-service credential reset flow.
-> **Cited:** "SSO and Password Reset" — an internal IT support article.
+A wording score cannot safely merge a security questionnaire. Measured on
+`fixtures/sample-security-questionnaire.csv`:
 
-That citation is _topically excellent_. It is literally about credential resets;
-term overlap scores it 0.40, comfortably "direct." It is also completely unsuitable
-as evidence in a customer's security questionnaire, because it is internal
-operational guidance rather than a reviewed statement of a security control.
+| Pair                                                                                               | Score    | Result                            |
+| -------------------------------------------------------------------------------------------------- | -------- | --------------------------------- |
+| "Is customer data encrypted **at rest**?" vs "Is customer data encrypted **in transit**?"          | **0.60** | Different controls. Do not merge. |
+| "Is customer data encrypted at rest?" vs "Describe your at-rest encryption, including key length." | 0.29     | Same question. Review for merge.  |
+| "Do you support SSO via SAML 2.0?" on two tabs                                                     | 1.00     | Exact duplicate. Safe to merge.   |
 
-No relevance score can catch this, because the problem isn't linguistic. So
-approval is **declared, not inferred** — `lib/approved-sources.ts` holds the
-prefixes cleared for customer-facing use, and the classifier scores the two axes
-separately:
+The false match scores higher than the true match. No threshold separates the
+two. The app therefore merges only normalized exact matches. Similarity orders
+possible repeats for review but never decides the merge.
 
-- **strong** — an approved source that addresses the question directly
-- **weak** — on topic but internal, or approved but only adjacent. The reason
-  string says which, so the reviewer knows what they are checking.
-- **none** — nothing citable. No draft, route to a human.
+## Why relevance does not grant approval
 
-That list is exactly the kind of thing a customer would own and review with their
-security team. Putting it in a heuristic would have been the mistake.
+A citation can discuss the right topic and still be wrong for a customer
+response. An internal password-reset article might answer a credential-reset
+question, but it is operational guidance rather than a reviewed statement of a
+security control.
 
-## Refusal is enforced, not requested
+`lib/approved-sources.ts` keeps approval separate from relevance:
 
-`classify()` controls the answer text and citations a row may display. Rows routed
-to a human must have an empty answer and no citations, even when Client Chat
-returns fluent prose. The fixture suite enforces this boundary with a response
-that contains a plausible answer for an unsupported attachment request.
+- **strong** means an approved source addresses the question directly.
+- **weak** means the source is on topic but internal, or approved but adjacent.
+  The row explains which case applies.
+- **none** means there is nothing citable. The app leaves the answer blank and
+  routes the question to a subject matter expert.
 
-## A failed call is not a finding
+Approval is declared through reviewed URL prefixes. The app does not infer it
+from wording.
 
-Client Chat can return HTTP 200 before a run produces a text block. Treat that as
-an unfinished call, not evidence that the corpus lacks an answer. Retry once; if
-the response is still unfinished, set `status: 'failed'` and `confidence: null`,
-and show a retry action. Keep explicit refusals as settled answers.
+## Boundaries to address before deployment
 
-## Deliberately not solved
-
-- **Answer library ACLs.** `lib/answer-library.ts` is a JSON file. An answer library
-  is a cache of retrieved content, so in a real deployment it is a way to leak
-  across the permission boundary the rest of the app respects. It needs its own
-  access control; here it is single-user and local.
-- **Write-back.** Export only. Writing answers back into the source document needs
-  the custom-tool pattern (see `first-custom-tool`), which is a separate recipe.
-- **xlsx / docx input.** The parser reads CSV. Real questionnaires arrive as
-  spreadsheets; adding a reader is mechanical and would pull in a dependency that
-  obscures the parts of this recipe worth reading.
-- **Semantic dedup.** Would need an embedding or LLM pass, which the flow rules out
-  by design: dedup has to finish before the reviewer confirms and before any Chat
-  call runs.
+- **Answer library access.** `lib/answer-library.ts` stores accepted answers in
+  a local JSON file. Add access control before sharing the library across a
+  team, because it caches retrieved content.
+- **Write-back.** The app exports a CSV. Writing to the source document requires
+  a separate integration with the same confirmation and approval log.
+- **Spreadsheet input.** The parser reads CSV. Add xlsx or docx support for
+  questionnaires that arrive in those formats.
+- **Semantic deduplication.** The app does not merge paraphrased questions.
+  Doing that safely requires a separate review interaction.
 
 ## Layout
 
-| Path                      | What                                                           |
-| ------------------------- | -------------------------------------------------------------- |
-| `server.ts`               | Routes; SSE progress for the batched run                       |
-| `lib/questionnaire.ts`    | CSV parse, column mapping, dedup                               |
-| `lib/chat.ts`             | Client Chat call, instructions, response parsing               |
-| `lib/grounding.ts`        | Evidence classification                                        |
-| `lib/approved-sources.ts` | Which sources may be quoted to a customer                      |
-| `lib/answer-library.ts`   | Accepted Q&A reuse                                             |
-| `lib/state.ts`            | Run state and approval log                                     |
-| `public/index.html`       | Review grid (safe DOM only, no `innerHTML`)                    |
-| `fixtures/`               | Questionnaire input, recorded Chat responses, grounding oracle |
-| `scripts/verify.mjs`      | Fixture and live verification                                  |
+| Path                      | What it contains                                           |
+| ------------------------- | ---------------------------------------------------------- |
+| `server.ts`               | Routes and streamed progress for the drafting run          |
+| `lib/questionnaire.ts`    | CSV parsing, column mapping, and exact deduplication       |
+| `lib/chat.ts`             | Client Chat request and response parsing                   |
+| `lib/grounding.ts`        | Evidence classification                                    |
+| `lib/approved-sources.ts` | Sources cleared for customer-facing answers                |
+| `lib/answer-library.ts`   | Local reuse of accepted answers                            |
+| `lib/state.ts`            | Run state and approval log                                 |
+| `public/index.html`       | Browser review app                                         |
+| `fixtures/`               | Sample input, recorded responses, and the grounding oracle |
+| `scripts/verify.mjs`      | Fixture and live verification                              |
 
-Tokens stay server-side; the browser only calls this app's own routes.
+Tokens stay on the server. The browser calls only this app's routes.

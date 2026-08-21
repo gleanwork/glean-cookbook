@@ -7,7 +7,8 @@
   "scripts": {
     "login": "node scripts/glean-auth.mjs login --scopes chat",
     "demo": "node --import tsx scripts/demo.mjs",
-    "start": "tsx server.ts",
+    "start": "GLEAN_USE_FIXTURE=true tsx server.ts",
+    "start:live": "GLEAN_USE_FIXTURE=false tsx server.ts",
     "verify": "node scripts/verify.mjs",
     "verify:fixture": "GLEAN_USE_FIXTURE=true node scripts/verify.mjs",
     "lint": "eslint ."

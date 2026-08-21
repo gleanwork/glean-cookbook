@@ -230,9 +230,8 @@
         <h1>RFP Responder</h1>
         <div class="brand-copy">Grounded drafts with human approval</div>
       </div>
-      <div class="subtitle">
-        Runs as you — evidence you cannot access never reaches the customer’s
-        document.
+      <div id="mode-subtitle" class="subtitle">
+        Every draft keeps its evidence attached for review.
       </div>
     </header>
     <main class="layout">
@@ -244,8 +243,8 @@
             ones.
           </h2>
           <p>
-            Upload a CSV, let Glean ground each response in approved company
-            knowledge, then review every answer before export.
+            Upload a CSV, draft each response from approved evidence, then
+            review every answer before export.
           </p>
         </div>
         <div class="workflow" aria-label="Workflow">
@@ -255,6 +254,7 @@
       </section>
       <section id="load-section" class="card">
         <h2 class="section-label">1 · Load questionnaire</h2>
+        <div id="mode-note" class="note hidden"></div>
         <div id="mapping-note" class="note hidden"></div>
         <div class="load-grid">
           <label class="dropzone"
@@ -334,6 +334,29 @@
       const $ = (id) => document.getElementById(id);
       let csv = '';
       let rows = [];
+
+      async function renderMode() {
+        try {
+          const response = await fetch('/api/config');
+          if (!response.ok) return;
+          const config = await response.json();
+          if (config.fixtureMode) {
+            $('mode-subtitle').textContent =
+              'Recorded walkthrough with no credentials or network calls.';
+            const note = $('mode-note');
+            note.textContent =
+              'The sample uses saved Chat responses, so these drafts do not come from your Glean content.';
+            note.classList.remove('hidden');
+          } else {
+            $('mode-subtitle').textContent =
+              'Live mode runs as you. Evidence you cannot access never reaches the customer’s document.';
+          }
+        } catch {
+          return;
+        }
+      }
+
+      void renderMode();
 
       const el = (tag, props = {}, children = []) => {
         const node = document.createElement(tag);

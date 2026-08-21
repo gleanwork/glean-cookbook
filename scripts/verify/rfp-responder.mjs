@@ -48,22 +48,44 @@ async function waitForServer(deadlineMs = 20_000) {
 
 export async function setup(context) {
   const cwd = path.join(context.repoRoot, 'recipes/rfp-responder');
-  const child = spawn('npx', ['tsx', 'server.ts'], {
+  const env = { ...process.env, PORT: String(PORT) };
+  delete env.GLEAN_USE_FIXTURE;
+  const child = spawn('npm', ['run', 'start:live'], {
     cwd,
-    env: { ...process.env, PORT: String(PORT), GLEAN_USE_FIXTURE: 'false' },
+    detached: true,
+    env,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let stderr = '';
   child.stderr.on('data', (chunk) => (stderr += chunk));
   if (!(await waitForServer())) {
-    child.kill();
+    try {
+      process.kill(-child.pid, 'SIGTERM');
+    } catch {
+      child.kill('SIGTERM');
+    }
     throw new Error(`server did not start:\n${stderr}`);
+  }
+  const config = await (await fetch(`${BASE}/api/config`)).json();
+  if (config.fixtureMode) {
+    try {
+      process.kill(-child.pid, 'SIGTERM');
+    } catch {
+      child.kill('SIGTERM');
+    }
+    throw new Error('server started in fixture mode during live verification');
   }
   return { child };
 }
 
 export async function teardown(context) {
-  context.child?.kill();
+  const child = context.child;
+  if (!child?.pid) return;
+  try {
+    process.kill(-child.pid, 'SIGTERM');
+  } catch {
+    child.kill('SIGTERM');
+  }
 }
 
 /** Parses the questionnaire and streams a full drafting run. Cached per process. */
