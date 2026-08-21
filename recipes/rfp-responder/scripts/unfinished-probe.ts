@@ -1,51 +1,47 @@
-// Exercises the chat response parser directly, on the three shapes that matter.
-// The distinction it proves -- an unfinished run is not a refusal -- is invisible
-// from the outside because both have an empty answer with no citations.
-import { parseClientChatResponse } from '../lib/chat.ts';
+import { parsePlatformChatResponse } from '../lib/chat.ts';
 
-// A run that never produced text: progress narration, then an empty CONTENT.
-const unfinished = parseClientChatResponse({
-  messages: [
-    {
-      author: 'GLEAN_AI',
-      messageType: 'UPDATE',
-      fragments: [{ text: '**Searching company knowledge**' }],
-    },
-    { author: 'GLEAN_AI', messageType: 'CONTENT', fragments: [{ text: '' }] },
-  ],
-});
-
-// A settled verdict: the model answered, and the answer is a refusal.
-const refused = parseClientChatResponse({
-  messages: [
-    {
-      author: 'GLEAN_AI',
-      messageType: 'CONTENT',
-      fragments: [{ text: 'INSUFFICIENT_EVIDENCE' }],
-    },
-  ],
-});
-
-const answered = parseClientChatResponse({
-  messages: [
-    {
-      author: 'GLEAN_AI',
-      messageType: 'CONTENT',
-      fragments: [
-        { text: 'Backups are encrypted at rest with AES-256.' },
-        {
-          text: '',
-          citation: {
-            sourceDocument: {
-              title: 'Data Protection Standard',
-              url: 'https://example/1',
-            },
+function response(text: string, cited = false) {
+  return {
+    object: 'RESPONSE',
+    status: 'COMPLETED',
+    output: [
+      {
+        type: 'MESSAGE',
+        role: 'ASSISTANT',
+        content: [
+          {
+            type: 'OUTPUT_TEXT',
+            text,
+            annotations: cited
+              ? [
+                  {
+                    type: 'CITATION',
+                    sources: [
+                      {
+                        type: 'DOCUMENT',
+                        document_id: 'data-protection',
+                        title: 'Data Protection Standard',
+                        url: 'https://example/1',
+                      },
+                    ],
+                    snippets: [
+                      { text: 'Backups are encrypted at rest with AES-256.' },
+                    ],
+                  },
+                ]
+              : [],
           },
-        },
-      ],
-    },
-  ],
-});
+        ],
+      },
+    ],
+  };
+}
+
+const unfinished = parsePlatformChatResponse(response(''));
+const refused = parsePlatformChatResponse(response('INSUFFICIENT_EVIDENCE'));
+const answered = parsePlatformChatResponse(
+  response('Backups are encrypted at rest with AES-256.', true),
+);
 
 console.log(
   JSON.stringify({

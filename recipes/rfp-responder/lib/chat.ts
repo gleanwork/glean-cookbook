@@ -1,74 +1,51 @@
-// Client Chat client.
-//
-// Auth: this recipe runs as the caller. There is no impersonation and no act-as —
-// your own OAuth token is the permission boundary, so content you cannot see can
-// never reach the prompt, and therefore can never reach the customer's document.
-// That property is the recipe, not a caveat.
-//
-//   POST /rest/api/v1/chat  { messages: [{ author, fragments: [{ text }] }] }
-//   -> messages[] where messageType === 'CONTENT' && author === 'GLEAN_AI'
-//      .fragments[].text and .fragments[].citation.sourceDocument { title, url }
-
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Glean } from '@gleanwork/api-client';
+import { PlatformProblemDetailError } from '@gleanwork/api-client/models/errors';
 import type { Citation } from './grounding.ts';
 
-interface ChatCitationDocument {
+interface CitationSource {
+  type?: string;
+  document_id?: string;
   title?: string;
   url?: string;
-  snippet?: string;
 }
 
-interface ChatFragment {
-  text?: string;
-  citation?: { sourceDocument?: ChatCitationDocument };
-}
-
-interface ChatMessageEnvelope {
-  author?: string;
-  messageType?: string;
-  fragments?: ChatFragment[];
-}
-
-export interface ClientChatResponse {
-  messages?: ChatMessageEnvelope[];
+interface PlatformChatResponse {
+  object?: string;
+  status?: string;
+  output?: Array<{
+    type?: string;
+    role?: string;
+    content?: Array<{
+      type?: string;
+      text?: string;
+      annotations?: Array<{
+        type?: string;
+        sources?: CitationSource[];
+        snippets?: Array<{ text?: string }>;
+      }>;
+    }>;
+  }>;
 }
 
 export interface ChatAnswer {
   answer: string;
   citations: Citation[];
-  /**
-   * True when the response carried no answer text at all. Chat can return
-   * HTTP 200 for a run that never finished -- an empty CONTENT message, a
-   * trailing SERVER_TOOL, and no error field anywhere -- for roughly one call in
-   * four on questions that invoke a server tool.
-   *
-   * That is a transport failure, not a finding. Without this flag it arrives as
-   * `answer: ''` with no citations, which is indistinguishable from a refusal,
-   * and the row is then labelled "insufficient evidence" -- a claim about the
-   * reader's corpus that this recipe has no basis to make.
-   */
   unfinished: boolean;
 }
 
-/** A run that returned 200 without ever producing text. Retryable. */
 export class ChatUnfinishedError extends Error {
   constructor(questionId: string, attempts: number) {
     super(
-      `chat returned 200 with no answer text for ${questionId} after ${attempts} attempt(s). ` +
+      `Platform Chat completed with no answer text for ${questionId} after ${attempts} attempt(s). ` +
         'The run did not finish. This says nothing about the evidence in your corpus.',
     );
     this.name = 'ChatUnfinishedError';
   }
 }
 
-/**
- * Constrains answers to retrieved evidence and to a tone that can be pasted
- * straight into a customer questionnaire. The refusal instruction is the
- * load-bearing line: without it the model will happily answer a compliance
- * question from its own training data.
- */
 export function buildInstructions(steering?: string): string {
   const base = [
     'You are drafting a response to a customer security questionnaire.',
@@ -84,61 +61,60 @@ export function buildInstructions(steering?: string): string {
 
 export const INSUFFICIENT = 'INSUFFICIENT_EVIDENCE';
 
-export function parseClientChatResponse(data: ClientChatResponse): ChatAnswer {
-  // The answer is the CONTENT messages from GLEAN_AI. UPDATE messages are
-  // progress narration ('Searching company knowledge') and are not the answer.
-  const contentMessages = (data.messages ?? []).filter(
-    (message) =>
-      message.messageType === 'CONTENT' && message.author === 'GLEAN_AI',
-  );
-  const fragments = contentMessages.flatMap(
-    (message) => message.fragments ?? [],
-  );
-  // A trailing empty CONTENT message is normal, so join across all of them
-  // rather than reading the last.
-  const textFragments = fragments.filter(
-    (fragment) => (fragment.text ?? '').trim() !== '',
-  );
-
-  const answer = textFragments
-    .map((fragment) => fragment.text ?? '')
-    .join('')
-    .trim();
-
-  // Citations hang off individual fragments, not off the message.
-  const raw = fragments
-    .map((fragment) => fragment.citation?.sourceDocument)
-    .filter((document): document is ChatCitationDocument => Boolean(document));
-
-  const citations = Array.from(
-    new Map(
-      raw
-        .filter((source) => source.title && source.url)
-        .map((source) => [
-          source.url as string,
-          {
-            title: source.title as string,
-            url: source.url as string,
-            snippet: source.snippet,
-          },
-        ]),
-    ).values(),
-  );
-
-  // No text block at all is an unfinished run, not a refusal. A refusal is a
-  // real verdict and must stay distinguishable from a call that never produced
-  // anything, because the two get shown to the reviewer differently.
-  if (textFragments.length === 0) {
-    return { answer: '', citations: [], unfinished: true };
+export function parsePlatformChatResponse(data: unknown): ChatAnswer {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Platform Chat returned an invalid response.');
+  }
+  const response = data as PlatformChatResponse;
+  if (response.object !== 'RESPONSE' || response.status !== 'COMPLETED') {
+    throw new Error('Platform Chat did not return a completed response.');
   }
 
-  // A model that refuses has produced no answer, so drop any citations with it —
-  // otherwise the row looks grounded in the review grid.
+  const contents = (response.output ?? [])
+    .filter(
+      (message) => message.type === 'MESSAGE' && message.role === 'ASSISTANT',
+    )
+    .flatMap((message) => message.content ?? [])
+    .filter((content) => content.type === 'OUTPUT_TEXT');
+  const textBlocks = contents
+    .map((content) => content.text ?? '')
+    .filter((text) => text.trim() !== '');
+  const answer = textBlocks.join('').trim();
+
+  if (textBlocks.length === 0) {
+    return { answer: '', citations: [], unfinished: true };
+  }
   if (answer.includes(INSUFFICIENT)) {
     return { answer: '', citations: [], unfinished: false };
   }
 
-  return { answer, citations, unfinished: false };
+  const citations = new Map<string, Citation>();
+  for (const annotation of contents.flatMap(
+    (content) => content.annotations ?? [],
+  )) {
+    if (annotation.type !== 'CITATION') continue;
+    const snippet = (annotation.snippets ?? [])
+      .map((item) => item.text ?? '')
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    for (const source of annotation.sources ?? []) {
+      if (
+        source.type !== 'DOCUMENT' ||
+        !source.title ||
+        !source.url ||
+        citations.has(source.url)
+      ) {
+        continue;
+      }
+      citations.set(source.url, {
+        title: source.title,
+        url: source.url,
+        ...(snippet ? { snippet } : {}),
+      });
+    }
+  }
+  return { answer, citations: [...citations.values()], unfinished: false };
 }
 
 function fixtureDir(): string {
@@ -155,17 +131,13 @@ function requireEnv(name: string): string {
   return value;
 }
 
-/** Recorded responses keyed by question id, for offline verification. */
-export function loadFixtureResponses(): Record<string, ClientChatResponse> {
-  // Overridable so the verification can point at a recorded unfinished run
-  // without disturbing the main fixture's row counts. Only ever read when
-  // GLEAN_USE_FIXTURE is already on, so it is not a production affordance.
+export function loadFixtureResponses(): Record<string, PlatformChatResponse> {
   const file =
     process.env.RFP_CHAT_FIXTURES ??
     path.join(fixtureDir(), 'chat-responses.json');
   return JSON.parse(fs.readFileSync(file, 'utf8')) as Record<
     string,
-    ClientChatResponse
+    PlatformChatResponse
   >;
 }
 
@@ -178,57 +150,39 @@ export async function askChat(
   attempt = 1,
 ): Promise<ChatAnswer> {
   if (process.env.GLEAN_USE_FIXTURE === 'true') {
-    const fixtures = loadFixtureResponses();
-    const recorded = fixtures[questionId];
+    const recorded = loadFixtureResponses()[questionId];
     if (!recorded) return { answer: '', citations: [], unfinished: false };
-    const parsed = parseClientChatResponse(recorded);
+    const parsed = parsePlatformChatResponse(recorded);
     if (parsed.unfinished) throw new ChatUnfinishedError(questionId, 1);
     return parsed;
   }
 
-  // GLEAN_SERVER_URL rather than an instance name: deriving the backend as
-  // `https://${instance}-be.glean.com` only holds for the default naming and
-  // silently points at nothing when a deployment differs. The dev site docs use
-  // GLEAN_SERVER_URL throughout for the same reason.
-  const backend = requireEnv('GLEAN_SERVER_URL').replace(/\/$/u, '');
-  const token = requireEnv('GLEAN_API_TOKEN');
-
-  const response = await fetch(`${backend}/rest/api/v1/chat`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      saveChat: false,
-      messages: [
-        {
-          author: 'USER',
-          fragments: [
-            {
-              text: `${buildInstructions(steering)}\n\nQuestion: ${question}`,
-            },
-          ],
-        },
-      ],
-    }),
+  const glean = new Glean({
+    apiToken: requireEnv('GLEAN_API_TOKEN'),
+    serverURL: requireEnv('GLEAN_SERVER_URL').replace(/\/$/u, ''),
+    includeExperimental: true,
   });
-
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(
-      `POST /rest/api/v1/chat returned ${response.status}: ${body}`,
-    );
+  let response: Awaited<ReturnType<typeof glean.chat.create>>;
+  try {
+    response = await glean.chat.create({
+      input: `${buildInstructions(steering)}\n\nQuestion: ${question}`,
+      stream: false,
+      store: false,
+    });
+  } catch (error) {
+    if (error instanceof PlatformProblemDetailError) {
+      throw new Error(
+        `POST /api/chat returned ${error.status} (${error.code}), request ${error.request_id}`,
+        { cause: error },
+      );
+    }
+    throw error;
   }
-
-  const parsed = parseClientChatResponse(
-    (await response.json()) as ClientChatResponse,
-  );
+  if (typeof response === 'string') {
+    throw new Error('Platform Chat returned a stream for a non-stream request.');
+  }
+  const parsed = parsePlatformChatResponse(response);
   if (!parsed.unfinished) return parsed;
-
-  // One retry, because the failure is transient by nature. Retrying a refusal
-  // would be wrong -- that is a settled answer -- which is why the two cases
-  // had to be told apart first.
   if (attempt < MAX_CHAT_ATTEMPTS) {
     return askChat(questionId, question, steering, attempt + 1);
   }

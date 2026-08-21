@@ -1,364 +1,599 @@
 {
   "SEC-01": {
-    "messages": [
+    "id": "resp_rfp_sec_01",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Sample Corp maintains a current SOC 2 Type II attestation, renewed annually. The report is available to customers on request under NDA."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Security Questionnaire Response Summary",
-                "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
-                "snippet": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+            "type": "OUTPUT_TEXT",
+            "text": "Sample Corp maintains a current SOC 2 Type II attestation, renewed annually. The report is available to customers on request under NDA.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
+                    "title": "Globex — Security Questionnaire Response Summary",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06"
+                  }
+                ],
+                "snippets": [
+                  {
+                    "text": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_sec_01"
   },
   "SEC-02": {
-    "messages": [
+    "id": "resp_rfp_sec_02",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Customer data is encrypted at rest using AES-256."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Security Questionnaire Response Summary",
-                "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
-                "snippet": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+            "type": "OUTPUT_TEXT",
+            "text": "Customer data is encrypted at rest using AES-256.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
+                    "title": "Globex — Security Questionnaire Response Summary",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06"
+                  }
+                ],
+                "snippets": [
+                  {
+                    "text": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_sec_02"
   },
   "SEC-03": {
-    "messages": [
+    "id": "resp_rfp_sec_03",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Customer data is encrypted in transit using TLS 1.2 or higher."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Security Questionnaire Response Summary",
-                "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
-                "snippet": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+            "type": "OUTPUT_TEXT",
+            "text": "Customer data is encrypted in transit using TLS 1.2 or higher.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
+                    "title": "Globex — Security Questionnaire Response Summary",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06"
+                  }
+                ],
+                "snippets": [
+                  {
+                    "text": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_sec_03"
   },
   "SEC-04": {
-    "messages": [
+    "id": "resp_rfp_sec_04",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Customer data is stored in United States regions only. US-only data residency was confirmed for Globex."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Security Questionnaire Response Summary",
-                "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
-                "snippet": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+            "type": "OUTPUT_TEXT",
+            "text": "Customer data is stored in United States regions only. US-only data residency was confirmed for Globex.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
+                    "title": "Globex — Security Questionnaire Response Summary",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06"
+                  }
+                ],
+                "snippets": [
+                  {
+                    "text": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_sec_04"
   },
   "SEC-05": {
-    "messages": [
+    "id": "resp_rfp_sec_05",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Sample Corp supports single sign-on via SAML 2.0."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Security Questionnaire Response Summary",
-                "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
-                "snippet": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+            "type": "OUTPUT_TEXT",
+            "text": "Sample Corp supports single sign-on via SAML 2.0.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
+                    "title": "Globex — Security Questionnaire Response Summary",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06"
+                  }
+                ],
+                "snippets": [
+                  {
+                    "text": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_sec_05"
   },
   "SEC-06": {
-    "messages": [
+    "id": "resp_rfp_sec_06",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Sample Corp commits to notifying affected customers within 24 hours of a confirmed breach, per its documented incident-response process."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Security Questionnaire Response Summary",
-                "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
-                "snippet": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+            "type": "OUTPUT_TEXT",
+            "text": "Sample Corp commits to notifying affected customers within 24 hours of a confirmed breach, per its documented incident-response process.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
+                    "title": "Globex — Security Questionnaire Response Summary",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06"
+                  }
+                ],
+                "snippets": [
+                  {
+                    "text": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_sec_06"
   },
   "SEC-07": {
-    "messages": [
+    "id": "resp_rfp_sec_07",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Sample Corp maintains a documented incident-response process covering severity classification, escalation, customer notification, and postmortem review."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Security Questionnaire Response Summary",
-                "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
-                "snippet": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+            "type": "OUTPUT_TEXT",
+            "text": "Sample Corp maintains a documented incident-response process covering severity classification, escalation, customer notification, and postmortem review.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
+                    "title": "Globex — Security Questionnaire Response Summary",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06"
+                  }
+                ],
+                "snippets": [
+                  {
+                    "text": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+                  }
+                ]
+              },
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "https://portal.sample.internal/engineering/incident-response-runbook",
+                    "title": "Incident Response Runbook",
+                    "url": "https://portal.sample.internal/engineering/incident-response-runbook"
+                  }
+                ],
+                "snippets": [
+                  {
+                    "text": "Severity ladder, paging policy, customer communication timeline, and postmortem requirements for confirmed incidents."
+                  }
+                ]
               }
-            }
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Incident Response Runbook",
-                "url": "https://portal.sample.internal/engineering/incident-response-runbook",
-                "snippet": "Severity ladder, paging policy, customer communication timeline, and postmortem requirements for confirmed incidents."
-              }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_sec_07"
   },
   "SEC-08": {
-    "messages": [
+    "id": "resp_rfp_sec_08",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": []
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
+          {
+            "type": "OUTPUT_TEXT",
+            "text": "",
+            "annotations": []
+          }
+        ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_sec_08"
   },
   "SEC-09": {
-    "messages": [
+    "id": "resp_rfp_sec_09",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Yes. The current SOC 2 Type II report is available to customers under NDA and is renewed annually."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Globex — Security Questionnaire Response Summary",
-                "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
-                "snippet": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+            "type": "OUTPUT_TEXT",
+            "text": "Yes. The current SOC 2 Type II report is available to customers under NDA and is renewed annually.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06",
+                    "title": "Globex — Security Questionnaire Response Summary",
+                    "url": "https://portal.sample.internal/sales/accounts/globex/security-questionnaire-2026-06"
+                  }
+                ],
+                "snippets": [
+                  {
+                    "text": "SOC 2 Type II report provided (current, renewed annually), data encrypted at rest (AES-256) and in transit (TLS 1.2+), data residency confirmed as US-only, SSO/SAML supported, documented incident-response process with a 24-hour customer notification SLA."
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_sec_09"
   },
   "ACC-02": {
-    "messages": [
+    "id": "resp_rfp_acc_02",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Administrative access is authenticated through the corporate identity provider."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "SSO and Password Reset",
-                "url": "https://portal.sample.internal/support/sso-password-reset",
-                "snippet": "How employees reset credentials and sign in through the corporate identity provider."
+            "type": "OUTPUT_TEXT",
+            "text": "Administrative access is authenticated through the corporate identity provider.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "https://portal.sample.internal/support/sso-password-reset",
+                    "title": "SSO and Password Reset",
+                    "url": "https://portal.sample.internal/support/sso-password-reset"
+                  }
+                ],
+                "snippets": [
+                  {
+                    "text": "How employees reset credentials and sign in through the corporate identity provider."
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_acc_02"
   },
   "ACC-03": {
-    "messages": [
+    "id": "resp_rfp_acc_03",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Credential resets are handled as self-service through the corporate identity provider."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "SSO and Password Reset",
-                "url": "https://portal.sample.internal/support/sso-password-reset",
-                "snippet": "How employees reset credentials and sign in through the corporate identity provider."
+            "type": "OUTPUT_TEXT",
+            "text": "Credential resets are handled as self-service through the corporate identity provider.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "https://portal.sample.internal/support/sso-password-reset",
+                    "title": "SSO and Password Reset",
+                    "url": "https://portal.sample.internal/support/sso-password-reset"
+                  }
+                ],
+                "snippets": [
+                  {
+                    "text": "How employees reset credentials and sign in through the corporate identity provider."
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_acc_03"
   },
   "ACC-04": {
-    "messages": [
+    "id": "resp_rfp_acc_04",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "INSUFFICIENT_EVIDENCE"
+            "type": "OUTPUT_TEXT",
+            "text": "INSUFFICIENT_EVIDENCE",
+            "annotations": []
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_acc_04"
   },
   "ACC-05": {
-    "messages": [
+    "id": "resp_rfp_acc_05",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "INSUFFICIENT_EVIDENCE"
+            "type": "OUTPUT_TEXT",
+            "text": "INSUFFICIENT_EVIDENCE",
+            "annotations": []
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_acc_05"
   },
   "CMP-01": {
-    "messages": [
+    "id": "resp_rfp_cmp_01",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "INSUFFICIENT_EVIDENCE"
+            "type": "OUTPUT_TEXT",
+            "text": "INSUFFICIENT_EVIDENCE",
+            "annotations": []
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_cmp_01"
   },
   "CMP-02": {
-    "messages": [
+    "id": "resp_rfp_cmp_02",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "INSUFFICIENT_EVIDENCE"
+            "type": "OUTPUT_TEXT",
+            "text": "INSUFFICIENT_EVIDENCE",
+            "annotations": []
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_cmp_02"
   },
   "CMP-03": {
-    "messages": [
+    "id": "resp_rfp_cmp_03",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "INSUFFICIENT_EVIDENCE"
+            "type": "OUTPUT_TEXT",
+            "text": "INSUFFICIENT_EVIDENCE",
+            "annotations": []
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_cmp_03"
   },
   "CMP-04": {
-    "messages": [
+    "id": "resp_rfp_cmp_04",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "INSUFFICIENT_EVIDENCE"
+            "type": "OUTPUT_TEXT",
+            "text": "INSUFFICIENT_EVIDENCE",
+            "annotations": []
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_cmp_04"
   },
   "RES-01": {
-    "messages": [
+    "id": "resp_rfp_res_01",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "INSUFFICIENT_EVIDENCE"
+            "type": "OUTPUT_TEXT",
+            "text": "INSUFFICIENT_EVIDENCE",
+            "annotations": []
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_res_01"
   },
   "RES-02": {
-    "messages": [
+    "id": "resp_rfp_res_02",
+    "object": "RESPONSE",
+    "created_at": "2026-08-21T21:31:00Z",
+    "status": "COMPLETED",
+    "output": [
       {
-        "author": "GLEAN_AI",
-        "messageType": "CONTENT",
-        "fragments": [
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
           {
-            "text": "Sample Corp runs authenticated external vulnerability scans monthly against all internet-facing services, and remediates critical findings within seven days under the vulnerability management policy."
-          },
-          {
-            "text": "",
-            "citation": {
-              "sourceDocument": {
-                "title": "Vulnerability Management Policy",
-                "url": "https://sample.example.com/security/vulnerability-management"
+            "type": "OUTPUT_TEXT",
+            "text": "Sample Corp runs authenticated external vulnerability scans monthly against all internet-facing services, and remediates critical findings within seven days under the vulnerability management policy.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "https://sample.example.com/security/vulnerability-management",
+                    "title": "Vulnerability Management Policy",
+                    "url": "https://sample.example.com/security/vulnerability-management"
+                  }
+                ]
               }
-            }
+            ]
           }
         ]
       }
-    ]
+    ],
+    "store": false,
+    "request_id": "req_rfp_res_02"
   }
 }

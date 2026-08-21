@@ -2,7 +2,7 @@
 // Verify gate for rfp-responder.
 //
 // Fixture mode (default) runs the whole flow with no credentials and no network:
-// recorded Client Chat responses in fixtures/chat-responses.json drive the app, and
+// recorded Platform Chat responses in fixtures/chat-responses.json drive the app, and
 // the extra columns in fixtures/sample-security-questionnaire.csv act as a test
 // oracle. That means a regression in dedup, in the confidence classifier, or in
 // the refusal path fails CI instead of quietly shipping a confident wrong answer
@@ -47,7 +47,7 @@ const check = (label, condition, detail = '') => {
 };
 
 function assertFixtureContract() {
-  console.log('\nRecorded fixtures match the Client Chat contract');
+  console.log('\nRecorded fixtures match the Platform Chat contract');
   const recorded = JSON.parse(
     fs.readFileSync(path.join(root, 'fixtures', 'chat-responses.json'), 'utf8'),
   );
@@ -56,22 +56,31 @@ function assertFixtureContract() {
   for (const id of ids) {
     const body = recorded[id];
     const problems = [];
-    if (!Array.isArray(body.messages))
-      problems.push('messages must be an array');
-    const message = body.messages?.[0];
-    if (message?.author !== 'GLEAN_AI')
-      problems.push('messages[0].author must be GLEAN_AI');
-    if (message?.messageType !== 'CONTENT')
-      problems.push('messages[0].messageType must be CONTENT');
-    if (!Array.isArray(message?.fragments))
-      problems.push('messages[0].fragments must be an array');
-    for (const fragment of message?.fragments ?? []) {
-      if (fragment.text !== undefined && typeof fragment.text !== 'string') {
-        problems.push('fragment.text must be a string');
+    if (body.object !== 'RESPONSE' || body.status !== 'COMPLETED') {
+      problems.push('expected a completed Platform Chat response');
+    }
+    if (body.store !== false) problems.push('store must be false');
+    const contents = (body.output ?? [])
+      .filter(
+        (message) =>
+          message.type === 'MESSAGE' && message.role === 'ASSISTANT',
+      )
+      .flatMap((message) => message.content ?? [])
+      .filter((content) => content.type === 'OUTPUT_TEXT');
+    if (contents.length === 0) {
+      problems.push('expected ASSISTANT OUTPUT_TEXT content');
+    }
+    for (const content of contents) {
+      if (typeof content.text !== 'string') {
+        problems.push('OUTPUT_TEXT text must be a string');
       }
-      const document = fragment.citation?.sourceDocument;
-      if (document && (!document.title || !document.url)) {
-        problems.push('cited sourceDocument must include title and url');
+      for (const annotation of content.annotations ?? []) {
+        if (annotation.type !== 'CITATION') continue;
+        for (const source of annotation.sources ?? []) {
+          if (source.type === 'DOCUMENT' && (!source.title || !source.url)) {
+            problems.push('cited document must include title and url');
+          }
+        }
       }
     }
     check(`${id} shape`, problems.length === 0, problems.join('; '));
