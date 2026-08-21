@@ -21,18 +21,18 @@ below, asking its questions one at a time.
 
 ### Web SDK
 
-Web SDK variant — checklist + renderChat
+Web SDK variant — checklist + `renderChat`
 
 Ask these before running commands. Ask one at a time, waiting for each answer before asking the
 next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
-- What onboarding steps should appear in the checklist? The sample in steps.json is fine to keep.
+- What onboarding steps should appear in the checklist? The sample in `steps.json` is fine to keep.
 
 Cookie SSO requires the user's normal signed-in browser. Never open or automate the app yourself.
 
 1. **Copy the project onto your machine**
-   Creates an onboarding-hub folder in whatever directory you run this from. Every command after this one runs inside that folder.
+   Creates an `onboarding-hub` folder in whatever directory you run this from. Every command after this one runs inside that folder.
 
    ```bash
    npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/web-sdk onboarding-hub
@@ -46,14 +46,14 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
    ```
 
 3. **Find your Glean tenant**
-   Your email is used once to find which Glean tenant you belong to. The command creates .env.local and fills in VITE_GLEAN_BACKEND.
+   Your email is used once to find which Glean tenant you belong to. The command creates `.env.local` and fills in `VITE_GLEAN_BACKEND`.
 
    ```bash
    cd onboarding-hub && npm run configure -- --email "<work-email>"
    ```
 
 4. **Keep the sample checklist, or use your own**
-   public/steps.json is already in the project, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique id, a title, a group (it, hr, team, or engineering), initiallyDone, and an askPrompt.
+   `public/steps.json` is already in the project, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique `id`, a `title`, a `group` (`it`, `hr`, `team`, or `engineering`), `initiallyDone`, and an `askPrompt`.
 
 5. **Open the page**
    Starts Vite and prints a Local URL. Open that URL yourself in your normal browser where you are already signed in to Glean.
@@ -68,7 +68,7 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
    action.
 
 6. **Check it against your own content**
-   Once the page is open in your signed-in browser, confirm your checklist renders. Click Ask about this on a step and check that Glean returns a cited first-day answer.
+   Once the page is open in your signed-in browser, confirm your checklist renders. Click **Ask about this** on a step and check that Glean returns a cited first-day answer.
 
 ### Client Chat
 
@@ -90,12 +90,12 @@ Ask these before running commands. Ask one at a time, waiting for each answer be
 next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
-- What onboarding steps should appear in the checklist? The sample in steps.json is fine to keep.
+- What onboarding steps should appear in the checklist? The sample in `steps.json` is fine to keep.
 
 Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
 
 1. **Copy the project onto your machine**
-   Creates an onboarding-hub folder in whatever directory you run this from. Every command after this one runs inside that folder.
+   Creates an `onboarding-hub` folder in whatever directory you run this from. Every command after this one runs inside that folder.
 
    ```bash
    npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/platform-chat onboarding-hub
@@ -116,14 +116,14 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```
 
 4. **Sign in to Glean**
-   Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the CHAT scope.
+   Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the `.env` file for you and fills in `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy `.env.example` to `.env`, then fill in your Glean instance URL and a Glean API token that has the `CHAT` scope.
 
    ```bash
    cd onboarding-hub && npm run login -- --email "<work-email>"
    ```
 
 5. **Keep the sample checklist, or use your own**
-   steps.json is already selected in .env, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique id, a title, a group (it, hr, team, or engineering), initiallyDone, and an askPrompt.
+   `steps.json` is already selected in `.env`, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique `id`, a `title`, a `group` (`it`, `hr`, `team`, or `engineering`), `initiallyDone`, and an `askPrompt`.
 
 6. **Check it against your own content**
    Takes 1 to 3 minutes. It starts its own server, checks your onboarding topics for cited answers, and fails if an unsupported question does not escalate.

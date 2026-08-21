@@ -1838,7 +1838,7 @@
       {
         "repoPath": "recipes/onboarding-hub/web-sdk",
         "language": "typescript",
-        "description": "Web SDK variant — checklist + renderChat",
+        "description": "Web SDK variant — checklist + `renderChat`",
         "execution": {
           "type": "local-web",
           "questions": [
@@ -1848,7 +1848,7 @@
             },
             {
               "id": "steps",
-              "prompt": "What onboarding steps should appear in the checklist? The sample in steps.json is fine to keep."
+              "prompt": "What onboarding steps should appear in the checklist? The sample in `steps.json` is fine to keep."
             }
           ],
           "auth": [
@@ -1876,7 +1876,7 @@
             "title": "Copy the project onto your machine",
             "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/web-sdk onboarding-hub",
             "kind": "scaffold",
-            "description": "Creates an onboarding-hub folder in whatever directory you run this from. Every command after this one runs inside that folder."
+            "description": "Creates an `onboarding-hub` folder in whatever directory you run this from. Every command after this one runs inside that folder."
           },
           {
             "title": "Install dependencies",
@@ -1887,12 +1887,12 @@
           {
             "title": "Find your Glean tenant",
             "command": "cd onboarding-hub && npm run configure -- --email \"<work-email>\"",
-            "description": "Your email is used once to find which Glean tenant you belong to. The command creates .env.local and fills in VITE_GLEAN_BACKEND.",
+            "description": "Your email is used once to find which Glean tenant you belong to. The command creates `.env.local` and fills in `VITE_GLEAN_BACKEND`.",
             "kind": "configure"
           },
           {
             "title": "Keep the sample checklist, or use your own",
-            "description": "public/steps.json is already in the project, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique id, a title, a group (it, hr, team, or engineering), initiallyDone, and an askPrompt.",
+            "description": "`public/steps.json` is already in the project, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique `id`, a `title`, a `group` (`it`, `hr`, `team`, or `engineering`), `initiallyDone`, and an `askPrompt`.",
             "kind": "configure"
           },
           {
@@ -1903,7 +1903,7 @@
           },
           {
             "title": "Check it against your own content",
-            "description": "Once the page is open in your signed-in browser, confirm your checklist renders. Click Ask about this on a step and check that Glean returns a cited first-day answer.",
+            "description": "Once the page is open in your signed-in browser, confirm your checklist renders. Click **Ask about this** on a step and check that Glean returns a cited first-day answer.",
             "kind": "verify-live"
           }
         ]
@@ -1921,7 +1921,7 @@
             },
             {
               "id": "steps",
-              "prompt": "What onboarding steps should appear in the checklist? The sample in steps.json is fine to keep."
+              "prompt": "What onboarding steps should appear in the checklist? The sample in `steps.json` is fine to keep."
             }
           ],
           "auth": [
@@ -1951,7 +1951,7 @@
             "title": "Copy the project onto your machine",
             "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/platform-chat onboarding-hub",
             "kind": "scaffold",
-            "description": "Creates an onboarding-hub folder in whatever directory you run this from. Every command after this one runs inside that folder."
+            "description": "Creates an `onboarding-hub` folder in whatever directory you run this from. Every command after this one runs inside that folder."
           },
           {
             "title": "Install dependencies",
@@ -1968,12 +1968,12 @@
           {
             "title": "Sign in to Glean",
             "command": "cd onboarding-hub && npm run login -- --email \"<work-email>\"",
-            "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the CHAT scope.",
+            "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the `.env` file for you and fills in `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy `.env.example` to `.env`, then fill in your Glean instance URL and a Glean API token that has the `CHAT` scope.",
             "kind": "authenticate"
           },
           {
             "title": "Keep the sample checklist, or use your own",
-            "description": "steps.json is already selected in .env, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique id, a title, a group (it, hr, team, or engineering), initiallyDone, and an askPrompt.",
+            "description": "`steps.json` is already selected in `.env`, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique `id`, a `title`, a `group` (`it`, `hr`, `team`, or `engineering`), `initiallyDone`, and an `askPrompt`.",
             "kind": "configure"
           },
           {
