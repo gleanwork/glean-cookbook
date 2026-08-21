@@ -1,32 +1,37 @@
 # Onboarding Hub — Client Chat path
 
-Checklist + progress + Glean Client Chat. Steps are server-owned through env/file configuration and
-remain empty until configured.
+Checklist + progress + Glean Client Chat. Steps are server-owned through env/file configuration.
 The app runs as you; there is no act-as / impersonation.
 
-## Run
+## Setup
 
 ```bash
 npm install
 npm run login
-# Customize steps.example.json, or point GLEAN_ONBOARDING_STEPS_FILE at your own file.
+```
+
+`npm run login` finds your Glean tenant from your work email, opens a browser for you to approve
+access, and writes `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN` into a new `.env`. If your tenant cannot
+use OAuth, skip that command: copy `.env.example` to `.env` and fill in those two values yourself,
+using a Glean API token that carries the **CHAT** scope.
+
+Signing in does not pick a checklist. `.env` already points at the included `steps.json`. Customize
+that file, point `GLEAN_ONBOARDING_STEPS_FILE` at another file, or set `GLEAN_ONBOARDING_STEPS_JSON`.
+Without those, `/api/checklist` returns `{ steps: [], source: "empty" }` and the UI asks you to
+configure steps.
+
+## Verify, then run
+
+```bash
 npm run verify
 npm start
 ```
 
-Open the Local URL printed by the server. The server holds your API token — never expose it in the browser.
+Open the Local URL printed by the server. The server holds your API token — never expose it in the
+browser.
 
-- **Live steps:** `.env.example` selects the included multi-step `steps.example.json`. Customize it,
-  point `GLEAN_ONBOARDING_STEPS_FILE` at another file, or set `GLEAN_ONBOARDING_STEPS_JSON`.
-- **Empty:** without those env vars, `/api/checklist` returns `{ steps: [], source: "empty" }` and the UI asks you to configure steps.
-
-## Verify
-
-Requires credentials from `.env` or the shell and starts its own server.
-
-```bash
-npm run verify
-```
+`npm run verify:fixture` runs the same checks against recorded Sample Corp answers and needs no
+credentials.
 
 ## Client Chat contract
 
