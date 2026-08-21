@@ -316,6 +316,18 @@ async function main() {
       finalRows.length === 20,
       `got ${finalRows.length}`,
     );
+    if (!useFixture) {
+      check(
+        'live Platform Chat produced at least one cited draft',
+        finalRows.some(
+          (row) =>
+            typeof row.answer === 'string' &&
+            row.answer.trim().length > 0 &&
+            Array.isArray(row.citations) &&
+            row.citations.length > 0,
+        ),
+      );
+    }
 
     // ---- Step 4: the classifier matches what the corpus can support --------
     if (useFixture) {

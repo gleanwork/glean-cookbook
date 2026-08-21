@@ -184,6 +184,14 @@ async function main() {
     const r1 = await (await fire(a1)).json();
     const inc1 = r1.incident;
     check('acked before triage', inc1.channel[0]?.kind === 'ack');
+    if (!useFixture) {
+      check(
+        'live triage used Platform Chat instead of the local fallback',
+        !(r1.notes ?? []).some((note) =>
+          note.includes('Chat synthesis produced no answer'),
+        ),
+      );
+    }
     check(
       'service registry resolved the on-call engineer',
       inc1.service.onCall === ONCALL,
@@ -504,6 +512,12 @@ async function main() {
       'the timeline is built from audited events',
       /\[audit\]/.test(pm.postmortem ?? ''),
     );
+    if (!useFixture) {
+      check(
+        'live postmortem used Platform Chat narrative',
+        !/Narrative unavailable/u.test(pm.postmortem ?? ''),
+      );
+    }
     check('the incident is resolved after the draft', pm.status === 'resolved');
   } finally {
     shutdown(child);
