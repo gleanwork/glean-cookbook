@@ -178,6 +178,7 @@ function assertCitationShape(citations) {
 function startServer() {
   const child = spawn('npm', ['start'], {
     cwd: root,
+    detached: true,
     stdio: ['ignore', 'pipe', 'inherit'],
     env: {
       ...process.env,
@@ -187,6 +188,15 @@ function startServer() {
   });
   child.stdout.on('data', (chunk) => process.stdout.write(chunk));
   return child;
+}
+
+function stopServer(child) {
+  if (!child.pid) return;
+  try {
+    process.kill(-child.pid, 'SIGTERM');
+  } catch {
+    child.kill('SIGTERM');
+  }
 }
 
 async function waitForServer(deadline) {
@@ -297,7 +307,7 @@ async function main() {
     failed = true;
     console.error(`✗ server never became ready: ${error.message}`);
   } finally {
-    server.kill();
+    stopServer(server);
   }
 
   if (failed) {
