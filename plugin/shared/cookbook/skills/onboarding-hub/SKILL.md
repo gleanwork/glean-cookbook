@@ -25,7 +25,7 @@ Web SDK variant — checklist + renderChat
 {{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
-- What onboarding steps should appear in the checklist? Use the names your own onboarding docs use.
+- What onboarding steps should appear in the checklist? The sample in steps.json is fine to keep.
 
 {{> browser-cookie-setup}}
 
@@ -50,8 +50,8 @@ Web SDK variant — checklist + renderChat
    cd onboarding-hub && npm run configure -- --email "<work-email>"
    ```
 
-4. **Put your onboarding steps in the checklist**
-   Finding your tenant does not pick a checklist for you, so open public/steps.json and replace the sample steps with your own. Each step needs a unique id, a title, a group (it, hr, team, or engineering), initiallyDone, and an askPrompt.
+4. **Keep the sample checklist, or use your own**
+   public/steps.json is already in the project, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique id, a title, a group (it, hr, team, or engineering), initiallyDone, and an askPrompt.
 
 5. **Open the page**
    Starts Vite and prints a Local URL. Open that URL yourself in your normal browser where you are already signed in to Glean.
@@ -74,7 +74,7 @@ Client Chat variant — server-side API call, custom UI
 {{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
-- What onboarding steps should appear in the checklist? Use the names your own onboarding docs use.
+- What onboarding steps should appear in the checklist? The sample in steps.json is fine to keep.
 
 {{> oauth-setup}}
 
@@ -106,8 +106,8 @@ Client Chat variant — server-side API call, custom UI
    cd onboarding-hub && npm run login -- --email "<work-email>"
    ```
 
-5. **Put your onboarding steps in the checklist**
-   Signing in does not pick a checklist for you. steps.json is already selected in .env, so open that file and replace the sample steps with your own. Each step needs a unique id, a title, a group (it, hr, team, or engineering), initiallyDone, and an askPrompt.
+5. **Keep the sample checklist, or use your own**
+   steps.json is already selected in .env, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique id, a title, a group (it, hr, team, or engineering), initiallyDone, and an askPrompt.
 
 6. **Check it against your own content**
    Takes 1 to 3 minutes. It starts its own server, checks your onboarding topics for cited answers, and fails if an unsupported question does not escalate.

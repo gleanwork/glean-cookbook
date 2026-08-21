@@ -111,7 +111,7 @@
           },
           {
             "id": "steps",
-            "prompt": "What onboarding steps should appear in the checklist? Use the names your own onboarding docs use."
+            "prompt": "What onboarding steps should appear in the checklist? The sample in steps.json is fine to keep."
           }
         ],
         "auth": [
@@ -154,8 +154,8 @@
           "kind": "configure"
         },
         {
-          "title": "Put your onboarding steps in the checklist",
-          "description": "Finding your tenant does not pick a checklist for you, so open public/steps.json and replace the sample steps with your own. Each step needs a unique id, a title, a group (it, hr, team, or engineering), initiallyDone, and an askPrompt.",
+          "title": "Keep the sample checklist, or use your own",
+          "description": "public/steps.json is already in the project, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique id, a title, a group (it, hr, team, or engineering), initiallyDone, and an askPrompt.",
           "kind": "configure"
         },
         {
@@ -184,7 +184,7 @@
           },
           {
             "id": "steps",
-            "prompt": "What onboarding steps should appear in the checklist? Use the names your own onboarding docs use."
+            "prompt": "What onboarding steps should appear in the checklist? The sample in steps.json is fine to keep."
           }
         ],
         "auth": [
@@ -235,8 +235,8 @@
           "kind": "authenticate"
         },
         {
-          "title": "Put your onboarding steps in the checklist",
-          "description": "Signing in does not pick a checklist for you. steps.json is already selected in .env, so open that file and replace the sample steps with your own. Each step needs a unique id, a title, a group (it, hr, team, or engineering), initiallyDone, and an askPrompt.",
+          "title": "Keep the sample checklist, or use your own",
+          "description": "steps.json is already selected in .env, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique id, a title, a group (it, hr, team, or engineering), initiallyDone, and an askPrompt.",
           "kind": "configure"
         },
         {

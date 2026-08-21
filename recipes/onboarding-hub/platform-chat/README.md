@@ -15,8 +15,9 @@ access, and writes `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN` into a new `.env`. I
 use OAuth, skip that command: copy `.env.example` to `.env` and fill in those two values yourself,
 using a Glean API token that carries the **CHAT** scope.
 
-Signing in does not pick a checklist. `.env` already points at the included `steps.json`. Customize
-that file, point `GLEAN_ONBOARDING_STEPS_FILE` at another file, or set `GLEAN_ONBOARDING_STEPS_JSON`.
+`.env` already points at the included `steps.json`, so you can run with the sample.
+Customize that file if you want your own onboarding program, or point
+`GLEAN_ONBOARDING_STEPS_FILE` at another file, or set `GLEAN_ONBOARDING_STEPS_JSON`.
 Without those, `/api/checklist` returns `{ steps: [], source: "empty" }` and the UI asks you to
 configure steps.
 
