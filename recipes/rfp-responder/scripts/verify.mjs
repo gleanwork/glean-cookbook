@@ -177,16 +177,12 @@ async function main() {
   };
   delete childEnv.GLEAN_USE_FIXTURE;
   if (useFixture) childEnv.RFP_APPROVED_SOURCE_PREFIXES = '';
-  const child = spawn(
-    'npm',
-    useFixture ? ['start'] : ['run', 'start:live'],
-    {
-      cwd: root,
-      env: childEnv,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      detached: true,
-    },
-  );
+  const child = spawn('npm', useFixture ? ['start'] : ['run', 'start:live'], {
+    cwd: root,
+    env: childEnv,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    detached: true,
+  });
   let stderr = '';
   child.stderr.on('data', (chunk) => (stderr += chunk));
 
@@ -202,6 +198,14 @@ async function main() {
       `server reports ${useFixture ? 'fixture' : 'live'} mode`,
       config.fixtureMode === useFixture,
     );
+    if (useFixture) {
+      const page = await (await fetch(BASE)).text();
+      check(
+        'fixture walkthrough labels its recorded responses',
+        page.includes('id="mode-note"') &&
+          page.includes('The sample uses saved Chat responses'),
+      );
+    }
 
     // ---- Step 1 + 2: parse, map, dedup -------------------------------------
     console.log('\nParse and dedup');

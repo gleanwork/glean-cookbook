@@ -1,14 +1,14 @@
 ---
 name: rfp-responder
-description: 'Turn a customer questionnaire into grounded, cited draft answers — where every claim carries a source, unsupported rows route to a human, and nothing reaches the customer without approval.'
+description: 'A review app that drafts cited answers to an RFP or security questionnaire, leaves unsupported questions blank, and requires a person to approve each answer. It starts with recorded Chat responses, so you can inspect its refusal paths before connecting it to Glean.'
 disable-model-invocation: true
 ---
 
 ## Before you start
 
-- For configured runs: a Glean instance with your company content indexed
-- For configured runs: a work email for tenant discovery and OAuth sign-in; a CHAT-scoped API token is the fallback
-- Node 20+
+- Node 20 or newer
+- Nothing else. The walkthrough replays recorded Chat responses, so it needs no credentials and makes no network calls
+- Only for a live run: a Glean instance with company content indexed, a work email for sign-in or a Glean API token with the CHAT scope, and a reviewed list of document URL prefixes that may support customer-facing answers
 
 Build "Answer an RFP or security questionnaire" following https://developers.glean.com/cookbook/rfp-responder
 
@@ -24,41 +24,29 @@ not print the environment or the variable value.
   follow the normal configured run, including its setup questions, authentication, and live
   verification.
 
-Ask these before running commands. Ask one at a time, waiting for each answer before asking the
-next — do not put them all in one message:
-
-- Which Glean URL prefixes are approved sources for external answers?
-- What is your work email?
-
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
-
-1. **Scaffold the project**
+1. **Copy the project onto your machine**
+   Creates an rfp-responder folder containing the local server, review app, sample questionnaire, and recorded Chat responses. Stay in the same parent directory for the remaining commands.
 
    ```bash
    npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder
    ```
 
 2. **Install dependencies**
+   Installs the packages for the TypeScript server. Everything runs on your machine, and nothing is deployed.
 
    ```bash
    cd rfp-responder && npm install
    ```
 
-3. **Try it with no credentials**
-   Runs the whole flow against recorded responses and asserts the failure contract: no ungrounded row carries an answer, every answered row carries a citation, and export is gated on approval.
+3. **See what it refuses before connecting anything**
+   Replays the recorded responses through the full questionnaire and checks that every draft has a citation, unsupported rows stay blank, weak evidence is flagged, and export stays behind approval. The command needs no credentials and makes no network calls.
 
    ```bash
    cd rfp-responder && npm run verify:fixture
    ```
 
-4. **Set credentials**
-   Only for a live run. Use the shipped login flow, then configure the approved source prefixes supplied up front. The app runs as the signed-in user; there is no act-as.
-
-   ```bash
-   cd rfp-responder && npm run login -- --email "<work-email>"
-   ```
-
-5. **Run it**
+4. **Open the review app**
+   Starts the local server and prints a Local URL. Open that URL in a browser. The app uses the same recorded responses, so there is nothing to sign in to.
 
    ```bash
    cd rfp-responder && npm start
@@ -68,5 +56,5 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
    the first verification action.
 
-6. **Verify**
-   Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered.
+5. **Load the sample and check the refusals**
+   Click Try the bundled sample, then Confirm and draft answers. The app parses 20 rows and merges the exact SSO duplicate before drafting 19 questions. SEC-01 and SEC-02 get cited answers. ACC-02 and ACC-03 are marked weak. ACC-04 and CMP-01 stay blank and need a subject matter expert.

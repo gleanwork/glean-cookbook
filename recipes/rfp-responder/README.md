@@ -90,7 +90,7 @@ A wording score cannot safely merge a security questionnaire. Measured on
 | -------------------------------------------------------------------------------------------------- | -------- | --------------------------------- |
 | "Is customer data encrypted **at rest**?" vs "Is customer data encrypted **in transit**?"          | **0.60** | Different controls. Do not merge. |
 | "Is customer data encrypted at rest?" vs "Describe your at-rest encryption, including key length." | 0.29     | Same question. Review for merge.  |
-| "Do you support SSO via SAML 2.0?" on two tabs                                                      | 1.00     | Exact duplicate. Safe to merge.   |
+| "Do you support SSO via SAML 2.0?" on two tabs                                                     | 1.00     | Exact duplicate. Safe to merge.   |
 
 The false match scores higher than the true match. No threshold separates the
 two. The app therefore merges only normalized exact matches. Similarity orders
@@ -128,17 +128,17 @@ from wording.
 
 ## Layout
 
-| Path                      | What it contains                                                |
-| ------------------------- | --------------------------------------------------------------- |
-| `server.ts`               | Routes and streamed progress for the drafting run               |
-| `lib/questionnaire.ts`    | CSV parsing, column mapping, and exact deduplication             |
-| `lib/chat.ts`             | Client Chat request and response parsing                        |
-| `lib/grounding.ts`        | Evidence classification                                         |
-| `lib/approved-sources.ts` | Sources cleared for customer-facing answers                     |
-| `lib/answer-library.ts`   | Local reuse of accepted answers                                 |
-| `lib/state.ts`            | Run state and approval log                                      |
-| `public/index.html`       | Browser review app                                              |
-| `fixtures/`               | Sample input, recorded responses, and the grounding oracle      |
-| `scripts/verify.mjs`      | Fixture and live verification                                   |
+| Path                      | What it contains                                           |
+| ------------------------- | ---------------------------------------------------------- |
+| `server.ts`               | Routes and streamed progress for the drafting run          |
+| `lib/questionnaire.ts`    | CSV parsing, column mapping, and exact deduplication       |
+| `lib/chat.ts`             | Client Chat request and response parsing                   |
+| `lib/grounding.ts`        | Evidence classification                                    |
+| `lib/approved-sources.ts` | Sources cleared for customer-facing answers                |
+| `lib/answer-library.ts`   | Local reuse of accepted answers                            |
+| `lib/state.ts`            | Run state and approval log                                 |
+| `public/index.html`       | Browser review app                                         |
+| `fixtures/`               | Sample input, recorded responses, and the grounding oracle |
+| `scripts/verify.mjs`      | Fixture and live verification                              |
 
 Tokens stay on the server. The browser calls only this app's routes.

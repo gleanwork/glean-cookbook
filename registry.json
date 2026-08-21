@@ -2603,7 +2603,7 @@
   {
     "id": "rfp-responder",
     "title": "Answer an RFP or security questionnaire",
-    "description": "Turn a customer questionnaire into grounded, cited draft answers — where every claim carries a source, unsupported rows route to a human, and nothing reaches the customer without approval.",
+    "description": "A review app that drafts cited answers to an RFP or security questionnaire, leaves unsupported questions blank, and requires a person to approve each answer. It starts with recorded Chat responses, so you can inspect its refusal paths before connecting it to Glean.",
     "sidebarLabel": "RFP responder",
     "preview": {
       "path": "recipes/rfp-responder/assets/preview.webp",
@@ -2622,26 +2622,11 @@
     "buildMethod": "scaffold",
     "execution": {
       "type": "local-web",
-      "questions": [
-        {
-          "id": "approved-sources",
-          "prompt": "Which Glean URL prefixes are approved sources for external answers?"
-        },
-        { "id": "email", "prompt": "What is your work email?" }
-      ],
-      "auth": [
-        {
-          "kind": "oauth-with-token-fallback",
-          "scopes": ["CHAT"],
-          "setupCommand": "cd rfp-responder && npm run login -- --email \"<work-email>\"",
-          "configFile": ".env",
-          "backendVariable": "GLEAN_SERVER_URL",
-          "credentialVariable": "GLEAN_API_TOKEN"
-        }
-      ],
+      "questions": [],
+      "auth": [{ "kind": "none" }],
       "verification": {
         "kind": "user-browser",
-        "expectedDuration": "under 1 minute for fixtures; 1–3 minutes live",
+        "expectedDuration": "under 1 minute",
         "startsOwnServer": false
       },
       "run": {
@@ -2652,61 +2637,58 @@
     },
     "languages": ["typescript"],
     "prerequisites": [
-      "For configured runs: a Glean instance with your company content indexed",
-      "For configured runs: a work email for tenant discovery and OAuth sign-in; a CHAT-scoped API token is the fallback",
-      "Node 20+"
+      "Node 20 or newer",
+      "Nothing else. The walkthrough replays recorded Chat responses, so it needs no credentials and makes no network calls",
+      "Only for a live run: a Glean instance with company content indexed, a work email for sign-in or a Glean API token with the CHAT scope, and a reviewed list of document URL prefixes that may support customer-facing answers"
     ],
     "demoQueries": [
       {
-        "query": "Draft answers to a real questionnaire you've had to fill in",
-        "expectedBehavior": "Every row is parsed across every tab, exact duplicates are merged, and each row is classified by the evidence behind it: strongly grounded rows get a cited draft, adjacent-evidence rows are flagged for verification, and rows with nothing behind them are left blank. Use a questionnaire your own content can actually speak to."
+        "query": "Draft the bundled security questionnaire",
+        "expectedBehavior": "Click Try the bundled sample, then Confirm and draft answers. The app parses 20 rows across 4 tabs, merges 1 exact duplicate, and asks 19 questions. The review summary shows 10 strongly grounded answers, 2 weak answers to verify, and 8 questions that need a subject matter expert. SEC-01 and SEC-02 have cited drafts."
       },
       {
-        "query": "Ask something your documentation genuinely doesn't cover",
-        "expectedBehavior": "Retrieval finds nothing, so the row returns INSUFFICIENT_EVIDENCE and renders as 'needs SME' with no draft text, and accepting it is refused. This is the behaviour to check first — an RFP tool that invents a compliance answer is worse than no tool, because someone will send it to a customer."
+        "query": "Check what happens when the evidence does not support an answer",
+        "expectedBehavior": "After drafting the bundled sample, ACC-04 and CMP-01 show no draft answer and say that the question needs a subject matter expert. The rows have no citations and offer assignment to a subject matter expert."
       },
       {
-        "query": "Ask something only tangentially covered",
-        "expectedBehavior": "Retrieval finds a document that is genuinely on-topic but not authoritative, so the row is flagged weak rather than strong: drafted, but labelled as resting on documentation a person must clear before it goes out."
+        "query": "Review an answer backed by weak evidence",
+        "expectedBehavior": "After drafting the bundled sample, ACC-02 and ACC-03 have draft answers but appear in the weak evidence bucket. Their evidence notes explain that a person must verify the source before accepting the answer."
       },
       {
-        "query": "Run the same questionnaire as a colleague with narrower access",
-        "expectedBehavior": "Rows backed by documents that person cannot see collapse to 'needs SME' rather than being answered from elsewhere. Their own credential is the permission boundary — you are not impersonating them, you are each running the app as yourselves and comparing.",
+        "query": "Compare a live questionnaire run with a colleague who has narrower access",
+        "expectedBehavior": "In separate live runs, each person signs in as themselves and uploads the same questionnaire. A row backed only by a document the second person cannot access stays blank and needs a subject matter expert. The app does not impersonate either person.",
         "permissionDifferentiated": true
       }
     ],
     "steps": [
       {
-        "title": "Scaffold the project",
+        "title": "Copy the project onto your machine",
         "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder",
+        "description": "Creates an rfp-responder folder containing the local server, review app, sample questionnaire, and recorded Chat responses. Stay in the same parent directory for the remaining commands.",
         "kind": "scaffold"
       },
       {
         "title": "Install dependencies",
         "command": "cd rfp-responder && npm install",
+        "description": "Installs the packages for the TypeScript server. Everything runs on your machine, and nothing is deployed.",
         "kind": "install"
       },
       {
-        "title": "Try it with no credentials",
+        "title": "See what it refuses before connecting anything",
         "command": "cd rfp-responder && npm run verify:fixture",
-        "description": "Runs the whole flow against recorded responses and asserts the failure contract: no ungrounded row carries an answer, every answered row carries a citation, and export is gated on approval.",
+        "description": "Replays the recorded responses through the full questionnaire and checks that every draft has a citation, unsupported rows stay blank, weak evidence is flagged, and export stays behind approval. The command needs no credentials and makes no network calls.",
         "kind": "verify-fixture"
       },
       {
-        "title": "Set credentials",
-        "command": "cd rfp-responder && npm run login -- --email \"<work-email>\"",
-        "description": "Only for a live run. Use the shipped login flow, then configure the approved source prefixes supplied up front. The app runs as the signed-in user; there is no act-as.",
-        "kind": "authenticate"
-      },
-      {
-        "title": "Run it",
+        "title": "Open the review app",
         "command": "cd rfp-responder && npm start",
+        "description": "Starts the local server and prints a Local URL. Open that URL in a browser. The app uses the same recorded responses, so there is nothing to sign in to.",
         "kind": "run"
       },
       {
-        "title": "Verify",
-        "description": "Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered.",
-        "kind": "verify-live"
+        "title": "Load the sample and check the refusals",
+        "description": "Click Try the bundled sample, then Confirm and draft answers. The app parses 20 rows and merges the exact SSO duplicate before drafting 19 questions. SEC-01 and SEC-02 get cited answers. ACC-02 and ACC-03 are marked weak. ACC-04 and CMP-01 stay blank and need a subject matter expert.",
+        "kind": "manual"
       }
     ],
     "combines": [
@@ -2751,8 +2733,8 @@
         "category": "portal"
       }
     ],
-    "aiPrompt": "Build an RFP and security-questionnaire responder with Glean Client Chat. Parse every questionnaire tab, merge only exact duplicates, and call Chat once per unique question with evidence-only instructions. Classify citation topicality separately from approval for external use. Never render an uncited draft; route unsupported rows to an SME. Preserve the original questionnaire structure, require explicit approval before export, and record the approval.",
-    "llmContext": "Use Client Chat POST /rest/api/v1/chat with saveChat:false during verification. Read answer text from CONTENT messages and citations from fragment.citation.sourceDocument. Merge only exact duplicate questions. Classify citation topicality separately from approval for external use; every answer requires a citation, and unsupported rows remain blank with needs-sme status. Use the caller's credential as the permission boundary. Retry empty chat output and keep export behind explicit human approval with an audit log.",
+    "aiPrompt": "Build the RFP responder from the deterministic scaffold and start with its recorded Chat responses. Parse every questionnaire tab, merge only exact duplicates, and call Chat once per unique question with evidence-only instructions. Classify citation topicality separately from approval for external use. Never render an uncited draft; route unsupported rows to a subject matter expert. Preserve the original questionnaire structure, require explicit approval before export, and record the approval. Treat live mode as a later adaptation that requires reviewed source URL prefixes.",
+    "llmContext": "Use the recorded responses for the default run. Live mode uses Client Chat POST /rest/api/v1/chat with saveChat:false and requires RFP_APPROVED_SOURCE_PREFIXES. Read answer text from CONTENT messages and citations from fragment.citation.sourceDocument. Merge only exact duplicate questions. Classify citation topicality separately from approval for external use. Every answer requires a citation, and unsupported rows remain blank with needs-sme status. In live mode, use the caller's credential as the permission boundary. Retry empty chat output and keep export behind explicit human approval with an audit log.",
     "goDependency": false,
     "featured": false,
     "tags": [
@@ -2766,16 +2748,16 @@
       {
         "repoPath": "recipes/rfp-responder",
         "language": "typescript",
-        "description": "Parse + dedup -> batched Chat calls -> review grid with evidence classification -> approval gate -> structure-preserving export"
+        "description": "Parse and deduplicate, make batched Chat calls, review evidence, approve answers, and preserve the questionnaire structure on export"
       }
     ],
     "content": {
-      "problem": "A security questionnaire arrives with 200 rows. The answers all exist somewhere —\nin last quarter's SOC 2 report, in a policy doc, in the response you sent a\ndifferent customer in March. Someone spends a week finding them again.\n\nEveryone has seen an RFP bot that drafts those answers. The hard part isn't\ndrafting. It's what happens on the rows where the evidence isn't there, because a\nfluent, confident, wrong answer about your own security controls doesn't get\ncaught in review — it gets pasted into a customer's document over your signature.\n\nSo this recipe is built around the failure contract rather than the happy path.\nOnly permitted, approved evidence enters the prompt. Every claim keeps its\ncitation. Missing evidence stays unanswered. A person approves before anything\nleaves.",
+      "problem": "A security questionnaire arrives with 200 rows. The answers exist in last quarter's SOC 2 report, a policy document, or the response you sent another customer. Someone spends a week finding them again.\n\nDrafting is not the dangerous part. A fluent answer with no supporting evidence can reach a customer's document over your signature. This app makes that failure visible. Questions with approved evidence get cited drafts. Questions with weak evidence are flagged for verification. Questions with no evidence stay blank and go to a subject matter expert. A person approves each answer before export.\n\nThe default walkthrough uses recorded responses, so you can watch each path without credentials. Live mode runs as the signed-in person and limits customer-facing drafts to reviewed source URL prefixes.",
       "takeItFurther": [
-        "Add an xlsx and docx reader so real questionnaires can be uploaded directly — the parser here reads CSV to keep the interesting logic legible.",
+        "Add an xlsx and docx reader so real questionnaires can be uploaded directly. The parser here reads CSV to keep the evidence and approval logic legible.",
         "Write answers back into the source document with a custom tool instead of exporting, keeping the confirm step and the approval log.",
         "Give the answer library its own access control before sharing it across a team. It's a cache of retrieved content, so it can leak across the permission boundary the rest of the app respects.",
-        "Route \"needs SME\" rows to their owners automatically, and track which ones came back — the assignment field here is deliberately inert.",
+        "Route \"needs SME\" rows to their owners automatically and track which ones came back. The assignment field here does not send a message.",
         "Combine with [permissions-aware retrieval](/cookbook/permissions-aware-retrieval) to see the same refusal property in a smaller, single-question app."
       ],
       "guardrails": [
