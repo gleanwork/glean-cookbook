@@ -263,7 +263,7 @@ async function boot(): Promise<void> {
     } else {
       sourceNote.hidden = false;
       sourceNote.textContent =
-        'No checklist is configured. Copy public/steps.example.json to public/steps.json, customize it, and reload.';
+        'No checklist is configured. Add your steps to public/steps.json and reload.';
     }
   }
 

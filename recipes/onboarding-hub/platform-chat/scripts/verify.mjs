@@ -207,10 +207,7 @@ function evaluateCheck(check, result) {
 async function main() {
   if (useFixture) {
     delete process.env.GLEAN_ONBOARDING_STEPS_JSON;
-    process.env.GLEAN_ONBOARDING_STEPS_FILE = path.join(
-      root,
-      'steps.example.json',
-    );
+    process.env.GLEAN_ONBOARDING_STEPS_FILE = path.join(root, 'steps.json');
     assertFixtureContract();
     console.log('Running verify against recorded Client Chat fixtures');
   } else {

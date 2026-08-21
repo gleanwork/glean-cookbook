@@ -10,13 +10,13 @@ Requires Node 20.19+ or 22.12+.
 ```bash
 npm install
 npm run configure
-cp public/steps.example.json public/steps.json
 ```
 
-The configure command discovers your tenant from your work email and writes `.env.local`.
-Customize `public/steps.json` with your checklist before running the app. Each step needs a unique
-`id`, a `title`, a `group` (`it`, `hr`, `team`, or `engineering`), a boolean `initiallyDone`, and an
-`askPrompt`.
+`npm run configure` finds your Glean tenant from your work email and writes `.env.local`.
+
+`public/steps.json` is already in the project. Customize it with your checklist before running the
+app, or keep the sample steps. Each step needs a unique `id`, a `title`, a `group` (`it`, `hr`,
+`team`, or `engineering`), a boolean `initiallyDone`, and an `askPrompt`.
 
 Optional completion links come from `public/resources.json`:
 
