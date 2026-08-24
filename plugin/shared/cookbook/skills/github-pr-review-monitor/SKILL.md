@@ -31,21 +31,21 @@ Build "Draft PR reviews with Glean Triggers and Claude Code Monitor" following h
    ```
 
 2. **Verify the local path with no credentials**
-   Verifies the signed receiver, event queue, and draft-review flow using recorded events.
+   Use recorded events to verify the signed receiver, event queue, and draft-review flow.
 
    ```bash
    cd github-pr-review-monitor && npm run verify:fixture
    ```
 
 3. **Sign in to Glean**
-   Discovers your tenant and writes GLEAN_SERVER_URL and GLEAN_API_TOKEN to an ignored .env. An exported GLEAN_API_TOKEN outranks .env, and the scripts warn when it does.
+   Sign in to discover your tenant and save GLEAN_SERVER_URL and GLEAN_API_TOKEN to the ignored .env file. An exported GLEAN_API_TOKEN takes precedence over .env, and the scripts warn you when it does.
 
    ```bash
    cd github-pr-review-monitor && npm run login -- --email "<work-email>"
    ```
 
 4. **Run the receiver**
-   Keep this running. It binds to loopback, verifies signatures, and queues each webhook id once.
+   Keep the receiver running. It listens on loopback, verifies signatures, and queues each webhook ID once.
 
    ```bash
    cd github-pr-review-monitor && npm start
@@ -54,25 +54,25 @@ Build "Draft PR reviews with Glean Triggers and Claude Code Monitor" following h
    {{> run-hybrid-service}}
 
 5. **Expose the receiver over HTTPS**
-   Append /webhook to the printed origin and set GLEAN_WEBHOOK_URL before registering. Leave the tunnel running — the triggers outlive it, so a closed tunnel means deliveries to a dead address.
+   Append /webhook to the printed origin and set GLEAN_WEBHOOK_URL before registering. Keep the tunnel running: triggers outlive the tunnel, so closing it sends future deliveries to a dead address.
 
    ```bash
    cd github-pr-review-monitor && cloudflared tunnel --url http://127.0.0.1:8787
    ```
 
 6. **Register the review triggers**
-   Set GLEAN_TRIGGER_DATASOURCE and the preset ids you want to register. With no ids configured, setup lists the presets your deployment serves and stops. Presets that require inputs read them from GLEAN_TRIGGER_INPUT_<FIELD>.
+   Set GLEAN_TRIGGER_DATASOURCE and the preset IDs to register. If you leave the IDs empty, setup lists the presets available in your deployment and stops instead of guessing. Provide required preset inputs through GLEAN_TRIGGER_INPUT_<FIELD>.
 
    ```bash
    cd github-pr-review-monitor && npm run setup
    ```
 
 7. **Attach Claude Code Monitor**
-   Validate the plugin, then restart Claude Code from the repository being reviewed so Monitor starts with the session. Where Monitor is unavailable, run npm run stream to receive the same events in the terminal.
+   Validate the plugin, then restart Claude Code from the repository under review so Monitor starts with the session. If Monitor is unavailable, run npm run stream to receive the same events in the terminal.
 
    ```bash
    cd github-pr-review-monitor && claude plugin validate . --strict
    ```
 
 8. **Verify a real review request**
-   Request a review from yourself on a real pull request. Expect one queued event and one draft grounded in the current diff, with no GitHub write until you ask for one.
+   Request a review from yourself on a real pull request. Confirm one queued event and one draft grounded in the current diff. The workflow makes no GitHub write until you ask for one.

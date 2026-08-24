@@ -415,7 +415,11 @@ export async function run(argv = process.argv.slice(2), cwd = process.cwd()) {
     if (url.protocol !== 'https:') fail('Glean backend URL must use HTTPS.');
     const match = url.hostname.match(/^([a-z0-9-]+)-be\.glean\.com$/u);
     if (!match)
-      fail('Glean backend must match https://<instance>-be.glean.com.');
+      fail(
+        'Glean backend must be https://<instance>-be.glean.com. ' +
+          'Do not paste the frontend or legacy discovery URL (for example, ' +
+          '*.askscio.com); let tenant discovery normalize it for you.',
+      );
     instance = match[1];
     backend = `https://${url.hostname}`;
   }

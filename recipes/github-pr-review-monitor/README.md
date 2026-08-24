@@ -7,6 +7,9 @@ where the skill reviews the real local diff and prepares a draft.
 
 It never submits a GitHub review automatically.
 
+For the API concepts and endpoint contract, see the [Triggers guide](https://developers.glean.com/guides/triggers/overview)
+and the [Triggers API reference](https://developers.glean.com/api/platform-api/triggers-overview).
+
 ## The bridge is datasource-agnostic
 
 The receiver, queue, and stream do not know what a pull request is. Which datasource to watch and
@@ -44,8 +47,40 @@ carries no submit field.
    events it did not cover.
 5. `claude plugin validate . --strict`, then `claude --plugin-dir .` from the repository you review.
 
+The login flow discovers your tenant from the work email and writes the normalized API backend
+(`https://<instance>-be.glean.com`) to `.env`; you do not need to find or paste the backend host
+manually. Discovery can return a legacy frontend URL such as `*.askscio.com`, which the resolver
+converts before making API calls.
+
 Monitors start at session start, so **installing the plugin needs a session restart** —
 `/reload-plugins` does not pick them up.
+
+## When nothing arrives
+
+`npm run doctor` walks the whole path and names the broken link: configuration, the local
+receiver, the public URL, whether each trigger still points at the current `GLEAN_WEBHOOK_URL`,
+and whether the GitHub CLI is signed in. A running `cloudflared` is not a working tunnel — it
+stays alive retrying after Cloudflare withdraws its hostname, so check the path, not the process.
+
+```bash
+npm run doctor
+npm run preview         # what Glean has matched, and what predates its trigger
+npm run triggers         # every trigger on the tenant, yours marked
+npm run repoint          # after the tunnel rotates: same triggers, same secrets, new URL
+```
+
+`preview` answers the question a silent webhook cannot: whether Glean matched nothing, or
+matched something that never reached you. Delivery only fires **forward** from a trigger's
+creation, so a match older than its trigger is listed and will never arrive.
+
+Quick-tunnel URLs rotate. `npm run repoint` PATCHes the existing triggers instead of recreating
+them, which matters because signing secrets are issued once — recreating means new secrets, while
+re-pointing keeps the ones already in `.env`.
+
+`npm run triggers -- --delete <trigger_id>` also removes that trigger's aligned local secret. If the
+trigger was already deleted elsewhere, rerun the command to clear the stale local state. The running
+receiver reloads file-backed secrets automatically. If IDs or secrets are exported in your shell,
+unset them before setup; a child process cannot update its parent shell.
 
 ## Getting events into the session
 

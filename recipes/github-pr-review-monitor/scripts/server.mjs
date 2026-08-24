@@ -10,17 +10,25 @@ import {
   verifySignature,
 } from '../lib/signature.mjs';
 
+const inheritedWebhookSecrets = process.env.GLEAN_WEBHOOK_SECRETS;
 loadEnv();
 
-function secrets() {
-  const configured =
-    process.env.GLEAN_WEBHOOK_SECRETS || readEnv().GLEAN_WEBHOOK_SECRETS || '';
+export function secretValues({ inherited, persisted, demo = false }) {
+  const configured = inherited === undefined ? persisted || '' : inherited;
   const values = configured
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
   if (values.length > 0) return values;
-  return process.env.GLEAN_COOKBOOK_DEMO === 'true' ? [demoSecret] : [];
+  return demo ? [demoSecret] : [];
+}
+
+function secrets() {
+  return secretValues({
+    inherited: inheritedWebhookSecrets,
+    persisted: readEnv().GLEAN_WEBHOOK_SECRETS,
+    demo: process.env.GLEAN_COOKBOOK_DEMO === 'true',
+  });
 }
 
 function readSeen(file) {

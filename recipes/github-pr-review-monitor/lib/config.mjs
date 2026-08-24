@@ -62,6 +62,25 @@ export function stateDir() {
     : path.resolve(recipeRoot, configured);
 }
 
+export function withoutTrigger(target, idsValue = '', secretsValue = '') {
+  const ids = idsValue
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const secrets = secretsValue
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const index = ids.indexOf(target);
+  if (index === -1) return null;
+  ids.splice(index, 1);
+  secrets.splice(index, 1);
+  return {
+    GLEAN_TRIGGER_IDS: ids.join(','),
+    GLEAN_WEBHOOK_SECRETS: secrets.join(','),
+  };
+}
+
 /**
  * Updates keys in place and appends the rest, leaving every other line alone —
  * rebuilding from parsed pairs would delete the comments people copied in from

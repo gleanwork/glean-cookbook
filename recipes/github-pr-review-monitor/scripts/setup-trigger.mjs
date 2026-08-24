@@ -1,4 +1,10 @@
 import { loadEnv, writeEnv } from '../lib/config.mjs';
+import {
+  allPresets,
+  listTriggers,
+  readPreset,
+  request,
+} from '../lib/glean-api.mjs';
 import { resolveInputs, selectPresets } from '../lib/presets.mjs';
 
 loadEnv();
@@ -20,21 +26,6 @@ if (process.env.GLEAN_TRIGGER_IDS) {
   );
 }
 
-const headers = {
-  authorization: `Bearer ${token}`,
-  'content-type': 'application/json',
-  'x-glean-include-experimental': 'true',
-};
-
-async function request(path, options = {}) {
-  const response = await fetch(`${server}/api${path}`, { headers, ...options });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(`${response.status} ${JSON.stringify(body)}`);
-  }
-  return body;
-}
-
 // Datasource and presets are configuration, not code. Point this at any
 // datasource the Triggers API serves by editing .env.
 const datasource = process.env.GLEAN_TRIGGER_DATASOURCE || '';
@@ -42,30 +33,27 @@ const configured = (process.env.GLEAN_TRIGGER_PRESET_IDS || '')
   .split(',')
   .map((value) => value.trim())
   .filter(Boolean);
-// The catalog is paged. Stopping at the first page would report a preset the
-// deployment does serve as unavailable, which is the one thing setup must not do.
-async function allPresets() {
-  const out = [];
-  let cursor = '';
-  do {
-    const page = await request(
-      `/trigger-presets?page_size=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`,
-    );
-    out.push(...(page.results ?? []));
-    cursor = page.has_more ? (page.next_cursor ?? '') : '';
-  } while (cursor);
-  return out;
-}
-
 const presets = selectPresets(await allPresets(), configured, datasource);
 const presetIds = presets.map((preset) => preset.preset_id);
 
 // Resolved for every preset before the first POST, so a missing input stops the
 // run rather than leaving half the set registered and rolling the rest back.
+//
+// Each preset is read individually first: the list carries identity only, so
+// asking a list entry for `inputs` yields undefined and every preset looks like
+// it requires nothing. Harmless for the GitHub presets, which require none, but
+// it would post `inputs: {}` for a preset that does and earn a confusing
+// rejection.
+//
+// The reads sit outside the try: a configuration mistake prints one line and
+// stops, while a network or API fault keeps its stack.
+const detailed = await Promise.all(
+  presetIds.map((presetId) => readPreset(presetId)),
+);
 let inputsByPreset;
 try {
   inputsByPreset = new Map(
-    presets.map((preset) => [
+    detailed.map((preset) => [
       preset.preset_id,
       resolveInputs(preset, process.env),
     ]),
@@ -73,6 +61,37 @@ try {
 } catch (error) {
   console.error(error.message);
   process.exit(1);
+}
+
+// A scaffold with an empty .env cannot see triggers already registered on the
+// tenant, so creating blindly leaves the earlier set enabled and delivering to
+// whatever URL it was built with -- usually a tunnel that has since died. Their
+// signing secrets cannot be re-fetched, so they can never be adopted; the only
+// safe moves are to re-point them or delete them, and both are the operator's
+// call rather than something setup should do silently.
+const existing = (await listTriggers()).filter((trigger) =>
+  presetIds.includes(trigger.preset_id),
+);
+if (
+  existing.length > 0 &&
+  process.env.GLEAN_TRIGGER_ALLOW_DUPLICATES !== 'true'
+) {
+  const lines = existing.map(
+    (trigger) =>
+      `  ${trigger.preset_id}  ${trigger.trigger_id}  ${trigger.status}  -> ${trigger.delivery?.webhook_url ?? '(no url)'}`,
+  );
+  throw new Error(
+    [
+      `This tenant already has ${existing.length} trigger(s) for the presets you asked for:`,
+      ...lines,
+      '',
+      'Their signing secrets were returned once, at creation, so this checkout cannot',
+      'adopt or re-point them. Pick one:',
+      `  In the checkout that created them, run npm run repoint to use ${webhookUrl}`,
+      '  npm run triggers -- --delete <trigger_id>   # remove the stale ones, then re-run setup',
+      '  GLEAN_TRIGGER_ALLOW_DUPLICATES=true npm run setup   # deliberately register another set',
+    ].join('\n'),
+  );
 }
 
 const created = [];

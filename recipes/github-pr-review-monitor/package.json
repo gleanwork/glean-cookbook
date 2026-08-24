@@ -8,8 +8,13 @@
     "start": "node scripts/server.mjs",
     "stream": "node scripts/stream.mjs",
     "setup": "node scripts/setup-trigger.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "preview": "node scripts/preview-events.mjs",
+    "repoint": "node scripts/repoint.mjs",
+    "triggers": "node scripts/triggers.mjs",
     "draft": "node scripts/draft-review.mjs",
     "demo": "node scripts/demo.mjs",
+    "verify": "node scripts/verify.mjs",
     "verify:fixture": "node scripts/verify.mjs",
     "test": "node scripts/verify.mjs"
   },
