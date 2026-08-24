@@ -27,10 +27,18 @@ const fixture = (name) =>
  * Runs one Code node exactly as n8n would in runOnceForAllItems mode: the body
  * is a function over `$input`, and it returns an array of `{ json }` items.
  */
-function runNode(name, items, { vars = {}, upstream = {}, staticData } = {}) {
+function runNode(
+  name,
+  items,
+  { vars = {}, upstream = {}, staticData, transform } = {},
+) {
   const node = workflow.nodes.find((candidate) => candidate.name === name);
   if (!node) throw new Error(`workflow.json has no node named "${name}"`);
-  const code = node.parameters.jsCode;
+  // `transform` lets a check neutralise a configured value, so the gate asserts
+  // the same behaviour in this repo and in a scaffold someone has filled in.
+  const code = transform
+    ? transform(node.parameters.jsCode)
+    : node.parameters.jsCode;
   const $input = {
     all: () => items.map((json) => ({ json })),
     first: () => ({ json: items[0] }),
@@ -451,6 +459,26 @@ check(
   routed.channel === 'C0GLOBEX',
 );
 check('the message links the call', routed.text.includes(extracted.viewUrl));
+// Escaping the label is not enough. A url carrying | or > closes the link early
+// and the remainder of the message renders as raw text.
+{
+  const odd = runNode('Resolve channel', [{ id: 'sf-task-1' }], {
+    vars: { GONG_ACCOUNT_CHANNELS: channels },
+    upstream: {
+      'Resolve account': [
+        {
+          ...resolved,
+          call: { ...extracted, viewUrl: 'https://gong.example/call?id=1|2>3' },
+        },
+      ],
+    },
+  })[0];
+  check(
+    'a url with Slack link syntax in it is encoded, not left to break the link',
+    !/\|2>3/u.test(odd.text) && odd.text.includes('%7C2%3E3'),
+    odd.text.split('\n')[0],
+  );
+}
 // The fixture keeps Gong's "<>" title shape so the suite tests the real problem.
 {
   const hostile = runNode('Resolve channel', [{ id: 'sf-task-1' }], {
@@ -531,9 +559,20 @@ check(
   /does not fall back/u.test(bothSet ?? ''),
   bothSet?.slice(0, 90),
 );
+// This asserts the halt when nothing is routed, so it has to hold whether or not
+// this copy has been configured — otherwise the documented order (configure, then
+// verify) fails here for every user who filled in a channel.
+const unconfigured = (code) =>
+  code
+    .replace(/const SLACK_CHANNEL = '[^']*'/u, "const SLACK_CHANNEL = ''")
+    .replace(
+      /const ACCOUNT_CHANNELS = \{[^}]*\}/u,
+      'const ACCOUNT_CHANNELS = {}',
+    );
 const neither = throws('Resolve channel', [{ id: 'sf-task-1' }], {
   vars: {},
   upstream: { 'Resolve account': [resolved] },
+  transform: unconfigured,
 });
 check(
   'no channel configured at all halts and names both options',
@@ -624,6 +663,44 @@ for (const [node, source] of [
       byName.get(node)?.parameters?.jsCode ?? '',
     ),
   );
+}
+
+// ---- Configuration --------------------------------------------------------
+// The shipped file carries both placeholders on purpose, so this reports by
+// default. `--configured` turns it into a gate: run that before publishing,
+// where a placeholder means the workflow imports clean and then dies mid-run,
+// at Chat on a placeholder hostname or at Resolve channel with nowhere to post
+// — after Salesforce has already been written.
+console.log('\nConfiguration');
+{
+  const gate = process.argv.includes('--configured');
+  const chatUrl = byName.get('Glean Chat')?.parameters?.url ?? '';
+  const routing = byName.get('Resolve channel')?.parameters?.jsCode ?? '';
+  const state = [
+    [
+      'the Glean Chat node points at your Glean backend',
+      !/YOUR-INSTANCE-be\.glean\.com/u.test(chatUrl),
+      'still the placeholder host',
+    ],
+    [
+      'a Slack destination is configured',
+      /const SLACK_CHANNEL = '[^']+'/u.test(routing) ||
+        /const ACCOUNT_CHANNELS = \{\s*'[^']/u.test(routing),
+      'SLACK_CHANNEL and ACCOUNT_CHANNELS are both empty',
+    ],
+  ];
+  for (const [label, ok, detail] of state) {
+    if (gate) check(label, ok, detail);
+    else
+      console.log(
+        `  ${ok ? 'ok  ' : 'todo'} ${label}${ok ? '' : ` — ${detail}`}`,
+      );
+  }
+  if (!gate) {
+    console.log(
+      '  (run `npm run verify:config` after editing local workflow.json; UI and Variable values must be checked in n8n)',
+    );
+  }
 }
 
 console.log('');
