@@ -18,7 +18,7 @@ Build "Brief recurring meetings with Glean Triggers and Cursor Automations" foll
 {{> ask-setup-questions}}
 
 - What is your work email? It is used once to discover your Glean tenant.
-- Which reviewed meeting-title pattern identifies the recurring meeting?
+- Which reviewed meeting-title pattern identifies the recurring meeting? It filters the trigger at the source and is also what the automation accepts. Matching is a case-insensitive substring and matches mid-word, so pick a distinctive phrase rather than a short word.
 - Which project should receive the update? Paste its URL or its id — the automation takes the id out of a URL. Not a name: it refuses to infer a target.
 - Where is the work tracked? Usually the same project you are updating — say so and the automation discovers the fields itself. Name a table and its timestamp column only for a warehouse.
 
@@ -26,53 +26,53 @@ Build "Brief recurring meetings with Glean Triggers and Cursor Automations" foll
 
 {{> auth-external-api-key}}
 
-1. **Scaffold the automation kit**
+1. **Set up the automation kit**
 
    ```bash
    npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/pre-meeting-brief pre-meeting-brief
    ```
 
-2. **Configure the Cursor Automation**
-   Create a webhook-triggered Cursor Automation, connect the tracker and optionally Glean MCP, and paste the fenced prompt from automation-prompt.md after replacing all three placeholders. Save the automation, then store its webhook URL and bearer token in the ignored .env file.
+2. **Create the Cursor Automation**
+   Create a webhook-triggered Cursor Automation and connect the tracker. Add Glean MCP if you want cited context, then paste the prompt from automation-prompt.md and fill in its three placeholders. Save the automation before copying its webhook URL and bearer token into the ignored .env file.
 
 3. **Verify the delivery contract with no credentials**
-   Verifies the calendar-delivery and recurring-brief workflow using recorded events.
+   Use the recorded events to check calendar delivery and the recurring-brief workflow before connecting real accounts.
 
    ```bash
    cd pre-meeting-brief && npm run verify:fixture
    ```
 
 4. **Sign in to Glean**
-   Use the shipped OAuth flow, which registers a client dynamically. A TRIGGERS-scoped API token is the fallback.
+   Use the shipped OAuth flow; it discovers your tenant and registers a client dynamically. If OAuth is unavailable, use a `TRIGGERS`-scoped API token.
 
    ```bash
    cd pre-meeting-brief && npm run login -- --email "<work-email>"
    ```
 
-5. **Preview indexed calendar events**
-   Lists what your deployment serves and shows recent indexed events, so the meeting-title pattern is checked against real titles before anything is registered. Read-only.
+5. **Preview your calendar events**
+   See which presets your deployment offers and review recent indexed events. Use real meeting titles to test your pattern before registering anything. This step is read-only.
 
    ```bash
    cd pre-meeting-brief && npm run preview
    ```
 
 6. **Enable the automation**
-   Enable it now, before testing: a disabled automation may take no action on a delivery, so the receiver test would prove nothing. Enabling only makes it able to run — nobody else holds the webhook URL or key. Registering the Glean trigger, later, is what puts it in production.
+   Enable the automation before testing. A disabled automation might ignore a delivery, so the receiver test would prove nothing. Enabling it only allows Cursor to run; the webhook URL and key stay private. Registering the Glean trigger later puts it in production.
    {{> run-existing-app}}
 
-7. **Test the receiver before registering**
-   A webhook trigger is a private endpoint with no test button, so post one delivery yourself. The title is built from the pattern you configured, so the run does the work rather than exiting ignored.
+7. **Test it before going live**
+   Webhook triggers do not have a test button, so send one delivery yourself. The default command uses a non-matching title and writes nothing. After it succeeds, ask for explicit approval before running `npm run test:webhook -- --write`; that path creates one tracker update and each repeat is a new occurrence.
 
    ```bash
    cd pre-meeting-brief && npm run test:webhook
    ```
 
-8. **Register the trigger**
-   Setup reads the selected preset's required inputs from GLEAN_TRIGGER_INPUT_<FIELD> and rejects unsupported values. For this recipe, select a calendar preset that supports delivery 1,800 seconds before the event.
+8. **Register the calendar trigger**
+   Setup reads the preset catalog, checks the selected preset's inputs, and rejects unsupported values. Set `GLEAN_TRIGGER_INPUT_TITLE` to the reviewed pattern so Glean filters by title at the source. Choose a calendar preset that supports delivery 1,800 seconds before the event.
 
    ```bash
    cd pre-meeting-brief && npm run setup
    ```
 
-9. **Verify one scheduled meeting**
-   Put a meeting matching your title pattern more than 30 minutes out. Confirm one run and one update on the configured project. On the first run, expect a labeled seven-day lookback; later occurrences cover only the interval since the previous brief.
+9. **Try one scheduled meeting**
+   Schedule a meeting that matches your title pattern and starts more than 30 minutes from now. Confirm one run and one update on the configured project. The first brief looks back seven days; later briefs cover only the time since the previous one.

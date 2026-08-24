@@ -8,6 +8,9 @@ or updates exactly one project update.
 The window is not a fixed seven days. It starts at the marker the previous brief left behind, so the
 update covers precisely the interval the group has not seen.
 
+For the trigger model and endpoint contract, see the [Triggers guide](https://developers.glean.com/guides/triggers/overview)
+and the [Triggers API reference](https://developers.glean.com/api/platform-api/triggers-overview).
+
 ## Configure Cursor
 
 At [cursor.com/automations](https://cursor.com/automations), or `/automate` in a Cursor agent
@@ -24,31 +27,58 @@ description, and the prompt shipped here is the part worth keeping.
 5. Paste the fenced block from [`automation-prompt.md`](automation-prompt.md) and replace all three
    placeholders.
 6. Run `npm run test:webhook` from this directory before registering anything with Glean. Cursor has
-   no test button; the command posts one delivery so you can watch a real run.
+   no test button; the default command posts a non-matching delivery and writes nothing. After that
+   succeeds, approve one tracker update explicitly before running `npm run test:webhook -- --write`.
 
 ## Register the 30-minute trigger
 
-Copy `.env.example` to `.env`, sign in with the shipped Glean login script, and set the two Cursor values. Then run:
+Copy `.env.example` to `.env`, sign in with the shipped Glean login script, and set the two Cursor
+values plus `GLEAN_TRIGGER_INPUT_TITLE` — the same reviewed pattern the automation prompt accepts, so
+Glean filters by title at the source instead of sending events the automation only discards. Then run:
+
+The login flow discovers your tenant from the work email and writes the normalized API backend
+(`https://<instance>-be.glean.com`) to `.env`; you do not need to find or paste the backend host
+manually. Discovery can return a legacy frontend URL such as `*.askscio.com`, which the resolver
+converts before making API calls.
 
 ```bash
 npm run verify:fixture   # no credentials, no network
 npm run login            # OAuth via dynamic client registration
 npm run preview          # what your deployment serves, and real event titles
-npm run test:webhook     # one delivery to the receiver, before committing to anything
+npm run test:webhook     # safe non-matching delivery; writes nothing
 npm run setup            # registers the trigger
 ```
+
+This recipe declares no dependencies, so there is nothing to install first, and each script also runs
+directly — `node scripts/setup-trigger.mjs` and so on. Reach for that form if a security wrapper on
+your machine replaces the TLS trust store for npm-script children.
+
+### Filtering by meeting title
+
+`GLEAN_TRIGGER_INPUT_TITLE` narrows delivery to titles containing your pattern. Three things about it
+are worth knowing before you rely on it:
+
+- **It is a case-insensitive substring, not an exact title and not a regex** — and it matches mid-word,
+  so `rigger` matches "Triggers". A short pattern is far broader than it looks; use a distinctive phrase.
+- **The field is spelled `TITLE`, in upper case**, unlike `organizer`, `participants` or `time_offset`
+  on the same preset. The variable name follows the preset's own spelling.
+- **A misspelled input is not an error.** The trigger registers, reports healthy, matches nothing, and
+  never fires — indistinguishable from a quiet calendar. `npm run preview` is how you catch it: it
+  applies the same inputs and prints what they actually match.
+
+Keep the prompt's own title check too. The payload is untrusted, and a mid-word substring is loose
+enough that two independent gates is the right posture rather than redundancy.
 
 `test:webhook` exists because a webhook trigger is a private endpoint with no test button — the only
 way to know the receiver accepts your token, is reachable, and can read the fields the prompt names
 is to post a delivery yourself.
 
-**It builds its title from the pattern you configured, so by default the run does the work — including
-writing the update.** That is the point: a test that can only ever exit `ignored` proves the transport
-and nothing else. The write is markered and idempotent, so repeating it updates that entry rather than
-piling up duplicates, and the command prints what it is about to do before it does it. Pass `--ignore`
-to send a deliberately non-matching title and exercise the filter instead, which reads every field and
-writes nothing. Before the prompt's placeholders are filled in there is no pattern to match, so a bare
-run falls back to the non-matching title and says so.
+By default it sends a deliberately non-matching title, proving the receiver and filter without writing
+to the tracker. To exercise the full path, first approve one project update, then run
+`npm run test:webhook -- --write`. The write-capable command prints the exact title and target before
+posting. It also generates a new `event_time` on every invocation, so each run is a new occurrence and
+may create another update. Run it once and inspect the result. Supplying `--title` also requires
+`--write`, because a custom title may match the automation.
 
 `preview` lists the presets your deployment actually serves, so you can set
 `GLEAN_CALENDAR_PRESET_ID` from real data. There is deliberately no default: `GCAL_1` is what one

@@ -1,5 +1,6 @@
 import { loadEnv, writeEnv } from '../lib/config.mjs';
-import { resolveInputs, selectPreset } from '../lib/presets.mjs';
+import { allPresets, readPreset, request } from '../lib/glean-api.mjs';
+import { assertOffset, resolveInputs, selectPreset } from '../lib/presets.mjs';
 
 loadEnv();
 
@@ -51,46 +52,23 @@ if (process.env.GLEAN_TRIGGER_ID) {
   );
 }
 
-const headers = {
-  authorization: `Bearer ${token}`,
-  'content-type': 'application/json',
-  'x-glean-include-experimental': 'true',
-};
-
-async function request(path, options = {}) {
-  const response = await fetch(`${server}/api${path}`, { headers, ...options });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok)
-    throw new Error(`${response.status} ${JSON.stringify(body)}`);
-  return body;
-}
-
-// The catalog is paged; stopping at the first page would hide a served preset.
-async function allPresets() {
-  const out = [];
-  let cursor = '';
-  do {
-    const page = await request(
-      `/trigger-presets?page_size=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`,
-    );
-    out.push(...(page.results ?? []));
-    cursor = page.has_more ? (page.next_cursor ?? '') : '';
-  } while (cursor);
-  return out;
-}
-const catalog = await allPresets();
-// Capability, not display name: selectCalendarPreset refuses anything that does
-// not advertise a required 1,800-second time_offset.
 // A missing or wrong GLEAN_CALENDAR_PRESET_ID is a configuration mistake, not a
 // crash: print what to do and stop. Anything else keeps its stack, which is
 // what you want for a network or API fault.
-let preset;
+let listed;
 try {
-  preset = selectPreset(catalog, configuredPreset, {
+  listed = selectPreset(await allPresets(), configuredPreset, {
     datasource,
-    offsetSeconds,
     envVar: 'GLEAN_CALENDAR_PRESET_ID',
   });
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
+
+const preset = await readPreset(listed.preset_id);
+try {
+  assertOffset(preset, offsetSeconds);
 } catch (error) {
   console.error(error.message);
   process.exit(1);

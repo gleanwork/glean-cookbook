@@ -10,6 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  assertOffset,
   offersOffset,
   presetsFor,
   resolveInputs,
@@ -42,7 +43,9 @@ const promptRaw = read('automation-prompt.md');
 const prompt = promptRaw.replace(/\s+/gu, ' ');
 const setup = read('scripts', 'setup-trigger.mjs');
 const preview = read('scripts', 'preview-events.mjs');
+const api = read('lib', 'glean-api.mjs');
 const presets = fixture('presets.json').results;
+const presetDetail = fixture('preset-detail.json').trigger_preset;
 const events = fixture('calendar-events.json').results;
 const delivery = fixture('delivery.json');
 
@@ -247,10 +250,12 @@ console.log('\nThe setup order is followable');
   const steps = recipe.steps.map(
     (step) => `${step.title} ${step.description ?? ''}`,
   );
-  const commandAt = (needle) =>
-    recipe.steps.findIndex((step) => (step.command ?? '').includes(needle));
+  // Matched by pattern so the check survives either command style: the npm
+  // script name or the script file it runs.
+  const commandAt = (pattern) =>
+    recipe.steps.findIndex((step) => pattern.test(step.command ?? ''));
   const saveAt = steps.findIndex((t) => /\bSave the automation\b/u.test(t));
-  const testAt = commandAt('test:webhook');
+  const testAt = commandAt(/test[:-]webhook|test-webhook\.mjs/u);
   const enableAt = steps.findIndex((t) => /\bEnable the\b/u.test(t));
   check('a step says to save the automation', saveAt !== -1);
   check(
@@ -267,7 +272,7 @@ console.log('\nThe setup order is followable');
     'enabling comes before the receiver test',
     enableAt !== -1 && enableAt < testAt,
   );
-  const registerAt = commandAt('npm run setup');
+  const registerAt = commandAt(/run setup\b|setup-trigger\.mjs/u);
   check('and registering the trigger comes after both', registerAt > testAt);
   check(
     'the step says why it is enabled this early',
@@ -285,12 +290,23 @@ console.log('\nThe calendar preset is chosen, never guessed');
 // registers a different schedule elsewhere.
 const CAL = {
   datasource: 'googlecalendar',
-  offsetSeconds: '1800',
   envVar: 'GLEAN_CALENDAR_PRESET_ID',
 };
+// The catalog answers in two shapes and the difference is load-bearing, so the
+// gate holds them apart. Blur them and the code reads `inputs` off a list entry,
+// finds none, and refuses every preset the deployment serves.
 check(
-  'the live preset requires a 1,800-second offset',
-  offersOffset(presets[0], '1800'),
+  'the list response carries identity without inputs',
+  presets.every((preset) => preset.inputs === undefined),
+  Object.keys(presets[0]).join(', '),
+);
+check(
+  'the per-preset read is what advertises a 1,800-second offset',
+  offersOffset(presetDetail, '1800'),
+);
+check(
+  'so a list entry alone cannot satisfy the offset check',
+  !offersOffset(presets[0], '1800'),
 );
 // Removing the default from the code achieves nothing if config hands it back.
 check(
@@ -326,19 +342,23 @@ check(
 check(
   'a preset that cannot fire 30 minutes early halts',
   /cannot fire that far ahead/u.test(
-    throws(() =>
-      selectPreset(
-        [{ ...presets[0], preset_id: 'GCAL_X', inputs: [] }],
-        'GCAL_X',
-        CAL,
-      ),
-    ) ?? '',
+    throws(() => assertOffset({ ...presetDetail, inputs: [] }, '1800')) ?? '',
+  ),
+);
+check(
+  'and names the offsets it does advertise',
+  /It offers: 1800, 3600, 5400, 7200/u.test(
+    throws(() => assertOffset(presetDetail, '900')) ?? '',
   ),
 );
 for (const [label, src] of [
   ['setup', setup],
   ['preview', preview],
 ]) {
+  check(
+    `${label} reads the preset before reasoning about its inputs`,
+    /readPreset\(/u.test(src),
+  );
   // An unset preset is the default first-run state, so it must read as an
   // instruction rather than a crash.
   check(
@@ -378,7 +398,77 @@ const slack = {
 };
 check(
   "this recipe's own input resolves from a default",
-  resolveInputs(presets[0], {}, { time_offset: '1800' }).time_offset === '1800',
+  resolveInputs(presetDetail, {}, { time_offset: '1800' }).time_offset ===
+    '1800',
+);
+// How a preset's own filters get registered without this code knowing their
+// names — the same path a title filter arrives on.
+check(
+  'an optional filter the environment supplies is registered',
+  resolveInputs(
+    presetDetail,
+    { GLEAN_TRIGGER_INPUT_TYPE: 'meeting' },
+    { time_offset: '1800' },
+  ).type === 'meeting',
+);
+check(
+  'an optional input nobody supplies is left out',
+  resolveInputs(presetDetail, {}, { time_offset: '1800' }).type === undefined,
+);
+// The title filter is the one this recipe configures by default. Its field is
+// spelled TITLE in upper case, unlike every other input on the same preset, and
+// the value is registered under the preset's own spelling rather than a
+// normalised one -- an input the preset does not recognise is not rejected, it
+// matches nothing, so the trigger registers, reports healthy and never fires.
+check(
+  'the preset advertises a TITLE input',
+  (presetDetail.inputs || []).some((input) => input.field === 'TITLE'),
+);
+check(
+  "the title filter registers under the preset's own upper-case spelling",
+  resolveInputs(
+    presetDetail,
+    { GLEAN_TRIGGER_INPUT_TITLE: 'Platform weekly' },
+    { time_offset: '1800' },
+  ).TITLE === 'Platform weekly',
+);
+check(
+  'and is omitted entirely when no pattern is configured',
+  resolveInputs(presetDetail, {}, { time_offset: '1800' }).TITLE === undefined,
+);
+check(
+  'the title input is free text, not a picklist',
+  ((presetDetail.inputs || []).find((input) => input.field === 'TITLE') || {})
+    .type === 'TEXT',
+);
+check(
+  'the recipe tells the reader it is a mid-word case-insensitive substring',
+  /case-insensitive substring/u.test(read('README.md')) &&
+    /mid-word/u.test(read('README.md')),
+);
+check(
+  'and warns that an unrecognised input silently never fires',
+  /never fires/u.test(read('.env.example')),
+);
+// A truncated picklist advertises some of its values, not all, so refusing what
+// it does not list would reject a legitimate one.
+check(
+  'a value outside a truncated picklist is still accepted',
+  resolveInputs(
+    {
+      preset_id: 'GCAL_1',
+      inputs: [
+        {
+          field: 'organizer',
+          is_required: false,
+          is_truncated: true,
+          values: [{ value: 'dana.reyes@example.com' }],
+        },
+      ],
+    },
+    { GLEAN_TRIGGER_INPUT_ORGANIZER: 'someone.else@example.com' },
+    {},
+  ).organizer === 'someone.else@example.com',
 );
 check(
   'a preset needing a different field resolves from the environment',
@@ -394,7 +484,8 @@ check(
 check(
   'a value the preset does not accept is refused with the allowed list',
   /Allowed: 1800, 3600, 5400, 7200/u.test(
-    throws(() => resolveInputs(presets[0], {}, { time_offset: '9999' })) ?? '',
+    throws(() => resolveInputs(presetDetail, {}, { time_offset: '9999' })) ??
+      '',
   ),
 );
 check(
@@ -402,9 +493,7 @@ check(
   /resolveInputs\(/u.test(setup) && !/inputs: \{ time_offset/u.test(setup),
 );
 
-// A receiver test that can only exit `ignored` proves the transport and nothing
-// else, so the matching path is the default.
-console.log('\nThe receiver test exercises the real path');
+console.log('\nThe receiver test is safe by default');
 {
   const t = read('scripts', 'test-webhook.mjs');
   check(
@@ -412,11 +501,9 @@ console.log('\nThe receiver test exercises the real path');
     /the meeting titles you accept:/u.test(t),
   );
   check(
-    'the matching path is the default',
-    /flag\('ignore'\)/u.test(t) &&
-      !/const NON_MATCHING[\s\S]{0,200}title = NON_MATCHING;\n/u.test(
-        t.split('let title')[0],
-      ),
+    'the non-matching path is the default',
+    /const write = flag\('write'\)/u.test(t) &&
+      /else \{[\s\S]{0,220}title = NON_MATCHING/u.test(t),
   );
   check(
     'an unconfigured prompt is reported, not silently non-matching',
@@ -429,8 +516,12 @@ console.log('\nThe receiver test exercises the real path');
     /Could not find the accepted-title line/u.test(t),
   );
   check(
-    'and a run that will write says so first',
-    /will write to the configured/u.test(t),
+    'and a run that will write needs an explicit flag',
+    /if \(write\)[\s\S]*will write to the configured/u.test(t),
+  );
+  check(
+    'and warns that every write is a new occurrence',
+    /generates a new event_time each time/u.test(t),
   );
 }
 
@@ -448,9 +539,21 @@ check(
   'and an unusable secret is refused before the API round trip',
   /not a valid bearer token \(RFC 6750\)/u.test(setup),
 );
+// The Triggers surface is experimental: without this header the API answers 401
+// `Not allowed`, which reads like a credential fault and sends you debugging the
+// token instead of the request. One client owns it so no caller can forget it.
 check(
-  'the Platform API is called as experimental',
-  /x-glean-include-experimental/u.test(setup),
+  'the shared client sends x-glean-include-experimental',
+  /x-glean-include-experimental/u.test(api),
+);
+check(
+  'no script builds its own Triggers request headers',
+  !/authorization:\s*`Bearer/u.test(setup) &&
+    !/authorization:\s*`Bearer/u.test(preview),
+);
+check(
+  'the per-preset read unwraps trigger_preset and keeps the resolved id',
+  /trigger_preset/u.test(api) && /preset_id: presetId/u.test(api),
 );
 check(
   'a second trigger is refused rather than duplicated',

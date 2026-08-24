@@ -1,7 +1,6 @@
 // Sends one delivery to the receiver, the way Glean will — a webhook trigger is
-// a private endpoint with no test button. The title is built from the pattern in
-// automation-prompt.md so the run does the work; a test that can only exit
-// `ignored` proves the transport and nothing else. Pass --ignore for that half.
+// a private endpoint with no test button. The default delivery is deliberately
+// non-matching. Pass --write only after approving one tracker update.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -50,26 +49,33 @@ function configuredPattern() {
 const NON_MATCHING = 'ZZ unmatched — receiver test';
 const { value: pattern, reason } = configuredPattern();
 const explicit = arg('title');
+const write = flag('write');
 let title;
 let expectation;
 
-if (explicit) {
-  title = explicit;
-  expectation = 'whatever your filter makes of the title you passed';
-} else if (flag('ignore')) {
-  title = NON_MATCHING;
-  expectation = 'a run that reads every field and writes nothing';
-} else if (pattern) {
-  title = `${pattern} — receiver test`;
+if (write) {
+  if (!explicit && !pattern) {
+    throw new Error(
+      'The prompt has no configured title pattern. Fill it in before using --write.',
+    );
+  }
+  title = explicit || `${pattern} — receiver test`;
   expectation = 'a full run, including the update it writes';
 } else {
+  if (explicit) {
+    throw new Error(
+      '--title may match the automation and write an update. Add --write after approving that write.',
+    );
+  }
   title = NON_MATCHING;
-  expectation = 'a run that exits ignored';
+  expectation = 'a run that reads every field and writes nothing';
+}
+
+if (!write && !pattern) {
   console.warn(
     reason === 'placeholder'
       ? 'automation-prompt.md still has its title placeholder, so there is no\n' +
-          'pattern to match. Sending a non-matching title; fill the prompt in to\n' +
-          'exercise the path that writes.\n'
+          'pattern to match. Sending the safe non-matching test.\n'
       : 'Could not find the accepted-title line in automation-prompt.md, so\n' +
           'there is no pattern to match. If you edited the prompt, keep the line\n' +
           'reading "the meeting titles you accept: `...`". Sending a\n' +
@@ -95,11 +101,11 @@ console.log(`POST ${target.origin}/…${url.slice(-4)}`);
 console.log(`  title      ${body.title}`);
 console.log(`  event_time ${body.event_time}  (${minutes} minutes out)`);
 console.log(`  expecting  ${expectation}`);
-if (!explicit && !flag('ignore') && pattern) {
+if (write) {
   console.log(
     `\nThis title matches your filter, so the run will write to the configured\n` +
-      `target. It is markered and idempotent, so repeating it updates rather than\n` +
-      `duplicates. Use --ignore to exercise the filter instead.`,
+      `target. This command generates a new event_time each time, so repeating it\n` +
+      `can create another project update. Run it once and inspect the result.`,
   );
 }
 
