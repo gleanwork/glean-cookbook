@@ -62,49 +62,49 @@
   "steps": [
     {
       "title": "Choose the mailbox and customer domain",
-      "description": "Provide the work email that owns the agent and the exact customer sender domain to watch. Only messages this user receives from that domain should match.",
+      "description": "Provide the work email that owns the agent and the exact customer sender domain to watch. The trigger matches only messages that this user receives from that domain.",
       "kind": "choose"
     },
     {
       "title": "Add the Glean plugin marketplace",
       "command": "claude plugin marketplace add gleanwork/glean-plugins-vnext",
-      "description": "Claude Code users add the marketplace with the command above. Cursor users open Customize in the sidebar, find Glean vNext, and Install it at user scope, then skip the next step; a team admin can instead add the marketplace under Dashboard, Plugins, Add Marketplace, Import from Repo.",
+      "description": "In Claude Code, add the marketplace with the command above. In Cursor, open Customize, find Glean vNext, and install it at user scope. A team admin can add it under Dashboard → Plugins → Add Marketplace → Import from Repo.",
       "kind": "configure"
     },
     {
       "title": "Install the agent-builder plugin",
       "command": "claude plugin install glean-vnext@glean-plugins-vnext --scope user",
-      "description": "Installs the agent_builder skill at user scope so it stays available across projects. Cursor users skip this step.",
+      "description": "Install the agent_builder skill at user scope so it remains available across projects. Cursor users can skip this step.",
       "kind": "configure"
     },
     {
       "title": "Reload the host and confirm the plugin",
-      "description": "Reload or restart the host so the plugin loads, then confirm /glean_run resolves.",
+      "description": "Reload or restart the host so it loads the plugin. Then confirm that /glean_run resolves.",
       "kind": "run"
     },
     {
       "title": "Authenticate the plugin",
-      "description": "Run setup, provide the Server instance (QE) URL from Glean's About page, then complete browser sign-in. Never use an API token.",
+      "description": "Run setup, enter your work email when prompted, and complete the browser sign-in. The current setup flow does not require a server URL or API token.",
       "kind": "authenticate"
     },
     {
       "title": "Build the agent with the headless builder",
-      "description": "Run /glean_run agent_builder and name the target directory. Ask for a Gmail thread trigger scoped to the owner and customer domain, search grounding, a reply-draft tool, and an owner-only Slack DM. Require no email-send tool, and no tool calls when the latest thread item is a draft, owner-authored, or already handled. Let the builder discover tenant-specific IDs.",
+      "description": "Run /glean_run agent_builder and name the target directory. Use the builder to generate the agent files; do not manually author or edit spec.yaml or instructions.md. Request a Gmail thread trigger scoped to the owner and customer domain, search grounding, a reply-draft tool, and an owner-only Slack DM. Do not add an email-send tool. Stop without tool calls when the latest thread item is a draft, owner-authored, or already handled. Let the builder discover tenant-specific IDs.",
       "kind": "manual"
     },
     {
       "title": "Preview against a real thread",
-      "description": "Run the agent against a real Gmail thread URL, naming the same directory; it arrives as the reserved content input. Hand anything wrong back to agent_builder rather than editing the spec.",
+      "description": "Run the agent against a real Gmail thread URL and name the same directory. The URL is passed as the reserved content input; inspect the run result before publishing. If the result is wrong, return to agent_builder instead of manually editing the generated spec or instructions.",
       "kind": "manual"
     },
     {
       "title": "Review the boundary, publish, and activate",
-      "description": "Show the trigger scope and the unattended write boundary, take one explicit confirmation, then save. Publishing does not activate: on the returned page allow connected-app actions, select Activate agent, and confirm ACTIVE.",
+      "description": "Review the trigger scope and the unattended write boundary, then give one explicit confirmation before saving. Saving publishes the agent but does not activate it. On the returned page, allow connected-app actions, select Activate agent, and confirm ACTIVE.",
       "kind": "manual"
     },
     {
       "title": "Verify with a real email",
-      "description": "Send one genuine customer question from the chosen domain. Expect one run, one unsent draft on the original thread, and one Slack DM to the owner.",
+      "description": "Send one genuine customer question from the chosen domain. Confirm one run, one unsent draft on the original thread, and one Slack DM to the owner.",
       "kind": "verify-live"
     }
   ],
@@ -135,13 +135,13 @@
       "icon": "slack"
     }
   ],
-  "aiPrompt": "Build this Glean agent through the headless agent builder, not by hand. Install the glean-vnext plugin from the gleanwork/glean-plugins-vnext marketplace, reload until /glean_run resolves, and authenticate with setup. Never substitute an MCP server URL or a hand-driven tool sequence for the plugin. Ask once for the owner's work email and the customer sender domain. Then run /glean_run agent_builder and require: a Gmail thread content trigger scoped to that owner as recipient and that sender domain; grounding through a read-only search tool; one reply draft on the original thread for genuine customer questions; a Slack DM to the owner alone; no email-send tool; and a leading instruction that exits with zero tool calls when the latest thread item is a draft, is owner-authored, or matches a draft it already created, because saving a draft re-indexes the thread. Name the target directory in every build, run, and save request, because the builder otherwise resolves to the current working directory. Let it discover every template id, provider id, and tool name and write the agent folder; do not hand-author or hand-edit it. Preview on a real thread before publishing, and treat a wrong-thread draft, a draft for automated mail, or a notification to anyone but the owner as a rebuild. Show the user the trigger scope and the unattended write boundary, take one explicit confirmation for unattended draft creation and the owner DM, publish, then allow connected-app actions and activate the agent on the returned page and confirm ACTIVE. Verify with a real genuine message, and confirm the no-op feedback guard on any follow-up run.",
+  "aiPrompt": "Use the Headless Agent Builder to generate and update this Glean agent. Do not manually author or edit the generated spec.yaml or instructions.md; tenant-specific IDs and tool contracts must come from builder discovery. Follow https://docs.glean.com/agents/create-agents/create-agent-via-headless-builder when the setup or builder flow needs clarification. Install the glean-vnext plugin from the gleanwork/glean-plugins-vnext marketplace, reload until /glean_run resolves, and authenticate with setup. Never substitute an MCP server URL or a hand-driven tool sequence for the plugin. Ask once for the owner's work email and the customer sender domain. Then run /glean_run agent_builder and require: a Gmail thread content trigger scoped to that owner as recipient and that sender domain; grounding through a read-only search tool; one reply draft on the original thread for genuine customer questions; a Slack DM to the owner alone; no email-send tool; and a leading instruction that exits with zero tool calls when the latest thread item is a draft, is owner-authored, or matches a draft it already created, because saving a draft re-indexes the thread. Name the target directory in every build, run, and save request, because the builder otherwise resolves to the current working directory. Let it discover every template id, provider id, and tool name and write the agent folder. Preview on a real thread before publishing and inspect the run result; if the trigger scope, draft, or notification is wrong, return to agent_builder and rebuild. Show the user the trigger scope and the unattended write boundary, take one explicit confirmation for unattended draft creation and the owner DM, publish, then allow connected-app actions and activate the agent on the returned page and confirm ACTIVE. Verify with a real genuine message, and confirm the no-op feedback guard on any follow-up run.",
   "llmContext": "Use the glean-vnext plugin's agent_builder skill: it owns the agent folder contract, tenant discovery, preview, and publish. Never author spec.yaml or instructions.md by hand. Its build, run and save modes resolve an unnamed path to the working directory, so name the directory every time. Resolve trigger template, provider ids and tool names from discovery. The Gmail thread template has no direction or draft-status condition, so a saved draft can re-index the thread and the instructions must stop before tools. Unattended writes are limited to a Gmail reply draft and an owner-only Slack DM. Saving publishes but does not activate the subscription.",
   "goDependency": false,
   "featured": false,
   "tags": ["gmail", "content-trigger", "headless-agent", "agent-builder"],
   "content": {
-    "problem": "You are already working in Claude Code or Cursor—the place where you describe, test, and refine automations. Glean Headless Agent Builder lets you create an agent without switching to another UI: describe the outcome in your existing coding harness, let the builder discover the trigger and action tools available in your deployment, and preview the result before publishing.\n\nIn this recipe, the finished agent watches emails from one customer domain, decides whether a response is needed, drafts a grounded Gmail reply, and alerts you in Slack. It handles the preparation; you stay in control of what gets sent.",
+    "problem": "You already use Claude Code or Cursor to describe, test, and refine automations. Glean Headless Agent Builder lets you create an agent there, while discovering the triggers and action tools available in your deployment. You can preview the result before publishing it.\n\nThis recipe builds an agent that watches messages from one customer domain, decides whether a reply is needed, drafts a grounded response in Gmail, and alerts you in Slack. It handles the preparation; you remain in control of what is sent.",
     "takeItFurther": [
       "Expand from one customer domain to a reviewed domain allow-list after the single-domain workflow is reliable.",
       "Route unclear questions to a support queue while preserving the same no-send boundary.",
