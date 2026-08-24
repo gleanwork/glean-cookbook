@@ -23,9 +23,33 @@ function gh(args, input) {
     input,
     stdio: ['pipe', 'pipe', 'pipe'],
   });
+  if (result.error?.code === 'ENOENT') {
+    throw new Error(
+      'The GitHub CLI (gh) is not installed. Install it from https://cli.github.com, then run `gh auth login`.',
+    );
+  }
   if (result.status !== 0) throw new Error(result.stderr.trim() || 'gh failed');
   return result.stdout;
 }
+
+// Checked before anything is written. An unauthenticated CLI otherwise fails at
+// the last step, once the notification has already been consumed and the local
+// draft is the only surviving copy of the work.
+function requireGitHubAuth() {
+  const status = spawnSync('gh', ['auth', 'status'], { encoding: 'utf8' });
+  if (status.error?.code === 'ENOENT') {
+    throw new Error(
+      'The GitHub CLI (gh) is not installed. Install it from https://cli.github.com, then run `gh auth login`.',
+    );
+  }
+  if (status.status !== 0) {
+    throw new Error(
+      `The GitHub CLI is not signed in, so the draft cannot be placed on the pull request. Run \`gh auth login\`, then try again.\n${(status.stderr || '').trim()}`,
+    );
+  }
+}
+
+requireGitHubAuth();
 
 const [, owner, repo, number] = match;
 const login = gh(['api', 'user', '--jq', '.login']).trim();

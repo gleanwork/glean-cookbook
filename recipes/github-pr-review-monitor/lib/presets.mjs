@@ -49,22 +49,18 @@ export function selectPresets(results = [], presetIds = [], datasource = '') {
   return ids.map((id) => byId.get(id));
 }
 
-/**
- * The inputs a preset requires, read from GLEAN_TRIGGER_INPUT_<FIELD>. Required
- * inputs differ per preset (SLACK_1 `channel`, JIRA_1 `label`) and the API
- * rejects a trigger that omits one, so a flat `inputs: {}` only works for the
- * GitHub presets, which require none.
- */
-export function resolveInputs(preset, env = {}) {
-  const required = (preset?.inputs || []).filter((input) => input.is_required);
+/** Resolves the inputs advertised by one detailed preset. */
+export function resolveInputs(preset, env = {}, defaults = {}) {
+  const advertised = preset?.inputs || [];
   const inputs = {};
   const missing = [];
 
-  for (const input of required) {
+  for (const input of advertised) {
     const key = `GLEAN_TRIGGER_INPUT_${input.field.toUpperCase()}`;
-    const value = env[key];
+    const value = env[key] ?? defaults[input.field];
     const allowed = (input.values || []).map((v) => String(v.value));
     if (value === undefined || value === '') {
+      if (!input.is_required) continue;
       missing.push(
         `  ${key}` +
           (allowed.length ? `  one of: ${allowed.join(', ')}` : '') +
@@ -72,7 +68,13 @@ export function resolveInputs(preset, env = {}) {
       );
       continue;
     }
-    if (allowed.length > 0 && !allowed.includes(String(value))) {
+    // A truncated picklist advertises some of its values, not all of them, so
+    // refusing what it does not list would reject a legitimate one.
+    if (
+      allowed.length > 0 &&
+      !input.is_truncated &&
+      !allowed.includes(String(value))
+    ) {
       throw new Error(
         `${key}=${value} is not one this preset accepts. Allowed: ${allowed.join(', ')}`,
       );

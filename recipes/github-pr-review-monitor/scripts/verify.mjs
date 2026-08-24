@@ -18,10 +18,11 @@ process.env.GLEAN_REVIEW_STATE_DIR = fs.mkdtempSync(
   path.join(os.tmpdir(), 'glean-pr-review-monitor-'),
 );
 
-const { recipeRoot, stateDir } = await import('../lib/config.mjs');
+const { recipeRoot, stateDir, withoutTrigger } =
+  await import('../lib/config.mjs');
 const { demoSecret, sign } = await import('../lib/signature.mjs');
 const { resolveInputs, selectPresets } = await import('../lib/presets.mjs');
-const { createReceiver } = await import('./server.mjs');
+const { createReceiver, secretValues } = await import('./server.mjs');
 
 const failures = [];
 function check(label, ok, detail) {
@@ -147,11 +148,96 @@ console.log('\nno submit path');
     'it never names a submit state',
     !/APPROVE|REQUEST_CHANGES|DISMISS/u.test(source),
   );
+  const skill = fs.readFileSync(
+    path.join(recipeRoot, 'skills', 'review-trigger', 'SKILL.md'),
+    'utf8',
+  );
+  check(
+    'the skill asks before writing the pending review to GitHub',
+    /explicit approval before writing anything to GitHub/u.test(skill),
+  );
+  check(
+    'deleting one owned trigger removes its aligned secret',
+    JSON.stringify(withoutTrigger('t2', 't1,t2,t3', 's1,s2,s3')) ===
+      JSON.stringify({
+        GLEAN_TRIGGER_IDS: 't1,t3',
+        GLEAN_WEBHOOK_SECRETS: 's1,s3',
+      }),
+  );
+  check(
+    "deleting another checkout's trigger leaves local state alone",
+    withoutTrigger('other', 't1,t2', 's1,s2') === null,
+  );
+}
+
+// ---- Experimental opt-in ---------------------------------------------------
+console.log('\nexperimental opt-in');
+{
+  const api = fs.readFileSync(
+    path.join(recipeRoot, 'lib', 'glean-api.mjs'),
+    'utf8',
+  );
+  // The Triggers surface is experimental: without this header the API answers
+  // 401 `Not allowed`, which reads like a credential fault and sends you
+  // debugging the token instead of the request.
+  check(
+    'the shared client sends x-glean-include-experimental',
+    /x-glean-include-experimental/u.test(api),
+  );
+  const callers = [
+    'setup-trigger',
+    'preview-events',
+    'repoint',
+    'triggers',
+    'doctor',
+  ];
+  const offenders = callers.filter((name) => {
+    const source = fs.readFileSync(
+      path.join(recipeRoot, 'scripts', `${name}.mjs`),
+      'utf8',
+    );
+    // Every caller goes through the shared client, so none of them builds its
+    // own headers and none of them can forget the opt-in.
+    return /authorization:\s*`Bearer/u.test(source);
+  });
+  check(
+    'no script builds its own Triggers request headers',
+    offenders.length === 0,
+    offenders.join(', '),
+  );
+  // The catalog answers in two shapes. The list carries identity only, so
+  // asking a list entry for `inputs` yields undefined and every preset looks
+  // like it requires nothing -- harmless for the GitHub presets, which require
+  // none, and a confusing rejection for any preset that does.
+  check(
+    'the per-preset read unwraps trigger_preset and keeps the resolved id',
+    /trigger_preset/u.test(api) && /preset_id: presetId/u.test(api),
+  );
+  check(
+    'setup reads each preset before resolving its inputs',
+    /readPreset\(/u.test(
+      fs.readFileSync(
+        path.join(recipeRoot, 'scripts', 'setup-trigger.mjs'),
+        'utf8',
+      ),
+    ),
+  );
 }
 
 // ---- Receiver --------------------------------------------------------------
 console.log('\nreceiver');
 const nowSeconds = () => Math.floor(Date.now() / 1000);
+
+check(
+  'the receiver reloads file-backed secrets after setup',
+  secretValues({ inherited: undefined, persisted: 'new-secret' })[0] ===
+    'new-secret',
+);
+check(
+  'an explicitly exported secret keeps precedence',
+  secretValues({ inherited: 'shell-secret', persisted: 'file-secret' })[0] ===
+    'shell-secret',
+);
 
 async function deliver(
   port,

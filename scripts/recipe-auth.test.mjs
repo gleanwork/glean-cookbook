@@ -73,6 +73,10 @@ test('discovers a backend from either discovery host form', async () => {
     instance: 'my-corp',
     backend: 'https://my-corp-be.glean.com',
   });
+  assert.deepEqual(await discover('https://scio-prod.askscio.com/'), {
+    instance: 'scio-prod',
+    backend: 'https://scio-prod-be.glean.com',
+  });
 });
 
 test('rejects generic and untrusted discovery responses', async () => {
