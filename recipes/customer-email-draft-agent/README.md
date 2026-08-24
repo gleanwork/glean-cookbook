@@ -9,9 +9,12 @@ The full walkthrough is at
 or run `/cookbook:customer-email-draft-agent`. What follows is only the part that is easy to get
 wrong and hard to discover from the steps.
 
+For the underlying workflow, see [Create an agent with the headless builder](https://docs.glean.com/agents/create-agents/create-agent-via-headless-builder).
+
 The recipe ships no agent files. Generating `spec.yaml` and `instructions.md` from a description is
 the entire point of the headless builder, and trigger templates, action-provider ids, tool names and
-Slack identity are tenant-specific in any case.
+Slack identity are tenant-specific in any case. Use the builder to create and update those generated
+files; do not manually author or edit them.
 
 ## Installing the plugin
 
@@ -33,13 +36,14 @@ alone may not be enough. Installs are scoped, and a copy installed against a dif
 
 Call the plugin's `setup` tool with no arguments and let it advance one stage at a time:
 
-| It reports                  | You pass                                                                                       |
-| --------------------------- | ---------------------------------------------------------------------------------------------- |
-| `[SETUP_REQUIRED]`          | `server_url` — the **Server instance (QE)** URL from `https://app.glean.com/admin/about-glean` |
-| `[AUTHENTICATION_REQUIRED]` | `callback_url` — the URL copied from the Glean sign-in success page                            |
-| a bare connection failure   | `reset: true`, then reconfigure — a stale URL is cached                                        |
+| It reports                  | You pass                                                     |
+| --------------------------- | ------------------------------------------------------------ |
+| `[SETUP_REQUIRED]`          | `email` — your work email, then complete the browser sign-in |
+| `[AUTHENTICATION_REQUIRED]` | Continue in the browser and return to the host after sign-in |
+| a bare connection failure   | `reset: true`, then run setup again                          |
 
-`setup` never asks for an API token, and never asks for your work email.
+The current setup flow does not ask for a server URL or API token. Do not open About Glean to copy
+one; enter your work email when prompted and complete the browser sign-in.
 
 ## Name the directory in every request
 
@@ -49,8 +53,9 @@ one the later modes will not find from the repo root. `.glean/agents/` is worth 
 the layout the Git ADLC sync action expects, so the agent can later ship through pull requests.
 
 Preview against a real thread before publishing — a content-trigger preview takes the thread URL as
-its reserved `content` input. When something is wrong, hand it back to `agent_builder` and rebuild;
-an edit you make by hand is an edit the next rebuild discards.
+its reserved `content` input and shows the run result for inspection. When something is wrong, hand
+the feedback back to `agent_builder` and rebuild; a manual edit to the generated files is an edit the
+next rebuild discards.
 
 ## Read the spec again after saving
 
