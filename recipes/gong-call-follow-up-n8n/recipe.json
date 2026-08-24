@@ -20,8 +20,16 @@
     "type": "existing-app",
     "questions": [
       {
+        "id": "n8n-hosting",
+        "prompt": "Will you use n8n Cloud or a local/self-hosted n8n instance? If local/self-hosted, choose a public HTTPS option before importing: n8n's development --tunnel, Cloudflare Tunnel, or another public ingress. Glean cannot deliver to localhost."
+      },
+      {
+        "id": "work-email",
+        "prompt": "What is your work email? It is used once to discover your Glean tenant and normalized API backend."
+      },
+      {
         "id": "slack-channel",
-        "prompt": "Which Slack channel id should the heads-up go to? One central channel (C…) is the simplest start. If different account teams should see different calls, give a Salesforce Account id to Slack channel id map instead — ids, not names."
+        "prompt": "Where should the follow-up go in Slack? Start with one channel id, or provide a Salesforce Account id → Slack channel id map if each account team has its own destination. Use ids, not names."
       }
     ],
     "auth": [
@@ -44,7 +52,7 @@
   "languages": ["javascript"],
   "prerequisites": [
     "Glean Triggers enabled with the Gong preset available, Gong calls indexed, and credentials scoped for Triggers, Search, and Chat",
-    "A publicly reachable n8n instance",
+    "A publicly reachable n8n instance, or a local one exposed with npx n8n start --tunnel",
     "Permission to install the Glean n8n community nodes",
     "Salesforce and Slack credentials with the required write access",
     "Node 20+"
@@ -65,100 +73,111 @@
   "scaffoldActions": ["scaffold-n8n-workflow"],
   "steps": [
     {
+      "title": "Choose n8n hosting before scaffolding",
+      "description": "Choose n8n Cloud or local/self-hosted n8n before downloading anything. Cloud is public by default. Local/self-hosted needs a public HTTPS webhook origin—use n8n's development `--tunnel`, Cloudflare Tunnel, or another ingress, and keep it available before publishing.",
+      "kind": "manual"
+    },
+    {
       "title": "Scaffold the workflow",
       "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/gong-call-follow-up-n8n gong-call-follow-up-n8n",
       "kind": "scaffold"
     },
     {
+      "title": "Resolve the Glean backend",
+      "command": "cd gong-call-follow-up-n8n && node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"",
+      "description": "Run the cookbook resolver with the work email. It may see a legacy frontend address such as `*.askscio.com`, but it returns the API backend `https://<instance>-be.glean.com`. Use that result for Glean Chat; do not paste the discovery address into the workflow.",
+      "kind": "authenticate"
+    },
+    {
       "title": "Install the Glean n8n nodes",
-      "description": "Settings, Community nodes, Install, then @gleanwork/n8n-nodes-gleanclient@0.4.1; verified end to end on n8n 2.35. It ships a Trigger and a Search action and no Chat node, so summarization is an HTTP Request. n8n Cloud works as shipped; self-hosted needs WEBHOOK_URL set to its public origin.",
+      "description": "In n8n, open Settings → Community nodes → Install and add `@gleanwork/n8n-nodes-gleanclient@0.4.2`. It provides the Trigger and Search nodes; the workflow uses an HTTP Request for Chat. Cloud works as shipped. For self-hosted n8n, set the webhook base to your public origin or start the development tunnel.",
       "kind": "install"
     },
     {
       "title": "Import the workflow",
       "kind": "configure",
-      "description": "In n8n, use Workflows, Import from URL with the raw workflow.json link. If n8n cannot reach GitHub, copy and paste the workflow onto an empty canvas. Import from File uses the browser's filesystem, so it cannot see files scaffolded on a remote host. Confirm that ten nodes and the Start here note appear."
+      "description": "In n8n, choose Workflows → Import from File and select the scaffolded `workflow.json`; this is the route that keeps your local edits. Import from URL always fetches the untouched GitHub file. If your browser cannot see the scaffolded file, copy and paste it onto a blank canvas. Confirm that the ten nodes and Start here note appear."
     },
     {
       "title": "Attach credentials",
-      "description": "A TRIGGERS-scoped Glean Trigger credential for the trigger, a SEARCH+CHAT-scoped Glean Client credential for Search and Chat, plus Salesforce and Slack. The trigger matches the Glean credential owner's calls; there is no user to pick.",
+      "description": "Attach a Glean Trigger credential with `TRIGGERS`, a Glean Client credential with `SEARCH` and `CHAT`, plus your Salesforce and Slack credentials. The trigger follows the Glean credential owner; there is no separate user to select.",
       "kind": "authenticate"
     },
     {
       "title": "Configure Glean Chat and Slack routing",
-      "description": "Replace the placeholder backend URL in the Glean Chat node. Then configure either one reviewed central Slack channel or an Account-to-channel map in Resolve channel. n8n Variables may override these values but are not required.",
+      "description": "Set the Glean Chat node to the backend returned by the resolver, then choose one reviewed Slack channel or an Account-to-channel map. n8n Variables can hold the backend and routing values, but they are optional.",
       "kind": "configure"
     },
     {
       "title": "Verify the workflow with no credentials",
       "command": "cd gong-call-follow-up-n8n && npm run verify:fixture",
-      "description": "Verifies the imported workflow, account resolution, Salesforce activity, and Slack routing using recorded data.",
+      "description": "Run the fixture verifier against recorded data. If you edited the local workflow.json, run `npm run verify:config` too. That command cannot see values entered in the n8n UI or stored in n8n Variables, so verify those configurations inside n8n before publishing.",
       "kind": "verify-fixture"
     },
     {
       "title": "Publish the workflow",
-      "description": "Publish in n8n. The Glean Trigger node registers n8n's production webhook and stores the one-time signing secret in workflow static data.",
+      "description": "Publish the workflow in n8n. The Glean Trigger node registers the production webhook and stores the signing secret used to verify deliveries.",
       "kind": "run"
     },
     {
       "title": "Verify with a real Gong call",
-      "description": "Complete a short call with yourself as a participant. Confirm one execution, one completed Salesforce activity on the matched Account, and one Slack post, and read the summary before widening the audience.",
+      "description": "Make a short Gong call with yourself as a participant. Confirm one execution, one completed Salesforce activity on the matched Account, and one Slack post. Read the summary before widening the audience.",
       "kind": "verify-live"
     }
   ],
   "architecture": [
     {
       "label": "Gong",
-      "caption": "A new indexed call involving the trigger owner",
+      "caption": "A new indexed call involving you",
       "category": "workflow",
       "icon": "gong"
     },
     {
       "label": "Glean Trigger",
-      "caption": "Registers and verifies signed delivery to n8n",
+      "caption": "Delivers the call securely to n8n",
       "category": "workflow",
       "emphasized": true,
       "icon": "glean-trigger"
     },
     {
       "label": "n8n",
-      "caption": "Retrieves context, summarizes, and resolves one account",
+      "caption": "Finds context, writes the summary, and matches one account",
       "category": "workflow",
       "icon": "n8n"
     },
     {
       "label": "Salesforce + Slack",
-      "caption": "Records an activity and posts the account heads-up",
+      "caption": "Records the activity and shares the right update",
       "category": "workflow",
       "icon": "slack"
     }
   ],
-  "aiPrompt": "Scaffold the shipped n8n workflow and help the user import it. Confirm their n8n endpoint is public HTTPS, install exactly @gleanwork/n8n-nodes-gleanclient@0.4.1, and attach host-managed credentials rather than writing secrets into JSON. Keep the live Glean preset selected by semantics, not only by cached id. Configure either one reviewed central Slack destination or a reviewed Account-to-channel map. Preserve the single-account gate and the completed Salesforce activity pattern. Run the offline workflow verifier, publish only after every credential and mapping is configured, then verify one real Gong call end to end.",
-  "llmContext": "The published Glean n8n package is 0.4.1. It includes a Glean Trigger node and a Glean Search action, not a Glean Chat node. The trigger registers POST /api/triggers on activation, stores the returned signing secret, verifies Standard Webhooks delivery, and deletes the trigger on deactivation. Glean event payloads are thin, so retrieve permission-aware context before summarization. n8n credentials must remain host-managed. Do not write to Salesforce or Slack if the account is absent, ambiguous, or unsupported by evidence.",
+  "aiPrompt": "Before downloading the workflow, ask whether the user will use n8n Cloud or local/self-hosted n8n. For local/self-hosted, require a public HTTPS webhook origin before publishing; offer n8n's development --tunnel, Cloudflare Tunnel, or another public ingress, and never accept localhost as reachable by Glean. Ask for the user's work email, then run the cookbook plugin's resolve-backend.mjs script and use its normalized https://<instance>-be.glean.com result for the Glean Chat URL; do not paste a legacy *.askscio.com discovery URL into the workflow. For trigger concepts or endpoint details, consult https://developers.glean.com/guides/triggers/overview and https://developers.glean.com/api/platform-api/triggers-overview. Scaffold the shipped n8n workflow, install exactly @gleanwork/n8n-nodes-gleanclient@0.4.2, and attach host-managed credentials rather than writing secrets into JSON. Keep the live Glean preset selected by semantics, not only by cached id. Configure either one reviewed central Slack destination or a reviewed Account-to-channel map. Preserve the single-account gate and the completed Salesforce activity pattern. Run the offline workflow verifier, publish only after every credential and mapping is configured, then verify one real Gong call end to end.",
+  "llmContext": "The published Glean n8n package is 0.4.2. It includes a Glean Trigger node and a Glean Search action, not a Glean Chat node. The trigger registers POST /api/triggers on activation, stores the returned signing secret, verifies Standard Webhooks delivery, and deletes the trigger on deactivation. Glean event payloads are thin, so retrieve permission-aware context before summarization. n8n credentials must remain host-managed. Do not write to Salesforce or Slack if the account is absent, ambiguous, or unsupported by evidence.",
   "goDependency": false,
   "featured": false,
   "tags": ["gong", "n8n", "salesforce", "slack", "content-trigger"],
   "content": {
-    "problem": "Your team already runs its automations in n8n because workflows are visible, integrations and credentials stay managed in one place, and each step is easy to inspect or adapt. A Gong follow-up belongs there too—but n8n cannot start the workflow when a new Gong call becomes available on its own.\n\nGlean supplies the missing trigger and permission-aware context. When a customer call is indexed, it automatically starts the n8n workflow, which summarizes the conversation, records it only when one Salesforce account matches, and alerts the reviewed Slack destination. The workflow stays in the automation platform your team already uses.",
+    "problem": "Important follow-up gets lost after customer calls—not because the information is missing, but because it is scattered across Gong, Salesforce, and Slack.\n\nThis recipe connects those systems in n8n. When a new Gong call is indexed, Glean finds permission-aware context and summarizes it, Salesforce gets an activity only when one account matches, and Slack receives a focused update for the right audience.",
     "takeItFurther": [
-      "Create owner-assigned Salesforce follow-up tasks from explicit call action items, so a commitment made on the call has an owner.",
-      "Send a daily digest of completed and unresolved call follow-ups, so the account team sees the backlog rather than individual posts.",
-      "Route unresolved accounts to a human-owned queue instead of stopping, once someone owns that review path."
+      "Create Salesforce follow-up tasks from explicit call action items, so every commitment has an owner.",
+      "Send a daily digest of completed and unresolved follow-ups instead of one Slack post per call.",
+      "Route unresolved accounts to a human review queue once that ownership path is in place."
     ],
     "guardrails": [
       {
         "title": "One account or no write",
-        "rule": "Writes happen only after exactly one Salesforce Account matches; ambiguity halts the run rather than choosing."
+        "rule": "The workflow writes only after exactly one Salesforce Account matches. Ambiguity stops the run instead of choosing for you."
       },
       {
         "title": "Evidence before summary",
-        "rule": "Summaries come from the call and permission-aware Glean results. The prompt forbids unsupported commitments, dates, and pricing."
+        "rule": "The summary uses the call and permission-aware Glean results. Unsupported commitments, dates, and pricing stay out."
       }
     ],
     "limitations": [
       {
-        "title": "Account identification remains model-dependent",
-        "description": "Glean Chat identifies the customer from the call context. The workflow proceeds only when Salesforce returns one matching Account; otherwise it stops for manual resolution."
+        "title": "Account matching still needs a review path",
+        "description": "Glean Chat proposes the customer from the call context, but Salesforce remains the authority. The workflow continues only when exactly one Account matches; otherwise it stops for resolution."
       }
     ]
   }
