@@ -61,6 +61,17 @@ async function desiredOutputs(registry) {
       return [file, await format(file, renderRecipeSkill(recipe))];
     }),
   );
+  const pastePrompts = registry.flatMap((recipe) => {
+    if (!recipe.pastePromptFile) return [];
+    const src = path.join(
+      repoRoot,
+      'recipes',
+      recipe.id,
+      recipe.pastePromptFile,
+    );
+    const dest = path.join(skillsDir, recipe.id, recipe.pastePromptFile);
+    return [[dest, fs.readFileSync(src, 'utf8')]];
+  });
   const marked = await Promise.all(
     [
       [
@@ -76,7 +87,7 @@ async function desiredOutputs(registry) {
       ),
     ]),
   );
-  return new Map([...skills, ...marked]);
+  return new Map([...skills, ...pastePrompts, ...marked]);
 }
 
 async function existingGeneratedSkills() {

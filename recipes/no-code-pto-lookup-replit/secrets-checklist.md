@@ -5,7 +5,7 @@ Before you send the prompt, have these two values ready. When Replit Agent asks 
 | Secret            | Where it comes from                                                                                                 | Notes                                                                                                                                                |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GLEAN_API_TOKEN` | Glean Admin Console → API access → Client API tokens. Use the Client tab of Token Management, scoped to `CHAT` only | Scope it as narrowly as possible. This token answers questions for anyone who uses the app, so `CHAT`-only limits the blast radius if it ever leaks. |
-| `GLEAN_INSTANCE`  | Your Glean URL, `https://<instance>-be.glean.com` → the `<instance>` part                                           | Not a secret in the security sense, but keeping it in Secrets alongside the token means the whole app config lives in one place.                     |
+| `GLEAN_INSTANCE`  | About Glean → Instance name, for example `acme` from `https://acme-be.glean.com`                                    | Not a secret in the security sense, but keeping it in Secrets alongside the token means the whole app config lives in one place.                     |
 
 **After Replit Agent finishes:**
 

@@ -11,7 +11,7 @@ This walkthrough has not been run end-to-end against a live Lovable account. Con
 ## Run it
 
 1. Read [`secrets-checklist.md`](secrets-checklist.md) and have `GLEAN_API_TOKEN` (scoped to `CHAT`) and `GLEAN_INSTANCE` ready.
-2. Start a new private project at [lovable.dev](https://lovable.dev/) and paste the entire block from [`lovable-prompt.md`](lovable-prompt.md). Fill in your instance slug and the first suggested question first.
+2. Start a new private project at [lovable.dev](https://lovable.dev/) and paste the entire block from [`lovable-prompt.md`](lovable-prompt.md). Fill in your instance name and the first suggested question first.
 3. When the Agent sets up a backend/secrets integration, add the two values there, not in the chat.
 4. Test with the two demo queries below.
 

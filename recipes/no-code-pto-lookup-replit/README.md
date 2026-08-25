@@ -11,7 +11,7 @@ This walkthrough has not been run end-to-end against a live Replit account. Conf
 ## Run it
 
 1. Read [`secrets-checklist.md`](secrets-checklist.md) and have `GLEAN_API_TOKEN` (scoped to `CHAT`) and `GLEAN_INSTANCE` ready.
-2. Start a new private Repl at [replit.com](https://replit.com/new), open Agent, and paste the entire block from [`replit-agent-prompt.md`](replit-agent-prompt.md). Fill in your instance slug and the first suggested question first.
+2. Start a new private Repl at [replit.com](https://replit.com/new), open Agent, and paste the entire block from [`replit-agent-prompt.md`](replit-agent-prompt.md). Fill in your instance name and the first suggested question first.
 3. When the Agent asks for secrets, add them via the Secrets tab, not the chat.
 4. Test with the two demo queries below.
 
