@@ -3,66 +3,8 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Glean } from '@gleanwork/api-client';
 import { listenLocal } from './lib/cookbook-server.js';
-
-// Path B (Chat API): you own the UI, the server owns the API token. Construct
-// the client with instance/serverURL, read citations from
-// fragment.citation.sourceDocument, and exclude progress messages from answers.
-const glean = new Glean({
-  apiToken: requireEnv('GLEAN_API_TOKEN'),
-  instance: requireEnv('GLEAN_INSTANCE'),
-});
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return value;
-}
-
-async function askGlean(question: string) {
-  const response = await glean.client.chat.create({
-    messages: [
-      {
-        author: 'USER',
-        fragments: [{ text: question }],
-      },
-    ],
-  });
-
-  const contentMessages = (response.messages ?? []).filter(
-    (message) => message.messageType === 'CONTENT',
-  );
-  const fragments = contentMessages.flatMap(
-    (message) => message.fragments ?? [],
-  );
-
-  const answer = fragments.map((fragment) => fragment.text ?? '').join('');
-
-  // Empty answer text means the run did not produce a usable answer. Surface a
-  // retryable failure rather than rendering a blank panel.
-  if (answer.trim().length === 0) {
-    throw new Error(
-      'Glean returned no answer text. This happens when a chat run ends while ' +
-        'a server tool is still pending; the request succeeded but the answer ' +
-        'was never produced. Retrying usually works.',
-    );
-  }
-
-  const citations = fragments
-    .map((fragment) => fragment.citation?.sourceDocument)
-    .filter(
-      (document): document is NonNullable<typeof document> =>
-        !!document?.title && !!document?.url,
-    );
-  const uniqueCitations = Array.from(
-    new Map(citations.map((document) => [document.url, document])).values(),
-  );
-
-  return { answer, citations: uniqueCitations };
-}
+import { askPlatformChat } from './lib/chat.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'public');
@@ -92,7 +34,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/ask') {
     try {
       const body = await readJsonBody(req);
-      const { answer, citations } = await askGlean(body.question);
+      const { answer, citations } = await askPlatformChat(body.question);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ answer, citations }));
     } catch (error) {
@@ -123,4 +65,4 @@ function readJsonBody(
   });
 }
 
-listenLocal(server, 'Company Answers (Chat API)');
+listenLocal(server, 'Company Answers (Platform Chat)');

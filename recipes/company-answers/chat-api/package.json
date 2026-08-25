@@ -2,16 +2,19 @@
   "name": "company-answers-chat-api",
   "version": "0.0.0",
   "private": true,
-  "description": "Company Answers \u2014 Chat API path: one chat.create call, you own the UI.",
+  "description": "Company Answers — Platform Chat path: glean.chat.create, you own the UI.",
   "type": "module",
   "scripts": {
-    "login": "node scripts/glean-auth.mjs login --scopes chat",
+    "login": "node scripts/glean-auth.mjs login --scopes chat --require GLEAN_DEMO_QUERY",
+    "demo": "node --import tsx scripts/demo.mjs",
     "start": "tsx server.ts",
+    "test": "node --import tsx --test \"lib/**/*.test.ts\"",
     "verify": "node scripts/verify.mjs",
+    "verify:fixture": "npm test && GLEAN_USE_FIXTURE=true node scripts/verify.mjs",
     "lint": "eslint ."
   },
   "dependencies": {
-    "@gleanwork/api-client": "0.18.0",
+    "@gleanwork/api-client": "0.19.0",
     "dotenv": "17.4.2"
   },
   "devDependencies": {

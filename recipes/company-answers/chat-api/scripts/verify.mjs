@@ -1,14 +1,10 @@
 #!/usr/bin/env node
-// Deterministic verify gate for the company-answers/chat-api recipe: starts the
-// real server (requires GLEAN_API_TOKEN + GLEAN_INSTANCE already set, same
-// as `npm start`), runs each demo query against it for real, and asserts the
-// checkable behavior every recipe skill's "## Verify" section promises.
-// Exits 0 only if every query passes.
-
+import 'dotenv/config';
 import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 async function availablePort() {
   const server = net.createServer();
@@ -26,34 +22,29 @@ async function availablePort() {
 const PORT = Number(process.env.PORT ?? (await availablePort()));
 const BASE_URL = `http://localhost:${PORT}`;
 const START_TIMEOUT_MS = 15_000;
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const useFixture = process.env.GLEAN_USE_FIXTURE === 'true';
 
-// Generated from this recipe's registry entry, so the questions asked here are
-// the ones the recipe documents. They were hardcoded once and drifted: this
-// script went on asking about a demo corpus long after the recipe stopped using
-// one. Regenerate with `npm run build:registry` in the cookbook repo.
-const QUERIES = process.env.GLEAN_DEMO_QUERY?.trim()
-  ? [process.env.GLEAN_DEMO_QUERY.trim()]
-  : JSON.parse(
-      fs.readFileSync(
-        path.join(import.meta.dirname, 'demo-queries.json'),
-        'utf8',
-      ),
-    );
+const QUERIES = JSON.parse(
+  fs.readFileSync(path.join(root, 'scripts', 'demo-queries.json'), 'utf8'),
+);
 
-/**
- * What every query must produce. The recipe's promise is a grounded answer, so
- * an answer with no citations is a failure even though the request succeeded --
- * that distinction is the whole point of the gate.
- */
+function requireEnv(name) {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    console.error(`Missing required environment variable: ${name}`);
+    process.exit(1);
+  }
+  return value;
+}
+
 function assertAnswer(result) {
-  if (result.answer.trim().length === 0) return 'answer was empty';
-  if (result.citations.length === 0) {
+  if (!result.answer?.trim()) return 'answer was empty';
+  if (!result.citations?.length) {
     return 'answer had no citations — the recipe promises cited, grounded answers';
   }
   return null;
 }
-
-const CHECKS = QUERIES.map((query) => ({ query, assert: assertAnswer }));
 
 function assertCitationShape(citations) {
   for (const citation of citations) {
@@ -68,8 +59,52 @@ function assertCitationShape(citations) {
   return null;
 }
 
+function assertFixtureContract() {
+  const recorded = JSON.parse(
+    fs.readFileSync(path.join(root, 'fixtures', 'chat-responses.json'), 'utf8'),
+  );
+  const missing = QUERIES.filter((query) => !recorded[query]);
+  if (missing.length > 0) {
+    throw new Error(`fixtures missing keys: ${missing.join(', ')}`);
+  }
+  for (const [key, body] of Object.entries(recorded)) {
+    if (body.object !== 'RESPONSE' || body.status !== 'COMPLETED') {
+      throw new Error(`${key}: expected a completed Platform Chat response`);
+    }
+    if (body.store !== false) {
+      throw new Error(`${key}: store must be false`);
+    }
+    const contents = (body.output ?? [])
+      .filter(
+        (message) => message.type === 'MESSAGE' && message.role === 'ASSISTANT',
+      )
+      .flatMap((message) => message.content ?? [])
+      .filter((content) => content.type === 'OUTPUT_TEXT');
+    if (contents.length === 0) {
+      throw new Error(`${key}: no ASSISTANT OUTPUT_TEXT content`);
+    }
+    const sources = contents.flatMap((content) =>
+      (content.annotations ?? [])
+        .filter((annotation) => annotation.type === 'CITATION')
+        .flatMap((annotation) => annotation.sources ?? []),
+    );
+    if (sources.length === 0) {
+      throw new Error(`${key}: expected at least one citation source`);
+    }
+    for (const source of sources) {
+      if (!source.title && !source.name) {
+        throw new Error(`${key}: citation missing title`);
+      }
+      if (source.url && !/^https?:\/\//u.test(source.url)) {
+        throw new Error(`${key}: citation url must be http(s)`);
+      }
+    }
+  }
+}
+
 function startServer() {
   const child = spawn('npm', ['start'], {
+    cwd: root,
     stdio: ['ignore', 'pipe', 'inherit'],
     env: { ...process.env, PORT: String(PORT) },
   });
@@ -83,7 +118,7 @@ async function waitForServer(deadline) {
       const response = await fetch(BASE_URL, { method: 'GET' });
       if (response.ok) return;
     } catch {
-      // not up yet — keep polling
+      // not up yet
     }
     await new Promise((resolve) => setTimeout(resolve, 300));
   }
@@ -104,29 +139,38 @@ async function askGlean(question) {
 }
 
 async function main() {
+  if (useFixture) {
+    assertFixtureContract();
+    console.log('Running verify against recorded Platform Chat fixtures');
+  } else {
+    requireEnv('GLEAN_API_TOKEN');
+    requireEnv('GLEAN_SERVER_URL');
+    requireEnv('GLEAN_DEMO_QUERY');
+    console.log('Running verify against live Platform Chat');
+  }
+
   const server = startServer();
   let failed = false;
+  const queries = useFixture ? QUERIES : [process.env.GLEAN_DEMO_QUERY.trim()];
 
   try {
     await waitForServer(Date.now() + START_TIMEOUT_MS);
 
-    for (const check of CHECKS) {
+    for (const query of queries) {
       try {
-        const result = await askGlean(check.query);
-        const behaviorError = check.assert(result);
+        const result = await askGlean(query);
+        const behaviorError = assertAnswer(result);
         const shapeError =
           behaviorError ?? assertCitationShape(result.citations);
         if (shapeError) {
           failed = true;
-          console.error(`✗ "${check.query}": ${shapeError}`);
+          console.error(`✗ "${query}": ${shapeError}`);
         } else {
-          console.log(
-            `✓ "${check.query}" — ${result.citations.length} citation(s)`,
-          );
+          console.log(`✓ "${query}" — ${result.citations.length} citation(s)`);
         }
       } catch (error) {
         failed = true;
-        console.error(`✗ "${check.query}": ${error.message}`);
+        console.error(`✗ "${query}": ${error.message}`);
       }
     }
   } catch (error) {

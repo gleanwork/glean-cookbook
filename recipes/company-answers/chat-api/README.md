@@ -1,34 +1,42 @@
-# company-answers / chat-api
+# Company Answers - Platform Chat
 
-Path B of the [Company Answers](https://developers.glean.com/cookbook/company-answers) recipe — you own the UI, the server owns the API token.
+Path B of the [Company Answers](https://developers.glean.com/cookbook/company-answers) recipe. You own the UI. The server owns the API token.
 
-## Run it
+## See it work before you connect anything
 
 ```bash
 npm install
+npm run verify:fixture
+```
+
+That run uses recorded answers for a fictional company named Acme. It needs no Glean credentials.
+
+## Sign in, then check your own content
+
+```bash
 npm run login
-# Set GLEAN_DEMO_QUERY in .env to a topic you know exists.
+```
+
+`npm run login` finds your Glean tenant from your work email, opens a browser for you to approve access, and writes `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN` into a new `.env`. If your tenant cannot use OAuth, skip that command: copy `.env.example` to `.env` and fill in those two values yourself, using a Glean API token that carries the **CHAT** scope.
+
+Signing in does not pick a topic. Open `.env` and set `GLEAN_DEMO_QUERY` to a question about your own content.
+
+```bash
 npm run verify
 npm start
 ```
 
-Open the Local URL printed by the server, ask a question, and get a cited answer.
+Open the Local URL printed by the server.
 
 ## What this does
 
-`server.ts` is a small Node HTTP server: `GET /` serves `public/index.html`; `POST /api/ask` calls `glean.client.chat.create` from `@gleanwork/api-client` with the question as a single `USER` message, then extracts:
+`server.ts` is a small Node HTTP server. `GET /` serves the page. `POST /api/ask` calls experimental Platform Chat through `glean.chat.create` with `stream:false`, `store:false`, and `X_GLEAN_INCLUDE_EXPERIMENTAL=true`. It then extracts:
 
-- **answer text** — `fragments[].text` from `CONTENT`-type messages only, joined (a real response can include earlier `UPDATE`-type messages narrating search/read steps; joining those in too prepends "Searching…"/"Reading…" text to the answer)
-- **citations** — `fragments[].citation.sourceDocument`, filtered to ones with a `title` and `url`, deduped by `url` (the same source is commonly cited by more than one fragment)
+- **answer text** from ASSISTANT `OUTPUT_TEXT` content
+- **citations** from `annotations[].sources`, kept when they have a title, deduped by URL
 
-The current API contract has three important details:
+The API token never reaches the browser.
 
-1. Construct the client with `instance` or a full `serverURL` override.
-2. Citations live per-fragment in `fragment.citation.sourceDocument`; do not use a top-level `citedDocuments` field or deprecated `message.citations[]`.
-3. Don't assume every message in the response is the answer — a real chat response can include step-narration messages ahead of the actual answer; filter to `messageType === 'CONTENT'`.
+## Contrast with Path A (`../web-sdk/`)
 
-The API token never reaches the browser — only `server.ts` reads `GLEAN_API_TOKEN`.
-
-## Contrast with Path A (web-sdk/)
-
-Here you own every pixel of the UI and the request/response shape, at the cost of writing (a little) more code. See `../web-sdk/` for the alternative: `renderChat` ships Glean's full UI for free.
+Here you own every pixel of the UI and the request shape. The Web SDK path ships Glean's full chat UI and uses the viewer's browser session instead of a server token.

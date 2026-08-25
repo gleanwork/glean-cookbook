@@ -1,0 +1,68 @@
+{
+  "What's our PTO policy?": {
+    "id": "resp_company_answers_pto",
+    "object": "RESPONSE",
+    "created_at": "2026-08-24T18:00:00Z",
+    "status": "COMPLETED",
+    "output": [
+      {
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
+          {
+            "type": "OUTPUT_TEXT",
+            "text": "Acme employees accrue 20 days of paid time off per year. You can take PTO after your first 90 days. Request leave in Workday at least two weeks before a trip of five days or more.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "acme-pto",
+                    "title": "Acme Employee Handbook — Time Off",
+                    "url": "https://intranet.acme.test/hr/handbook/time-off"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "store": false,
+    "request_id": "req_company_answers_pto"
+  },
+  "How do I request time off?": {
+    "id": "resp_company_answers_request",
+    "object": "RESPONSE",
+    "created_at": "2026-08-24T18:00:00Z",
+    "status": "COMPLETED",
+    "output": [
+      {
+        "type": "MESSAGE",
+        "role": "ASSISTANT",
+        "content": [
+          {
+            "type": "OUTPUT_TEXT",
+            "text": "Open Workday, then Time, then Request Time Off. Pick the dates, choose PTO, and submit. Your manager is notified automatically. For five or more consecutive days, submit the request at least two weeks ahead.",
+            "annotations": [
+              {
+                "type": "CITATION",
+                "sources": [
+                  {
+                    "type": "DOCUMENT",
+                    "document_id": "acme-request-time-off",
+                    "title": "How to request time off in Workday",
+                    "url": "https://intranet.acme.test/hr/how-to/request-time-off"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "store": false,
+    "request_id": "req_company_answers_request"
+  }
+}

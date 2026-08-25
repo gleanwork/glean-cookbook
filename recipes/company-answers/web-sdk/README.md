@@ -1,16 +1,19 @@
-# company-answers / web-sdk
+# Company Answers - Web SDK
 
-Path A of the [Company Answers](https://developers.glean.com/cookbook/company-answers) recipe — Glean owns the UI. One `renderChat` call, no backend code.
+Path A of the [Company Answers](https://developers.glean.com/cookbook/company-answers) recipe. Glean owns the UI. One `renderChat` call, no backend code.
 
-## Configure
+## Setup
+
+Requires Node 20.19+ or 22.12+.
 
 ```bash
 npm install
 npm run configure
 ```
 
-The configure command discovers your tenant from your work email and writes `.env.local`. Set
-`VITE_GLEAN_INITIAL_MESSAGE` to a question about content you know exists in your tenant.
+`npm run configure` finds your Glean tenant from your work email and writes `VITE_GLEAN_BACKEND` into `.env.local`.
+
+Signing in does not pick a question. Open `.env.local` and set `VITE_GLEAN_INITIAL_MESSAGE` to something you know exists in your Glean content.
 
 ## Run
 
@@ -18,15 +21,10 @@ The configure command discovers your tenant from your work email and writes `.en
 npm run dev
 ```
 
-Copy the exact local URL printed by Vite and open it yourself in your normal browser where you are
-already signed in to Glean. Do not use a private/incognito window or an agent-controlled browser;
-those browsers do not share your Glean SSO session.
+Copy the exact local URL printed by Vite and open it yourself in your normal browser where you are already signed in to Glean. Do not use a private window or an agent-controlled browser. Those browsers do not share your Glean SSO session.
 
-## What this does
+Confirm a cited answer renders inside Glean's chat UI.
 
-`src/main.ts` calls `renderChat` from `@gleanwork/web-sdk` with your explicit backend. Glean renders
-and owns the full chat UI inside `#chat`, using the viewer's existing Glean browser session.
+## Contrast with Path B (`../chat-api/`)
 
-## Contrast with Path B (chat-api/)
-
-This path ships Glean's full chat UI for free — fastest to stand up, but you don't control the UI. See `../chat-api/` for the alternative: you own the UI and call the Chat API directly.
+This path ships Glean's full chat UI for free. Fastest to stand up, and you do not control the pixels. The Platform Chat path owns the UI and calls Glean from a small local server.
