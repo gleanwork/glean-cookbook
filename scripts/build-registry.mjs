@@ -22,6 +22,7 @@ import fg from 'fast-glob';
 import prettier from 'prettier';
 
 import { materializeArtifacts } from './lib/artifacts.mjs';
+import { extractPastePrompt } from './lib/paste-prompt.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const recipesDir = path.join(repoRoot, 'recipes');
@@ -32,6 +33,28 @@ const check = process.argv.includes('--check');
 function fail(message) {
   console.error(message);
   process.exit(1);
+}
+
+function inlinePastePrompt(entry, recipeDir) {
+  if (!entry.pastePromptFile) return entry;
+  if (path.basename(entry.pastePromptFile) !== entry.pastePromptFile) {
+    fail(
+      `${entry.id}: pastePromptFile must be a file in the recipe directory, got ${entry.pastePromptFile}`,
+    );
+  }
+  const promptFile = path.join(recipeDir, entry.pastePromptFile);
+  const rel = path.relative(repoRoot, promptFile);
+  if (!fs.existsSync(promptFile)) {
+    fail(`${entry.id}: pastePromptFile ${rel} does not exist`);
+  }
+  const pastePrompt = extractPastePrompt(fs.readFileSync(promptFile, 'utf8'));
+  if (pastePrompt == null) {
+    fail(`${rel}: needs a four-backtick text fence for the docs copy button`);
+  }
+  return {
+    ...entry,
+    pastePrompt,
+  };
 }
 
 const recipeFiles = await fg('*/recipe.json', {
@@ -59,7 +82,7 @@ const entries = recipeFiles
           `The directory name is the id.`,
       );
     }
-    return entry;
+    return inlinePastePrompt(entry, path.dirname(file));
   })
   // Sort by id so the built file has a stable order regardless of how the
   // filesystem hands back directory entries.

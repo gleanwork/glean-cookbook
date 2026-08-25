@@ -1,7 +1,7 @@
 {
   "id": "no-code-it-helpdesk-lovable",
-  "title": "IT helpdesk deflection page — no code, on Lovable",
-  "description": "Prompt Lovable into a private, single-user IT helpdesk prototype on the Glean Chat API — zero hand-written backend.",
+  "title": "Build an IT helpdesk page in Lovable",
+  "description": "Paste a prompt into Lovable to get a private page that answers common IT questions from your Glean docs.",
   "sidebarLabel": "IT Helpdesk (Lovable)",
   "surfaces": ["client-api"],
   "status": "showcase",
@@ -25,7 +25,7 @@
       },
       {
         "id": "topic",
-        "prompt": "What IT topic do you know exists in your Glean content?"
+        "prompt": "What IT topic do you know your docs cover?"
       }
     ],
     "auth": [
@@ -43,17 +43,17 @@
   },
   "prerequisites": [
     "A Lovable account",
-    "A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, then keep it as a Lovable backend secret; every request uses this one token owner's access",
-    "A private Lovable project — multi-user deployments require authenticated per-user Glean OAuth"
+    "A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, and keep it as a Lovable backend secret. Every request uses that token owner's access",
+    "A private Lovable project. Multi-user deployments require authenticated per-user Glean OAuth"
   ],
   "demoQueries": [
     {
       "query": "Where do I reset my SSO password?",
-      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
+      "expectedBehavior": "A cited answer from your own IT docs, with a real title and URL."
     },
     {
       "query": "How do I request a new laptop?",
-      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
+      "expectedBehavior": "A cited answer from your own IT docs, with a real title and URL."
     }
   ],
   "codeAssets": [
@@ -64,17 +64,47 @@
     }
   ],
   "scaffoldActions": [],
-  "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt. It is one service identity, so keep this prototype private;\n   multi-user deployment requires per-user Glean OAuth.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
-  "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations.",
+  "pasteTarget": "Lovable",
+  "pastePromptFile": "lovable-prompt.md",
+  "steps": [
+    {
+      "title": "Copy your instance name",
+      "description": "Copy the instance name from the lookup on this page, or from `https://app.glean.com/admin/about-glean`. For `https://acme-be.glean.com` that value is `acme`, not the full URL and not `app.glean.com`. Cookbook plugin users can run `resolve-backend.mjs` with the work email and use the `instance` field.",
+      "kind": "configure"
+    },
+    {
+      "title": "Copy the prompt into a private Lovable project",
+      "description": "Click `Copy Lovable prompt`. Replace `<your-glean-instance>` with your instance name. Paste the result into a new private project at `https://lovable.dev`. Cookbook plugin users: the same text is in `lovable-prompt.md` next to this skill.",
+      "kind": "handoff"
+    },
+    {
+      "title": "Add secrets when Lovable asks",
+      "description": "When Lovable asks, add `GLEAN_API_TOKEN` and `GLEAN_INSTANCE` as backend secrets, never in the chat. This token is one person's Glean access. Keep the project private.",
+      "kind": "authenticate"
+    },
+    {
+      "title": "Ask the two IT questions",
+      "description": "Ask \"Where do I reset my SSO password?\" and \"How do I request a new laptop?\" Each answer should cite a real doc from your own instance.",
+      "kind": "verify-live"
+    }
+  ],
+  "aiPrompt": "I'm using Cursor, Claude Code, or Codex, not Lovable. Do not open Lovable. Ask for my work email if needed, run `node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"`, and use the instance field from that JSON as GLEAN_INSTANCE. Open lovable-prompt.md next to this skill. Replace <your-glean-instance> with that name and set the first suggested question to a natural question about the IT topic they named. Show me the filled prompt so I can paste it into a new private Lovable project. Remind me GLEAN_API_TOKEN and GLEAN_INSTANCE go in Lovable backend secrets, never in the prompt. Then walk the remaining steps.",
+  "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations. GLEAN_INSTANCE is Instance name from https://app.glean.com/admin/about-glean, for example acme.",
   "goDependency": false,
   "featured": false,
   "tags": ["no-code", "it"],
   "content": {
-    "problem": "Half your helpdesk tickets are \"how do I reset my SSO password\" and \"how do\nI get a new laptop\" — questions your IT docs already answer. You want a\npage that answers them before a ticket gets filed, without pulling an\nengineer off other work to build it.",
+    "problem": "Half the helpdesk tickets are \"how do I reset my SSO password\" and \"how do I get a new laptop.\" The IT docs already answer both.\n\nThis recipe builds a private Lovable page that answers those questions from your Glean content before a ticket gets filed.",
     "takeItFurther": [
       "Scope the `CHAT` token even further if your Glean plan supports per-collection tokens, so this tool can only ever answer from IT content.",
-      "Compare this to [`no-code-pto-lookup-replit`](/cookbook/no-code-pto-lookup-replit) — same Chat API call, same \"browser never holds the token\" constraint, different no-code tool and persona.",
+      "Compare this to [`no-code-pto-lookup-replit`](/cookbook/no-code-pto-lookup-replit). Same Chat API call, same constraint that the browser never holds the token, different no-code tool and persona.",
       "Once your team outgrows the no-code version, [`company-answers`](/cookbook/company-answers) shows the same pattern as a hand-written, version-controlled app."
+    ],
+    "limitations": [
+      {
+        "title": "Not run on a live Lovable account yet",
+        "description": "Finish the two verify questions on your own instance before you trust the generated app."
+      }
     ]
   }
 }

@@ -4,6 +4,8 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import fg from 'fast-glob';
 
+import { extractPastePrompt } from './lib/paste-prompt.mjs';
+
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const schema = JSON.parse(
   fs.readFileSync(path.join(repoRoot, 'schemas', 'recipe.schema.json'), 'utf8'),
@@ -105,6 +107,47 @@ for (const { file, entry } of registry) {
       failed = true;
       console.error(
         `✗ ${label}: preview asset is ${Math.ceil(preview.length / 1024)} KB; maximum is 200 KB`,
+      );
+      continue;
+    }
+  }
+
+  if (entry.pastePrompt) {
+    failed = true;
+    console.error(
+      `✗ ${label}: pastePrompt is generated into registry.json; set pastePromptFile instead`,
+    );
+    continue;
+  }
+
+  if (Boolean(entry.pasteTarget) !== Boolean(entry.pastePromptFile)) {
+    failed = true;
+    console.error(
+      `✗ ${label}: pasteTarget and pastePromptFile must be set together`,
+    );
+    continue;
+  }
+
+  if (entry.pastePromptFile) {
+    if (path.basename(entry.pastePromptFile) !== entry.pastePromptFile) {
+      failed = true;
+      console.error(
+        `✗ ${label}: pastePromptFile must be a file in the recipe directory`,
+      );
+      continue;
+    }
+    const promptFile = path.join(recipeDir, entry.pastePromptFile);
+    if (!fs.existsSync(promptFile) || !fs.statSync(promptFile).isFile()) {
+      failed = true;
+      console.error(
+        `✗ ${label}: pastePromptFile does not exist: ${entry.pastePromptFile}`,
+      );
+      continue;
+    }
+    if (extractPastePrompt(fs.readFileSync(promptFile, 'utf8')) == null) {
+      failed = true;
+      console.error(
+        `✗ ${label}: ${entry.pastePromptFile} needs a four-backtick text fence for the docs copy button`,
       );
       continue;
     }

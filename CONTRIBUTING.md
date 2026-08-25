@@ -100,11 +100,15 @@ What "verify" means depends on the recipe's `buildMethod`:
   regenerating code from prose. There's no drift for an LLM to introduce in that part. What still
   needs a real run is the recipe's own `## Verify` step and, where one exists, its `verify` script
   (e.g. `recipes/company-answers/chat-api/scripts/verify.mjs`).
-- **`integrate`** and **`third-party-build`** recipes still drive off a hand-written `aiPrompt` —
-  this is where genuine regeneration-from-prose happens, and where drift (a stale response shape, a
-  deprecated field) can hide undetected between runs.
+- **`integrate`** recipes still drive off a hand-written `aiPrompt` — this is where genuine
+  regeneration-from-prose happens, and where drift (a stale response shape, a deprecated field) can
+  hide undetected between runs.
+- **`third-party-build`** recipes (Lovable, Replit) put the builder paste in a four-backtick `text`
+  fence and name that file as `pastePromptFile`. The docs copy button inlines that fence as
+  `pastePrompt` so a reader can copy without cloning this repo. `aiPrompt` is only for a coding
+  assistant filling placeholders, not for pasting into the builder.
 
-For the second group especially, verify with a **genuinely fresh build, not inspect-and-patch**:
+For integrate recipes especially, verify with a **genuinely fresh build, not inspect-and-patch**:
 spawn an isolated agent (a fresh subagent, or a scratch git worktree) whose _only_ input is the
 generated skill at `plugin/shared/cookbook/skills/{id}/SKILL.md` — the same content a real
 `/cookbook:{id}` invocation gets. Do not hand it the existing `recipes/{id}/` code to read and patch;

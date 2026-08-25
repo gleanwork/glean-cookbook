@@ -1,7 +1,7 @@
 {
   "id": "no-code-pto-lookup-replit",
-  "title": "PTO & benefits lookup — no code, on Replit",
-  "description": "Prompt Replit Agent into a private, single-user HR lookup prototype on the Glean Chat API — zero hand-written backend.",
+  "title": "Build a PTO lookup page in Replit",
+  "description": "Paste a prompt into Replit Agent to get a private page that answers PTO and benefits questions from your Glean docs.",
   "sidebarLabel": "PTO Lookup (Replit)",
   "surfaces": ["client-api"],
   "status": "showcase",
@@ -25,7 +25,7 @@
       },
       {
         "id": "topic",
-        "prompt": "What HR topic do you know exists in your Glean content?"
+        "prompt": "What HR topic do you know your docs cover?"
       }
     ],
     "auth": [
@@ -43,17 +43,17 @@
   },
   "prerequisites": [
     "A Replit account with Agent access",
-    "A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, then keep it in Replit Secrets; every request uses this one token owner's access",
-    "A private Repl — multi-user deployments require authenticated per-user Glean OAuth"
+    "A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, and keep it in Replit Secrets. Every request uses that token owner's access",
+    "A private Repl. Multi-user deployments require authenticated per-user Glean OAuth"
   ],
   "demoQueries": [
     {
       "query": "What is our PTO policy?",
-      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
+      "expectedBehavior": "A cited answer from your own HR docs, with a real title and URL."
     },
     {
-      "query": "When is open enrollment?",
-      "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
+      "query": "what's our revenue?",
+      "expectedBehavior": "No fabricated answer when Glean cites nothing. The page shows that it does not know."
     }
   ],
   "codeAssets": [
@@ -64,17 +64,47 @@
     }
   ],
   "scaffoldActions": [],
-  "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt. It is one service identity, so keep this prototype\n   private; multi-user deployment requires per-user Glean OAuth.\n3. After Replit builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
-  "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token server-side, call glean.client.chat.create with USER message fragments, read CONTENT text and fragment.citation.sourceDocument citations, and show cited answers or an explicit no-answer state.",
+  "pasteTarget": "Replit",
+  "pastePromptFile": "replit-agent-prompt.md",
+  "steps": [
+    {
+      "title": "Copy your instance name",
+      "description": "Copy the instance name from the lookup on this page, or from `https://app.glean.com/admin/about-glean`. For `https://acme-be.glean.com` that value is `acme`, not the full URL and not `app.glean.com`. Cookbook plugin users can run `resolve-backend.mjs` with the work email and use the `instance` field.",
+      "kind": "configure"
+    },
+    {
+      "title": "Copy the prompt into a private Repl",
+      "description": "Click `Copy Replit prompt`. Replace `<your-glean-instance>` with your instance name. Paste the result into a new private Repl at `https://replit.com/new` and open Agent. Cookbook plugin users: the same text is in `replit-agent-prompt.md` next to this skill.",
+      "kind": "handoff"
+    },
+    {
+      "title": "Add secrets when Replit asks",
+      "description": "When Replit Agent asks, add `GLEAN_API_TOKEN` and `GLEAN_INSTANCE` in the Secrets tab, never in the chat. This token is one person's Glean access. Keep the Repl private.",
+      "kind": "authenticate"
+    },
+    {
+      "title": "Ask a PTO question, then an off-topic one",
+      "description": "Ask \"What is our PTO policy?\" and confirm a cited answer from your own docs. Then ask \"what's our revenue?\" and confirm the assistant does not invent an answer when Glean cites nothing.",
+      "kind": "verify-live"
+    }
+  ],
+  "aiPrompt": "I'm using Cursor, Claude Code, or Codex, not Replit Agent. Do not open Replit. Ask for my work email if needed, run `node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"`, and use the instance field from that JSON as GLEAN_INSTANCE. Open replit-agent-prompt.md next to this skill. Replace <your-glean-instance> with that name and set the first suggested question to a natural question about the HR topic they named. Show me the filled prompt so I can paste it into a new private Repl. Remind me GLEAN_API_TOKEN and GLEAN_INSTANCE go in Replit Secrets, never in the prompt. Then walk the remaining steps.",
+  "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Replit Secrets, call glean.client.chat.create with USER message fragments, read CONTENT text and fragment.citation.sourceDocument citations, and show cited answers or an explicit no-answer state. GLEAN_INSTANCE is Instance name from https://app.glean.com/admin/about-glean, for example acme.",
   "goDependency": false,
   "featured": false,
   "tags": ["no-code", "hr"],
   "content": {
-    "problem": "Your HR team fields the same PTO and benefits questions on repeat. You want\na self-serve lookup tool answered from your real HR docs — but nobody on\nthe team writes backend code, and you don't want to wait for an engineer\nto have time for it.",
+    "problem": "HR fields the same PTO and benefits questions on repeat. The answers are already in your docs.\n\nThis recipe builds a private Replit page that looks those answers up in Glean. Nobody on the team has to write a backend.",
     "takeItFurther": [
       "Scope the `CHAT` token even further if your Glean plan supports per-collection tokens, so this tool can only ever answer from HR content.",
-      "Compare this to [`no-code-it-helpdesk-lovable`](/cookbook/no-code-it-helpdesk-lovable) — same Chat API call, same \"browser never holds the token\" constraint, different no-code tool and persona.",
+      "Compare this to [`no-code-it-helpdesk-lovable`](/cookbook/no-code-it-helpdesk-lovable). Same Chat API call, same constraint that the browser never holds the token, different no-code tool and persona.",
       "Once your team outgrows the no-code version, [`company-answers`](/cookbook/company-answers) shows the same pattern as a hand-written, version-controlled app."
+    ],
+    "limitations": [
+      {
+        "title": "Not run on a live Replit account yet",
+        "description": "Finish the two verify questions on your own instance before you trust the generated app."
+      }
     ]
   }
 }

@@ -1,46 +1,31 @@
 ---
 name: no-code-pto-lookup-replit
-description: 'Prompt Replit Agent into a private, single-user HR lookup prototype on the Glean Chat API — zero hand-written backend.'
+description: 'Paste a prompt into Replit Agent to get a private page that answers PTO and benefits questions from your Glean docs.'
 disable-model-invocation: true
 ---
 
 ## Before you start
 
-- Required API scopes (for paths that use API credentials): `CHAT`
 - A Replit account with Agent access
-- A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, then keep it in Replit Secrets; every request uses this one token owner's access
-- A private Repl — multi-user deployments require authenticated per-user Glean OAuth
+- A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, and keep it in Replit Secrets. Every request uses that token owner's access
+- A private Repl. Multi-user deployments require authenticated per-user Glean OAuth
+
+Build "Build a PTO lookup page in Replit" following https://developers.glean.com/cookbook/no-code-pto-lookup-replit
 
 Ask these before running commands. Ask one at a time, waiting for each answer before asking the
 next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
-- What HR topic do you know exists in your Glean content?
+- What HR topic do you know your docs cover?
 
-I'm using Replit Agent, not you, to build this — your job is to prepare
-my inputs per
-https://developers.glean.com/cookbook/no-code-pto-lookup-replit
+1. **Copy your instance name**
+   Copy the instance name from the lookup on this page, or from `https://app.glean.com/admin/about-glean`. For `https://acme-be.glean.com` that value is `acme`, not the full URL and not `app.glean.com`. Cookbook plugin users can run `resolve-backend.mjs` with the work email and use the `instance` field.
 
-1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.
-2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never
-   in the prompt. It is one service identity, so keep this prototype
-   private; multi-user deployment requires per-user Glean OAuth.
-3. After Replit builds it, hand it back to me — see Verify below for
-   the exact queries to test and what a correct result looks like.
+2. **Copy the prompt into a private Repl**
+   Click `Copy Replit prompt`. Replace `<your-glean-instance>` with your instance name. Paste the result into a new private Repl at `https://replit.com/new` and open Agent. Cookbook plugin users: the same text is in `replit-agent-prompt.md` next to this skill.
 
-## Reference
+3. **Add secrets when Replit asks**
+   When Replit Agent asks, add `GLEAN_API_TOKEN` and `GLEAN_INSTANCE` in the Secrets tab, never in the chat. This token is one person's Glean access. Keep the Repl private.
 
-Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token server-side, call glean.client.chat.create with USER message fragments, read CONTENT text and fragment.citation.sourceDocument citations, and show cited answers or an explicit no-answer state.
-
-## Verify
-
-This recipe's app is built and run by a separate tool (Lovable, Replit), not by you. Before
-telling me you're done, give me the scenarios below to test myself in the running app, along with
-what a correct result looks like. If my instance does not contain the named topic, ask me for an
-equivalent topic I know exists rather than treating the example query as a universal requirement:
-
-- **Query:** "What is our PTO policy?"
-  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
-
-- **Query:** "When is open enrollment?"
-  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+4. **Ask a PTO question, then an off-topic one**
+   Ask "What is our PTO policy?" and confirm a cited answer from your own docs. Then ask "what's our revenue?" and confirm the assistant does not invent an answer when Glean cites nothing.
