@@ -69,7 +69,7 @@ function assertFixtureContract() {
   }
   for (const [key, body] of Object.entries(recorded)) {
     if (body.object !== 'RESPONSE' || body.status !== 'COMPLETED') {
-      throw new Error(`${key}: expected a completed Platform Chat response`);
+      throw new Error(`${key}: expected a completed Chat API response`);
     }
     if (body.store !== false) {
       throw new Error(`${key}: store must be false`);
@@ -141,12 +141,12 @@ async function askGlean(question) {
 async function main() {
   if (useFixture) {
     assertFixtureContract();
-    console.log('Running verify against recorded Platform Chat fixtures');
+    console.log('Running verify against recorded Chat API fixtures');
   } else {
     requireEnv('GLEAN_API_TOKEN');
     requireEnv('GLEAN_SERVER_URL');
     requireEnv('GLEAN_DEMO_QUERY');
-    console.log('Running verify against live Platform Chat');
+    console.log('Running verify against live Chat API');
   }
 
   const server = startServer();

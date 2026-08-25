@@ -65,4 +65,4 @@ function readJsonBody(
   });
 }
 
-listenLocal(server, 'Company Answers (Platform Chat)');
+listenLocal(server, 'Company Answers (Chat API)');

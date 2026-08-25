@@ -1,4 +1,4 @@
-# Company Answers - Platform Chat
+# Company Answers - Chat API
 
 Path B of the [Company Answers](https://developers.glean.com/cookbook/company-answers) recipe. You own the UI. The server owns the API token.
 
@@ -30,7 +30,7 @@ Open the Local URL printed by the server.
 
 ## What this does
 
-`server.ts` is a small Node HTTP server. `GET /` serves the page. `POST /api/ask` calls experimental Platform Chat through `glean.chat.create` with `stream:false`, `store:false`, and `X_GLEAN_INCLUDE_EXPERIMENTAL=true`. It then extracts:
+`server.ts` is a small Node HTTP server. `GET /` serves the page. `POST /api/ask` calls the Chat API through `glean.chat.create` with `stream:false`, `store:false`, and `X_GLEAN_INCLUDE_EXPERIMENTAL=true`. It then extracts:
 
 - **answer text** from ASSISTANT `OUTPUT_TEXT` content
 - **citations** from `annotations[].sources`, kept when they have a title, deduped by URL

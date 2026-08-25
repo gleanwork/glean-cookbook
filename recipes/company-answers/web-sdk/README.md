@@ -27,4 +27,4 @@ Confirm a cited answer renders inside Glean's chat UI.
 
 ## Contrast with Path B (`../chat-api/`)
 
-This path ships Glean's full chat UI for free. Fastest to stand up, and you do not control the pixels. The Platform Chat path owns the UI and calls Glean from a small local server.
+This path ships Glean's full chat UI for free. Fastest to stand up, and you do not control the pixels. The Chat API path owns the UI and calls Glean from a small local server.

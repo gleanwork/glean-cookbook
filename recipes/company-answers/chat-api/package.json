@@ -2,7 +2,7 @@
   "name": "company-answers-chat-api",
   "version": "0.0.0",
   "private": true,
-  "description": "Company Answers — Platform Chat path: glean.chat.create, you own the UI.",
+  "description": "Company Answers — Chat API path: glean.chat.create, you own the UI.",
   "type": "module",
   "scripts": {
     "login": "node scripts/glean-auth.mjs login --scopes chat --require GLEAN_DEMO_QUERY",

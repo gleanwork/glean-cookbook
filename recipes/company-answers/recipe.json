@@ -1,7 +1,7 @@
 {
   "id": "company-answers",
   "title": "Company Answers: a cited Q&A page on your own content",
-  "description": "The hello-world of Glean apps: one page, one input, one permission-aware cited answer, built two ways, with the Web SDK and with Platform Chat.",
+  "description": "The hello-world of Glean apps: one page, one input, one permission-aware cited answer, built two ways, with the Web SDK and with the Chat API.",
   "sidebarLabel": "Company Answers",
   "preview": {
     "path": "recipes/company-answers/assets/preview.webp",
@@ -116,7 +116,7 @@
     {
       "repoPath": "recipes/company-answers/chat-api",
       "language": "typescript",
-      "description": "Platform Chat variant \u2014 glean.chat.create, citations rendered",
+      "description": "Chat API variant \u2014 glean.chat.create, citations rendered",
       "execution": {
         "type": "local-web",
         "questions": [
@@ -199,7 +199,7 @@
   "steps": [
     {
       "title": "Pick a path",
-      "description": "Path A (Web SDK) renders Glean's own chat UI for you. Fastest to stand up, no backend code. Path B (Platform Chat) calls glean.chat.create from your own backend. You own every pixel of the UI. Both end in the same place: a permission-aware, cited answer.",
+      "description": "Path A (Web SDK) renders Glean's own chat UI for you. Fastest to stand up, no backend code. Path B (Chat API) calls glean.chat.create from your own backend. You own every pixel of the UI. Both end in the same place: a permission-aware, cited answer.",
       "kind": "choose"
     }
   ],
@@ -216,7 +216,7 @@
       "category": "search"
     },
     {
-      "label": "Path B: Platform Chat",
+      "label": "Path B: Chat API",
       "caption": "glean.chat.create \u2014 you own the UI",
       "category": "agent"
     },
@@ -226,8 +226,8 @@
       "emphasized": true
     }
   ],
-  "aiPrompt": "Build Company Answers following https://developers.glean.com/cookbook/company-answers. Ask whether to use (A) Web SDK or (B) Platform Chat, then collect that path's inputs before starting. Path A: run the shipped configure command with the work email already supplied, write VITE_GLEAN_BACKEND, then set VITE_GLEAN_INITIAL_MESSAGE to the topic they know exists. Start Vite, report the exact local URL, and wait for the user to open it in their normal signed-in browser. Never automate that browser. Path B: run npm run verify:fixture first (no credentials). Sign in with the shipped login command, which writes GLEAN_SERVER_URL and GLEAN_API_TOKEN only. Then set GLEAN_DEMO_QUERY to their topic. Keep the token server-side. Call experimental Platform Chat with glean.chat.create, stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Parse ASSISTANT OUTPUT_TEXT content and citations from annotations[].sources. Retry empty output once. Verify a cited answer on the user's own content before claiming live success.",
-  "llmContext": "Path A uses renderChat with an explicit backend and the user's existing Glean browser session; live verification is user-mediated in their normal signed-in browser. Path B uses experimental Platform Chat through glean.chat.create with stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Construct Glean with apiToken plus serverURL. Read ASSISTANT OUTPUT_TEXT content and citations from annotations[].sources. Retry empty output once. Default first run is npm run verify:fixture with GLEAN_USE_FIXTURE=true. Login does not write GLEAN_DEMO_QUERY.",
+  "aiPrompt": "Build Company Answers following https://developers.glean.com/cookbook/company-answers. Ask whether to use (A) Web SDK or (B) Chat API, then collect that path's inputs before starting. Path A: run the shipped configure command with the work email already supplied, write VITE_GLEAN_BACKEND, then set VITE_GLEAN_INITIAL_MESSAGE to the topic they know exists. Start Vite, report the exact local URL, and wait for the user to open it in their normal signed-in browser. Never automate that browser. Path B: run npm run verify:fixture first (no credentials). Sign in with the shipped login command, which writes GLEAN_SERVER_URL and GLEAN_API_TOKEN only. Then set GLEAN_DEMO_QUERY to their topic. Keep the token server-side. Call the Chat API with glean.chat.create, stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Parse ASSISTANT OUTPUT_TEXT content and citations from annotations[].sources. Retry empty output once. Verify a cited answer on the user's own content before claiming live success.",
+  "llmContext": "Path A uses renderChat with an explicit backend and the user's existing Glean browser session; live verification is user-mediated in their normal signed-in browser. Path B uses the Chat API through glean.chat.create with stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Construct Glean with apiToken plus serverURL. Read ASSISTANT OUTPUT_TEXT content and citations from annotations[].sources. Retry empty output once. Default first run is npm run verify:fixture with GLEAN_USE_FIXTURE=true. Login does not write GLEAN_DEMO_QUERY.",
   "goDependency": false,
   "featured": true,
   "hidden": true,
@@ -237,7 +237,7 @@
     "problem": "Every team has the same first Glean app: a single page where anyone can ask\na company question and get a cited, permission-aware answer. There are two\nequally valid ways to build it \u2014 this recipe builds both, side by side, so\nyou can pick the trade-off that fits your app.",
     "takeItFurther": [
       "Swap in a specific agent by passing its `agentId` to `renderChat` on Path A.",
-      "Keep Path B on `stream:false` until you own a stream parser for Platform Chat events."
+      "Keep Path B on `stream:false` until you own a stream parser for Chat API events."
     ]
   }
 }

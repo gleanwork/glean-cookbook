@@ -70,11 +70,11 @@ function sourceTitle(source: CitationSource): string | undefined {
 
 export function parsePlatformChatResponse(data: unknown): ChatAnswer {
   if (!data || typeof data !== 'object') {
-    throw new Error('Platform Chat returned an invalid response.');
+    throw new Error('Chat API returned an invalid response.');
   }
   const response = data as PlatformChatResponse;
   if (response.object !== 'RESPONSE' || response.status !== 'COMPLETED') {
-    throw new Error('Platform Chat did not return a completed response.');
+    throw new Error('Chat API did not return a completed response.');
   }
 
   const contents = (response.output ?? [])
@@ -176,7 +176,7 @@ export async function askPlatformChat(
   }
   if (typeof response === 'string') {
     throw new Error(
-      'Platform Chat returned a stream for a non-stream request.',
+      'Chat API returned a stream for a non-stream request.',
     );
   }
   const parsed = parsePlatformChatResponse(response);
