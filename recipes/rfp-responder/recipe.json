@@ -159,6 +159,8 @@
       "Write answers back into the source document with a custom tool instead of exporting, keeping the confirm step and the approval log.",
       "Give the answer library its own access control before sharing it across a team. It's a cache of retrieved content, so it can leak across the permission boundary the rest of the app respects.",
       "Route \"needs SME\" rows to their owners automatically and track which ones came back. The assignment field here does not send a message."
+      // TODO: restore when permissions-aware-retrieval is unhidden:
+      // "Combine with [permissions-aware retrieval](/cookbook/permissions-aware-retrieval) to see the same refusal property in a smaller, single-question app."
     ],
     "guardrails": [
       {

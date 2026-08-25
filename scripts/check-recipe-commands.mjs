@@ -3,6 +3,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { readJsonc } from './lib/jsonc.mjs';
+
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const recipesRoot = path.join(repoRoot, 'recipes');
 const errors = [];
@@ -37,7 +39,7 @@ for (const entry of fs.readdirSync(recipesRoot, { withFileTypes: true })) {
   if (!entry.isDirectory()) continue;
   const recipeFile = path.join(recipesRoot, entry.name, 'recipe.json');
   if (!fs.existsSync(recipeFile)) continue;
-  const recipe = JSON.parse(fs.readFileSync(recipeFile, 'utf8'));
+  const recipe = readJsonc(recipeFile);
 
   for (const [location, steps] of commandLists(recipe)) {
     let target;

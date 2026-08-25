@@ -14,6 +14,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { readJsonc } from './lib/jsonc.mjs';
 import { backendUrl, oauthScopes } from './verify-lib/auth.mjs';
 import { login } from './verify-lib/oauth.mjs';
 
@@ -21,9 +22,7 @@ const repoRoot = path.resolve(import.meta.dirname, '..');
 const recipeId = process.argv[2];
 
 function recipeAt(id) {
-  return JSON.parse(
-    fs.readFileSync(path.join(repoRoot, 'recipes', id, 'recipe.json'), 'utf8'),
-  );
+  return readJsonc(path.join(repoRoot, 'recipes', id, 'recipe.json'));
 }
 
 function allRecipes() {

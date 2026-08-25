@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import fg from 'fast-glob';
 
+import { readJsonc } from './lib/jsonc.mjs';
+
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const recipesRoot = path.join(repoRoot, 'recipes');
 const skillsRoot = path.join(
@@ -218,7 +220,7 @@ for (const entry of fs.readdirSync(recipesRoot, { withFileTypes: true })) {
   if (!entry.isDirectory()) continue;
   const file = path.join(recipesRoot, entry.name, 'recipe.json');
   if (!fs.existsSync(file)) continue;
-  const recipe = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const recipe = readJsonc(file);
   const contracts = [];
   if (recipe.execution) {
     contracts.push({

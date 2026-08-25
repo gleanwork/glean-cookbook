@@ -12,9 +12,10 @@
 // every attempt lands in the audit log. Those are asserted here.
 
 import { spawn } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { readJsonc } from '../lib/jsonc.mjs';
 
 // Platform Search + Chat, plus an optional agent run. The registered actions are
 // simulated in-process, so nothing is written to the instance and no ticket, PR, or
@@ -159,13 +160,10 @@ const SCENARIOS = [
   'unregistered-action',
 ];
 
-const RECIPE = JSON.parse(
-  fs.readFileSync(
-    path.join(
-      path.dirname(fileURLToPath(import.meta.url)),
-      '../../recipes/oncall-copilot/recipe.json',
-    ),
-    'utf8',
+const RECIPE = readJsonc(
+  path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../../recipes/oncall-copilot/recipe.json',
   ),
 );
 

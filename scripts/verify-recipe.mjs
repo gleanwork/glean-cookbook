@@ -43,6 +43,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { readJsonc } from './lib/jsonc.mjs';
 import { resolveCredential } from './verify-lib/auth.mjs';
 import { verificationExitCode } from './verify-lib/outcome.mjs';
 
@@ -77,7 +78,7 @@ const recipeFile = path.join(repoRoot, 'recipes', recipeId, 'recipe.json');
 if (!fs.existsSync(recipeFile)) {
   fail(`No recipe at recipes/${recipeId}/recipe.json`);
 }
-const recipe = JSON.parse(fs.readFileSync(recipeFile, 'utf8'));
+const recipe = readJsonc(recipeFile);
 
 const modulePath = path.join(repoRoot, 'scripts', 'verify', `${recipeId}.mjs`);
 if (!fs.existsSync(modulePath)) {
