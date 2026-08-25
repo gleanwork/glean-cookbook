@@ -121,6 +121,7 @@
   "llmContext": "Index the service catalog with a server-side Indexing API token. Embed search and chat with Web SDK cookie SSO, then have the user verify it in their normal signed-in browser.",
   "goDependency": false,
   "featured": false,
+  "hidden": true,
   "tags": ["portal"],
   "lastVerified": "2026-08-02",
   "content": {

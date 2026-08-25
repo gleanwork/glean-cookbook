@@ -4,6 +4,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import fg from 'fast-glob';
 
+import { readJsonc } from './lib/jsonc.mjs';
 import { extractPastePrompt } from './lib/paste-prompt.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -33,7 +34,7 @@ const registry = fg
   .sync('*/recipe.json', { cwd: recipesDir, absolute: true })
   .map((file) => ({
     file: path.relative(repoRoot, file),
-    entry: JSON.parse(fs.readFileSync(file, 'utf8')),
+    entry: readJsonc(file),
   }))
   .sort((a, b) => a.entry.id.localeCompare(b.entry.id));
 

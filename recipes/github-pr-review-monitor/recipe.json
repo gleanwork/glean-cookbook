@@ -159,6 +159,7 @@
   "llmContext": "Delivery uses Standard Webhooks, at-least-once. Payload is flat snake_case, no wrapper: version, trigger_id, event_type, datasource, reason, doc_type, doc_id, view_url, title, event_time; webhook-id exists only in headers. Verify HMAC over the raw bytes, since re-serialising changes the signature; reject stale timestamps and deduplicate webhook-id. Every Triggers request needs x-glean-include-experimental: true, or the API answers 401 Not allowed. A 401 on a valid TRIGGERS-scoped token means the grant was revoked: sign in again. events/search looks backward; delivery fires forward from trigger creation. PATCH /triggers/{id} re-points delivery.webhook_url and keeps the signing secret, issued once, so a fresh checkout cannot adopt existing triggers. Diffs come from gh, matching the head SHA. A pending review is author-only; never approve, request changes, or submit it.",
   "goDependency": false,
   "featured": false,
+  "hidden": true,
   "tags": ["github", "claude-code", "monitor", "content-trigger"],
   "content": {
     "problem": "You already have the repository, local diff, and review tools in Claude Code. The hard part is noticing a new review request and rebuilding enough context to give it a thoughtful first pass.\n\nGlean catches the GitHub event and delivers it to Claude Code Monitor, where your local review skill examines the current diff and prepares initial findings. You review and refine the draft, then decide whether anything should be submitted.",

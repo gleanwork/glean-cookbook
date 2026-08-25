@@ -145,6 +145,7 @@
   "llmContext": "Run agents with glean.client.agents.run(agent_id, messages) using Message and MessageTextBlock. Expose a local demo tool through public HTTPS and set the OpenAPI server URL to that origin with route paths aligned. Register tools manually in the admin console. Glean-User-Email supports an authorization allow-list only after the request is authenticated as coming from Glean; the sample server is demo-only and must not front a real write action.",
   "goDependency": false,
   "featured": true,
+  "hidden": true,
   "tags": ["agents", "governance"],
   "content": {
     "problem": "A chatbot that only answers questions is half an agent. Attach a governed\nTool and it can act — file a ticket, update a record — but only for people\nwho are actually allowed to, with a graceful fallback for everyone else\ninstead of a hard failure.",

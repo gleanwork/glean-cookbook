@@ -3,6 +3,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { readJsonc } from './lib/jsonc.mjs';
+
 const recipesDir = path.resolve(import.meta.dirname, '..', 'recipes');
 const historicalNarration = [
   /\bearlier\b/iu,
@@ -28,7 +30,7 @@ for (const entry of fs.readdirSync(recipesDir, { withFileTypes: true })) {
   if (!entry.isDirectory()) continue;
   const file = path.join(recipesDir, entry.name, 'recipe.json');
   if (!fs.existsSync(file)) continue;
-  const recipe = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const recipe = readJsonc(file);
   for (const [field, maxWords] of Object.entries(fieldLimits)) {
     const value = recipe[field] ?? '';
     const words = value.trim().split(/\s+/u).filter(Boolean).length;

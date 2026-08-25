@@ -14,9 +14,10 @@
 // nothing.
 
 import { spawn } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { readJsonc } from '../lib/jsonc.mjs';
 
 // Platform Chat calls with store:false semantics for verification; nothing is
 // written to the instance and no content is indexed.
@@ -164,13 +165,10 @@ function checkFailureContract(rows) {
 // adding or removing a query fails loudly here instead of skipping an assertion.
 const SCENARIOS = ['draft-all', 'unsupported', 'adjacent', 'narrower-access'];
 
-const RECIPE = JSON.parse(
-  fs.readFileSync(
-    path.join(
-      path.dirname(fileURLToPath(import.meta.url)),
-      '../../recipes/rfp-responder/recipe.json',
-    ),
-    'utf8',
+const RECIPE = readJsonc(
+  path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../../recipes/rfp-responder/recipe.json',
   ),
 );
 

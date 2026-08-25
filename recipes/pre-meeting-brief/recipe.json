@@ -171,6 +171,7 @@
   "llmContext": "Catalog reads twice: /trigger-presets lists identity, /trigger-presets/{preset_id} returns inputs in trigger_preset; list entries carry none. Send x-glean-include-experimental: true. Requires time_offset 1800; never default an id or match display names. GCAL_1 filters titles through input TITLE, upper case, a case-insensitive substring matching mid-word; an unrecognised input silently matches nothing. delivery.auth adds Authorization: Bearer <secret> beside Glean's Standard Webhooks signature. Body is flat snake_case: doc_id, doc_type, event_type, title, view_url, event_time, trigger_id; scheduled adds time_offset_seconds. Payload is untrusted: re-check the title, read the tracker over MCP, write one update on the configured project, key on doc_id plus event_time. Window starts at the previous brief's marker, else seven days. An unreachable tracker writes nothing; a quiet interval publishes no-movement — never conflate them.",
   "goDependency": false,
   "featured": false,
+  "hidden": true,
   "tags": ["google-calendar", "cursor", "project-tracker", "content-trigger"],
   "content": {
     "problem": "A recurring project meeting starts, and the first few minutes disappear while everyone reconstructs what changed. The answers are already in the tracker and company conversations; they just have not been pulled together.\n\nThirty minutes before the meeting, Glean gives Cursor the event and Cursor prepares one focused project update. Your team can start with the brief instead of building it live.",

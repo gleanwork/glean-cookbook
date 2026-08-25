@@ -156,6 +156,7 @@
   "llmContext": "The published Glean n8n package is 0.4.2. It includes a Glean Trigger node and a Glean Search action, not a Glean Chat node. The trigger registers POST /api/triggers on activation, stores the returned signing secret, verifies Standard Webhooks delivery, and deletes the trigger on deactivation. Glean event payloads are thin, so retrieve permission-aware context before summarization. n8n credentials must remain host-managed. Do not write to Salesforce or Slack if the account is absent, ambiguous, or unsupported by evidence.",
   "goDependency": false,
   "featured": false,
+  "hidden": true,
   "tags": ["gong", "n8n", "salesforce", "slack", "content-trigger"],
   "content": {
     "problem": "Important follow-up gets lost after customer calls—not because the information is missing, but because it is scattered across Gong, Salesforce, and Slack.\n\nThis recipe connects those systems in n8n. When a new Gong call is indexed, Glean finds permission-aware context and summarizes it, Salesforce gets an activity only when one account matches, and Slack receives a focused update for the right audience.",

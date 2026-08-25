@@ -139,6 +139,7 @@
   "llmContext": "Use the glean-vnext plugin's agent_builder skill: it owns the agent folder contract, tenant discovery, preview, and publish. Never author spec.yaml or instructions.md by hand. Its build, run and save modes resolve an unnamed path to the working directory, so name the directory every time. Resolve trigger template, provider ids and tool names from discovery. The Gmail thread template has no direction or draft-status condition, so a saved draft can re-index the thread and the instructions must stop before tools. Unattended writes are limited to a Gmail reply draft and an owner-only Slack DM. Saving publishes but does not activate the subscription.",
   "goDependency": false,
   "featured": false,
+  "hidden": true,
   "tags": ["gmail", "content-trigger", "headless-agent", "agent-builder"],
   "content": {
     "problem": "You already use Claude Code or Cursor to describe, test, and refine automations. Glean Headless Agent Builder lets you create an agent there, while discovering the triggers and action tools available in your deployment. You can preview the result before publishing it.\n\nThis recipe builds an agent that watches messages from one customer domain, decides whether a reply is needed, drafts a grounded response in Gmail, and alerts you in Slack. It handles the preparation; you remain in control of what is sent.",

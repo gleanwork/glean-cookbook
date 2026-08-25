@@ -22,6 +22,7 @@ import fg from 'fast-glob';
 import prettier from 'prettier';
 
 import { materializeArtifacts } from './lib/artifacts.mjs';
+import { readJsonc } from './lib/jsonc.mjs';
 import { extractPastePrompt } from './lib/paste-prompt.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -71,7 +72,7 @@ const entries = recipeFiles
     const rel = path.relative(repoRoot, file);
     let entry;
     try {
-      entry = JSON.parse(fs.readFileSync(file, 'utf8'));
+      entry = readJsonc(file);
     } catch (error) {
       fail(`${rel}: not valid JSON — ${error.message}`);
     }

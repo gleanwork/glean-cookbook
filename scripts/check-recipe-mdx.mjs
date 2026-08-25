@@ -9,6 +9,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { readJsonc } from './lib/jsonc.mjs';
+
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const recipesRoot = path.join(repoRoot, 'recipes');
 
@@ -57,7 +59,7 @@ function main() {
     const file = path.join(recipesRoot, entry.name, 'recipe.json');
     if (!fs.existsSync(file)) continue;
     checked += 1;
-    errors.push(...mdxProblems(JSON.parse(fs.readFileSync(file, 'utf8'))));
+    errors.push(...mdxProblems(readJsonc(file)));
   }
 
   if (errors.length > 0) {

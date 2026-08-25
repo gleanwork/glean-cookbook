@@ -206,6 +206,7 @@
   "llmContext": "Path A uses renderChat with an explicit backend and the user's existing Glean browser session; live verification is user-mediated in their normal signed-in browser. Path B constructs Glean with apiToken plus instance or serverURL, reads answer text only from CONTENT messages, collects citations from fragment.citation.sourceDocument, deduplicates by URL, keeps the token server-side, sets saveChat:false for verification, and treats an empty joined answer as retryable.",
   "goDependency": false,
   "featured": true,
+  "hidden": true,
   "tags": ["starter", "dual-implementation"],
   "lastVerified": "2026-08-02",
   "content": {
