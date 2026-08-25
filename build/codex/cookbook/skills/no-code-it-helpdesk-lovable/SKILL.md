@@ -1,46 +1,38 @@
 ---
 name: no-code-it-helpdesk-lovable
-description: 'Prompt Lovable into a private, single-user IT helpdesk prototype on the Glean Chat API — zero hand-written backend.'
+description: 'Prompt Lovable into a private, single-user IT helpdesk prototype on the Glean Chat API, with zero hand-written backend.'
 disable-model-invocation: true
 ---
 
 ## Before you start
 
-- Required API scopes (for paths that use API credentials): `CHAT`
 - A Lovable account
 - A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, then keep it as a Lovable backend secret; every request uses this one token owner's access
-- A private Lovable project — multi-user deployments require authenticated per-user Glean OAuth
+- A private Lovable project. Multi-user deployments require authenticated per-user Glean OAuth
+
+Build "IT helpdesk deflection page, no code, on Lovable" following https://developers.glean.com/cookbook/no-code-it-helpdesk-lovable
 
 Ask these before running commands. Ask one at a time, waiting for each answer before asking the
 next — do not put them all in one message:
 
 - What is your work email? It is used once to discover your Glean tenant.
-- What IT topic do you know exists in your Glean content?
+- What IT topic should the first suggested question cover? Pick something you know exists in your Glean content.
 
-I'm using Lovable, not you, to build this — your job is to prepare my
-inputs per
-https://developers.glean.com/cookbook/no-code-it-helpdesk-lovable
+1. **Resolve your Glean instance**
+   Copy the instance slug from your Glean URL, the part in https://<instance>-be.glean.com. That slug is GLEAN_INSTANCE. Plugin users run the command instead and take the same slug from the returned URL.
 
-1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.
-2. Remind me: token goes in a Lovable backend secret, never in the
-   prompt. It is one service identity, so keep this prototype private;
-   multi-user deployment requires per-user Glean OAuth.
-3. After Lovable builds it, hand it back to me — see Verify below for
-   the exact queries to test and what a correct result looks like.
+   ```bash
+   node <cookbook-plugin-root>/scripts/resolve-backend.mjs "<work-email>"
+   ```
 
-## Reference
+2. **Fill the prompt template**
+   Open recipes/no-code-it-helpdesk-lovable/lovable-prompt.md. Replace <your-glean-instance> with the instance slug, and set the first suggested question to a natural question about the supplied topic. Plugin users show the filled prompt and stop. Do not open Lovable.
 
-Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations.
+3. **Paste into a new private Lovable project**
+   Start a new private project at https://lovable.dev and paste the filled prompt as the first message. Plugin users hand the filled prompt to the user. Do not open Lovable.
 
-## Verify
+4. **Add secrets when Lovable asks**
+   When Lovable asks, add GLEAN_API_TOKEN and GLEAN_INSTANCE as backend secrets, never in the chat. The token is one service identity. Keep the project private.
 
-This recipe's app is built and run by a separate tool (Lovable, Replit), not by you. Before
-telling me you're done, give me the scenarios below to test myself in the running app, along with
-what a correct result looks like. If my instance does not contain the named topic, ask me for an
-equivalent topic I know exists rather than treating the example query as a universal requirement:
-
-- **Query:** "Where do I reset my SSO password?"
-  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
-
-- **Query:** "How do I request a new laptop?"
-  **Expected:** Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content.
+5. **Verify with two live questions**
+   Ask "Where do I reset my SSO password?" and "How do I request a new laptop?" Each should return a cited answer from your own indexed content.

@@ -1,9 +1,9 @@
 # Lovable prompt
 
-Paste this whole block into Lovable as your first message. Fill in `<your-glean-instance>` before sending — everything else is instructions for the Agent, not for you.
+Paste this whole block into Lovable as your first message. Fill in `<your-glean-instance>` and `<topic>` before sending. Everything else is instructions for the Agent, not for you.
 
 ````text
-Build "IT Deflection Page" — a single-page chat tool that answers
+Build "IT Deflection Page", a single-page chat tool that answers
 common IT helpdesk questions (SSO/password resets, laptop issues, VPN
 setup) using the Glean Chat API, so employees get an answer before they
 file a ticket. I don't want to write or review implementation code; you
@@ -11,22 +11,24 @@ own that. I do want to review the running app and its use of secrets.
 
 The browser must never see a Glean API token. If a question calls a
 Glean API from the client, the token is exposed to anyone who opens
-devtools — that's not acceptable here. Route the Glean call through
-whatever server-side mechanism you use for secrets and backend calls
-(you may need to connect a backend/database integration to get one) —
-ask me before you do, and ask me for the two values below when it's
+devtools, and that's not acceptable here. Route the Glean call through
+whatever server-side mechanism you use for secrets and backend calls.
+You may need to connect a backend/database integration to get one.
+Ask me before you do, and ask me for the two values below when it's
 ready. Don't skip this by calling Glean directly from React.
 
 1. Build a polished React assistant called "IT Help." On desktop, use a
    compact two-column workspace: a short "Ask before you file a ticket"
    intro with three suggested questions on the left, and the assistant on
-   the right. Keep the assistant, its composer, and the latest answer above
+   the right. The three questions are "How do I get help with <topic>?",
+   "How do I reset my SSO password?", and "How do I request a new laptop?"
+   Keep the assistant, its composer, and the latest answer above
    the fold. On mobile, put the assistant first. The assistant is a real
    thread: append user and assistant messages, keep the composer pinned,
    auto-scroll inside the thread, and show citations as compact source chips
    directly under each answer.
 
-2. Server-side, install `@gleanwork/api-client` (pin the version — do
+2. Server-side, install `@gleanwork/api-client` (pin the version; do
    not use a `^` or `latest` range) and construct the client like this:
 
    ```ts
@@ -41,9 +43,9 @@ ready. Don't skip this by calling Glean directly from React.
    Both `GLEAN_API_TOKEN` and `GLEAN_INSTANCE` must be stored as
    server-side secrets, never hardcoded and never bundled into the
    frontend. Stop and ask me for these two values by name before running
-   the app — do not invent placeholder values and move on.
+   the app. Do not invent placeholder values and move on.
 
-3. Call the Chat API like this — the response shape is specific, follow
+3. Call the Chat API like this. The response shape is specific, follow
    it exactly rather than guessing at field names:
 
    ```ts
@@ -75,12 +77,12 @@ ready. Don't skip this by calling Glean directly from React.
    Notes on the response shape, since guessing at field names here is
    easy to get wrong:
    - The response can include earlier step-narration messages (search/read
-     progress) before the real answer — filter to `messageType === 'CONTENT'`
+     progress) before the real answer. Filter to `messageType === 'CONTENT'`
      or that narration text ends up prepended to the answer.
-   - Citations live per-fragment, in `fragment.citation.sourceDocument` —
-     not a top-level `citedDocuments` field, and not the older
-     `message.citations[]` field (deprecated, and not populated at all on
-     a live agentic response). Dedupe by `url` since the same source is
+   - Citations live per-fragment, in `fragment.citation.sourceDocument`,
+     not a top-level `citedDocuments` field, and not the
+     `message.citations[]` field, which is deprecated and not populated
+     on a live agentic response. Dedupe by `url` since the same source is
      commonly cited by more than one fragment.
 
 4. Frontend: on submit, call your server-side function with the question,
@@ -94,8 +96,8 @@ ready. Don't skip this by calling Glean directly from React.
    Inter/system sans, strong typographic hierarchy, and `#343ced` as the
    primary accent. Avoid a generic chatbot bubble, oversized hero, gradients
    behind text, and a separate answer box below the form. Use this
-   exact mark as the page's logo/icon instead of a generic chat icon —
-   inline the SVG directly rather than approximating it:
+   exact mark as the page's logo/icon instead of a generic chat icon.
+   Inline the SVG directly rather than approximating it:
 
    ```svg
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none" role="img" aria-label="Glean">
@@ -106,14 +108,14 @@ ready. Don't skip this by calling Glean directly from React.
 
 6. Give the assistant a short system framing so it stays on-topic: it
    should present itself as "IT Help" and answer IT/helpdesk
-   questions using only what Glean returns — don't have it improvise
+   questions using only what Glean returns. Don't have it improvise
    troubleshooting steps Glean didn't cite.
 
 7. When you're done, tell me the two things I need to test:
    - Ask "Where do I reset my SSO password?" and confirm the answer
-     cites the SSO reset guide.
-   - Ask "How do I request a new laptop?" and confirm it cites the IT
-     helpdesk FAQ (loaner laptops, same-day, from the IT desk).
+     cites a source from my own indexed content.
+   - Ask "How do I request a new laptop?" and confirm the answer
+     cites a source from my own indexed content.
 
 This is a private, single-user prototype. The backend token is one service
 identity: every request has the token owner's Glean access, not the person

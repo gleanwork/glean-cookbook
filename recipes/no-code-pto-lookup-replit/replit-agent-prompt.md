@@ -1,15 +1,15 @@
 # Replit Agent prompt
 
-Paste this whole block into Replit Agent as your first message. Fill in `<your-glean-instance>` before sending — everything else is instructions for the Agent, not for you.
+Paste this whole block into Replit Agent as your first message. Fill in `<your-glean-instance>` and `<topic>` before sending. Everything else is instructions for the Agent, not for you.
 
 ````text
-Build "HR Assistant" — a single-page chat tool that answers employee
+Build "HR Assistant", a single-page chat tool that answers employee
 questions about PTO and benefits using the Glean Chat API. I don't want to
 write or review implementation code; you own that. I do want to review the
 running app and its use of secrets.
 
 Stack: Node.js + Express backend, plain HTML/CSS/JS frontend (no framework
-needed). The backend is the only thing that talks to Glean — the browser
+needed). The backend is the only thing that talks to Glean. The browser
 never sees a Glean API token.
 
 1. Scaffold an Express server with one route:
@@ -18,7 +18,7 @@ never sees a Glean API token.
    - POST /api/ask    → body `{ "question": string }`, calls Glean, returns
      `{ "answer": string, "citations": [{ "title": string, "url": string }] }`.
 
-2. Install `@gleanwork/api-client` (pin the version — do not use a `^` or
+2. Install `@gleanwork/api-client` (pin the version; do not use a `^` or
    `latest` range) and construct the client like this:
 
    ```ts
@@ -33,9 +33,9 @@ never sees a Glean API token.
    Both `GLEAN_API_TOKEN` and `GLEAN_INSTANCE` must come from Replit
    Secrets (the padlock icon in the sidebar), never hardcoded and never
    sent to the browser. Stop and ask me for these two values by name
-   before running the app — do not invent placeholder values and move on.
+   before running the app. Do not invent placeholder values and move on.
 
-3. Call the Chat API like this — the response shape is specific, follow it
+3. Call the Chat API like this. The response shape is specific, follow it
    exactly rather than guessing at field names:
 
    ```ts
@@ -67,17 +67,19 @@ never sees a Glean API token.
    Notes on the response shape, since guessing at field names here is
    easy to get wrong:
    - The response can include earlier step-narration messages (search/read
-     progress) before the real answer — filter to `messageType === 'CONTENT'`
+     progress) before the real answer. Filter to `messageType === 'CONTENT'`
      or that narration text ends up prepended to the answer.
-   - Citations live per-fragment, in `fragment.citation.sourceDocument` —
-     not a top-level `citedDocuments` field, and not the older
-     `message.citations[]` field (deprecated, and not populated at all on
-     a live agentic response). Dedupe by `url` since the same source is
+   - Citations live per-fragment, in `fragment.citation.sourceDocument`,
+     not a top-level `citedDocuments` field, and not the
+     `message.citations[]` field, which is deprecated and not populated
+     on a live agentic response. Dedupe by `url` since the same source is
      commonly cited by more than one fragment.
 
 4. Frontend: build a real "HR Assistant" thread. On desktop, use a compact
    two-column workspace: a short PTO/benefits intro with three suggested
-   questions on the left, and the assistant on the right. Keep the assistant,
+   questions on the left, and the assistant on the right. The three
+   questions are "How do I get help with <topic>?", "What is our PTO
+   policy?", and "How do I request parental leave?" Keep the assistant,
    composer, and latest answer above the fold. On mobile, put the assistant
    first. Append user and assistant messages, pin the composer, auto-scroll
    inside the thread, and render citations as compact source chips under the
@@ -89,8 +91,8 @@ never sees a Glean API token.
    Inter/system sans, strong typographic hierarchy, and `#343ced` as the
    primary accent. Avoid a generic chatbot bubble, oversized hero, gradients
    behind text, and a separate answer box below the form. Use this
-   exact mark as the page's logo/icon instead of a generic chat icon —
-   inline the SVG directly rather than approximating it:
+   exact mark as the page's logo/icon instead of a generic chat icon.
+   Inline the SVG directly rather than approximating it:
 
    ```svg
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none" role="img" aria-label="Glean">
@@ -101,15 +103,14 @@ never sees a Glean API token.
 
 6. Give the assistant a short system framing so it stays on-topic: it
    should present itself as "HR Assistant" and answer PTO/benefits
-   questions using only what Glean returns — don't have it add HR advice
+   questions using only what Glean returns. Don't have it add HR advice
    Glean didn't cite.
 
 7. When you're done, tell me the two things I need to test:
-   - Ask "What is our PTO policy?" and confirm the answer cites the PTO
-     policy document.
-   - Ask something outside HR entirely (e.g. "what's our revenue?") and
-     confirm the assistant doesn't fabricate an answer when Glean has
-     nothing relevant to cite.
+   - Ask "What is our PTO policy?" and confirm the answer cites a
+     source from my own indexed content.
+   - Ask "what's our revenue?" and confirm the assistant does not
+     fabricate an answer when Glean has nothing relevant to cite.
 
 This is a private, single-user prototype. The backend token is one service
 identity: every request has the token owner's Glean access, not the person
