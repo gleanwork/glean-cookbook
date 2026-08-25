@@ -93,6 +93,7 @@
   "llmContext": "Use @gleanwork/web-sdk named exports renderSearchBox, renderSearchResults, and renderChat; the script-tag build exposes the same methods on window.GleanWebSDK. Set backend explicitly. Prefer the user's Glean SSO session; token auth must be minted by a backend and never exposed in browser code. Results remain permission-filtered for the signed-in user. Give every embedded widget an explicitly sized container.",
   "goDependency": false,
   "featured": true,
+  "hidden": true,
   "tags": ["embed", "web-sdk"],
   "lastVerified": "2026-08-02",
   "content": {

@@ -97,8 +97,7 @@
     "problem": "Half the helpdesk tickets are \"how do I reset my SSO password\" and \"how do I get a new laptop.\" The IT docs already answer both.\n\nThis recipe builds a private Lovable page that answers those questions from your Glean content before a ticket gets filed.",
     "takeItFurther": [
       "Scope the `CHAT` token even further if your Glean plan supports per-collection tokens, so this tool can only ever answer from IT content.",
-      "Compare this to [`no-code-pto-lookup-replit`](/cookbook/no-code-pto-lookup-replit). Same Chat API call, same constraint that the browser never holds the token, different no-code tool and persona.",
-      "Once your team outgrows the no-code version, [`company-answers`](/cookbook/company-answers) shows the same pattern as a hand-written, version-controlled app."
+      "Compare this to [`no-code-pto-lookup-replit`](/cookbook/no-code-pto-lookup-replit). Same Chat API call, same constraint that the browser never holds the token, different no-code tool and persona."
     ]
   }
 }
