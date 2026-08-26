@@ -771,7 +771,7 @@
     },
     "hidden": {
       "default": false,
-      "description": "When true, the developer docs site does not generate a page, sidebar item, or search entry. The cookbook plugin and GitHub README still list the recipe.",
+      "description": "When true, the recipe is not customer-ready and is omitted from the developer docs site, cookbook plugin, and GitHub README.",
       "type": "boolean"
     },
     "tags": {

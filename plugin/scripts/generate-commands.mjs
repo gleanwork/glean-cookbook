@@ -55,13 +55,14 @@ async function format(file, content) {
 }
 
 async function desiredOutputs(registry) {
+  const publicRecipes = registry.filter((recipe) => !recipe.hidden);
   const skills = await Promise.all(
-    registry.map(async (recipe) => {
+    publicRecipes.map(async (recipe) => {
       const file = path.join(skillsDir, recipe.id, 'SKILL.md');
       return [file, await format(file, renderRecipeSkill(recipe))];
     }),
   );
-  const pastePrompts = registry.flatMap((recipe) => {
+  const pastePrompts = publicRecipes.flatMap((recipe) => {
     if (!recipe.pastePromptFile) return [];
     const src = path.join(
       repoRoot,
@@ -76,9 +77,9 @@ async function desiredOutputs(registry) {
     [
       [
         path.join(skillsDir, 'browse-cookbook', 'SKILL.md'),
-        listTemplate(registry),
+        listTemplate(publicRecipes),
       ],
-      [path.join(repoRoot, 'README.md'), tableTemplate(registry)],
+      [path.join(repoRoot, 'README.md'), tableTemplate(publicRecipes)],
     ].map(async ([file, block]) => [
       file,
       await format(
@@ -130,6 +131,6 @@ if (check && (changed.length > 0 || stale.length > 0)) {
 
 console.log(
   check
-    ? `${registry.length} generated recipe skills are up to date.`
-    : `Generated ${registry.length} recipe skills and shared recipe lists.`,
+    ? `${registry.filter((recipe) => !recipe.hidden).length} public recipe skills are up to date.`
+    : `Generated ${registry.filter((recipe) => !recipe.hidden).length} public recipe skills and shared recipe lists.`,
 );

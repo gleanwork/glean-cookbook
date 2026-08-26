@@ -2,7 +2,7 @@
 
 Customer-ready examples of building on the [Glean platform](https://developers.glean.com) — the Indexing API, Platform API, Web SDK, Connector SDK, MCP, and Agents. This repo is the code companion to the **Cookbooks** section of [developers.glean.com](https://developers.glean.com). Each recipe includes a runnable scaffold, integration instructions, or a build prompt appropriate to the surface it teaches.
 
-> **Status:** private, pre-launch. This repo goes public alongside the Cookbooks section launch at Glean Go (targeting Aug 26–27, 2026). Until then, treat it as internal-only — do not link to it from public docs or share the URL externally.
+> **Status:** public. Recipes marked hidden are still in development and are not customer-ready.
 
 ## Build a recipe
 
@@ -38,25 +38,14 @@ the coding agent must not substitute its isolated browser for your Glean SSO ses
 
 <!-- pluginpack-generated:recipes:start -->
 
-| Recipe                                                                  | Level        | Time              | Build it                                |
-| ----------------------------------------------------------------------- | ------------ | ----------------- | --------------------------------------- |
-| **Call a Glean agent from an A2A client**                               | Intermediate | ~45 min           | `/cookbook:a2a-client`                  |
-| **Build an engineering portal**                                         | Intermediate | ~30 min           | `/cookbook:build-engineering-portal`    |
-| **Company Answers: a cited Q&A page on your own content**               | Beginner     | ~30 min           | `/cookbook:company-answers`             |
-| **Connect Glean MCP to your AI tools**                                  | Beginner     | ~15 min           | `/cookbook:connect-mcp-hosts`           |
-| **Customer 360: an account page built from your own content**           | Intermediate | ~1 hr             | `/cookbook:customer-360`                |
-| **Build a customer email agent with Glean Headless Agent Builder**      | Intermediate | ~30 min           | `/cookbook:customer-email-draft-agent`  |
-| **Embed search & chat in an internal app**                              | Beginner     | ~15 min (minimal) | `/cookbook:embed-search-chat`           |
-| **Draft PR reviews with Glean Triggers and Claude Code Monitor**        | Intermediate | ~45 min           | `/cookbook:github-pr-review-monitor`    |
-| **Automate Gong call follow-up with Glean Triggers in n8n**             | Advanced     | ~1.5 hr           | `/cookbook:gong-call-follow-up-n8n`     |
-| **Multi-step agent with governed tools**                                | Advanced     | ~2 hr             | `/cookbook:multi-step-agent`            |
-| **Build an IT helpdesk page in Lovable**                                | Beginner     | ~45 min           | `/cookbook:no-code-it-helpdesk-lovable` |
-| **Build a PTO lookup page in Replit**                                   | Beginner     | ~45 min           | `/cookbook:no-code-pto-lookup-replit`   |
-| **Onboarding Hub: a day-one checklist grounded in your own docs**       | Intermediate | ~45 min           | `/cookbook:onboarding-hub`              |
-| **On-call Copilot**                                                     | Advanced     | ~1.5 hr           | `/cookbook:oncall-copilot`              |
-| **Ground your own LLM app in Glean**                                    | Intermediate | ~1 hr             | `/cookbook:permissions-aware-retrieval` |
-| **Brief recurring meetings with Glean Triggers and Cursor Automations** | Advanced     | ~1 hr             | `/cookbook:pre-meeting-brief`           |
-| **Answer an RFP or security questionnaire**                             | Intermediate | ~45 min           | `/cookbook:rfp-responder`               |
+| Recipe                                                            | Level        | Time    | Build it                                |
+| ----------------------------------------------------------------- | ------------ | ------- | --------------------------------------- |
+| **Customer 360: an account page built from your own content**     | Intermediate | ~1 hr   | `/cookbook:customer-360`                |
+| **Build an IT helpdesk page in Lovable**                          | Beginner     | ~45 min | `/cookbook:no-code-it-helpdesk-lovable` |
+| **Build a PTO lookup page in Replit**                             | Beginner     | ~45 min | `/cookbook:no-code-pto-lookup-replit`   |
+| **Onboarding Hub: a day-one checklist grounded in your own docs** | Intermediate | ~45 min | `/cookbook:onboarding-hub`              |
+| **On-call Copilot**                                               | Advanced     | ~1.5 hr | `/cookbook:oncall-copilot`              |
+| **Answer an RFP or security questionnaire**                       | Intermediate | ~45 min | `/cookbook:rfp-responder`               |
 
 <!-- pluginpack-generated:recipes:end -->
 
@@ -86,6 +75,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for adding a recipe, the registry, verifi
 
 ## Related
 
-- [developers.glean.com/cookbook](https://developers.glean.com/cookbook) — the published recipes (behind a feature flag pre-launch)
+- [developers.glean.com/cookbook](https://developers.glean.com/cookbook) — the published recipes
 - [glean-developer-site](https://github.com/gleanwork/glean-developer-site) — the dev site repo; owns the recipe schema and MDX pages
 - Linear project: **Glean Cookbook (GO)** (team PACT) — tracks every recipe, the brand kit, the corpus, and the `glean-cookbook` plugin
