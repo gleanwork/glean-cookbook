@@ -14,22 +14,11 @@ before running its command. Full write-ups live at
 
 <!-- pluginpack-generated:recipes:start -->
 
-- **Call a Glean agent from an A2A client** (`/cookbook:a2a-client`) — Discover a published Glean agent's A2A card and run it from any A2A client — multi-turn, streamed, permission-aware.
-- **Build an engineering portal** (`/cookbook:build-engineering-portal`) — The end-to-end showcase — index a developer catalog into Glean, then embed permission-aware search and chat back into the portal your team already uses.
-- **Company Answers: a cited Q&A page on your own content** (`/cookbook:company-answers`) — The hello-world of Glean apps: one page, one input, one permission-aware cited answer — built two ways, with the Web SDK and with the Chat API.
-- **Connect Glean MCP to your AI tools** (`/cookbook:connect-mcp-hosts`) — Point Claude Code, Cursor, and Claude Desktop at your Glean MCP endpoint and run one enterprise task from each — same context, three surfaces.
 - **Customer 360: an account page built from your own content** (`/cookbook:customer-360`) — One page per account — status, risks, and a drill-in chat — assembled from whatever your instance already knows about that customer. No CRM export, no separate index.
-- **Build a customer email agent with Glean Headless Agent Builder** (`/cookbook:customer-email-draft-agent`) — Use Glean Headless Agent Builder from Claude Code or Cursor to create a content-triggered agent that watches one customer domain, drafts grounded Gmail replies, and alerts you in Slack.
-- **Embed search & chat in an internal app** (`/cookbook:embed-search-chat`) — Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.
-- **Draft PR reviews with Glean Triggers and Claude Code Monitor** (`/cookbook:github-pr-review-monitor`) — Use Glean Triggers to send GitHub review events to Claude Code Monitor, which runs your local review skill against the diff and prepares a first-pass review draft.
-- **Automate Gong call follow-up with Glean Triggers in n8n** (`/cookbook:gong-call-follow-up-n8n`) — Use the Glean Trigger node in n8n to summarize a Gong call, log it in Salesforce, and post a Slack heads-up.
-- **Multi-step agent with governed tools** (`/cookbook:multi-step-agent`) — Build a Glean agent that plans, retrieves, and acts through a governed custom tool — with a safe fallback when the tool is denied.
 - **Build an IT helpdesk page in Lovable** (`/cookbook:no-code-it-helpdesk-lovable`) — Paste a prompt into Lovable to get a private page that answers common IT questions from your Glean docs.
 - **Build a PTO lookup page in Replit** (`/cookbook:no-code-pto-lookup-replit`) — Paste a prompt into Replit Agent to get a private page that answers PTO and benefits questions from your Glean docs.
 - **Onboarding Hub: a day-one checklist grounded in your own docs** (`/cookbook:onboarding-hub`) — A guided first-week hub for new hires: a checklist with progress, and every step able to answer itself from your own onboarding content.
 - **On-call Copilot** (`/cookbook:oncall-copilot`) — An on-call dashboard that takes an alarm to a proposed action and puts a person in front of that action. It names a cause only when a past incident backs it, turns away an approver who is neither on call nor the service owner, and escalates instead of approving itself when nobody answers. It runs on recorded incidents, so you can watch it refuse things before connecting it to anything.
-- **Ground your own LLM app in Glean** (`/cookbook:permissions-aware-retrieval`) — Use Glean's Platform API as the retrieval layer for your own LLM app — every result ACL-filtered for the caller before it ever reaches the model.
-- **Brief recurring meetings with Glean Triggers and Cursor Automations** (`/cookbook:pre-meeting-brief`) — Use a Glean calendar trigger to start Cursor Automations before a recurring meeting, summarize what changed, and update the project tracker.
 - **Answer an RFP or security questionnaire** (`/cookbook:rfp-responder`) — A review app that drafts cited answers to an RFP or security questionnaire, leaves unsupported questions blank, and requires a person to approve each answer. It starts with recorded Chat responses, so you can inspect its refusal paths before connecting it to Glean.
 
 <!-- pluginpack-generated:recipes:end -->
