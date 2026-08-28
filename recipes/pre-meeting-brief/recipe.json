@@ -4,6 +4,7 @@
   "description": "Use a Glean calendar trigger to start Cursor Automations before a recurring meeting, summarize what changed, and update the project tracker.",
   "sidebarLabel": "Pre-meeting brief",
   "surfaces": ["platform-api"],
+  "capabilities": ["workflows", "search"],
   "status": "showcase",
   "category": "workflow",
   "level": "Advanced",

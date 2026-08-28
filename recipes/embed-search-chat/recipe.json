@@ -4,6 +4,7 @@
   "description": "Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.",
   "sidebarLabel": "Embed Search & Chat",
   "surfaces": ["web-sdk"],
+  "capabilities": ["embed", "search", "chat"],
   "status": "production-pattern",
   "category": "search",
   "level": "Beginner",

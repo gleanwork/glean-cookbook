@@ -1,0 +1,24 @@
+{
+  "name": "search-with-discovered-filters",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Discover filters available in a Glean instance and apply them to Platform Search.",
+  "type": "module",
+  "scripts": {
+    "login": "node scripts/glean-auth.mjs login --scopes search",
+    "start": "tsx src/main.ts",
+    "verify": "tsx src/verify.ts",
+    "test": "tsx --test src/search.test.ts",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "dotenv": "17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.1",
+    "eslint": "10.8.0",
+    "tsx": "4.23.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.65.0"
+  }
+}

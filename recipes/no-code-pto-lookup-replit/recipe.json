@@ -4,6 +4,7 @@
   "description": "Paste a prompt into Replit Agent to get a private page that answers PTO and benefits questions from your Glean docs.",
   "sidebarLabel": "PTO Lookup (Replit)",
   "surfaces": ["client-api"],
+  "capabilities": ["chat"],
   "status": "showcase",
   "category": "workflow",
   "level": "Beginner",

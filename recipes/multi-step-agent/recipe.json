@@ -4,6 +4,7 @@
   "description": "Build a Glean agent that plans, retrieves, and acts through a governed custom tool — with a safe fallback when the tool is denied.",
   "sidebarLabel": "Multi-Step Agent",
   "surfaces": ["agents", "tools"],
+  "capabilities": ["agents", "tools"],
   "status": "production-pattern",
   "category": "agent",
   "level": "Advanced",

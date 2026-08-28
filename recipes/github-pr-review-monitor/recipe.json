@@ -4,6 +4,7 @@
   "description": "Use Glean Triggers to send GitHub review events to Claude Code Monitor, which runs your local review skill against the diff and prepares a first-pass review draft.",
   "sidebarLabel": "PR Review Trigger",
   "surfaces": ["platform-api"],
+  "capabilities": ["workflows"],
   "status": "showcase",
   "category": "workflow",
   "level": "Intermediate",

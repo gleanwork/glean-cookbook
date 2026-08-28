@@ -4,6 +4,7 @@
   "description": "Use the Glean Trigger node in n8n to summarize a Gong call, log it in Salesforce, and post a Slack heads-up.",
   "sidebarLabel": "Gong + n8n",
   "surfaces": ["platform-api", "client-api"],
+  "capabilities": ["workflows", "search", "chat"],
   "status": "showcase",
   "category": "workflow",
   "level": "Advanced",

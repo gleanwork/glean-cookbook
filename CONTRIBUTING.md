@@ -89,9 +89,17 @@ The dev site pulls the built registry with `mise exec -- pnpm registry:sync` the
 `mise exec -- pnpm recipes:compile` — run
 both there after changing a recipe here, or wait for the `sync-cookbook-registry` workflow to open a
 PR automatically. Its `docs/cookbook/{id}.mdx` files are prose-only and matched to their recipe by
-filename === `id`. Set `"hidden": true` on a `recipe.json` for a recipe that is not yet customer-ready. Hidden recipes
-remain in the source and full registry for internal development, but are omitted from the docs site,
-cookbook plugin, and GitHub README.
+filename === `id`.
+
+Use the visibility fields deliberately:
+
+- Set `"hidden": true` when a recipe must not be generated for customers at all. Hidden recipes remain
+  in the source and full registry for internal development, but are omitted from the docs site,
+  cookbook plugin, and GitHub README.
+- Set `"visibility": "preview"` when a recipe should be deployed for review without public discovery.
+  Preview recipes are omitted from the cookbook plugin and GitHub README. The developer site generates
+  an unlisted, no-index page and reveals its card and detail content only when the URL includes an exact
+  `ff_recipe=<recipe-id>` query parameter.
 
 ## Verifying a recipe
 

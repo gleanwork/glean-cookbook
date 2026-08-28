@@ -9,6 +9,7 @@
     "caption": "Evidence-ranked triage with a human approval gate before action."
   },
   "surfaces": ["platform-api", "agents", "tools"],
+  "capabilities": ["search", "chat", "agents", "tools", "workflows"],
   "status": "showcase",
   "category": "agent",
   "level": "Advanced",

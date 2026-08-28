@@ -4,6 +4,7 @@
   "description": "Use Glean Headless Agent Builder from Claude Code or Cursor to create a content-triggered agent that watches one customer domain, drafts grounded Gmail replies, and alerts you in Slack.",
   "sidebarLabel": "Email Draft Agent",
   "surfaces": ["agents", "mcp"],
+  "capabilities": ["agents", "tools", "workflows"],
   "status": "showcase",
   "category": "agent",
   "level": "Intermediate",

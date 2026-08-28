@@ -4,6 +4,7 @@
   "description": "The end-to-end showcase — index a developer catalog into Glean, then embed permission-aware search and chat back into the portal your team already uses.",
   "sidebarLabel": "Engineering Portal",
   "surfaces": ["connector-sdk", "indexing-api", "web-sdk", "client-api"],
+  "capabilities": ["indexing", "embed", "search", "chat"],
   "status": "showcase",
   "category": "portal",
   "level": "Intermediate",
