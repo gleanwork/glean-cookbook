@@ -464,6 +464,51 @@
       "required": ["path", "alt", "caption"],
       "additionalProperties": false
     },
+    "codeWalkthrough": {
+      "type": "object",
+      "description": "Optional source-backed code walkthrough rendered directly on the recipe documentation page.",
+      "properties": {
+        "intro": {
+          "type": "string",
+          "minLength": 1
+        },
+        "examples": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source": {
+                "type": "string",
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$"
+              },
+              "language": {
+                "type": "string",
+                "enum": ["typescript", "javascript", "python", "go", "java"]
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 30000,
+                "description": "Generated from source by the registry build; never authored in recipe.json."
+              }
+            },
+            "required": ["title", "description", "source", "language"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["intro", "examples"],
+      "additionalProperties": false
+    },
     "surfaces": {
       "minItems": 1,
       "type": "array",

@@ -3,6 +3,17 @@
   "title": "Search Glean with discovered filters",
   "description": "Use the official TypeScript API client to discover the datasources and common filter fields available in your Glean instance, then apply a returned selection to permission-aware Platform Search.",
   "sidebarLabel": "Search with filters",
+  "codeWalkthrough": {
+    "intro": "This implementation uses the official TypeScript client to discover the filter catalog visible to the signed-in user, request query-specific suggestions for one returned datasource, and carry the selected value into a typed Search request.",
+    "examples": [
+      {
+        "title": "Discover filters and run Search",
+        "description": "The flow keeps datasource and filter selection injectable while the released client owns authentication, transport, serialization, response validation, retries, and typed errors.",
+        "source": "src/search.ts",
+        "language": "typescript"
+      }
+    ]
+  },
   "surfaces": ["platform-api"],
   "capabilities": ["search"],
   "status": "quickstart",

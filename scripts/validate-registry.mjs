@@ -6,6 +6,7 @@ import fg from 'fast-glob';
 
 import { readJsonc } from './lib/jsonc.mjs';
 import { extractPastePrompt } from './lib/paste-prompt.mjs';
+import { materializeCodeWalkthrough } from './lib/code-walkthrough.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const schema = JSON.parse(
@@ -74,6 +75,14 @@ for (const { file, entry } of registry) {
   if (!fs.existsSync(recipeDir) || !fs.statSync(recipeDir).isDirectory()) {
     failed = true;
     console.error(`✗ ${label}: no matching recipes/${entry.id}/ directory`);
+    continue;
+  }
+
+  try {
+    materializeCodeWalkthrough(entry, recipeDir);
+  } catch (error) {
+    failed = true;
+    console.error(`✗ ${label}: ${error.message}`);
     continue;
   }
 
