@@ -1,27 +1,36 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { Glean, HTTPClient } from '@gleanwork/api-client';
 import {
-  PlatformSearchClient,
-  PlatformSearchError,
   runSearchFlow,
   type DatasourceFilterInfo,
+  type PlatformSearchSdk,
+  type SearchFiltersResponse,
+  type SearchResponse,
 } from './search.js';
 
-interface RecordedRequest {
-  url: URL;
-  init?: RequestInit;
-}
-
-function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
+function jsonResponse(body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
-    ...init,
   });
 }
 
-test('discovers and applies a returned field filter to search', async () => {
-  const requests: RecordedRequest[] = [];
+function filtersResult(result: SearchFiltersResponse) {
+  return { Headers: {}, result };
+}
+
+const emptySearchResponse: SearchResponse = {
+  request_id: 'search-request',
+  results: [],
+  has_more: false,
+  next_cursor: null,
+  warnings: [],
+};
+
+test('uses the official SDK to discover and apply a returned field filter', async () => {
+  process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = 'true';
+  const requests: Request[] = [];
   const responses = [
     jsonResponse({
       request_id: 'catalog-request',
@@ -63,19 +72,23 @@ test('discovers and applies a returned field filter to search', async () => {
       warnings: [],
     }),
   ];
-  const mockFetch: typeof fetch = async (input, init) => {
-    requests.push({ url: new URL(String(input)), init });
-    const response = responses.shift();
-    assert.ok(response, 'unexpected request');
-    return response;
-  };
-  const client = new PlatformSearchClient({
-    backend: 'https://acme-be.glean.com',
-    token: 'test-token',
-    fetch: mockFetch,
+  const httpClient = new HTTPClient({
+    fetcher: async (input, init) => {
+      const request =
+        input instanceof Request ? input : new Request(input, init);
+      requests.push(request.clone());
+      const response = responses.shift();
+      assert.ok(response, 'unexpected request');
+      return response;
+    },
+  });
+  const glean = new Glean({
+    serverURL: 'https://acme-be.glean.com',
+    apiToken: 'test-token',
+    httpClient,
   });
 
-  const result = await runSearchFlow(client, 'search migration', {
+  const result = await runSearchFlow(glean.search, 'search migration', {
     selectDatasource: (datasources) => datasources[0].datasource,
     selectFilter: (datasource: DatasourceFilterInfo) => ({
       field: datasource.filters[0].field,
@@ -89,13 +102,18 @@ test('discovers and applies a returned field filter to search', async () => {
     value: 'In Progress',
   });
   assert.equal(requests.length, 3);
-  assert.equal(requests[0].url.pathname, '/api/search/filters');
-  assert.equal(requests[0].url.search, '');
-  assert.equal(requests[1].url.pathname, '/api/search/filters');
-  assert.equal(requests[1].url.searchParams.get('datasources'), 'jira');
-  assert.equal(requests[1].url.searchParams.get('query'), 'search migration');
-  assert.equal(requests[2].url.pathname, '/api/search');
-  assert.deepEqual(JSON.parse(String(requests[2].init?.body)), {
+  assert.equal(new URL(requests[0].url).pathname, '/api/search/filters');
+  assert.equal(new URL(requests[1].url).pathname, '/api/search/filters');
+  assert.equal(
+    new URL(requests[1].url).searchParams.get('datasources'),
+    'jira',
+  );
+  assert.equal(
+    new URL(requests[1].url).searchParams.get('query'),
+    'search migration',
+  );
+  assert.equal(new URL(requests[2].url).pathname, '/api/search');
+  assert.deepEqual(await requests[2].json(), {
     query: 'search migration',
     page_size: 10,
     datasources: ['jira'],
@@ -108,75 +126,59 @@ test('discovers and applies a returned field filter to search', async () => {
     ],
   });
   for (const request of requests) {
-    const headers = new Headers(request.init?.headers);
-    assert.equal(headers.get('authorization'), 'Bearer test-token');
-    assert.equal(headers.get('x-glean-include-experimental'), 'true');
+    assert.equal(request.headers.get('authorization'), 'Bearer test-token');
+    assert.equal(request.headers.get('x-glean-include-experimental'), 'true');
   }
 });
 
 test('falls back to a discovered datasource when no values are suggested', async () => {
-  const requests: RecordedRequest[] = [];
-  const responses = [
-    jsonResponse({
+  const listResponses = [
+    filtersResult({
       request_id: 'catalog-request',
       datasources: [{ datasource: 'gdrive', filters: [] }],
     }),
-    jsonResponse({
+    filtersResult({
       request_id: 'suggestion-request',
       datasources: [{ datasource: 'gdrive', filters: [] }],
     }),
-    jsonResponse({
-      request_id: 'search-request',
-      results: [],
-      has_more: false,
-      next_cursor: null,
-      warnings: [],
-    }),
   ];
-  const client = new PlatformSearchClient({
-    backend: 'https://acme-be.glean.com',
-    token: 'test-token',
-    fetch: async (input, init) => {
-      requests.push({ url: new URL(String(input)), init });
-      return responses.shift()!;
+  let searchRequest: Parameters<PlatformSearchSdk['query']>[0] | undefined;
+  const search: PlatformSearchSdk = {
+    listFilters: async () => listResponses.shift()!,
+    query: async (request) => {
+      searchRequest = request;
+      return emptySearchResponse;
     },
-  });
+  };
 
-  const result = await runSearchFlow(client, 'planning', {
+  const result = await runSearchFlow(search, 'planning', {
     selectDatasource: (datasources) => datasources[0].datasource,
     selectFilter: () => undefined,
   });
 
   assert.equal(result.filter, undefined);
-  assert.deepEqual(JSON.parse(String(requests[2].init?.body)), {
+  assert.deepEqual(searchRequest, {
     query: 'planning',
     page_size: 10,
     datasources: ['gdrive'],
   });
 });
 
-test('surfaces rate-limit guidance and request IDs', async () => {
-  const client = new PlatformSearchClient({
-    backend: 'https://acme-be.glean.com',
-    token: 'test-token',
-    fetch: async () =>
-      jsonResponse(
-        {
-          title: 'Too many requests',
-          detail: 'Slow down',
-          request_id: 'request-429',
-        },
-        { status: 429, headers: { 'Retry-After': '30' } },
-      ),
-  });
+test('rejects a datasource that filter discovery did not return', async () => {
+  const search: PlatformSearchSdk = {
+    listFilters: async () =>
+      filtersResult({
+        request_id: 'catalog-request',
+        datasources: [{ datasource: 'jira', filters: [] }],
+      }),
+    query: async () => emptySearchResponse,
+  };
 
   await assert.rejects(
-    client.listFilters(),
-    (error: unknown) =>
-      error instanceof PlatformSearchError &&
-      error.status === 429 &&
-      error.retryAfter === '30' &&
-      error.requestId === 'request-429' &&
-      /Retry after 30/u.test(error.message),
+    runSearchFlow(search, 'planning', {
+      selectDatasource: () => 'gdrive',
+      selectFilter: () => undefined,
+    }),
+    /Datasource "gdrive" was not returned/u,
   );
 });

@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import readline from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
+import { Glean } from '@gleanwork/api-client';
+import { formatSdkError } from './errors.js';
 import {
-  PlatformSearchClient,
   runSearchFlow,
   type DatasourceFilterInfo,
   type SelectedFilter,
@@ -93,9 +94,10 @@ function suggestedFilters(
 
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
-  const client = new PlatformSearchClient({
-    backend: requireEnv('GLEAN_SERVER_URL'),
-    token: requireEnv('GLEAN_API_TOKEN'),
+  process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = 'true';
+  const glean = new Glean({
+    serverURL: requireEnv('GLEAN_SERVER_URL'),
+    apiToken: requireEnv('GLEAN_API_TOKEN'),
   });
   const terminal =
     !options.automatic && stdin.isTTY
@@ -103,7 +105,7 @@ async function main(): Promise<void> {
       : undefined;
 
   try {
-    const result = await runSearchFlow(client, options.query!, {
+    const result = await runSearchFlow(glean.search, options.query!, {
       async selectDatasource(datasources) {
         numberedDatasources(datasources);
         if (options.datasource) return options.datasource;
@@ -199,6 +201,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
+  console.error(formatSdkError(error));
   process.exit(1);
 });

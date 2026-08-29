@@ -1,8 +1,8 @@
 # Search Glean with discovered filters
 
-This TypeScript CLI discovers the datasources and common filter fields visible to you, requests query-specific suggested values for one datasource, and applies the selection to a Platform Search request.
+This TypeScript CLI uses the official `@gleanwork/api-client` to discover the datasources and common filter fields visible to you, request query-specific suggested values for one datasource, and apply the selection to Platform Search.
 
-The Platform Search APIs are experimental. The client sends `X-Glean-Include-Experimental: true` on every request.
+The Platform Search APIs are experimental. The SDK sends `X-Glean-Include-Experimental: true` when the recipe enables its documented experimental-feature option through `X_GLEAN_INCLUDE_EXPERIMENTAL`.
 
 ## Run
 
@@ -12,12 +12,22 @@ npm run login -- --email "you@company.com"
 npm start -- --query "quarterly planning"
 ```
 
+The core calls are the generated, typed SDK methods:
+
+```ts
+const { result: filters } = await glean.search.listFilters();
+const response = await glean.search.query({
+  query: 'quarterly planning',
+  datasources: [filters.datasources[0].datasource],
+});
+```
+
 The interactive flow:
 
-1. Lists datasource identifiers and common fields from `GET /api/search/filters`.
-2. Requests suggested values for your query and chosen datasource.
-3. Applies the datasource and an available field/value to `POST /api/search`.
-4. Prints results, warnings, pagination state, and the request ID.
+1. Calls `glean.search.listFilters()` to list datasource identifiers and common fields.
+2. Calls `glean.search.listFilters([datasource], query)` for suggested values.
+3. Applies the datasource and an available field/value through `glean.search.query()`.
+4. Prints typed results, warnings, pagination state, and the request ID.
 
 For a deterministic non-interactive run, provide the values explicitly:
 

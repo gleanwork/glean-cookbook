@@ -1,6 +1,7 @@
 import 'dotenv/config';
+import { Glean } from '@gleanwork/api-client';
+import { formatSdkError } from './errors.js';
 import {
-  PlatformSearchClient,
   runSearchFlow,
   type DatasourceFilterInfo,
   type SelectedFilter,
@@ -37,11 +38,12 @@ function firstSuggestedFilter(
 
 async function main(): Promise<void> {
   const query = parseQuery(process.argv.slice(2));
-  const client = new PlatformSearchClient({
-    backend: requireEnv('GLEAN_SERVER_URL'),
-    token: requireEnv('GLEAN_API_TOKEN'),
+  process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = 'true';
+  const glean = new Glean({
+    serverURL: requireEnv('GLEAN_SERVER_URL'),
+    apiToken: requireEnv('GLEAN_API_TOKEN'),
   });
-  const result = await runSearchFlow(client, query, {
+  const result = await runSearchFlow(glean.search, query, {
     selectDatasource: (datasources) => datasources[0].datasource,
     selectFilter: firstSuggestedFilter,
   });
@@ -71,6 +73,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
+  console.error(formatSdkError(error));
   process.exit(1);
 });
