@@ -3,6 +3,17 @@
   "title": "Search Glean with discovered filters",
   "description": "Use the official TypeScript API client to discover the datasources and common filter fields available in your Glean instance, then apply a returned selection to permission-aware Platform Search.",
   "sidebarLabel": "Search with filters",
+  "codeWalkthrough": {
+    "intro": "This implementation uses the official TypeScript client to discover the filter catalog visible to the signed-in user, request query-specific suggestions for one returned datasource, and carry the selected value into a typed Search request.",
+    "examples": [
+      {
+        "title": "Discover filters and run Search",
+        "description": "The flow keeps datasource and filter selection injectable while the released client owns authentication, transport, serialization, response validation, retries, and typed errors.",
+        "source": "src/search.ts",
+        "language": "typescript"
+      }
+    ]
+  },
   "surfaces": ["platform-api"],
   "capabilities": ["search"],
   "status": "quickstart",
@@ -133,7 +144,7 @@
   "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in with SEARCH scope, run live verification, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() for catalog and query-backed discovery, then pass only a returned datasource, field, and suggested value to glean.search.query(). Enable experimental features through the SDK's documented X_GLEAN_INCLUDE_EXPERIMENTAL option. Do not recreate the SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
   "llmContext": "@gleanwork/api-client provides typed glean.search.listFilters() and glean.search.query() methods for these Platform APIs. Enable the experimental header through X_GLEAN_INCLUDE_EXPERIMENTAL rather than constructing requests manually. Catalog discovery returns datasource identifiers and common built-in fields; query-backed discovery requires exactly one datasource and returns bounded, non-exhaustive suggested values. Apply returned values unchanged with EQUALS. The caller's credential is the permission boundary. Let the SDK validate response data and surface typed API errors; display warnings, request IDs, Retry-After guidance, and next_cursor without logging credentials or storing results.",
   "goDependency": false,
-  "featured": false,
+  "featured": true,
   "hidden": false,
   "tags": ["search", "filters", "quickstart", "platform-api"],
   "content": {

@@ -24,6 +24,7 @@ import prettier from 'prettier';
 import { materializeArtifacts } from './lib/artifacts.mjs';
 import { readJsonc } from './lib/jsonc.mjs';
 import { extractPastePrompt } from './lib/paste-prompt.mjs';
+import { materializeCodeWalkthrough } from './lib/code-walkthrough.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const recipesDir = path.join(repoRoot, 'recipes');
@@ -83,7 +84,15 @@ const entries = recipeFiles
           `The directory name is the id.`,
       );
     }
-    return inlinePastePrompt(entry, path.dirname(file));
+    const recipeDir = path.dirname(file);
+    try {
+      return materializeCodeWalkthrough(
+        inlinePastePrompt(entry, recipeDir),
+        recipeDir,
+      );
+    } catch (error) {
+      fail(`${rel}: ${error.message}`);
+    }
   })
   // Sort by id so the built file has a stable order regardless of how the
   // filesystem hands back directory entries.
