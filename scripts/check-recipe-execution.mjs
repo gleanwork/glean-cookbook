@@ -5,6 +5,7 @@ import path from 'node:path';
 import fg from 'fast-glob';
 
 import { readJsonc } from './lib/jsonc.mjs';
+import { hasRecipeOwnedOAuth } from './lib/oauth-entrypoint.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const recipesRoot = path.join(repoRoot, 'recipes');
@@ -184,11 +185,13 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
   if (
     execution.auth.some((auth) => auth.kind === 'oauth-with-token-fallback')
   ) {
+    const sharedHelper = path.join(absoluteTarget, 'scripts', 'glean-auth.mjs');
     if (
-      !fs.existsSync(path.join(absoluteTarget, 'scripts', 'glean-auth.mjs'))
+      !fs.existsSync(sharedHelper) &&
+      !hasRecipeOwnedOAuth(repoRoot, target)
     ) {
       errors.push(
-        `${recipe.id} ${location}: scaffold does not ship scripts/glean-auth.mjs`,
+        `${recipe.id} ${location}: scaffold does not ship an OAuth login entry point`,
       );
     }
   }
