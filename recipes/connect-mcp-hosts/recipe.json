@@ -4,6 +4,7 @@
   "description": "Point Claude Code, Cursor, and Claude Desktop at your Glean MCP endpoint and run one enterprise task from each — same context, three surfaces.",
   "sidebarLabel": "Connect MCP",
   "surfaces": ["mcp"],
+  "capabilities": ["mcp"],
   "status": "production-pattern",
   "category": "mcp",
   "level": "Beginner",

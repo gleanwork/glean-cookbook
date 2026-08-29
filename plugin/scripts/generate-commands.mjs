@@ -54,8 +54,12 @@ async function format(file, content) {
   });
 }
 
+function isPublicRecipe(recipe) {
+  return !recipe.hidden && recipe.visibility !== 'preview';
+}
+
 async function desiredOutputs(registry) {
-  const publicRecipes = registry.filter((recipe) => !recipe.hidden);
+  const publicRecipes = registry.filter(isPublicRecipe);
   const skills = await Promise.all(
     publicRecipes.map(async (recipe) => {
       const file = path.join(skillsDir, recipe.id, 'SKILL.md');
@@ -131,6 +135,6 @@ if (check && (changed.length > 0 || stale.length > 0)) {
 
 console.log(
   check
-    ? `${registry.filter((recipe) => !recipe.hidden).length} public recipe skills are up to date.`
-    : `Generated ${registry.filter((recipe) => !recipe.hidden).length} public recipe skills and shared recipe lists.`,
+    ? `${registry.filter(isPublicRecipe).length} public recipe skills are up to date.`
+    : `Generated ${registry.filter(isPublicRecipe).length} public recipe skills and shared recipe lists.`,
 );

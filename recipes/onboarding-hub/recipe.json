@@ -9,6 +9,7 @@
     "caption": "A first-week checklist where every step can answer itself."
   },
   "surfaces": ["web-sdk", "platform-api"],
+  "capabilities": ["chat", "embed"],
   "status": "showcase",
   "category": "portal",
   "level": "Intermediate",

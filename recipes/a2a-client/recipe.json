@@ -4,6 +4,7 @@
   "description": "Discover a published Glean agent's A2A card and run it from any A2A client — multi-turn, streamed, permission-aware.",
   "sidebarLabel": "A2A Client",
   "surfaces": ["agents", "client-api"],
+  "capabilities": ["agents"],
   "status": "production-pattern",
   "category": "agent",
   "level": "Intermediate",

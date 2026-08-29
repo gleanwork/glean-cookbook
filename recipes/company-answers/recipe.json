@@ -9,6 +9,7 @@
     "caption": "A permission-aware answer grounded in company knowledge."
   },
   "surfaces": ["client-api", "sdk-client", "web-sdk"],
+  "capabilities": ["chat", "embed"],
   "status": "showcase",
   "category": "search",
   "level": "Beginner",

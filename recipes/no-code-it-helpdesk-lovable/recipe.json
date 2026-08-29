@@ -4,6 +4,7 @@
   "description": "Paste a prompt into Lovable to get a private page that answers common IT questions from your Glean docs.",
   "sidebarLabel": "IT Helpdesk (Lovable)",
   "surfaces": ["client-api"],
+  "capabilities": ["chat"],
   "status": "showcase",
   "category": "workflow",
   "level": "Beginner",

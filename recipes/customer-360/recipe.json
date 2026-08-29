@@ -9,6 +9,7 @@
     "caption": "Account context, cited evidence, and follow-up chat in one workspace."
   },
   "surfaces": ["platform-api"],
+  "capabilities": ["search", "chat", "agents"],
   "status": "showcase",
   "category": "workflow",
   "level": "Intermediate",

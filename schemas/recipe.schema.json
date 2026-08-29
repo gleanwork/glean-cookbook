@@ -482,9 +482,26 @@
         ]
       }
     },
+    "capabilities": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "search",
+          "chat",
+          "agents",
+          "indexing",
+          "embed",
+          "tools",
+          "mcp",
+          "workflows"
+        ]
+      }
+    },
     "status": {
       "type": "string",
-      "enum": ["showcase", "production-pattern"]
+      "enum": ["quickstart", "showcase", "production-pattern"]
     },
     "category": {
       "type": "string",
@@ -769,9 +786,15 @@
       "default": false,
       "type": "boolean"
     },
+    "visibility": {
+      "default": "public",
+      "description": "Preview recipes remain available to the developer site for query-string testing but are omitted from public discovery and cookbook plugin output.",
+      "type": "string",
+      "enum": ["public", "preview"]
+    },
     "hidden": {
       "default": false,
-      "description": "When true, the recipe is not customer-ready and is omitted from the developer docs site, cookbook plugin, and GitHub README.",
+      "description": "When true, the recipe is not generated for the developer docs site, cookbook plugin, or GitHub README.",
       "type": "boolean"
     },
     "tags": {
@@ -788,6 +811,7 @@
     "title",
     "description",
     "surfaces",
+    "capabilities",
     "status",
     "category",
     "level",

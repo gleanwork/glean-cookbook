@@ -9,6 +9,7 @@
     "caption": "Grounded draft answers stay behind a human review gate."
   },
   "surfaces": ["platform-api"],
+  "capabilities": ["chat", "workflows"],
   "status": "showcase",
   "category": "workflow",
   "level": "Intermediate",
