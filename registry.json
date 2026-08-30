@@ -2915,7 +2915,7 @@
     "buildMethod": "scaffold",
     "languages": ["typescript"],
     "prerequisites": [
-      "Node 20 or newer",
+      "Node 20.19 or newer, Node 22.13 or newer, or Node 24 or newer",
       "A Glean instance with content indexed",
       "Your Glean backend URL, such as https://acme-be.glean.com",
       "A tenant that permits this public OAuth client and SEARCH scope through DCR; an administrator-provisioned OAuth client or user-scoped SEARCH token is the fallback",
