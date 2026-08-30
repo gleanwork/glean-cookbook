@@ -111,9 +111,18 @@ export async function discoverOAuth(backend, request = requestJson) {
 }
 
 async function registerClient(backend, metadata, redirectUri) {
-  if (process.env.GLEAN_OAUTH_CLIENT_ID)
-    return process.env.GLEAN_OAUTH_CLIENT_ID;
   const state = readState(backend);
+  const configuredClientId = process.env.GLEAN_OAUTH_CLIENT_ID?.trim();
+  if (configuredClientId) {
+    const preservesExistingGrant =
+      !state.client_id || state.client_id === configuredClientId;
+    writeState(backend, {
+      ...(preservesExistingGrant ? state : {}),
+      client_id: configuredClientId,
+      redirect_uri: redirectUri,
+    });
+    return configuredClientId;
+  }
   if (state.client_id && state.redirect_uri === redirectUri)
     return state.client_id;
   if (!metadata.registration_endpoint) {
@@ -256,11 +265,23 @@ export async function storedToken(backend, metadata, requiredScopes = []) {
   if (state.access_token && state.expires_at > Math.floor(Date.now() / 1000)) {
     return state.access_token;
   }
-  if (!state.refresh_token || !state.client_id) return undefined;
+
+  const configuredClientId = process.env.GLEAN_OAUTH_CLIENT_ID?.trim();
+  if (
+    state.client_id &&
+    configuredClientId &&
+    state.client_id !== configuredClientId
+  ) {
+    return undefined;
+  }
+  const clientId = state.client_id ?? configuredClientId;
+  if (!state.refresh_token || !clientId) return undefined;
+
+  writeState(backend, { ...state, client_id: clientId });
   const tokens = await exchange(metadata, {
     grant_type: 'refresh_token',
     refresh_token: state.refresh_token,
-    client_id: state.client_id,
+    client_id: clientId,
   });
   return persistTokens(backend, tokens);
 }

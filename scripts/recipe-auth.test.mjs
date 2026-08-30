@@ -190,6 +190,68 @@ test('refreshes an expired cached OAuth token', async () => {
   }
 });
 
+test('refreshes a provisioned-client grant and persists its client id', async () => {
+  const stateRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'recipe-auth-state-'),
+  );
+  const previousStateRoot = process.env.XDG_STATE_HOME;
+  const previousClientId = process.env.GLEAN_OAUTH_CLIENT_ID;
+  process.env.XDG_STATE_HOME = stateRoot;
+  process.env.GLEAN_OAUTH_CLIENT_ID = 'provisioned-client';
+  const backend = 'https://acme-be.glean.com';
+  const stateDirectory = path.join(stateRoot, 'glean-cookbook');
+  const statePath = path.join(stateDirectory, 'acme-be.glean.com.json');
+  fs.mkdirSync(stateDirectory, { recursive: true });
+  fs.writeFileSync(
+    statePath,
+    JSON.stringify({
+      refresh_token: 'refresh-token',
+      expires_at: 0,
+      scope: 'search offline_access',
+    }),
+  );
+  const server = http.createServer((request, response) => {
+    let body = '';
+    request.setEncoding('utf8');
+    request.on('data', (chunk) => {
+      body += chunk;
+    });
+    request.on('end', () => {
+      assert.equal(
+        new URLSearchParams(body).get('client_id'),
+        'provisioned-client',
+      );
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.end(
+        JSON.stringify({ access_token: 'fresh-token', expires_in: 3600 }),
+      );
+    });
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const port = server.address().port;
+    assert.equal(
+      await storedToken(
+        backend,
+        { token_endpoint: `http://127.0.0.1:${port}/token` },
+        ['search'],
+      ),
+      'fresh-token',
+    );
+    assert.equal(
+      JSON.parse(fs.readFileSync(statePath, 'utf8')).client_id,
+      'provisioned-client',
+    );
+  } finally {
+    server.close();
+    if (previousStateRoot === undefined) delete process.env.XDG_STATE_HOME;
+    else process.env.XDG_STATE_HOME = previousStateRoot;
+    if (previousClientId === undefined)
+      delete process.env.GLEAN_OAUTH_CLIENT_ID;
+    else process.env.GLEAN_OAUTH_CLIENT_ID = previousClientId;
+  }
+});
+
 test('does not reuse a cached token missing the recipe scopes', async () => {
   const stateRoot = fs.mkdtempSync(
     path.join(os.tmpdir(), 'recipe-auth-state-'),
