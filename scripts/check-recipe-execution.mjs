@@ -199,6 +199,17 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
     ? fs.readFileSync(path.join(absoluteTarget, '.gitignore'), 'utf8')
     : '';
   for (const auth of execution.auth) {
+    if (
+      auth.kind === 'oauth-with-token-fallback' &&
+      auth.setupCommand?.includes('--email') &&
+      !fs.existsSync(
+        path.join(absoluteTarget, 'scripts', 'tenant-discovery.mjs'),
+      )
+    ) {
+      errors.push(
+        `${recipe.id} ${location}: email-based OAuth login does not ship the shared tenant-discovery runtime`,
+      );
+    }
     if (auth.configFile?.startsWith('.env') && !gitignore.includes('.env')) {
       errors.push(
         `${recipe.id} ${location}: ${auth.configFile} is not ignored`,

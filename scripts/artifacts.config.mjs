@@ -29,7 +29,7 @@ function executionTarget(recipe, execution) {
     ?.repoPath;
 }
 
-async function oauthScaffolds({ repoRoot }) {
+async function oauthScaffoldRoots({ repoRoot }, includeRecipeOwned) {
   const targets = new Set(['plugin/shared/cookbook']);
   // Any scaffold already shipping the runtime is a target, whatever its auth
   // kind says -- the web-sdk ones call `configure` but declare `browser-cookie`,
@@ -70,10 +70,24 @@ async function oauthScaffolds({ repoRoot }) {
           `${recipe.id}: cannot resolve the scaffold that owns its OAuth execution contract`,
         );
       }
-      if (!hasRecipeOwnedOAuth(repoRoot, target)) targets.add(target);
+      if (includeRecipeOwned || !hasRecipeOwnedOAuth(repoRoot, target)) {
+        targets.add(target);
+      }
     }
   }
-  return [...targets].map((target) => `${target}/scripts/glean-auth.mjs`);
+  return [...targets];
+}
+
+async function oauthScaffolds(context) {
+  return (await oauthScaffoldRoots(context, false)).map(
+    (target) => `${target}/scripts/glean-auth.mjs`,
+  );
+}
+
+async function tenantDiscoveryScaffolds(context) {
+  return (await oauthScaffoldRoots(context, true)).map(
+    (target) => `${target}/scripts/tenant-discovery.mjs`,
+  );
 }
 
 async function uiScaffolds({ repoRoot }) {
@@ -138,6 +152,13 @@ export default defineArtifacts([
       fs.readFile(path.join(repoRoot, 'scripts/recipe-auth.mjs')),
     targets: oauthScaffolds,
     mode: 0o755,
+  },
+  {
+    id: 'tenant-discovery',
+    content: ({ repoRoot }) =>
+      fs.readFile(path.join(repoRoot, 'scripts/tenant-discovery.mjs')),
+    targets: tenantDiscoveryScaffolds,
+    mode: 0o644,
   },
   {
     id: 'cookbook-styles',

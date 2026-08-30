@@ -10,7 +10,8 @@ import readline from 'node:readline/promises';
 import { execFile } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
-const DISCOVERY_URL = 'https://app.glean.com/config/search';
+import { discoverBackend } from './tenant-discovery.mjs';
+
 const CLIENT_NAME = 'Glean Cookbook';
 const CALLBACK_PORT = 53682;
 
@@ -31,44 +32,6 @@ async function requestJson(url, init) {
   } catch {
     fail(`${url} returned invalid JSON`);
   }
-}
-
-export async function discoverBackend(email, request = requestJson) {
-  const normalized = email.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(normalized)) {
-    fail('Enter a valid work email address.');
-  }
-
-  const config = await request(DISCOVERY_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: normalized }),
-  });
-  const queryURL = config?.search_config?.queryURL;
-  if (typeof queryURL !== 'string') {
-    fail('Glean tenant discovery returned no search_config.queryURL.');
-  }
-
-  let hostname;
-  try {
-    hostname = new URL(queryURL).hostname.toLowerCase();
-  } catch {
-    fail('Glean tenant discovery returned an invalid queryURL.');
-  }
-  // Discovery returns either the backend host already (`acme-be.glean.com`) or
-  // the legacy frontend one (`acme.askscio.com`). Appending `-be` to the first
-  // would ask for `acme-be-be.glean.com`, which does not resolve.
-  const match = hostname.match(
-    /^([a-z0-9-]+?)(-be)?\.(?:glean\.com|askscio\.com)$/u,
-  );
-  if (!match || match[1] === 'app') {
-    fail(
-      `No customer Glean tenant was found for ${normalized}. Check the email and try again.`,
-    );
-  }
-
-  const instance = match[1];
-  return { instance, backend: `https://${instance}-be.glean.com` };
 }
 
 function stateFile(backend) {
@@ -382,6 +345,12 @@ async function askEmail() {
   }
 }
 
+export function selectBackend(args, configuredBackend) {
+  if (args.backend) return args.backend;
+  if (args.email) return undefined;
+  return configuredBackend;
+}
+
 export async function run(argv = process.argv.slice(2), cwd = process.cwd()) {
   const args = parseArgs(argv);
   if (!['configure', 'login', 'status', 'clear'].includes(args.command)) {
@@ -404,7 +373,7 @@ export async function run(argv = process.argv.slice(2), cwd = process.cwd()) {
   const configuredBackend = currentEnv
     .match(new RegExp(`^${escapedBackendVariable}=(.+)$`, 'mu'))?.[1]
     ?.trim();
-  let backend = args.backend ?? configuredBackend;
+  let backend = selectBackend(args, configuredBackend);
   let instance;
   if (!backend) {
     const discovered = await discoverBackend(args.email ?? (await askEmail()));
