@@ -2884,7 +2884,7 @@
           "description": "Give the Glean client an async OAuth token provider, a finite timeout per attempt, and bounded exponential backoff. A user-scoped SEARCH token remains an explicit fallback when OAuth is unavailable.",
           "source": "src/client.ts",
           "language": "typescript",
-          "code": "import 'dotenv/config';\nimport { Glean, type SDKOptions } from '@gleanwork/api-client';\nimport type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';\nimport { createOAuthTokenProvider } from './oauth.js';\n\nconst LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);\n\nexport function createGleanClient() {\n  const serverURL = process.env.GLEAN_SERVER_URL?.trim();\n  if (!serverURL) {\n    throw new Error('Set GLEAN_SERVER_URL in your environment or .env file.');\n  }\n\n  const server = new URL(serverURL);\n  if (server.protocol !== 'https:' && !LOOPBACK_HOSTS.has(server.hostname)) {\n    throw new Error('GLEAN_SERVER_URL must use HTTPS.');\n  }\n\n  const staticToken = process.env.GLEAN_API_TOKEN?.trim();\n  const options = {\n    serverURL: server.href,\n    apiToken: staticToken || createOAuthTokenProvider(server),\n    includeExperimental: true,\n    timeoutMs: 30_000,\n    retryConfig: {\n      strategy: 'backoff',\n      backoff: {\n        initialInterval: 500,\n        maxInterval: 5_000,\n        exponent: 2,\n        maxElapsedTime: 90_000,\n      },\n      retryConnectionErrors: true,\n    },\n  } satisfies SDKOptions & XGleanOptions;\n\n  return new Glean(options);\n}\n"
+          "code": "import 'dotenv/config';\nimport { Glean, type SDKOptions } from '@gleanwork/api-client';\nimport type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';\nimport { createOAuthTokenProvider } from './oauth.js';\nimport { parseGleanServerURL } from './server-url.js';\n\nexport function createGleanClient() {\n  const serverURL = process.env.GLEAN_SERVER_URL?.trim();\n  if (!serverURL) {\n    throw new Error('Set GLEAN_SERVER_URL in your environment or .env file.');\n  }\n\n  const server = parseGleanServerURL(serverURL, { allowLoopback: true });\n\n  const staticToken = process.env.GLEAN_API_TOKEN?.trim();\n  const options = {\n    serverURL: server.href,\n    apiToken: staticToken || createOAuthTokenProvider(server),\n    includeExperimental: true,\n    timeoutMs: 30_000,\n    retryConfig: {\n      strategy: 'backoff',\n      backoff: {\n        initialInterval: 500,\n        maxInterval: 5_000,\n        exponent: 2,\n        maxElapsedTime: 90_000,\n      },\n      retryConnectionErrors: true,\n    },\n  } satisfies SDKOptions & XGleanOptions;\n\n  return new Glean(options);\n}\n"
         },
         {
           "title": "Discover filters, then search",
@@ -2917,7 +2917,7 @@
     "prerequisites": [
       "Node 20.19 or newer, Node 22.13 or newer, or Node 24 or newer",
       "A Glean instance with content indexed",
-      "Your Glean backend URL, such as https://acme-be.glean.com",
+      "A work email for tenant discovery and OAuth sign-in",
       "A tenant that permits this public OAuth client and SEARCH scope through DCR; an administrator-provisioned OAuth client or user-scoped SEARCH token is the fallback",
       "Experimental Platform APIs enabled through the SDK's includeExperimental constructor option, which the scaffold sets automatically"
     ],
@@ -2954,8 +2954,8 @@
       },
       {
         "title": "Sign in with OAuth",
-        "description": "Discovers the tenant's OAuth server, dynamically registers a public client when policy allows it, and completes Authorization Code with PKCE for SEARCH and offline_access. Use GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN for an explicit user-scoped token fallback.",
-        "command": "cd search-with-discovered-filters && npm run login -- --server-url \"<server-url>\"",
+        "description": "Uses your work email to discover the tenant through app.glean.com/config/search, dynamically registers a public client when policy allows it, and completes Authorization Code with PKCE for SEARCH and offline_access. Use --server-url only as an override, GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN for an explicit user-scoped token fallback.",
+        "command": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\"",
         "kind": "authenticate"
       },
       {
@@ -2975,8 +2975,8 @@
       "type": "cli",
       "questions": [
         {
-          "id": "server-url",
-          "prompt": "What is your Glean backend URL, such as https://acme-be.glean.com?"
+          "id": "work-email",
+          "prompt": "What is your work email? It is used only to discover your Glean tenant."
         },
         {
           "id": "search-query",
@@ -2987,7 +2987,7 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["SEARCH"],
-          "setupCommand": "cd search-with-discovered-filters && npm run login -- --server-url \"<server-url>\"",
+          "setupCommand": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\"",
           "configFile": ".env",
           "backendVariable": "GLEAN_SERVER_URL",
           "credentialVariable": "GLEAN_API_TOKEN"
@@ -3027,7 +3027,7 @@
         "category": "search"
       }
     ],
-    "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's Glean backend URL and one topic they know exists in their Glean instance. Run the fixture tests, sign in through DCR OAuth with SEARCH and offline_access, run live verification, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() for catalog and query-backed discovery, then pass a returned datasource and either a suggested filter value or an explicit custom field/value to glean.search.query(). Enable experimental features through the SDK's documented includeExperimental constructor option. Do not recreate the SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
+    "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in through DCR OAuth with SEARCH and offline_access, run live verification, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() for catalog and query-backed discovery, then pass a returned datasource and either a suggested filter value or an explicit custom field/value to glean.search.query(). Enable experimental features through the SDK's documented includeExperimental constructor option. Do not recreate the SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
     "llmContext": "Use openid-client for OAuth discovery, DCR, Authorization Code with PKCE, and refresh. Pass its refreshable callback to @gleanwork/api-client's apiToken option; Glean-issued OAuth tokens need no X-Glean-Auth-Type. If DCR cannot grant SEARCH, use an administrator-provisioned public client or explicit user-scoped SEARCH token. Use typed glean.search.listFilters() and glean.search.query(), with includeExperimental enabled. Catalog discovery returns datasource IDs and common fields. Query-backed discovery accepts one datasource and returns bounded, non-exhaustive suggestions. Apply returned values unchanged with EQUALS, but treat discovery as advisory and allow explicit nonblank custom fields. The caller's credentials remain the permission boundary. Let the SDK validate responses and surface typed errors; display warnings, request IDs, Retry-After guidance, and next_cursor without logging credentials or storing results.",
     "goDependency": false,
     "featured": true,

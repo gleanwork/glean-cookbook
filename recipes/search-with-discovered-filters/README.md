@@ -10,11 +10,11 @@ The Platform Search APIs are experimental, so the API client also sets `includeE
 
 ```bash
 npm install
-npm run login -- --server-url "https://<instance>-be.glean.com"
+npm run login -- --email "you@example.com"
 npm start -- --query "quarterly planning"
 ```
 
-The login command requests `openid offline_access SEARCH`. It stores the public client registration and OAuth access and refresh tokens outside the project in a mode-`0600` state file; `.env` receives only the non-secret server URL. The SDK's async `apiToken` callback reads or refreshes the access token for each API request.
+The login command resolves your work email through `https://app.glean.com/config/search`, normalizes the returned tenant to its backend URL, and requests `openid offline_access SEARCH`. Use `--server-url` only when you need to override discovery. It stores the public client registration and OAuth access and refresh tokens outside the project in a mode-`0600` state file; `.env` receives only the non-secret server URL. The SDK's async `apiToken` callback reads or refreshes the access token for each API request.
 
 DCR is controlled by tenant policy. If DCR rejects this client, redirect URI, or scope, set `GLEAN_OAUTH_CLIENT_ID` to an administrator-provisioned public client. To complete the tutorial without OAuth, set `GLEAN_SERVER_URL` and a user-scoped `GLEAN_API_TOKEN` with only `SEARCH`, then skip the login command. Glean-issued OAuth tokens do not need `X-Glean-Auth-Type`.
 

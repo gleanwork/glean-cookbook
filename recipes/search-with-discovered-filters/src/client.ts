@@ -2,8 +2,7 @@ import 'dotenv/config';
 import { Glean, type SDKOptions } from '@gleanwork/api-client';
 import type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';
 import { createOAuthTokenProvider } from './oauth.js';
-
-const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);
+import { parseGleanServerURL } from './server-url.js';
 
 export function createGleanClient() {
   const serverURL = process.env.GLEAN_SERVER_URL?.trim();
@@ -11,10 +10,7 @@ export function createGleanClient() {
     throw new Error('Set GLEAN_SERVER_URL in your environment or .env file.');
   }
 
-  const server = new URL(serverURL);
-  if (server.protocol !== 'https:' && !LOOPBACK_HOSTS.has(server.hostname)) {
-    throw new Error('GLEAN_SERVER_URL must use HTTPS.');
-  }
+  const server = parseGleanServerURL(serverURL, { allowLoopback: true });
 
   const staticToken = process.env.GLEAN_API_TOKEN?.trim();
   const options = {
