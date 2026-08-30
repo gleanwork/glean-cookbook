@@ -191,6 +191,13 @@ distributes the shared authentication and local-server runtimes. Those copies ar
 is scaffolded one directory at a time with `tiged`, so root files would never reach it. CI evaluates
 the plan in read-only mode and fails if any output is stale.
 
+Authentication infrastructure belongs to that shared runtime, not to individual recipes.
+`scripts/recipe-auth.mjs` is the cross-language Cookbook CLI for `configure`, `login`, `status`, and
+`clear`; `scripts/tenant-discovery.mjs` owns work-email discovery through
+`https://app.glean.com/config/search`. Recipe-owned OAuth adapters may import the generated discovery
+module, but must not reimplement tenant discovery. Add general authentication behavior at this seam
+and run `mise exec -- pnpm build:artifacts` so every affected scaffold receives it.
+
 Primitives are presentational and carry no copy. What an empty state _says_ is a per-recipe decision;
 how it _looks_ is not.
 
