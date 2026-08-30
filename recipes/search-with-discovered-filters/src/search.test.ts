@@ -4,8 +4,8 @@ import { once } from 'node:events';
 import { createServer } from 'node:http';
 import readline from 'node:readline/promises';
 import { PassThrough } from 'node:stream';
-import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { test, vi } from 'vitest';
 import {
   ConnectionError,
   RequestTimeoutError,
@@ -331,8 +331,8 @@ void test('passes an explicit custom field through to the Search API', async () 
   });
 });
 
-void test('rejects zero instead of treating it as the last menu item', async (context) => {
-  context.mock.method(console, 'log', () => {});
+void test('rejects zero instead of treating it as the last menu item', async () => {
+  const logMock = vi.spyOn(console, 'log').mockImplementation(() => {});
   const input = new PassThrough();
   const output = new PassThrough();
   const terminal = readline.createInterface({ input, output });
@@ -354,8 +354,12 @@ void test('rejects zero instead of treating it as the last menu item', async (co
     terminal,
   );
 
-  assert.equal(await selection, 'jira');
-  terminal.close();
+  try {
+    assert.equal(await selection, 'jira');
+  } finally {
+    logMock.mockRestore();
+    terminal.close();
+  }
 });
 
 void test('rejects a datasource that discovery did not return', async () => {

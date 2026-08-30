@@ -4,12 +4,12 @@ import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import test from 'node:test';
+import { test, vi } from 'vitest';
 import { createGleanClient } from './client.js';
 import { createOAuthTokenProvider, loginWithOAuth } from './oauth.js';
 import { oauthStateFile, readOAuthState } from './oauth-state.js';
 
-void test('registers with DCR and refreshes through the SDK token callback', async (context) => {
+void test('registers with DCR and refreshes through the SDK token callback', async () => {
   const originalFetch = globalThis.fetch;
   const originalStateHome = process.env.XDG_STATE_HOME;
   const originalClientId = process.env.GLEAN_OAUTH_CLIENT_ID;
@@ -113,21 +113,21 @@ void test('registers with DCR and refreshes through the SDK token callback', asy
   const address = server.address();
   assert.ok(address && typeof address !== 'string');
 
-  context.mock.method(
-    globalThis,
-    'fetch',
-    async (input: RequestInfo | URL, init?: RequestInit) => {
-      const request =
-        input instanceof Request ? input : new Request(input, init);
-      const url = new URL(request.url);
-      if (url.hostname === 'acme-be.glean.com') {
-        url.protocol = 'http:';
-        url.hostname = '127.0.0.1';
-        url.port = String(address.port);
-      }
-      return originalFetch(new Request(url, request));
-    },
-  );
+  const fetchMock = vi
+    .spyOn(globalThis, 'fetch')
+    .mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const request =
+          input instanceof Request ? input : new Request(input, init);
+        const url = new URL(request.url);
+        if (url.hostname === 'acme-be.glean.com') {
+          url.protocol = 'http:';
+          url.hostname = '127.0.0.1';
+          url.port = String(address.port);
+        }
+        return originalFetch(new Request(url, request));
+      },
+    );
 
   const issuer = new URL('https://acme-be.glean.com');
   try {
@@ -191,6 +191,7 @@ void test('registers with DCR and refreshes through the SDK token callback', asy
       assert.equal(mode, 0o600);
     }
   } finally {
+    fetchMock.mockRestore();
     server.close();
     await once(server, 'close');
     await rm(stateHome, { recursive: true, force: true });
