@@ -8,6 +8,7 @@
     "build/cursor/cookbook/scripts/glean-auth.mjs",
     "build/cursor/cookbook/scripts/resolve-backend.mjs",
     "build/cursor/cookbook/scripts/scaffold-recipe.mjs",
+    "build/cursor/cookbook/scripts/tenant-discovery.mjs",
     "build/cursor/cookbook/skills/browse-cookbook/SKILL.md",
     "build/cursor/cookbook/skills/cookbook-conventions/SKILL.md",
     "build/cursor/cookbook/skills/customer-360/SKILL.md",
