@@ -1,9 +1,11 @@
 import {
+  ConnectionError,
   GleanBaseError,
   PlatformProblemDetailError,
+  RequestTimeoutError,
 } from '@gleanwork/api-client/models/errors';
 
-/** Format the SDK's typed errors without reimplementing its HTTP handling. */
+/** Converts typed SDK errors into actionable CLI output. */
 export function formatSdkError(error: unknown): string {
   if (error instanceof PlatformProblemDetailError) {
     const retryAfter = error.headers.get('retry-after');
@@ -18,6 +20,12 @@ export function formatSdkError(error: unknown): string {
   }
   if (error instanceof GleanBaseError) {
     return `HTTP ${error.statusCode}: ${error.message}`;
+  }
+  if (error instanceof RequestTimeoutError) {
+    return 'The request timed out. Try again or increase the SDK timeout.';
+  }
+  if (error instanceof ConnectionError) {
+    return `Could not reach Glean: ${error.message}`;
   }
   return error instanceof Error ? error.message : String(error);
 }

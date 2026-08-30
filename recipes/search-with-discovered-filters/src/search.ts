@@ -1,126 +1,69 @@
-import type { Glean } from '@gleanwork/api-client';
-import type {
-  PlatformDatasourceFilterInfo,
-  PlatformSearchFiltersResponse,
-  PlatformSearchResponse,
-} from '@gleanwork/api-client/models/components';
-
-export type DatasourceFilterInfo = PlatformDatasourceFilterInfo;
-export type SearchFiltersResponse = PlatformSearchFiltersResponse;
-export type SearchResponse = PlatformSearchResponse;
-export type PlatformSearchSdk = Pick<Glean['search'], 'listFilters' | 'query'>;
-
-export interface SelectedFilter {
-  field: string;
-  value: string;
-}
-
-export interface SearchChoices {
-  selectDatasource(
-    datasources: DatasourceFilterInfo[],
-  ): Promise<string> | string;
-  selectFilter(
-    datasource: DatasourceFilterInfo,
-  ): Promise<SelectedFilter | undefined> | SelectedFilter | undefined;
-}
-
-export interface SearchFlowResult {
-  catalog: SearchFiltersResponse;
-  suggestions: SearchFiltersResponse;
-  datasource: string;
-  filter?: SelectedFilter;
-  response: SearchResponse;
-}
-
-function requireNonEmpty(value: string, name: string): string {
-  const normalized = value.trim();
-  if (!normalized) throw new Error(`${name} must not be blank.`);
-  return normalized;
-}
-
-function selectedDatasource(
-  response: SearchFiltersResponse,
-  datasource: string,
-): DatasourceFilterInfo {
-  const selected = response.datasources.find(
-    (candidate) => candidate.datasource === datasource,
-  );
-  if (!selected) {
-    throw new Error(
-      `Datasource "${datasource}" was not returned by Search Filters.`,
-    );
-  }
-  return selected;
-}
-
-function validateFilter(
-  datasource: DatasourceFilterInfo,
-  filter: SelectedFilter | undefined,
-): SelectedFilter | undefined {
-  if (!filter) return undefined;
-  const field = datasource.filters.find(
-    (candidate) => candidate.field === filter.field,
-  );
-  if (!field) {
-    throw new Error(
-      `Field "${filter.field}" was not returned for ${datasource.datasource}.`,
-    );
-  }
-  if (!field.operators.includes('EQUALS')) {
-    throw new Error(`Field "${filter.field}" does not support EQUALS.`);
-  }
-  return {
-    field: requireNonEmpty(filter.field, 'filter field'),
-    value: requireNonEmpty(filter.value, 'filter value'),
-  };
-}
+import {
+  chooseDatasource,
+  chooseFilter,
+  createTerminal,
+  parseCliOptions,
+  printSearchResponse,
+} from './cli.js';
+import { createGleanClient } from './client.js';
+import { formatSdkError } from './errors.js';
 
 /**
- * Compose the official SDK's discovery and Search methods without recreating
- * its transport, generated request types, response validation, or errors.
+ * Lists visible datasources and common filter fields, requests query-specific
+ * values for one datasource, then searches with the selected filter.
+ *
+ * @remarks
+ * Filter discovery returns a best-effort catalog and may omit valid fields.
+ * Query-specific values are bounded suggestions, not guaranteed matches. The
+ * final Search request still enforces the caller's permissions.
  */
-export async function runSearchFlow(
-  search: PlatformSearchSdk,
-  query: string,
-  choices: SearchChoices,
-): Promise<SearchFlowResult> {
-  const normalizedQuery = requireNonEmpty(query, 'query');
-  const { result: catalog } = await search.listFilters();
-  if (catalog.datasources.length === 0) {
-    throw new Error(
-      'Search Filters returned no datasources visible to this user.',
+async function main() {
+  const cliOptions = parseCliOptions();
+  const glean = createGleanClient();
+  const terminal = createTerminal();
+
+  try {
+    const { result: catalog } = await glean.search.listFilters();
+    const datasource = await chooseDatasource(
+      catalog.datasources,
+      cliOptions.datasource,
+      cliOptions.autoSelect,
+      terminal,
     );
+
+    const { result: suggestions } = await glean.search.listFilters(
+      [datasource],
+      cliOptions.query,
+    );
+    const filterInfo = suggestions.datasources.find(
+      (candidate) => candidate.datasource === datasource,
+    );
+    if (!filterInfo) {
+      throw new Error(
+        `No filter metadata for "${datasource}" (request ${suggestions.request_id}).`,
+      );
+    }
+
+    const filter = await chooseFilter(
+      filterInfo,
+      cliOptions.filter,
+      cliOptions.autoSelect,
+      terminal,
+    );
+    const searchResponse = await glean.search.query({
+      query: cliOptions.query,
+      page_size: 10,
+      datasources: [datasource],
+      ...(filter ? { filters: [filter] } : {}),
+    });
+
+    printSearchResponse(searchResponse, datasource, filter);
+  } finally {
+    terminal?.close();
   }
-
-  const datasource = await choices.selectDatasource(catalog.datasources);
-  selectedDatasource(catalog, datasource);
-
-  const { result: suggestions } = await search.listFilters(
-    [datasource],
-    normalizedQuery,
-  );
-  const suggestionDatasource = selectedDatasource(suggestions, datasource);
-  const filter = validateFilter(
-    suggestionDatasource,
-    await choices.selectFilter(suggestionDatasource),
-  );
-
-  const response = await search.query({
-    query: normalizedQuery,
-    page_size: 10,
-    datasources: [datasource],
-    ...(filter
-      ? {
-          filters: [
-            {
-              field: filter.field,
-              values: [filter.value],
-              operator: 'EQUALS',
-            },
-          ],
-        }
-      : {}),
-  });
-
-  return { catalog, suggestions, datasource, filter, response };
 }
+
+main().catch((error: unknown) => {
+  console.error(formatSdkError(error));
+  process.exitCode = 1;
+});
