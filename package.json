@@ -18,6 +18,7 @@
     "release": "release-it",
     "snippets:check": "md-code check && node scripts/check-prompt-snippets.mjs",
     "skill-context:check": "node scripts/check-skill-context.mjs",
+    "install-scripts:check": "node scripts/check-install-scripts.mjs",
     "recipe-commands:check": "node scripts/check-recipe-commands.mjs",
     "snippets:sync": "md-code sync",
     "test": "node --test \"scripts/**/*.test.mjs\" && npm run artifacts:check && npm run execution:check",

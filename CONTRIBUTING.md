@@ -68,6 +68,13 @@ clones just that directory (plus repo-root env var docs) into a fresh project.
   `@gleanwork/web-sdk`, `glean-indexing-sdk`) are pinned to an exact released version — no `^`, `~`,
   or `latest`. CI (`pinned-deps`) fails a recipe that isn't, for both npm and Python (including PEP
   723 inline dependencies).
+- **Explicit npm install-script policy.** Every dependency marked with `hasInstallScript` in a
+  recipe's `package-lock.json` must be approved or denied in that recipe's `package.json`
+  `allowScripts` map. Review pending packages with
+  `npm approve-scripts --allow-scripts-pending`; approve only reviewed packages with
+  `npm approve-scripts <package>` so npm pins the installed version, or record a denial with
+  `npm deny-scripts <package>`. Never use `--all` without reviewing each script. Re-run a clean
+  `npm ci` after changing the policy, then run `pnpm install-scripts:check` from the repository root.
 - **Locked transitively.** Python recipes using inline dependencies commit a `<script>.py.lock` from
   `uv lock --script`. An exact direct pin still leaves dependencies-of-dependencies floating; the
   lock pins the full tree with hashes, so a recipe verified months ago still installs what it was
@@ -211,7 +218,8 @@ Every PR runs:
 1. **`validate-registry`** — every `recipe.json` validates against `schemas/recipe.schema.json`, its
    `recipes/{id}/` directory exists, and `registry.json` matches what the recipe files build to.
    Plus an informational re-verification freshness report.
-2. **`pinned-deps`** — every recipe's Glean SDK dependency is pinned to an exact version.
+2. **`pinned-deps`** — every recipe's Glean SDK dependency is pinned to an exact version, and each
+   npm lifecycle script is covered by an explicit pinned approval or denial.
 3. **`recipe-checks`** — each recipe typechecks (`tsc --noEmit`) and lints (`ruff`, `pyright`).
 4. **`format-check`** — Prettier formatting.
 5. **`plugin-build`** — the plugin builds and validates for every target (Claude Code, Cursor,

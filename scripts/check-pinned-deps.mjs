@@ -1,9 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { installScriptPolicyErrors } from './lib/install-script-policy.mjs';
+
 /**
- * Node-side dependency pinning: package.json and requirements.txt, both of
- * which this can read natively.
+ * Node-side dependency policy: exact Glean SDK versions plus explicit
+ * approval or denial of every dependency install script. This also checks
+ * requirements.txt pins, which Node can read natively.
  *
  * Python recipes that declare dependencies inline (PEP 723) are checked by
  * scripts/check_pinned_deps.py instead -- it reads the specifiers uv already
@@ -30,6 +33,7 @@ const GLEAN_SDKS = new Set([
 const RANGE_PREFIX = /^[\^~>=<]/;
 
 let failed = false;
+let checkedInstallScriptPolicies = 0;
 
 function checkPackageJson(label, filePath) {
   const pkg = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -43,6 +47,16 @@ function checkPackageJson(label, filePath) {
       );
     } else {
       console.log(`✓ ${label}: ${name}@${version} pinned`);
+    }
+  }
+
+  const lockfilePath = path.join(path.dirname(filePath), 'package-lock.json');
+  if (fs.existsSync(lockfilePath)) {
+    checkedInstallScriptPolicies += 1;
+    const lockfile = JSON.parse(fs.readFileSync(lockfilePath, 'utf8'));
+    for (const error of installScriptPolicyErrors(pkg, lockfile)) {
+      failed = true;
+      console.error(`✗ ${path.relative(repoRoot, filePath)}: ${error}`);
     }
   }
 }
@@ -112,5 +126,5 @@ if (failed) {
 }
 
 console.log(
-  '\nAll Glean SDK dependencies are pinned to exact released versions.',
+  `\nAll Glean SDK dependencies are pinned, and install-script policies cover ${checkedInstallScriptPolicies} npm lockfile(s).`,
 );
