@@ -26,6 +26,11 @@ mise exec -- pnpm build
 `pnpm build` refreshes both `registry.json` and the plugin's committed output, and CI fails if
 either is stale.
 
+`pnpm test` also discovers every npm package under `recipes/` and `examples/`. It runs `check` when
+a package declares it, otherwise `test`, after installing from that package's own lockfile. Keep
+those packages standalone rather than adding them to a root workspace: users scaffold one recipe
+directory and should exercise the same npm dependency graph that CI does.
+
 ## Setup
 
 ```bash
