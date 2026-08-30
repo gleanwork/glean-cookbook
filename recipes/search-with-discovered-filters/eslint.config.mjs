@@ -4,6 +4,10 @@ export default tseslint.config(
   { ignores: ['eslint.config.mjs'] },
   tseslint.configs.recommendedTypeChecked,
   {
+    files: ['**/*.mjs'],
+    extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
     files: ['**/*.ts'],
     languageOptions: {
       parser: tseslint.parser,
