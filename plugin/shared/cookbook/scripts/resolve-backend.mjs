@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { discoverBackend, discoverOAuth } from './glean-auth.mjs';
+import { discoverOAuth } from './glean-auth.mjs';
+import { discoverBackend } from './tenant-discovery.mjs';
 
 const email = process.argv[2];
 if (!email) {

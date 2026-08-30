@@ -12,8 +12,6 @@ import { pathToFileURL } from 'node:url';
 
 import { discoverBackend } from './tenant-discovery.mjs';
 
-export { discoverBackend } from './tenant-discovery.mjs';
-
 const CLIENT_NAME = 'Glean Cookbook';
 const CALLBACK_PORT = 53682;
 
