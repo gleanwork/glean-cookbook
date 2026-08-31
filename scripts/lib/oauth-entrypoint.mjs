@@ -8,9 +8,14 @@ export function hasRecipeOwnedOAuth(repoRoot, target) {
   const packageFile = path.join(repoRoot, target, 'package.json');
   if (!fs.existsSync(packageFile)) return false;
 
-  const login = readJsonc(packageFile).scripts?.login;
+  const packageJson = readJsonc(packageFile);
+  const login = packageJson.scripts?.login;
   if (typeof login !== 'string' || login.includes('glean-auth.mjs')) {
     return false;
+  }
+
+  if (/(?:^|\s)glean-auth\s+login(?:\s|$)/u.test(login)) {
+    return typeof packageJson.dependencies?.['@gleanwork/auth'] === 'string';
   }
 
   const entrypoint = login

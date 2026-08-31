@@ -4,11 +4,11 @@
   "description": "Use the official TypeScript API client to discover the datasources and common filter fields available in your Glean instance, then apply a returned selection to permission-aware Platform Search.",
   "sidebarLabel": "Search with filters",
   "codeWalkthrough": {
-    "intro": "The runnable scaffold uses Glean OAuth by default, gives the API client a refreshable token provider, and keeps the Search sequence explicit. Supporting modules handle the loopback redirect, private token storage, CLI prompts, and error presentation.",
+    "intro": "The runnable scaffold uses the published Glean auth package for tenant discovery and refreshable OAuth credentials, gives that token provider to the official API client, and keeps the Search sequence explicit.",
     "examples": [
       {
         "title": "Configure the API client",
-        "description": "Give the Glean client an async OAuth token provider, a finite timeout per attempt, and bounded exponential backoff. A user-scoped SEARCH token remains an explicit fallback when OAuth is unavailable.",
+        "description": "Resolve the backend from work email or an explicit server URL, then give the Glean client the auth package's async token provider, a finite timeout per attempt, and bounded exponential backoff. A user-scoped SEARCH token remains an explicit fallback.",
         "source": "src/client.ts",
         "language": "typescript"
       },
@@ -16,12 +16,6 @@
         "title": "Discover filters, then search",
         "description": "Keep the API sequence explicit: list visible fields, request query-specific suggestions for one datasource, and pass the selected filter to Search.",
         "source": "src/search.ts",
-        "language": "typescript"
-      },
-      {
-        "title": "Under the hood: DCR and token refresh",
-        "description": "Use openid-client for OAuth server discovery, Dynamic Client Registration, Authorization Code with PKCE, token validation, and refresh. Client registration plus OAuth access and refresh tokens stay outside the project.",
-        "source": "src/oauth.ts",
         "language": "typescript"
       }
     ]
@@ -42,10 +36,10 @@
   "buildMethod": "scaffold",
   "languages": ["typescript"],
   "prerequisites": [
-    "Node 20 or newer",
+    "Node 22.12.0 or newer",
     "A Glean instance with content indexed",
-    "Your Glean backend URL, such as https://acme-be.glean.com",
-    "A tenant that permits this public OAuth client and SEARCH scope through DCR; an administrator-provisioned OAuth client or user-scoped SEARCH token is the fallback",
+    "Your work email, or the complete Glean backend origin shown under Server instance (QE)",
+    "A tenant that permits this public OAuth client and search scope through DCR; an administrator-provisioned OAuth client or user-scoped SEARCH token is the fallback",
     "Experimental Platform APIs enabled through the SDK's includeExperimental constructor option, which the scaffold sets automatically"
   ],
   "demoQueries": [
@@ -64,7 +58,7 @@
   "steps": [
     {
       "title": "Scaffold the project",
-      "description": "Copies the runnable TypeScript CLI, OAuth client, secure token store, and fixture tests into a new directory.",
+      "description": "Copies the runnable TypeScript Search CLI and fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
       "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/search-with-discovered-filters search-with-discovered-filters",
       "kind": "scaffold"
     },
@@ -81,20 +75,20 @@
     },
     {
       "title": "Sign in with OAuth",
-      "description": "Discovers the tenant's OAuth server, dynamically registers a public client when policy allows it, and completes Authorization Code with PKCE for SEARCH and offline_access. Use GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN for an explicit user-scoped token fallback.",
-      "command": "cd search-with-discovered-filters && npm run login -- --server-url \"<server-url>\"",
+      "description": "Discovers your Glean backend from work email, completes Authorization Code with PKCE for search and offline_access, and stores refreshable credentials outside the project. Use --server-url for an explicit backend, GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN as a user-scoped fallback.",
+      "command": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\"",
       "kind": "authenticate"
     },
     {
       "title": "Verify against your instance",
       "description": "Uses your topic to discover current filters, automatically selects a returned datasource and suggested field value when available, then validates the Search response shape and pagination state.",
-      "command": "cd search-with-discovered-filters && npm run verify -- --query \"<search-query>\"",
+      "command": "cd search-with-discovered-filters && npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
       "kind": "verify-live"
     },
     {
       "title": "Discover filters and search",
       "description": "Runs the non-interactive CLI path, selecting the first returned datasource and suggested field value, then prints results, warnings, pagination state, and request IDs. Omit --auto-select when running interactively to choose them yourself.",
-      "command": "cd search-with-discovered-filters && npm start -- --query \"<search-query>\" --auto-select",
+      "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select",
       "kind": "run"
     }
   ],
@@ -102,8 +96,8 @@
     "type": "cli",
     "questions": [
       {
-        "id": "server-url",
-        "prompt": "What is your Glean backend URL, such as https://acme-be.glean.com?"
+        "id": "work-email",
+        "prompt": "What is your work email address?"
       },
       {
         "id": "search-query",
@@ -113,21 +107,19 @@
     "auth": [
       {
         "kind": "oauth-with-token-fallback",
-        "scopes": ["SEARCH"],
-        "setupCommand": "cd search-with-discovered-filters && npm run login -- --server-url \"<server-url>\"",
-        "configFile": ".env",
-        "backendVariable": "GLEAN_SERVER_URL",
+        "scopes": ["search"],
+        "setupCommand": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\"",
         "credentialVariable": "GLEAN_API_TOKEN"
       }
     ],
     "verification": {
       "kind": "automated",
-      "command": "cd search-with-discovered-filters && npm run verify -- --query \"<search-query>\"",
+      "command": "cd search-with-discovered-filters && npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
       "expectedDuration": "about 1 minute after sign-in",
       "startsOwnServer": false
     },
     "run": {
-      "command": "cd search-with-discovered-filters && npm start -- --query \"<search-query>\" --auto-select",
+      "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select",
       "userBrowser": false
     }
   },
@@ -154,8 +146,8 @@
       "category": "search"
     }
   ],
-  "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's Glean backend URL and one topic they know exists in their Glean instance. Run the fixture tests, sign in through DCR OAuth with SEARCH and offline_access, run live verification, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() for catalog and query-backed discovery, then pass a returned datasource and either a suggested filter value or an explicit custom field/value to glean.search.query(). Enable experimental features through the SDK's documented includeExperimental constructor option. Do not recreate the SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
-  "llmContext": "Use openid-client for OAuth discovery, DCR, Authorization Code with PKCE, and refresh. Pass its refreshable callback to @gleanwork/api-client's apiToken option; Glean-issued OAuth tokens need no X-Glean-Auth-Type. If DCR cannot grant SEARCH, use an administrator-provisioned public client or explicit user-scoped SEARCH token. Use typed glean.search.listFilters() and glean.search.query(), with includeExperimental enabled. Catalog discovery returns datasource IDs and common fields. Query-backed discovery accepts one datasource and returns bounded, non-exhaustive suggestions. Apply returned values unchanged with EQUALS, but treat discovery as advisory and allow explicit nonblank custom fields. The caller's credentials remain the permission boundary. Let the SDK validate responses and surface typed errors; display warnings, request IDs, Retry-After guidance, and next_cursor without logging credentials or storing results.",
+  "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the search scope, run live verification, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() for catalog and query-backed discovery, then pass a returned datasource and either a suggested filter value or an explicit custom field/value to glean.search.query(). Enable experimental features through the SDK's documented includeExperimental constructor option. Do not recreate auth or SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
+  "llmContext": "Use @gleanwork/auth for tenant discovery, OAuth login, secure state, and refresh, then pass its async token provider to @gleanwork/api-client's apiToken option. Glean-issued OAuth tokens need no X-Glean-Auth-Type. If DCR cannot grant search, use an administrator-provisioned public client or explicit user-scoped SEARCH token. Use typed glean.search.listFilters() and glean.search.query(), with includeExperimental enabled. Catalog discovery returns datasource IDs and common fields. Query-backed discovery accepts one datasource and returns bounded, non-exhaustive suggestions. Apply returned values unchanged with EQUALS, but treat discovery as advisory and allow explicit nonblank custom fields. The caller's credentials remain the permission boundary. Let the SDK validate responses and surface typed errors; display warnings, request IDs, Retry-After guidance, and next_cursor without logging credentials or storing results.",
   "goDependency": false,
   "featured": true,
   "hidden": false,
@@ -175,7 +167,7 @@
       },
       {
         "title": "OAuth policy varies by tenant",
-        "description": "DCR may be disabled, restricted to approved applications or redirect URI patterns, or unable to grant SEARCH. Use an administrator-provisioned public OAuth client when available; a user-scoped SEARCH token is the tutorial fallback."
+        "description": "DCR may be disabled, restricted to approved applications or redirect URI patterns, or unable to grant search. Use an administrator-provisioned public OAuth client when available; a user-scoped SEARCH token is the tutorial fallback."
       },
       {
         "title": "Experimental API",

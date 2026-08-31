@@ -14,6 +14,8 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
         $ npm start -- --query <text> [options]
 
       Options
+        --email           Work email used to discover the Glean backend
+        --server-url      Complete Glean backend origin; overrides --email
         --query, -q       Search query
         --datasource, -d  Datasource returned by filter discovery
         --field, -f       Filter field; requires --value
@@ -21,12 +23,14 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
         --auto-select     Select the first discovered datasource and suggestion
 
       Example
-        $ npm start -- --query "quarterly planning" --datasource jira
+        $ npm start -- --email you@example.com --query "quarterly planning"
     `,
     {
       importMeta: import.meta,
       argv,
       flags: {
+        email: { type: 'string' },
+        serverUrl: { type: 'string' },
         query: { type: 'string', shortFlag: 'q', isRequired: true },
         datasource: { type: 'string', shortFlag: 'd' },
         field: { type: 'string', shortFlag: 'f' },
@@ -40,11 +44,19 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
     throw new Error(`Unexpected argument: ${cli.input[0]}`);
   }
 
+  const email = cli.flags.email?.trim();
+  const serverUrl = cli.flags.serverUrl?.trim();
   const query = cli.flags.query.trim();
   const datasource = cli.flags.datasource?.trim();
   const field = cli.flags.field?.trim();
   const value = cli.flags.value?.trim();
 
+  if (cli.flags.email !== undefined && !email) {
+    throw new Error('--email must not be blank.');
+  }
+  if (cli.flags.serverUrl !== undefined && !serverUrl) {
+    throw new Error('--server-url must not be blank.');
+  }
   if (!query) throw new Error('--query must not be blank.');
   if (cli.flags.datasource !== undefined && !datasource) {
     throw new Error('--datasource must not be blank.');
@@ -69,6 +81,8 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
       : undefined;
 
   return {
+    email,
+    serverUrl,
     query,
     datasource,
     filter,
