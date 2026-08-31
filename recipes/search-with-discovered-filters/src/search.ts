@@ -19,7 +19,10 @@ import { formatSdkError } from './errors.js';
  */
 async function main() {
   const cliOptions = parseCliOptions();
-  const glean = createGleanClient();
+  const glean = await createGleanClient({
+    email: cliOptions.email,
+    serverUrl: cliOptions.serverUrl,
+  });
   const terminal = createTerminal();
 
   try {

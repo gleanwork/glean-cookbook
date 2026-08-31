@@ -23,6 +23,7 @@ const scanDirs = [
 const GLEAN_SDKS = new Set([
   'glean-api-client',
   '@gleanwork/api-client',
+  '@gleanwork/auth',
   '@gleanwork/web-sdk',
   'glean-indexing-sdk',
 ]);

@@ -2,21 +2,21 @@
 
 This TypeScript CLI uses the official `@gleanwork/api-client` to discover the datasources and common filter fields visible to you, request query-specific suggested values for one datasource, and apply the selection to Platform Search.
 
-The recipe uses Glean OAuth by default. [`openid-client`](https://github.com/panva/openid-client) discovers the authorization server, dynamically registers a public client, runs Authorization Code with PKCE, and refreshes the grant before it expires. The Glean API client receives that refreshable token provider directly.
-
-The Platform Search APIs are experimental, so the API client also sets `includeExperimental: true`. Each request attempt has a 30-second timeout, with bounded exponential backoff for transient API and connection failures.
+The recipe uses `@gleanwork/auth` for tenant discovery, OAuth login, secure credential storage, and automatic token refresh. The Platform Search APIs are experimental, so the API client sets `includeExperimental: true`. Each request attempt has a 30-second timeout, with bounded exponential backoff for transient API and connection failures.
 
 ## Run
 
+Requires Node.js 22.12.0 or newer.
+
 ```bash
 npm install
-npm run login -- --server-url "https://<instance>-be.glean.com"
-npm start -- --query "quarterly planning"
+npm run login -- --email "you@example.com"
+npm start -- --email "you@example.com" --query "quarterly planning"
 ```
 
-The login command requests `openid offline_access SEARCH`. It stores the public client registration and OAuth access and refresh tokens outside the project in a mode-`0600` state file; `.env` receives only the non-secret server URL. The SDK's async `apiToken` callback reads or refreshes the access token for each API request.
+The login command discovers your Glean backend from your work email and requests `openid offline_access search`. Use `--server-url "https://<instance>-be.glean.com"` instead of `--email` when you need an explicit backend origin. The auth package stores the public client registration and OAuth access and refresh tokens outside the project under your user state directory.
 
-DCR is controlled by tenant policy. If DCR rejects this client, redirect URI, or scope, set `GLEAN_OAUTH_CLIENT_ID` to an administrator-provisioned public client. To complete the tutorial without OAuth, set `GLEAN_SERVER_URL` and a user-scoped `GLEAN_API_TOKEN` with only `SEARCH`, then skip the login command. Glean-issued OAuth tokens do not need `X-Glean-Auth-Type`.
+Dynamic Client Registration is controlled by tenant policy. If DCR rejects the client, redirect URI, or scope, set `GLEAN_OAUTH_CLIENT_ID` to an administrator-provisioned public client. To use a Glean-issued token instead, set `GLEAN_SERVER_URL` and a user-scoped `GLEAN_API_TOKEN`, then omit `--email`. Glean-issued OAuth tokens do not need `X-Glean-Auth-Type`.
 
 The core calls are the generated, typed SDK methods:
 
@@ -56,7 +56,7 @@ Discovery is advisory. A field omitted from the catalog may still be valid, and 
 For a deterministic non-interactive run, provide the datasource and optional filter explicitly:
 
 ```bash
-npm start -- --query "quarterly planning" --datasource jira --field status --value "In Progress"
+npm start -- --email "you@example.com" --query "quarterly planning" --datasource jira --field status --value "In Progress"
 ```
 
 Use `--auto-select` only when choosing the first discovered datasource and suggested value is intentional, such as live verification.
@@ -70,7 +70,7 @@ npm run check
 Verify against your Glean instance after signing in:
 
 ```bash
-npm run verify -- --query "a topic you know exists"
+npm run verify -- --email "you@example.com" --query "a topic you know exists"
 ```
 
 See the [OAuth authentication guide](https://developers.glean.com/api-info/client/authentication/oauth), [Platform Search API](https://developers.glean.com/api/platform-api/search-overview), [Search Filters reference](https://developers.glean.com/api/platform-api/platform-search-filters), and [experimental API policy](https://developers.glean.com/experimental/overview).
