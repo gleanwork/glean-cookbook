@@ -5,7 +5,7 @@ import tseslint from 'typescript-eslint';
 // @gleanwork/api-client's ChatMessage.citations) that tsc alone accepts
 // silently.
 export default tseslint.config({
-  files: ['*.ts'],
+  files: ['**/*.ts'],
   languageOptions: {
     parser: tseslint.parser,
     parserOptions: {
