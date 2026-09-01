@@ -16,8 +16,8 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
       Options
         --email           Work email used to discover the Glean backend
         --server-url      Complete Glean backend origin; overrides --email
-        --query, -q       Search query
-        --datasource, -d  Datasource returned by filter discovery
+        --query, -q       Search query; searches all datasources by default
+        --datasources, -d Comma-separated datasources to search
         --field, -f       Filter field; requires --value
         --value, -v       Filter value; requires --field
         --auto-select     Select the first discovered datasource and suggestion
@@ -32,7 +32,7 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
         email: { type: 'string' },
         serverUrl: { type: 'string' },
         query: { type: 'string', shortFlag: 'q', isRequired: true },
-        datasource: { type: 'string', shortFlag: 'd' },
+        datasources: { type: 'string', shortFlag: 'd' },
         field: { type: 'string', shortFlag: 'f' },
         value: { type: 'string', shortFlag: 'v' },
         autoSelect: { type: 'boolean', default: false },
@@ -47,7 +47,9 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
   const email = cli.flags.email?.trim();
   const serverUrl = cli.flags.serverUrl?.trim();
   const query = cli.flags.query.trim();
-  const datasource = cli.flags.datasource?.trim();
+  const datasources = cli.flags.datasources
+    ?.split(',')
+    .map((datasource) => datasource.trim());
   const field = cli.flags.field?.trim();
   const value = cli.flags.value?.trim();
 
@@ -58,8 +60,14 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
     throw new Error('--server-url must not be blank.');
   }
   if (!query) throw new Error('--query must not be blank.');
-  if (cli.flags.datasource !== undefined && !datasource) {
-    throw new Error('--datasource must not be blank.');
+  if (
+    cli.flags.datasources !== undefined &&
+    (!datasources || datasources.some((datasource) => !datasource))
+  ) {
+    throw new Error('--datasources must contain nonblank values.');
+  }
+  if (datasources && new Set(datasources).size !== datasources.length) {
+    throw new Error('--datasources must not contain duplicates.');
   }
   if (cli.flags.field !== undefined && !field) {
     throw new Error('--field must not be blank.');
@@ -69,6 +77,11 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
   }
   if (Boolean(field) !== Boolean(value)) {
     throw new Error('--field and --value must be provided together.');
+  }
+  if (field && !datasources && !cli.flags.autoSelect) {
+    throw new Error(
+      '--datasources is required when using --field and --value, or use --auto-select.',
+    );
   }
 
   const filter =
@@ -84,7 +97,7 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
     email,
     serverUrl,
     query,
-    datasource,
+    datasources,
     filter,
     autoSelect: cli.flags.autoSelect,
   };
@@ -116,13 +129,13 @@ async function chooseItem<T>(
   }
 }
 
-export async function chooseDatasource(
-  datasources: PlatformDatasourceFilterInfo[],
-  requested: string | undefined,
+export async function chooseDatasources(
+  catalog: PlatformDatasourceFilterInfo[],
+  requested: string[] | undefined,
   autoSelect: boolean,
   terminal: readline.Interface | undefined,
 ) {
-  const first = datasources.at(0);
+  const first = catalog.at(0);
   if (!first) {
     throw new Error(
       'Search Filters returned no datasources visible to this user.',
@@ -130,26 +143,29 @@ export async function chooseDatasource(
   }
 
   if (requested) {
-    const selected = datasources.find(
-      (datasource) => datasource.datasource === requested,
+    const available = new Set(
+      catalog.map((datasource) => datasource.datasource),
     );
-    if (!selected) {
+    const missing = requested.filter(
+      (datasource) => !available.has(datasource),
+    );
+    if (missing.length > 0) {
       throw new Error(
-        `Datasource "${requested}" was not returned by Search Filters.`,
+        `Datasources "${missing.join(', ')}" were not returned by Search Filters.`,
       );
     }
-    return selected.datasource;
+    return requested;
   }
 
-  if (autoSelect) return first.datasource;
+  if (autoSelect) return [first.datasource];
   if (!terminal) {
     throw new Error(
-      'Pass --datasource when input is not interactive, or use --auto-select.',
+      'Pass --datasources when input is not interactive, or use --auto-select.',
     );
   }
 
   console.log('\nDatasources visible to you:');
-  for (const [index, datasource] of datasources.entries()) {
+  for (const [index, datasource] of catalog.entries()) {
     const fields = datasource.filters.map((filter) => filter.field).join(', ');
     console.log(
       `  ${index + 1}. ${datasource.datasource}${fields ? ` — ${fields}` : ''}`,
@@ -162,9 +178,9 @@ export async function chooseDatasource(
   const selected = await chooseItem(
     terminal,
     '\nChoose a datasource [1]: ',
-    datasources,
+    catalog,
   );
-  return selected.datasource;
+  return [selected.datasource];
 }
 
 export async function chooseFilter(
@@ -188,7 +204,7 @@ export async function chooseFilter(
 
   if (!first) {
     console.log(
-      `\n${datasource.datasource} returned no suggested values for this query; continuing with the discovered datasource filter only.`,
+      `\n${datasource.datasource} returned no suggested values for this query; continuing without a field filter.`,
     );
     return undefined;
   }
@@ -229,10 +245,10 @@ export async function chooseFilter(
 
 export function printSearchResponse(
   response: PlatformSearchResponse,
-  datasource: string,
+  datasources: string[] | undefined,
   filter: PlatformFilter | undefined,
 ) {
-  console.log(`\nSearch scope: ${datasource}`);
+  console.log(`\nSearch datasources: ${datasources?.join(', ') ?? 'all'}`);
   if (filter) {
     console.log(
       `Applied filter: ${filter.field} ${filter.operator ?? 'EQUALS'} ${filter.values.join(', ')}`,

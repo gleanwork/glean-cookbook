@@ -7,7 +7,7 @@
   "scripts": {
     "login": "glean-auth login --scopes search",
     "start": "tsx src/search.ts",
-    "verify": "tsx src/search.ts --auto-select",
+    "verify": "tsx src/search.ts",
     "test": "vitest run",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",

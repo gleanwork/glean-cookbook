@@ -1,16 +1,18 @@
 import {
-  chooseDatasource,
+  chooseDatasources,
   chooseFilter,
   createTerminal,
   parseCliOptions,
   printSearchResponse,
 } from './cli.js';
 import { createGleanClient } from './client.js';
+import type { PlatformFilter } from '@gleanwork/api-client/models/components';
 import { formatSdkError } from './errors.js';
 
 /**
- * Lists visible datasources and common filter fields, requests query-specific
- * values for one datasource, then searches with the selected filter.
+ * Searches across all datasources by default. When a datasource list is
+ * supplied, discovers query-specific values for a single datasource and
+ * applies the selected filter.
  *
  * @remarks
  * Filter discovery returns a best-effort catalog and may omit valid fields.
@@ -26,41 +28,50 @@ async function main() {
   const terminal = createTerminal();
 
   try {
-    const { result: catalog } = await glean.search.listFilters();
-    const datasource = await chooseDatasource(
-      catalog.datasources,
-      cliOptions.datasource,
-      cliOptions.autoSelect,
-      terminal,
-    );
+    let datasources: string[] | undefined;
+    let filter: PlatformFilter | undefined = cliOptions.filter;
 
-    const { result: suggestions } = await glean.search.listFilters(
-      [datasource],
-      cliOptions.query,
-    );
-    const filterInfo = suggestions.datasources.find(
-      (candidate) => candidate.datasource === datasource,
-    );
-    if (!filterInfo) {
-      throw new Error(
-        `No filter metadata for "${datasource}" (request ${suggestions.request_id}).`,
+    if (cliOptions.datasources || cliOptions.autoSelect || filter) {
+      const { result: catalog } = await glean.search.listFilters();
+      datasources = await chooseDatasources(
+        catalog.datasources,
+        cliOptions.datasources,
+        cliOptions.autoSelect,
+        terminal,
       );
+
+      if (!filter && datasources.length === 1) {
+        const datasource = datasources[0];
+        const { result: suggestions } = await glean.search.listFilters(
+          datasources,
+          cliOptions.query,
+        );
+        const filterInfo = suggestions.datasources.find(
+          (candidate) => candidate.datasource === datasource,
+        );
+        if (!filterInfo) {
+          throw new Error(
+            `No filter metadata for "${datasource}" (request ${suggestions.request_id}).`,
+          );
+        }
+
+        filter = await chooseFilter(
+          filterInfo,
+          undefined,
+          cliOptions.autoSelect,
+          terminal,
+        );
+      }
     }
 
-    const filter = await chooseFilter(
-      filterInfo,
-      cliOptions.filter,
-      cliOptions.autoSelect,
-      terminal,
-    );
     const searchResponse = await glean.search.query({
       query: cliOptions.query,
       page_size: 10,
-      datasources: [datasource],
+      ...(datasources ? { datasources } : {}),
       ...(filter ? { filters: [filter] } : {}),
     });
 
-    printSearchResponse(searchResponse, datasource, filter);
+    printSearchResponse(searchResponse, datasources, filter);
   } finally {
     terminal?.close();
   }

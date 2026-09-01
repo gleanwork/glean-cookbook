@@ -1,6 +1,6 @@
 # Search Glean with discovered filters
 
-This TypeScript CLI uses the official `@gleanwork/api-client` to discover the datasources and common filter fields visible to you, request query-specific suggested values for one datasource, and apply the selection to Platform Search.
+This TypeScript CLI uses the official `@gleanwork/api-client` to search across all of your Glean content by default. You can optionally discover visible datasources and common filter fields, request query-specific suggested values for one datasource, and apply the selection to Platform Search.
 
 The recipe uses `@gleanwork/auth` for tenant discovery, OAuth login, secure credential storage, and automatic token refresh. The Platform Search APIs are experimental, so the API client sets `includeExperimental: true`. Each request attempt has a 30-second timeout, with bounded exponential backoff for transient API and connection failures.
 
@@ -45,10 +45,10 @@ const response = await glean.search.query({
 
 The example keeps the API sequence explicit:
 
-1. Call `glean.search.listFilters()` to list datasource identifiers and common fields.
-2. Choose a datasource returned by discovery.
+1. Call `glean.search.query()` with no `datasources` field to search across all sources by default.
+2. Optionally call `glean.search.listFilters()` to list datasource identifiers and common fields.
 3. Call `glean.search.listFilters([datasource], query)` for query-specific suggested values.
-4. Pass the selected datasource and optional filter to `glean.search.query()`.
+4. Pass selected datasources and an optional filter to `glean.search.query()`.
 5. Read the typed results, warnings, pagination state, and request ID.
 
 Discovery is advisory. A field omitted from the catalog may still be valid, and suggested values are bounded hints rather than a guarantee of matching results.
@@ -56,10 +56,10 @@ Discovery is advisory. A field omitted from the catalog may still be valid, and 
 For a deterministic non-interactive run, provide the datasource and optional filter explicitly:
 
 ```bash
-npm start -- --email "you@example.com" --query "quarterly planning" --datasource jira --field status --value "In Progress"
+npm start -- --email "you@example.com" --query "quarterly planning" --datasources jira,gdrive --field status --value "In Progress"
 ```
 
-Use `--auto-select` only when choosing the first discovered datasource and suggested value is intentional, such as live verification.
+Use `--auto-select` only when choosing the first discovered datasource and suggested value is intentional. Without `--datasources`, it changes the default all-datasource search into a first-datasource search.
 
 Run the Vitest fixture tests without credentials or network access:
 

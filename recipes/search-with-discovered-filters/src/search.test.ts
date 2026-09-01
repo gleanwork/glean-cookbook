@@ -10,7 +10,7 @@ import {
   ConnectionError,
   RequestTimeoutError,
 } from '@gleanwork/api-client/models/errors';
-import { chooseDatasource, parseCliOptions } from './cli.js';
+import { chooseDatasources, parseCliOptions } from './cli.js';
 import { formatSdkError } from './errors.js';
 
 const searchScript = fileURLToPath(new URL('./search.ts', import.meta.url));
@@ -240,7 +240,22 @@ void test('prints typed API error details and exits unsuccessfully', async () =>
   assert.match(stderr, /Request ID: invalid-request/u);
 });
 
-void test('searches the datasource without a field filter when none are suggested', async () => {
+void test('searches across all datasources by default', async () => {
+  const { requests, stdout } = await runSearchExample(
+    [{ ...searchResponse, results: [] }],
+    ['--query', 'planning'],
+  );
+
+  const searchRequest = requests.at(0);
+  assert.ok(searchRequest);
+  assert.deepEqual(JSON.parse(searchRequest.body), {
+    query: 'planning',
+    page_size: 10,
+  });
+  assert.match(stdout, /Search datasources: all/u);
+});
+
+void test('searches a selected datasource without a field filter when none are suggested', async () => {
   const { requests, stdout } = await runSearchExample(
     [
       {
@@ -253,7 +268,7 @@ void test('searches the datasource without a field filter when none are suggeste
       },
       { ...searchResponse, results: [] },
     ],
-    ['--query', 'planning', '--auto-select'],
+    ['--query', 'planning', '--datasources', 'gdrive'],
   );
 
   const searchRequest = requests.at(2);
@@ -264,6 +279,31 @@ void test('searches the datasource without a field filter when none are suggeste
     datasources: ['gdrive'],
   });
   assert.match(stdout, /no suggested values/u);
+});
+
+void test('searches multiple explicit datasources without narrowing to one', async () => {
+  const { requests, stdout } = await runSearchExample(
+    [
+      {
+        request_id: 'catalog-request',
+        datasources: [
+          { datasource: 'jira', filters: [] },
+          { datasource: 'gdrive', filters: [] },
+        ],
+      },
+      { ...searchResponse, results: [] },
+    ],
+    ['--query', 'planning', '--datasources', 'jira, gdrive'],
+  );
+
+  const searchRequest = requests.at(1);
+  assert.ok(searchRequest);
+  assert.deepEqual(JSON.parse(searchRequest.body), {
+    query: 'planning',
+    page_size: 10,
+    datasources: ['jira', 'gdrive'],
+  });
+  assert.match(stdout, /Search datasources: jira, gdrive/u);
 });
 
 void test('prints the cursor when another result page is available', async () => {
@@ -283,30 +323,30 @@ void test('prints the cursor when another result page is available', async () =>
   assert.match(stdout, /Next cursor: next-page-token/u);
 });
 
-void test('requires an explicit datasource for non-interactive input', async () => {
+void test('requires datasources when a field filter is explicit', async () => {
   const { stderr } = await runSearchExample(
-    [catalogResponse],
-    ['--query', 'search migration'],
+    [],
+    [
+      '--query',
+      'search migration',
+      '--field',
+      'status',
+      '--value',
+      'In Progress',
+    ],
     1,
   );
 
-  assert.match(stderr, /Pass --datasource.*or use --auto-select/u);
+  assert.match(stderr, /--datasources.*--field.*--value/u);
 });
 
 void test('passes an explicit custom field through to the Search API', async () => {
   const { requests } = await runSearchExample(
-    [
-      catalogResponse,
-      {
-        request_id: 'suggestion-request',
-        datasources: [{ datasource: 'jira', filters: [] }],
-      },
-      searchResponse,
-    ],
+    [catalogResponse, searchResponse],
     [
       '--query',
       'search migration',
-      '--datasource',
+      '--datasources',
       'jira',
       '--field',
       'custom_status',
@@ -315,7 +355,7 @@ void test('passes an explicit custom field through to the Search API', async () 
     ],
   );
 
-  const searchRequest = requests.at(2);
+  const searchRequest = requests.at(1);
   assert.ok(searchRequest);
   assert.deepEqual(JSON.parse(searchRequest.body), {
     query: 'search migration',
@@ -344,7 +384,7 @@ void test('rejects zero instead of treating it as the last menu item', async () 
     input.write(promptCount === 1 ? '0\n' : '1\n');
   });
 
-  const selection = chooseDatasource(
+  const selection = chooseDatasources(
     [
       { datasource: 'jira', filters: [] },
       { datasource: 'gdrive', filters: [] },
@@ -355,7 +395,7 @@ void test('rejects zero instead of treating it as the last menu item', async () 
   );
 
   try {
-    assert.equal(await selection, 'jira');
+    assert.deepEqual(await selection, ['jira']);
   } finally {
     log.mockRestore();
     terminal.close();
@@ -364,13 +404,13 @@ void test('rejects zero instead of treating it as the last menu item', async () 
 
 void test('rejects a datasource that discovery did not return', async () => {
   await assert.rejects(
-    chooseDatasource(
+    chooseDatasources(
       [{ datasource: 'jira', filters: [] }],
-      'gdrive',
+      ['gdrive'],
       false,
       undefined,
     ),
-    /Datasource "gdrive" was not returned/u,
+    /Datasources "gdrive" were not returned/u,
   );
 });
 
