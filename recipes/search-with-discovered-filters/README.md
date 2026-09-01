@@ -50,6 +50,15 @@ The example keeps the API sequence explicit:
 3. Call `glean.search.listFilters([datasource], query)` for query-specific suggested values.
 4. Pass selected datasources and an optional filter to `glean.search.query()`.
 5. Read the typed results, warnings, pagination state, and request ID.
+6. Pass `next_cursor` back as `cursor` to fetch another page; the CLI does this when `--pages` is greater than 1.
+
+The CLI fetches one page by default. Use a bounded page count for a larger demo:
+
+```bash
+npm run verify -- --email "you@example.com" --query "quarterly planning" --pages 2
+```
+
+The cursor is opaque and stays inside the process. The CLI reports when more results are available without printing the token.
 
 Discovery is advisory. A field omitted from the catalog may still be valid, and suggested values are bounded hints rather than a guarantee of matching results.
 

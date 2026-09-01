@@ -64,14 +64,42 @@ async function main() {
       }
     }
 
-    const searchResponse = await glean.search.query({
+    const searchRequest = {
       query: cliOptions.query,
       page_size: 10,
       ...(datasources ? { datasources } : {}),
       ...(filter ? { filters: [filter] } : {}),
-    });
+    };
+    let cursor: string | undefined;
+    let resultOffset = 0;
 
-    printSearchResponse(searchResponse, datasources, filter);
+    for (let page = 1; page <= cliOptions.pages; page += 1) {
+      const searchResponse = await glean.search.query({
+        ...searchRequest,
+        ...(cursor ? { cursor } : {}),
+      });
+
+      printSearchResponse(
+        searchResponse,
+        datasources,
+        filter,
+        page,
+        resultOffset,
+        cliOptions.pages,
+      );
+      resultOffset += searchResponse.results.length;
+
+      if (!searchResponse.has_more) break;
+      if (!searchResponse.next_cursor) {
+        throw new Error('Search reported has_more without a next_cursor.');
+      }
+      if (searchResponse.next_cursor === cursor) {
+        throw new Error(
+          'Search returned the same cursor for consecutive pages.',
+        );
+      }
+      cursor = searchResponse.next_cursor;
+    }
   } finally {
     terminal?.close();
   }

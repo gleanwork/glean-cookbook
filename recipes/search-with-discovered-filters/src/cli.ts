@@ -21,6 +21,7 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
         --field, -f       Filter field; requires --value
         --value, -v       Filter value; requires --field
         --auto-select     Select the first discovered datasource and suggestion
+        --pages           Number of Search result pages to fetch (default: 1)
 
       Example
         $ npm start -- --email you@example.com --query "quarterly planning"
@@ -36,6 +37,7 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
         field: { type: 'string', shortFlag: 'f' },
         value: { type: 'string', shortFlag: 'v' },
         autoSelect: { type: 'boolean', default: false },
+        pages: { type: 'number', default: 1 },
       },
     },
   );
@@ -52,6 +54,7 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
     .map((datasource) => datasource.trim());
   const field = cli.flags.field?.trim();
   const value = cli.flags.value?.trim();
+  const pages = cli.flags.pages;
 
   if (cli.flags.email !== undefined && !email) {
     throw new Error('--email must not be blank.');
@@ -60,6 +63,9 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
     throw new Error('--server-url must not be blank.');
   }
   if (!query) throw new Error('--query must not be blank.');
+  if (!Number.isInteger(pages) || pages < 1 || pages > 10) {
+    throw new Error('--pages must be an integer from 1 to 10.');
+  }
   if (
     cli.flags.datasources !== undefined &&
     (!datasources || datasources.some((datasource) => !datasource))
@@ -100,6 +106,7 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
     datasources,
     filter,
     autoSelect: cli.flags.autoSelect,
+    pages,
   };
 }
 
@@ -247,28 +254,33 @@ export function printSearchResponse(
   response: PlatformSearchResponse,
   datasources: string[] | undefined,
   filter: PlatformFilter | undefined,
+  page = 1,
+  resultOffset = 0,
+  requestedPages = 1,
 ) {
-  console.log(`\nSearch datasources: ${datasources?.join(', ') ?? 'all'}`);
-  if (filter) {
-    console.log(
-      `Applied filter: ${filter.field} ${filter.operator ?? 'EQUALS'} ${filter.values.join(', ')}`,
-    );
+  if (page === 1) {
+    console.log(`\nSearch datasources: ${datasources?.join(', ') ?? 'all'}`);
+    if (filter) {
+      console.log(
+        `Applied filter: ${filter.field} ${filter.operator ?? 'EQUALS'} ${filter.values.join(', ')}`,
+      );
+    }
   }
 
   if (response.warnings.length > 0) {
-    console.log('\nWarnings:');
+    console.log(`\nWarnings (page ${page}):`);
     for (const warning of response.warnings) {
       console.log(`  ${warning.code}: ${warning.message}`);
     }
   }
 
-  console.log(`\nResults (${response.results.length}):`);
+  console.log(`\nPage ${page} results (${response.results.length}):`);
   if (response.results.length === 0) {
     console.log('  No results matched this search.');
   }
   for (const [index, searchResult] of response.results.entries()) {
     console.log(
-      `\n${index + 1}. ${searchResult.title} [${searchResult.datasource}]`,
+      `\n${resultOffset + index + 1}. ${searchResult.title} [${searchResult.datasource}]`,
     );
     console.log(`   ${searchResult.url}`);
     for (const snippet of searchResult.snippets?.slice(0, 2) ?? []) {
@@ -280,7 +292,13 @@ export function printSearchResponse(
     if (!response.next_cursor) {
       throw new Error('Search reported has_more without a next_cursor.');
     }
-    console.log(`\nNext cursor: ${response.next_cursor}`);
+    if (page < requestedPages) {
+      console.log(`\nMore results available; fetching page ${page + 1}...`);
+    } else {
+      console.log(
+        `\nMore results available. Re-run with --pages ${requestedPages + 1} to fetch another page.`,
+      );
+    }
   }
   console.log(`\nRequest ID: ${response.request_id}`);
 }

@@ -306,7 +306,68 @@ void test('searches multiple explicit datasources without narrowing to one', asy
   assert.match(stdout, /Search datasources: jira, gdrive/u);
 });
 
-void test('prints the cursor when another result page is available', async () => {
+void test('fetches the next page with the opaque cursor', async () => {
+  const { requests, stdout } = await runSearchExample(
+    [
+      catalogResponse,
+      suggestionResponse,
+      {
+        ...searchResponse,
+        has_more: true,
+        next_cursor: 'next-page-token',
+      },
+      {
+        ...searchResponse,
+        request_id: 'search-page-2',
+        results: [
+          {
+            title: 'Second result',
+            url: 'https://jira.example/browse/DEV-456',
+            datasource: 'jira',
+            snippets: ['A second result.'],
+          },
+        ],
+      },
+    ],
+    ['--query', 'search migration', '--auto-select', '--pages', '2'],
+  );
+
+  assert.equal(requests.length, 4);
+  const firstSearchRequest = requests.at(2);
+  const secondSearchRequest = requests.at(3);
+  assert.ok(firstSearchRequest);
+  assert.ok(secondSearchRequest);
+  assert.deepEqual(JSON.parse(firstSearchRequest.body), {
+    query: 'search migration',
+    page_size: 10,
+    datasources: ['jira'],
+    filters: [
+      {
+        field: 'status',
+        values: ['In Progress'],
+        operator: 'EQUALS',
+      },
+    ],
+  });
+  assert.deepEqual(JSON.parse(secondSearchRequest.body), {
+    query: 'search migration',
+    page_size: 10,
+    cursor: 'next-page-token',
+    datasources: ['jira'],
+    filters: [
+      {
+        field: 'status',
+        values: ['In Progress'],
+        operator: 'EQUALS',
+      },
+    ],
+  });
+  assert.match(stdout, /fetching page 2/u);
+  assert.match(stdout, /\n2\. Second result/u);
+  assert.doesNotMatch(stdout, /next-page-token/u);
+});
+
+void test('reports more results without printing the opaque cursor', async () => {
   const { stdout } = await runSearchExample(
     [
       catalogResponse,
@@ -320,7 +381,8 @@ void test('prints the cursor when another result page is available', async () =>
     ['--query', 'search migration', '--auto-select'],
   );
 
-  assert.match(stdout, /Next cursor: next-page-token/u);
+  assert.match(stdout, /More results available\. Re-run with --pages 2/u);
+  assert.doesNotMatch(stdout, /next-page-token/u);
 });
 
 void test('requires datasources when a field filter is explicit', async () => {
@@ -423,6 +485,15 @@ void test('formats SDK timeout and connection errors', () => {
     formatSdkError(new ConnectionError('network unreachable')),
     'Could not reach Glean: network unreachable',
   );
+});
+
+void test('rejects invalid page counts', () => {
+  for (const pages of ['0', '1.5', '11']) {
+    assert.throws(
+      () => parseCliOptions(['--query', 'planning', '--pages', pages]),
+      /--pages must be an integer from 1 to 10/u,
+    );
+  }
 });
 
 void test('rejects blank filter flags instead of silently falling back', () => {
