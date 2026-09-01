@@ -68,9 +68,9 @@
       "kind": "install"
     },
     {
-      "title": "Check the request flow with fixtures",
-      "description": "Runs executable fixture tests, ESLint, and the TypeScript compiler to validate catalog discovery, query-backed suggestions, retries, typed errors, field-filter propagation, and experimental headers without credentials or network access.",
-      "command": "cd search-with-discovered-filters && npm run check",
+      "title": "Run the fixture tests",
+      "description": "Runs the Vitest fixture suite without credentials or network access, covering catalog discovery, query-backed suggestions, retries, typed errors, field-filter propagation, and experimental headers.",
+      "command": "cd search-with-discovered-filters && npm test",
       "kind": "manual"
     },
     {
