@@ -70,7 +70,7 @@ npm test
 To run the complete local validation suite, including ESLint and the TypeScript compiler:
 
 ```bash
-npm run check
+npm run test:all
 ```
 
 Verify against your Glean instance after signing in:

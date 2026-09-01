@@ -11,7 +11,7 @@
     "test": "vitest run",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "check": "npm run test && npm run lint && npm run typecheck"
+    "test:all": "npm run test && npm run lint && npm run typecheck"
   },
   "dependencies": {
     "@gleanwork/api-client": "0.19.0",
