@@ -61,7 +61,13 @@ npm start -- --email "you@example.com" --query "quarterly planning" --datasource
 
 Use `--auto-select` only when choosing the first discovered datasource and suggested value is intentional, such as live verification.
 
-Run the executable fixture tests, ESLint, and TypeScript compiler without credentials:
+Run the Vitest fixture tests without credentials or network access:
+
+```bash
+npm test
+```
+
+To run the complete local validation suite, including ESLint and the TypeScript compiler:
 
 ```bash
 npm run check
