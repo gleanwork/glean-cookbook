@@ -3249,5 +3249,180 @@
         }
       ]
     }
+  },
+  {
+    "id": "use-glean-in-your-hackathon",
+    "title": "Use Glean in your Hackathon",
+    "description": "A public, customer-generic fast start for hackathon teams: pick Web SDK SSO, Platform API OAuth/token auth, or MCP with Dynamic Client Registration before building on Glean.",
+    "sidebarLabel": "Hackathon Fast Start",
+    "surfaces": ["web-sdk", "platform-api", "mcp", "agents"],
+    "capabilities": ["embed", "search", "chat", "agents", "mcp"],
+    "status": "quickstart",
+    "visibility": "public",
+    "category": "workflow",
+    "level": "Beginner",
+    "levels": { "minimal": true, "wow": false },
+    "timeEstimate": "~15 min",
+    "icon": "sparkles",
+    "requiredScopes": ["SEARCH", "CHAT", "AGENTS", "MCP"],
+    "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token", "custom"],
+    "buildMethod": "integrate",
+    "execution": {
+      "type": "existing-app",
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email? It is used once to discover your Glean tenant."
+        },
+        {
+          "id": "project-shape",
+          "prompt": "What is the hackathon team building: a browser app, backend API app, or MCP agent/client?"
+        },
+        {
+          "id": "topic",
+          "prompt": "What topic do you know exists in your Glean content for verification?"
+        }
+      ],
+      "auth": [
+        { "kind": "browser-cookie", "scopes": [] },
+        {
+          "kind": "oauth-with-token-fallback",
+          "scopes": ["SEARCH", "CHAT", "AGENTS"],
+          "setupCommand": "node <cookbook-plugin-root>/scripts/glean-auth.mjs login --scopes search,chat,agents --email \"<work-email>\"",
+          "configFile": ".env",
+          "backendVariable": "GLEAN_SERVER_URL",
+          "credentialVariable": "GLEAN_API_TOKEN"
+        },
+        {
+          "kind": "host-managed",
+          "scopes": ["MCP"],
+          "setupCommand": "npx -y @gleanwork/configure-mcp-server remote --url <resolved-backend>/mcp/default --client <host>"
+        }
+      ],
+      "verification": {
+        "kind": "user-browser",
+        "expectedDuration": "about 1 minute after choosing an auth path",
+        "startsOwnServer": false
+      },
+      "run": { "kind": "existing-app", "userBrowser": true }
+    },
+    "languages": ["typescript", "javascript", "python"],
+    "prerequisites": [
+      "A Glean instance with content indexed",
+      "Your work email, so setup can find your Glean tenant",
+      "For Web SDK builds: your normal browser is already signed in to Glean",
+      "For Platform API builds: a tenant that permits cookbook OAuth for the requested scopes, or a user-scoped API token fallback",
+      "For MCP builds: the Glean MCP server is enabled for your deployment and your client or host can complete OAuth with Dynamic Client Registration"
+    ],
+    "demoQueries": [
+      {
+        "query": "Ask about a policy, project, customer, or service you know exists in your Glean instance",
+        "expectedBehavior": "The chosen Web SDK, Platform API, or MCP path returns a permission-aware answer or search result grounded in the signed-in user's accessible Glean content."
+      }
+    ],
+    "codeAssets": [
+      {
+        "repoPath": "recipes/use-glean-in-your-hackathon",
+        "language": "markdown",
+        "description": "Hackathon fast-start decision guide and authenticated-system options"
+      }
+    ],
+    "steps": [
+      {
+        "title": "Pick the build surface",
+        "description": "Choose Web SDK for a browser UI, Platform API for a backend-controlled app, or MCP for an agent/client. If the team is unsure, start with Web SDK for UI ideas and Platform API for custom answer or workflow logic.",
+        "kind": "choose"
+      },
+      {
+        "title": "Use Web SDK SSO for browser apps",
+        "description": "Embed Glean with Web SDK when the app can rely on the user's existing Glean browser session. This is the fastest no-token path and keeps permissions tied to the signed-in user.",
+        "kind": "authenticate"
+      },
+      {
+        "title": "Use scoped Platform API auth for backend calls",
+        "command": "node <cookbook-plugin-root>/scripts/glean-auth.mjs login --scopes search,chat,agents --email \"<work-email>\"",
+        "description": "Request only the scopes the app needs. SEARCH covers retrieval, CHAT covers answer generation, and AGENTS covers running published agents. If OAuth is unavailable, use a user-scoped token with the same minimal scopes.",
+        "kind": "authenticate"
+      },
+      {
+        "title": "Use MCP with DCR for custom agents",
+        "command": "npx -y @gleanwork/configure-mcp-server remote --url <resolved-backend>/mcp/default --client <host>",
+        "description": "Dynamic Client Registration lets a new MCP client register itself during OAuth and receive scoped client credentials without an admin pre-provisioning an OAuth app. Use the connect-mcp-hosts recipe as the reference implementation for host setup.",
+        "kind": "authenticate"
+      },
+      {
+        "title": "Start from the nearest recipe",
+        "description": "Use company-answers for cited Q&A, customer-360 for a richer workspace, or connect-mcp-hosts for MCP. Keep the chosen recipe's auth boundary instead of replacing it with a broad token.",
+        "kind": "scaffold"
+      },
+      {
+        "title": "Verify with your own content",
+        "description": "Ask about a topic that exists in your Glean instance and confirm the result is cited or otherwise grounded in accessible content. Switch users or content when possible to prove permissions are still enforced.",
+        "kind": "verify-live"
+      }
+    ],
+    "scaffoldActions": [],
+    "combines": [
+      {
+        "title": "Cookie SSO embed",
+        "surface": "Web SDK",
+        "category": "search",
+        "language": "typescript"
+      },
+      {
+        "title": "Scoped API calls",
+        "surface": "Platform API",
+        "category": "workflow",
+        "language": "typescript"
+      },
+      { "title": "Agent/client auth", "surface": "MCP", "category": "mcp" }
+    ],
+    "architecture": [
+      {
+        "label": "Hackathon app",
+        "caption": "browser UI, backend service, or agent",
+        "icon": "layout-outlined"
+      },
+      {
+        "label": "Auth path",
+        "caption": "SSO, scoped OAuth/token, or MCP DCR",
+        "category": "workflow",
+        "icon": "verification"
+      },
+      {
+        "label": "Glean",
+        "caption": "permission-aware knowledge and agents",
+        "emphasized": true
+      }
+    ],
+    "aiPrompt": "Help a hackathon team use Glean quickly and safely. Ask for their work email, what they are building (browser app, backend API app, or MCP agent/client), and one topic they know exists in their Glean content. Pick the smallest auth path: Web SDK cookie SSO for browser UI with no token, cookbook glean-auth OAuth login with only SEARCH, CHAT, and/or AGENTS for Platform API calls, or MCP at <backend>/mcp/default with Dynamic Client Registration for a custom client or host. Explain DCR briefly as OAuth client self-registration during setup, and point to connect-mcp-hosts as the reference implementation. Then route them to company-answers, customer-360, or connect-mcp-hosts as the nearest starting recipe and verify with their own content before claiming success.",
+    "llmContext": "This is a public, customer-generic hackathon fast start, not a GLEANHACK-specific page. Prefer zero-admin auth paths. Web SDK uses the user's normal signed-in browser session and needs no token. Platform API examples should use the cookbook glean-auth.mjs login script or a user-scoped token fallback, requesting only SEARCH, CHAT, and/or AGENTS. MCP clients use <backend>/mcp/default; compatible hosts can complete OAuth with Dynamic Client Registration, where the client registers itself and obtains a client id during setup. Use connect-mcp-hosts for the --client <host> reference flow. Never ask for a broad API token when Web SDK SSO, scoped OAuth, or MCP DCR fits.",
+    "goDependency": false,
+    "featured": true,
+    "hidden": false,
+    "tags": ["hackathon", "starter", "auth", "mcp", "web-sdk", "platform-api"],
+    "content": {
+      "problem": "Hackathon teams lose time deciding how to authenticate before they can build. This recipe gives them a public, customer-ready map of Glean's zero-admin paths: Web SDK cookie SSO for browser apps, scoped Platform API OAuth or token auth for backend calls, and MCP with Dynamic Client Registration for custom agents and AI clients.",
+      "takeItFurther": [
+        "Turn the prototype into a cited answer page with [company-answers](/cookbook/company-answers).",
+        "Build a richer account, project, or service workspace with [customer-360](/cookbook/customer-360).",
+        "Connect the team's AI host or custom agent through [connect-mcp-hosts](/cookbook/connect-mcp-hosts).",
+        "After the hackathon, replace prototype-only prompts with scoped production controls, app review, and tenant-specific permission testing."
+      ],
+      "guardrails": [
+        {
+          "title": "Keep auth scoped",
+          "rule": "Request only the scopes the project needs: SEARCH for retrieval, CHAT for answer generation, AGENTS for published agent runs, and MCP for MCP host/client access."
+        },
+        {
+          "title": "Prefer the user's session",
+          "rule": "Use Web SDK cookie SSO when the app is a browser experience. Do not mint or expose API tokens in frontend code."
+        },
+        {
+          "title": "Let DCR do setup when available",
+          "rule": "For MCP-capable clients, prefer the OAuth Dynamic Client Registration flow against <backend>/mcp/default instead of asking an admin to pre-create an OAuth app."
+        }
+      ]
+    }
   }
 ]
