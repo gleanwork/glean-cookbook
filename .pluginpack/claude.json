@@ -17,6 +17,7 @@
     "build/claude/cookbook/skills/no-code-pto-lookup-replit/replit-agent-prompt.md",
     "build/claude/cookbook/skills/onboarding-hub/SKILL.md",
     "build/claude/cookbook/skills/oncall-copilot/SKILL.md",
-    "build/claude/cookbook/skills/rfp-responder/SKILL.md"
+    "build/claude/cookbook/skills/rfp-responder/SKILL.md",
+    "build/claude/cookbook/skills/search-with-discovered-filters/SKILL.md"
   ]
 }
