@@ -138,25 +138,12 @@ jobs:
       # repository is not available here.
       - name: Check generated cookbook artifacts are not stale
         run: pnpm artifacts:check
-      - name: Check generated commands/skill are not stale
+      # Recipe PRs validate a fresh plugin render, but do not carry generated
+      # plugin skills, manifests, or build output. The main-branch sync workflow
+      # commits those outputs after CI succeeds on main.
+      - name: Generate cookbook skills
         working-directory: plugin
-        run: npm run generate:commands -- --check
-      # Emitted plugin content and the root marketplace manifests are committed
-      # (each manifest's `source` points at build/, so it must exist in a fresh
-      # clone). Fail if someone edited a skill without rebuilding.
-      #
-      # This MUST run before `pluginpack build`. The build's outDir is the repo
-      # root, so building first overwrites the very committed files this step
-      # then compares against -- the diff can only ever match, and the guard
-      # silently passes. That ordering shipped 42 skill files with unexpanded
-      # `{{> partial}}` markers on a green main. `diff` needs no prior build; it
-      # renders in memory and compares. Keep it ahead of the build.
-      - name: Check committed build output is not stale
-        working-directory: plugin
-        run: |
-          npx pluginpack diff --target claude --against ..
-          npx pluginpack diff --target cursor --against ..
-          npx pluginpack diff --target codex --against ..
+        run: npm run generate:commands
       - name: Build all targets
         working-directory: plugin
         run: npx pluginpack build

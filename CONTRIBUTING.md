@@ -20,11 +20,12 @@ Before pushing, run:
 ```bash
 mise exec -- pnpm format
 mise exec -- pnpm validate:registry
-mise exec -- pnpm build
+mise exec -- pnpm build:registry
 ```
 
-`pnpm build` refreshes both `registry.json` and the plugin's committed output, and CI fails if
-either is stale.
+Recipe PRs update `registry.json`, but do not include generated plugin output. CI renders and
+validates the plugin in a temporary workspace. After CI succeeds on `main`, the `Sync plugin
+outputs` workflow commits the generated plugin output to `main` automatically.
 
 `pnpm test` also discovers every npm package under `recipes/` and `examples/`. It runs `check` when
 a package declares it, otherwise `test`, after installing from that package's own lockfile. Keep
@@ -43,12 +44,12 @@ mise exec -- npm --prefix plugin ci   # once — the plugin is its own npm proje
 Adding a recipe means adding all three:
 
 1. `recipes/{id}/` with the runnable code (or a short README explaining why there isn't any)
-2. `recipes/{id}/recipe.json`, then `mise exec -- pnpm build`
+2. `recipes/{id}/recipe.json`, then `mise exec -- pnpm build:registry`
 3. a prose page at `docs/cookbook/{id}.mdx` in [glean-developer-site](https://github.com/gleanwork/glean-developer-site)
 
-Use `mise exec -- pnpm build`, not `pnpm build:registry` alone. The plugin's skills are generated from
-`registry.json` and its output is committed, so a registry-only build leaves `/cookbook:{id}`
-describing the previous state of the recipe — which is what users actually get.
+Do not commit generated plugin skills, manifests, or `build/` output in a recipe PR. The plugin's
+skills are generated from `registry.json` in CI and are committed automatically after the merge
+lands on `main`.
 
 If you're building a recipe from a spec handed to you (e.g. a Linear ticket with a validated registry
 entry attached), the entry is normative — copy it in unchanged and build the code to match what it
@@ -227,10 +228,9 @@ Every PR runs:
    npm lifecycle script is covered by an explicit pinned approval or denial.
 3. **`recipe-checks`** — each recipe typechecks (`tsc --noEmit`) and lints (`ruff`, `pyright`).
 4. **`format-check`** — Prettier formatting.
-5. **`plugin-build`** — the plugin builds and validates for every target (Claude Code, Cursor,
-   Codex), its generated skills and the README recipe table are checked against `registry.json` for
-   drift, the committed output under `build/` is checked against a fresh render, and every generated
-   standalone-scaffold artifact is checked against the declarative artifact plan.
+5. **`plugin-build`** — the plugin generates and validates a fresh render for every target (Claude
+   Code, Cursor, Codex). Generated plugin output is temporary on PRs and is committed automatically
+   by the main-branch sync workflow after CI succeeds.
 6. **`harness-tests`** — `mise exec -- pnpm test`, covering the verify harness's OAuth state validation and PKCE
    derivation.
 7. **`snippets-check`** — recipe prose and the code it embeds stay in sync.
