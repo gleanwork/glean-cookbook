@@ -1,43 +1,10 @@
-import type {
-  PlatformChatCompletedResponse,
-  PlatformChatOutputMessage,
-} from '@gleanwork/api-client/models/components';
-import { CreateAcceptEnum } from '@gleanwork/api-client/funcs/chatCreate.js';
-import {
-  createGleanClient,
-  createResponseBodyCapture,
-  type GleanClientTarget,
-} from './client.js';
-import { parseSseData, readSseEvents } from './sse.js';
-
-type JsonRecord = Record<string, unknown>;
+import type { PlatformChatCompletedResponse } from '@gleanwork/api-client/models/components';
+import { createGleanClient, type GleanClientTarget } from './client.js';
+import { streamTurn } from './stream.js';
 
 export interface ChatOptions extends GleanClientTarget {
   followUp?: string;
   prompt: string;
-  stream: boolean;
-}
-
-interface ChatTurn {
-  conversationId?: string;
-  text: string;
-}
-
-function asRecord(value: unknown): JsonRecord | undefined {
-  return typeof value === 'object' && value !== null
-    ? (value as JsonRecord)
-    : undefined;
-}
-
-function stringValue(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined;
-}
-
-function extractOutputText(messages: PlatformChatOutputMessage[]) {
-  return messages
-    .flatMap((message) => message.content)
-    .map((content) => content.text)
-    .join('');
 }
 
 function printCitations(response: PlatformChatCompletedResponse) {
@@ -66,155 +33,15 @@ function printCitations(response: PlatformChatCompletedResponse) {
   }
 }
 
-function findCompletedResponse(
-  value: unknown,
-): PlatformChatCompletedResponse | undefined {
-  const record = asRecord(value);
-  if (!record) return undefined;
-  if (
-    Array.isArray(record.output) &&
-    typeof record.id === 'string' &&
-    typeof record.request_id === 'string'
-  ) {
-    return record as PlatformChatCompletedResponse;
-  }
-
-  for (const nested of [record.response, record.data]) {
-    const response = findCompletedResponse(nested);
-    if (response) return response;
-  }
-  return undefined;
-}
-
-function findConversationId(value: unknown): string | undefined {
-  const record = asRecord(value);
-  if (!record) return undefined;
-  if (typeof record.conversation_id === 'string') return record.conversation_id;
-  for (const nested of [record.response, record.data]) {
-    const conversationId = findConversationId(nested);
-    if (conversationId) return conversationId;
-  }
-  return undefined;
-}
-
-function extractStreamText(value: unknown): string {
-  const record = asRecord(value);
-  if (!record) return stringValue(value) ?? '';
-
-  const delta = stringValue(record.delta);
-  if (delta) return delta;
-
-  const text = stringValue(record.text);
-  if (text) return text;
-
-  const responseText = extractStreamText(record.response);
-  if (responseText) return responseText;
-
-  if (Array.isArray(record.output)) {
-    const messages = record.output.filter(
-      (message): message is PlatformChatOutputMessage => {
-        const candidate = asRecord(message);
-        return (
-          !!candidate &&
-          Array.isArray(candidate.content) &&
-          candidate.content.every((content) => {
-            const item = asRecord(content);
-            return !!item && typeof item.text === 'string';
-          })
-        );
-      },
-    );
-    if (messages.length > 0) return extractOutputText(messages);
-  }
-
-  return '';
-}
-
-async function createTurn(
-  target: GleanClientTarget,
-  input: string,
-  conversationId?: string,
-): Promise<ChatTurn> {
-  const client = await createGleanClient(target);
-  const response = await client.chat.create({
-    conversation_id: conversationId,
-    input,
-    store: true,
-  });
-  if (typeof response === 'string') {
-    throw new Error(
-      'Expected a JSON Chat response. Remove stream mode for this turn.',
-    );
-  }
-
-  const text = extractOutputText(response.output);
-  console.log(text || 'No answer text returned.');
-  printCitations(response);
-  return { conversationId: response.conversation_id ?? undefined, text };
-}
-
-async function streamTurn(
-  target: GleanClientTarget,
-  input: string,
-  conversationId?: string,
-): Promise<ChatTurn> {
-  const capture = createResponseBodyCapture();
-  const client = await createGleanClient(target, capture);
-  const responsePromise = client.chat.create(
-    {
-      conversation_id: conversationId,
-      input,
-      store: true,
-      stream: true,
-    },
-    { acceptHeaderOverride: CreateAcceptEnum.textEventStream },
-  );
-  void responsePromise.catch((error: unknown) => capture.reject(error));
-
-  const stream = await capture.waitForStream();
-  let text = '';
-  let lastEvent: unknown;
-  for await (const event of readSseEvents(stream)) {
-    const payload = parseSseData<JsonRecord>(event);
-    if (!payload) continue;
-    lastEvent = payload;
-
-    const nextText = extractStreamText(payload);
-    const delta = nextText.startsWith(text)
-      ? nextText.slice(text.length)
-      : nextText;
-    if (delta) {
-      process.stdout.write(delta);
-      text += delta;
-    }
-  }
-
-  const response = await responsePromise;
-  if (typeof response !== 'string') {
-    lastEvent = response;
-    if (!text) text = extractOutputText(response.output);
-  }
-  process.stdout.write('\n');
-
-  const completed = findCompletedResponse(lastEvent);
-  if (completed) printCitations(completed);
-  return {
-    conversationId: completed?.conversation_id ?? findConversationId(lastEvent),
-    text,
-  };
-}
-
 export async function runChat({
   email,
   followUp,
   prompt,
   serverUrl,
-  stream,
 }: ChatOptions) {
-  const target = { email, serverUrl };
-  const firstTurn = stream
-    ? await streamTurn(target, prompt)
-    : await createTurn(target, prompt);
+  const client = await createGleanClient({ email, serverUrl });
+  const firstTurn = await streamTurn(client, prompt);
+  if (firstTurn.completed) printCitations(firstTurn.completed);
 
   if (!followUp) return;
   if (!firstTurn.conversationId) {
@@ -224,9 +51,10 @@ export async function runChat({
   }
 
   console.log('\nFollow-up:');
-  if (stream) {
-    await streamTurn(target, followUp, firstTurn.conversationId);
-  } else {
-    await createTurn(target, followUp, firstTurn.conversationId);
-  }
+  const followUpTurn = await streamTurn(
+    client,
+    followUp,
+    firstTurn.conversationId,
+  );
+  if (followUpTurn.completed) printCitations(followUpTurn.completed);
 }

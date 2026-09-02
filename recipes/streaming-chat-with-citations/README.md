@@ -1,15 +1,15 @@
 # Streaming Chat with citations
 
-Use the modern Platform Chat API to send a permission-aware question, continue the conversation, and read a server-sent event (SSE) response with a standard `ReadableStream` reader and `TextDecoder`.
+Use the modern Platform Chat API to send a permission-aware question, continue the conversation, and read a streamed response through `glean.chat.createStream()`.
 
-This recipe uses `@gleanwork/api-client`'s top-level `glean.chat.create()` method. It does not use the legacy `glean.client.chat` API or hand-written Glean request construction.
+This recipe uses `@gleanwork/api-client` 0.20.2. Every turn calls `createStream()` and `for await`s the typed EventStream. It does not use the legacy `glean.client.chat` API, `stream` on `create()`, or a hand-written SSE parser.
 
 ## Prerequisites
 
-- Node.js 22.12.0 or newer
+- Node.js 22.12.0 or newer. The steps use `npx` and `npm`. Install Node from [nodejs.org](https://nodejs.org) if needed.
 - A Glean instance with content indexed
-- Your work email, or the complete Glean backend origin shown under **Server instance (QE)**
-- A tenant that permits the public OAuth client and `chat` scope through DCR; an administrator-provisioned OAuth client or user-scoped `CHAT` token is the fallback
+- Your work email, or the complete Glean backend HTTPS origin
+- A tenant that permits the public OAuth client and `chat` scope through DCR
 
 Platform Chat is experimental. The SDK opts in through `includeExperimental: true`.
 
@@ -29,9 +29,11 @@ Use OAuth so the answer is evaluated with your own permissions:
 npm run login -- --email "you@example.com"
 ```
 
-The auth package stores refreshable credentials outside this project. You can also pass `--server-url` or set `GLEAN_SERVER_URL`. Set `GLEAN_API_TOKEN` only when using an explicit user-scoped token fallback.
+The auth package stores refreshable credentials outside this project. You can also pass `--server-url` or set `GLEAN_SERVER_URL`. If DCR is restricted, set `GLEAN_OAUTH_CLIENT_ID` for an administrator-provisioned public client.
 
-## Run a typed response
+If OAuth is not available, set `GLEAN_API_TOKEN` as a user-scoped fallback.
+
+## Stream one turn
 
 ```bash
 npm run verify -- \
@@ -39,27 +41,24 @@ npm run verify -- \
   --prompt "What is our PTO policy?"
 ```
 
-The typed response includes `conversation_id`, assistant output text, and citation annotations with source URLs and snippets.
+`createStream` yields `RESPONSE_OUTPUT_TEXT_DELTA` text, then a `RESPONSE_COMPLETED` payload with `conversation_id` and citation annotations.
 
-## Run the SSE response
+## Stream a follow-up
 
 ```bash
 npm start -- \
   --email "you@example.com" \
   --prompt "What is our PTO policy?" \
-  --follow-up "Who owns this policy?" \
-  --stream
+  --follow-up "Who owns this policy?"
 ```
 
-The generated SDK builds and authenticates the request. The recipe supplies an `HTTPClient` fetcher that tees the SSE response body: the SDK keeps its normal response handling, while the recipe reads the other branch with `reader.read()` and `TextDecoder`. The parser buffers complete SSE frames because a network read can end in the middle of an event or UTF-8 character. Fixture tests use MSW to intercept the SDK transport without a bespoke HTTP server.
-
-The follow-up sends `conversation_id` returned by the first stored turn. Omit `--follow-up` to run one turn.
+The follow-up sends `conversation_id` from the first stored turn. Omit `--follow-up` to run one turn.
 
 ## API sequence
 
-- `glean.chat.create({ input, store: true })` returns a typed JSON response.
-- `glean.chat.create({ input, conversation_id, store: true, stream: true })` requests SSE.
-- `acceptHeaderOverride: CreateAcceptEnum.textEventStream` negotiates `text/event-stream`.
+- `glean.chat.createStream({ input, store: true })` returns a typed EventStream.
+- `RESPONSE_OUTPUT_TEXT_DELTA` carries incremental text in `data.delta`.
+- `RESPONSE_COMPLETED` carries the finished `PlatformChatCompletedResponse` in `data.response`.
 - `output[].content[].annotations[]` contains citation sources and snippets.
 
 Keep prompts grounded in content you know exists in your own Glean instance. The answer and citations depend on your permissions and indexed content.
