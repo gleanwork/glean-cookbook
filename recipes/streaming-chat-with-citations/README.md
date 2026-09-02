@@ -8,7 +8,7 @@ This recipe uses `@gleanwork/api-client` 0.20.2. Every turn calls `createStream(
 
 - Node.js 22.12.0 or newer
 - A Glean instance with content indexed
-- Your work email, or the complete Glean backend origin shown under **Server instance (QE)**
+- Your work email, or the complete Glean backend HTTPS origin
 - A tenant that permits the public OAuth client and `chat` scope through DCR; an administrator-provisioned OAuth client or user-scoped `CHAT` token is the fallback
 
 Platform Chat is experimental. The SDK opts in through `includeExperimental: true`.

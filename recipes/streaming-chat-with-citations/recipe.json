@@ -14,8 +14,8 @@
       },
       {
         "title": "Iterate createStream events",
-        "description": "Call glean.chat.createStream and for-await the typed EventStream. Write RESPONSE_OUTPUT_TEXT_DELTA.data.delta and read citations from RESPONSE_COMPLETED.data.response.",
-        "source": "src/chat.ts",
+        "description": "Call glean.chat.createStream and for-await the typed EventStream. Write RESPONSE_OUTPUT_TEXT_DELTA.data.delta and keep RESPONSE_COMPLETED.data.response for citations.",
+        "source": "src/stream.ts",
         "language": "typescript"
       },
       {
@@ -44,7 +44,7 @@
   "prerequisites": [
     "Node 22.12.0 or newer",
     "A Glean instance with content indexed",
-    "Your work email, or the complete Glean backend origin shown under Server instance (QE)",
+    "Your work email, or the complete Glean backend HTTPS origin",
     "A tenant that permits this public OAuth client and chat scope through DCR; an administrator-provisioned OAuth client or user-scoped CHAT token is the fallback"
   ],
   "demoQueries": [
