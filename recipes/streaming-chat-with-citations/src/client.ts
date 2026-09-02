@@ -50,17 +50,6 @@ export async function createGleanClient(target: GleanClientTarget) {
         scopes: ['chat'],
       }),
     includeExperimental: true,
-    timeoutMs: 30_000,
-    retryConfig: {
-      strategy: 'backoff',
-      backoff: {
-        initialInterval: 500,
-        maxInterval: 5_000,
-        exponent: 2,
-        maxElapsedTime: 90_000,
-      },
-      retryConnectionErrors: true,
-    },
   } satisfies SDKOptions & XGleanOptions;
 
   return new Glean(options);

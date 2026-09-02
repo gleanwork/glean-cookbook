@@ -2,7 +2,7 @@
   "name": "streaming-chat-with-citations",
   "version": "0.0.0",
   "private": true,
-  "description": "Use the modern Glean Platform Chat API with OAuth, conversation state, citations, and createStream.",
+  "description": "Use the modern Glean Platform Chat API with OAuth, conversation state, citations, and createStream EventStream iteration.",
   "type": "module",
   "scripts": {
     "login": "glean-auth login --scopes chat",

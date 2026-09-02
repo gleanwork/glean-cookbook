@@ -63,29 +63,30 @@ function completedResponse(conversationId = 'conv_fixture') {
   };
 }
 
-function typedSseResponse() {
+function typedSseResponse(conversationId = 'conv_fixture') {
   const encoder = new TextEncoder();
-  const completed = completedResponse();
-  const frames = [
+  const completed = completedResponse(conversationId);
+  const frames =
     [
-      'event: RESPONSE_OUTPUT_TEXT_DELTA',
-      `data: ${JSON.stringify({
-        type: 'RESPONSE_OUTPUT_TEXT_DELTA',
-        response_id: completed.id,
-        delta: 'The answer is grounded in your content.',
-      })}`,
-      '',
-    ].join('\n'),
-    [
-      'event: RESPONSE_COMPLETED',
-      `data: ${JSON.stringify({
-        type: 'RESPONSE_COMPLETED',
-        response_id: completed.id,
-        response: completed,
-      })}`,
-      '',
-    ].join('\n'),
-  ].join('\n');
+      [
+        'event: RESPONSE_OUTPUT_TEXT_DELTA',
+        `data: ${JSON.stringify({
+          type: 'RESPONSE_OUTPUT_TEXT_DELTA',
+          response_id: completed.id,
+          delta: 'The answer is grounded in your content.',
+        })}`,
+        '',
+      ].join('\n'),
+      [
+        'event: RESPONSE_COMPLETED',
+        `data: ${JSON.stringify({
+          type: 'RESPONSE_COMPLETED',
+          response_id: completed.id,
+          response: completed,
+        })}`,
+        '',
+      ].join('\n'),
+    ].join('\n') + '\n';
 
   const body = new ReadableStream<Uint8Array>({
     start(controller) {
@@ -99,7 +100,7 @@ function typedSseResponse() {
   });
 }
 
-test('streams typed createStream events without setting stream on create()', async () => {
+test('streams typed createStream events', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   const bodies: JsonValue[] = [];
   server.use(
@@ -112,7 +113,6 @@ test('streams typed createStream events without setting stream on create()', asy
   await runChat({
     serverUrl: baseUrl,
     prompt: 'What is our policy?',
-    stream: true,
   });
 
   assert.deepEqual(bodies, [
@@ -124,13 +124,21 @@ test('streams typed createStream events without setting stream on create()', asy
   ]);
 });
 
-test('reuses conversation_id for a typed follow-up turn', async () => {
+test('reuses conversation_id for a streamed follow-up turn', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   const bodies: JsonValue[] = [];
   server.use(
     http.post(`${baseUrl}/api/chat`, async ({ request }) => {
-      bodies.push((await request.json()) as JsonValue);
-      return HttpResponse.json(completedResponse());
+      const body = (await request.json()) as JsonValue;
+      bodies.push(body);
+      const conversationId =
+        typeof body === 'object' &&
+        body !== null &&
+        'conversation_id' in body &&
+        typeof body.conversation_id === 'string'
+          ? body.conversation_id
+          : 'conv_fixture';
+      return typedSseResponse(conversationId);
     }),
   );
 
@@ -138,20 +146,19 @@ test('reuses conversation_id for a typed follow-up turn', async () => {
     serverUrl: baseUrl,
     prompt: 'What is our policy?',
     followUp: 'Who owns it?',
-    stream: false,
   });
 
   assert.deepEqual(bodies, [
     {
       input: 'What is our policy?',
       store: true,
-      stream: false,
+      stream: true,
     },
     {
       conversation_id: 'conv_fixture',
       input: 'Who owns it?',
       store: true,
-      stream: false,
+      stream: true,
     },
   ]);
 });

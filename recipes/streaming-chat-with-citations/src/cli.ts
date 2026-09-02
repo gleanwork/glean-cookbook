@@ -11,10 +11,9 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
         --server-url      Complete Glean backend origin; overrides --email
         --prompt, -p      Message to send to Glean Chat
         --follow-up, -f   Optional follow-up sent in the same conversation
-        --stream          Read the response as server-sent events
 
       Example
-        $ npm start -- --email you@example.com --prompt "What is our PTO policy?" --stream
+        $ npm start -- --email you@example.com --prompt "What is our PTO policy?"
     `,
     {
       importMeta: import.meta,
@@ -24,7 +23,6 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
         serverUrl: { type: 'string' },
         prompt: { type: 'string', shortFlag: 'p', isRequired: true },
         followUp: { type: 'string', shortFlag: 'f' },
-        stream: { type: 'boolean', default: false },
       },
     },
   );
@@ -49,5 +47,5 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
     throw new Error('--follow-up must not be blank.');
   }
 
-  return { email, followUp, prompt, serverUrl, stream: cli.flags.stream };
+  return { email, followUp, prompt, serverUrl };
 }

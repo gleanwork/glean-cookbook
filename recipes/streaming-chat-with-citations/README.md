@@ -1,8 +1,8 @@
 # Streaming Chat with citations
 
-Use the modern Platform Chat API to send a permission-aware question, continue the conversation, and read a streamed response through the SDK's `createStream` EventStream.
+Use the modern Platform Chat API to send a permission-aware question, continue the conversation, and read a streamed response through `glean.chat.createStream()`.
 
-This recipe uses `@gleanwork/api-client` 0.20.2. JSON turns call `glean.chat.create()`. Streaming turns call `glean.chat.createStream()` and iterate the returned EventStream. It does not use the legacy `glean.client.chat` API, `stream` on `create()`, or hand-written Glean request construction.
+This recipe uses `@gleanwork/api-client` 0.20.2. Every turn calls `createStream()` and `for await`s the typed EventStream. It does not use the legacy `glean.client.chat` API, `stream` on `create()`, or a hand-written SSE parser.
 
 ## Prerequisites
 
@@ -31,7 +31,7 @@ npm run login -- --email "you@example.com"
 
 The auth package stores refreshable credentials outside this project. You can also pass `--server-url` or set `GLEAN_SERVER_URL`. Set `GLEAN_API_TOKEN` only when using an explicit user-scoped token fallback.
 
-## Run a typed response
+## Stream one turn
 
 ```bash
 npm run verify -- \
@@ -39,26 +39,22 @@ npm run verify -- \
   --prompt "What is our PTO policy?"
 ```
 
-The typed response includes `conversation_id`, assistant output text, and citation annotations with source URLs and snippets.
+`createStream` yields `RESPONSE_OUTPUT_TEXT_DELTA` text, then a `RESPONSE_COMPLETED` payload with `conversation_id` and citation annotations.
 
-## Run the streamed response
+## Stream a follow-up
 
 ```bash
 npm start -- \
   --email "you@example.com" \
   --prompt "What is our PTO policy?" \
-  --follow-up "Who owns this policy?" \
-  --stream
+  --follow-up "Who owns this policy?"
 ```
 
-`createStream` returns a typed EventStream. The recipe `for await`s events and writes `RESPONSE_OUTPUT_TEXT_DELTA.data.delta`, then reads citations from `RESPONSE_COMPLETED.data.response`. HTTP clients still set `stream: true` in the JSON body; SDK callers do not pass `stream` on `create()`. Fixture tests use MSW to intercept the SDK transport without a bespoke HTTP server.
-
-The follow-up sends `conversation_id` returned by the first stored turn. Omit `--follow-up` to run one turn.
+The follow-up sends `conversation_id` from the first stored turn. Omit `--follow-up` to run one turn.
 
 ## API sequence
 
-- `glean.chat.create({ input, store: true })` returns a typed JSON response.
-- `glean.chat.createStream({ input, conversation_id, store: true })` returns an EventStream.
+- `glean.chat.createStream({ input, store: true })` returns a typed EventStream.
 - `RESPONSE_OUTPUT_TEXT_DELTA` carries incremental text in `data.delta`.
 - `RESPONSE_COMPLETED` carries the finished `PlatformChatCompletedResponse` in `data.response`.
 - `output[].content[].annotations[]` contains citation sources and snippets.

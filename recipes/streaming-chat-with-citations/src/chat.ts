@@ -1,25 +1,15 @@
-import type {
-  PlatformChatCompletedResponse,
-  PlatformChatOutputMessage,
-} from '@gleanwork/api-client/models/components';
+import type { Glean } from '@gleanwork/api-client';
+import type { PlatformChatCompletedResponse } from '@gleanwork/api-client/models/components';
 import { createGleanClient, type GleanClientTarget } from './client.js';
 
 export interface ChatOptions extends GleanClientTarget {
   followUp?: string;
   prompt: string;
-  stream: boolean;
 }
 
 interface ChatTurn {
   conversationId?: string;
   text: string;
-}
-
-function extractOutputText(messages: PlatformChatOutputMessage[]) {
-  return messages
-    .flatMap((message) => message.content)
-    .map((content) => content.text)
-    .join('');
 }
 
 function printCitations(response: PlatformChatCompletedResponse) {
@@ -48,30 +38,11 @@ function printCitations(response: PlatformChatCompletedResponse) {
   }
 }
 
-async function createTurn(
-  target: GleanClientTarget,
-  input: string,
-  conversationId?: string,
-): Promise<ChatTurn> {
-  const client = await createGleanClient(target);
-  const response = await client.chat.create({
-    conversation_id: conversationId,
-    input,
-    store: true,
-  });
-
-  const text = extractOutputText(response.output);
-  console.log(text || 'No answer text returned.');
-  printCitations(response);
-  return { conversationId: response.conversation_id ?? undefined, text };
-}
-
 async function streamTurn(
-  target: GleanClientTarget,
+  client: Glean,
   input: string,
   conversationId?: string,
 ): Promise<ChatTurn> {
-  const client = await createGleanClient(target);
   const stream = await client.chat.createStream({
     conversation_id: conversationId,
     input,
@@ -115,12 +86,9 @@ export async function runChat({
   followUp,
   prompt,
   serverUrl,
-  stream,
 }: ChatOptions) {
-  const target = { email, serverUrl };
-  const firstTurn = stream
-    ? await streamTurn(target, prompt)
-    : await createTurn(target, prompt);
+  const client = await createGleanClient({ email, serverUrl });
+  const firstTurn = await streamTurn(client, prompt);
 
   if (!followUp) return;
   if (!firstTurn.conversationId) {
@@ -130,9 +98,5 @@ export async function runChat({
   }
 
   console.log('\nFollow-up:');
-  if (stream) {
-    await streamTurn(target, followUp, firstTurn.conversationId);
-  } else {
-    await createTurn(target, followUp, firstTurn.conversationId);
-  }
+  await streamTurn(client, followUp, firstTurn.conversationId);
 }
