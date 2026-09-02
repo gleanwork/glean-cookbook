@@ -1,8 +1,8 @@
 # Streaming Chat with citations
 
-Use the modern Platform Chat API to send a permission-aware question, continue the conversation, and read a server-sent event (SSE) response with a standard `ReadableStream` reader and `TextDecoder`.
+Use the modern Platform Chat API to send a permission-aware question, continue the conversation, and read a streamed response through the SDK's `createStream` EventStream.
 
-This recipe uses `@gleanwork/api-client`'s top-level `glean.chat.create()` method. It does not use the legacy `glean.client.chat` API or hand-written Glean request construction.
+This recipe uses `@gleanwork/api-client` 0.20.2. JSON turns call `glean.chat.create()`. Streaming turns call `glean.chat.createStream()` and iterate the returned EventStream. It does not use the legacy `glean.client.chat` API, `stream` on `create()`, or hand-written Glean request construction.
 
 ## Prerequisites
 
@@ -41,7 +41,7 @@ npm run verify -- \
 
 The typed response includes `conversation_id`, assistant output text, and citation annotations with source URLs and snippets.
 
-## Run the SSE response
+## Run the streamed response
 
 ```bash
 npm start -- \
@@ -51,15 +51,16 @@ npm start -- \
   --stream
 ```
 
-The generated SDK builds and authenticates the request. The recipe supplies an `HTTPClient` fetcher that tees the SSE response body: the SDK keeps its normal response handling, while the recipe reads the other branch with `reader.read()` and `TextDecoder`. The parser buffers complete SSE frames because a network read can end in the middle of an event or UTF-8 character. Fixture tests use MSW to intercept the SDK transport without a bespoke HTTP server.
+`createStream` returns a typed EventStream. The recipe `for await`s events and writes `RESPONSE_OUTPUT_TEXT_DELTA.data.delta`, then reads citations from `RESPONSE_COMPLETED.data.response`. HTTP clients still set `stream: true` in the JSON body; SDK callers do not pass `stream` on `create()`. Fixture tests use MSW to intercept the SDK transport without a bespoke HTTP server.
 
 The follow-up sends `conversation_id` returned by the first stored turn. Omit `--follow-up` to run one turn.
 
 ## API sequence
 
 - `glean.chat.create({ input, store: true })` returns a typed JSON response.
-- `glean.chat.create({ input, conversation_id, store: true, stream: true })` requests SSE.
-- `acceptHeaderOverride: CreateAcceptEnum.textEventStream` negotiates `text/event-stream`.
+- `glean.chat.createStream({ input, conversation_id, store: true })` returns an EventStream.
+- `RESPONSE_OUTPUT_TEXT_DELTA` carries incremental text in `data.delta`.
+- `RESPONSE_COMPLETED` carries the finished `PlatformChatCompletedResponse` in `data.response`.
 - `output[].content[].annotations[]` contains citation sources and snippets.
 
 Keep prompts grounded in content you know exists in your own Glean instance. The answer and citations depend on your permissions and indexed content.

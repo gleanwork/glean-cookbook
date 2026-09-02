@@ -63,14 +63,33 @@ function completedResponse(conversationId = 'conv_fixture') {
   };
 }
 
-function sseResponse(payload: unknown) {
+function typedSseResponse() {
   const encoder = new TextEncoder();
+  const completed = completedResponse();
+  const frames = [
+    [
+      'event: RESPONSE_OUTPUT_TEXT_DELTA',
+      `data: ${JSON.stringify({
+        type: 'RESPONSE_OUTPUT_TEXT_DELTA',
+        response_id: completed.id,
+        delta: 'The answer is grounded in your content.',
+      })}`,
+      '',
+    ].join('\n'),
+    [
+      'event: RESPONSE_COMPLETED',
+      `data: ${JSON.stringify({
+        type: 'RESPONSE_COMPLETED',
+        response_id: completed.id,
+        response: completed,
+      })}`,
+      '',
+    ].join('\n'),
+  ].join('\n');
+
   const body = new ReadableStream<Uint8Array>({
     start(controller) {
-      controller.enqueue(encoder.encode('event: response\n'));
-      controller.enqueue(
-        encoder.encode(`data: ${JSON.stringify(payload)}\n\n`),
-      );
+      controller.enqueue(encoder.encode(frames));
       controller.close();
     },
   });
@@ -80,15 +99,13 @@ function sseResponse(payload: unknown) {
   });
 }
 
-test('uses the modern Platform Chat SSE response with the SDK transport', async () => {
+test('streams typed createStream events without setting stream on create()', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   const bodies: JsonValue[] = [];
-  const accepts: string[] = [];
   server.use(
     http.post(`${baseUrl}/api/chat`, async ({ request }) => {
       bodies.push((await request.json()) as JsonValue);
-      accepts.push(request.headers.get('accept') ?? '');
-      return sseResponse(completedResponse());
+      return typedSseResponse();
     }),
   );
 
@@ -98,7 +115,6 @@ test('uses the modern Platform Chat SSE response with the SDK transport', async 
     stream: true,
   });
 
-  assert.deepEqual(accepts, ['text/event-stream']);
   assert.deepEqual(bodies, [
     {
       input: 'What is our policy?',

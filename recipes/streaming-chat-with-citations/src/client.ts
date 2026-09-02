@@ -1,4 +1,4 @@
-import { Glean, HTTPClient, type SDKOptions } from '@gleanwork/api-client';
+import { Glean, type SDKOptions } from '@gleanwork/api-client';
 import type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';
 import { createGleanTokenProvider, discoverGleanTenant } from '@gleanwork/auth';
 
@@ -7,45 +7,6 @@ const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);
 export interface GleanClientTarget {
   email?: string;
   serverUrl?: string;
-}
-
-export interface ResponseBodyCapture {
-  capture(stream: ReadableStream<Uint8Array>): void;
-  reject(error: unknown): void;
-  waitForStream(): Promise<ReadableStream<Uint8Array>>;
-}
-
-export function createResponseBodyCapture(): ResponseBodyCapture {
-  let capturedStream: ReadableStream<Uint8Array> | undefined;
-  let failure: Error | undefined;
-  let resolveStream: (
-    value: ReadableStream<Uint8Array> | PromiseLike<ReadableStream<Uint8Array>>,
-  ) => void;
-  let rejectStream: (reason?: unknown) => void;
-
-  const streamPromise = new Promise<ReadableStream<Uint8Array>>(
-    (resolve, reject) => {
-      resolveStream = resolve;
-      rejectStream = reject;
-    },
-  );
-
-  return {
-    capture(value) {
-      capturedStream = value;
-      resolveStream(value);
-    },
-    reject(error) {
-      const reason = error instanceof Error ? error : new Error(String(error));
-      failure = reason;
-      rejectStream(reason);
-    },
-    waitForStream() {
-      if (capturedStream) return Promise.resolve(capturedStream);
-      if (failure) return Promise.reject(failure);
-      return streamPromise;
-    },
-  };
 }
 
 async function resolveServerUrl({ email, serverUrl }: GleanClientTarget) {
@@ -63,10 +24,7 @@ async function resolveServerUrl({ email, serverUrl }: GleanClientTarget) {
   );
 }
 
-export async function createGleanClient(
-  target: GleanClientTarget,
-  streamCapture?: ResponseBodyCapture,
-) {
+export async function createGleanClient(target: GleanClientTarget) {
   const serverURL = await resolveServerUrl(target);
   const server = new URL(serverURL);
   const loopback = LOOPBACK_HOSTS.has(server.hostname);
@@ -103,26 +61,6 @@ export async function createGleanClient(
       },
       retryConnectionErrors: true,
     },
-    httpClient: streamCapture
-      ? new HTTPClient({
-          fetcher: async (input) => {
-            const request =
-              input instanceof Request ? input : new Request(input);
-            const response = await fetch(request);
-            const acceptsEventStream =
-              request.headers.get('accept') === 'text/event-stream';
-            if (!acceptsEventStream || !response.body) return response;
-
-            const [sdkBody, consumerBody] = response.body.tee();
-            streamCapture.capture(consumerBody);
-            return new Response(sdkBody, {
-              headers: response.headers,
-              status: response.status,
-              statusText: response.statusText,
-            });
-          },
-        })
-      : undefined,
   } satisfies SDKOptions & XGleanOptions;
 
   return new Glean(options);

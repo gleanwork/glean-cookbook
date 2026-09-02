@@ -2,7 +2,7 @@
   "name": "streaming-chat-with-citations",
   "version": "0.0.0",
   "private": true,
-  "description": "Use the modern Glean Platform Chat API with OAuth, conversation state, citations, and SSE.",
+  "description": "Use the modern Glean Platform Chat API with OAuth, conversation state, citations, and createStream.",
   "type": "module",
   "scripts": {
     "login": "glean-auth login --scopes chat",
@@ -14,7 +14,7 @@
     "test:all": "npm run test && npm run lint && npm run typecheck"
   },
   "dependencies": {
-    "@gleanwork/api-client": "0.19.0",
+    "@gleanwork/api-client": "0.20.2",
     "@gleanwork/auth": "0.5.1",
     "meow": "14.1.0"
   },
