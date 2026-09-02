@@ -47,6 +47,7 @@ the coding agent must not substitute its isolated browser for your Glean SSO ses
 | **On-call Copilot**                                               | Advanced     | ~1.5 hr | `/cookbook:oncall-copilot`                 |
 | **Answer an RFP or security questionnaire**                       | Intermediate | ~45 min | `/cookbook:rfp-responder`                  |
 | **Search Glean with discovered filters**                          | Beginner     | ~15 min | `/cookbook:search-with-discovered-filters` |
+| **Stream a cited Chat response**                                  | Intermediate | ~20 min | `/cookbook:streaming-chat-with-citations`  |
 
 <!-- pluginpack-generated:recipes:end -->
 
