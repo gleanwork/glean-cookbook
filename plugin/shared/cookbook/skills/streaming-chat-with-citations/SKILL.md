@@ -25,7 +25,7 @@ Build "Stream a cited Chat response" following https://developers.glean.com/cook
    Copies the runnable TypeScript Chat CLI and fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.
 
    ```bash
-   npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/streaming-chat-with-citations streaming-chat-with-citations
+   npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/streaming-chat-with-citations streaming-chat-with-citations
    ```
 
 2. **Install dependencies**
