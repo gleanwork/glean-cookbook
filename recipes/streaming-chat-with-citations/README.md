@@ -6,10 +6,10 @@ This recipe uses `@gleanwork/api-client` 0.20.2. Every turn calls `createStream(
 
 ## Prerequisites
 
-- Node.js 22.12.0 or newer
+- Node.js 22.12.0 or newer. The steps use `npx` and `npm`. Install Node from [nodejs.org](https://nodejs.org) if needed.
 - A Glean instance with content indexed
 - Your work email, or the complete Glean backend HTTPS origin
-- A tenant that permits the public OAuth client and `chat` scope through DCR; an administrator-provisioned OAuth client or user-scoped `CHAT` token is the fallback
+- A tenant that permits the public OAuth client and `chat` scope through DCR
 
 Platform Chat is experimental. The SDK opts in through `includeExperimental: true`.
 
@@ -29,7 +29,9 @@ Use OAuth so the answer is evaluated with your own permissions:
 npm run login -- --email "you@example.com"
 ```
 
-The auth package stores refreshable credentials outside this project. You can also pass `--server-url` or set `GLEAN_SERVER_URL`. Set `GLEAN_API_TOKEN` only when using an explicit user-scoped token fallback.
+The auth package stores refreshable credentials outside this project. You can also pass `--server-url` or set `GLEAN_SERVER_URL`. If DCR is restricted, set `GLEAN_OAUTH_CLIENT_ID` for an administrator-provisioned public client.
+
+If OAuth is not available, set `GLEAN_API_TOKEN` as a user-scoped fallback.
 
 ## Stream one turn
 
