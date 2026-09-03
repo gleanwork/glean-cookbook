@@ -2,7 +2,7 @@
 
 Use the modern Platform Chat API to send a permission-aware question, continue the conversation, and read a streamed response through `glean.chat.createStream()`.
 
-This recipe uses `@gleanwork/api-client` 0.20.2. Every turn calls `createStream()` and `for await`s the typed EventStream. It does not use the legacy `glean.client.chat` API, `stream` on `create()`, or a hand-written SSE parser.
+This recipe uses `@gleanwork/api-client` 0.20.2. Every turn calls `createStream()` and `for await`s the typed `EventStream`. It does not use the legacy `glean.client.chat` API, `stream` on `create()`, or a hand-written SSE parser.
 
 ## Prerequisites
 
@@ -56,7 +56,7 @@ The follow-up sends `conversation_id` from the first stored turn. Omit `--follow
 
 ## API sequence
 
-- `glean.chat.createStream({ input, store: true })` returns a typed EventStream.
+- `glean.chat.createStream({ input, store: true })` returns a typed `EventStream`.
 - `RESPONSE_OUTPUT_TEXT_DELTA` carries incremental text in `data.delta`.
 - `RESPONSE_COMPLETED` carries the finished `PlatformChatCompletedResponse` in `data.response`.
 - `output[].content[].annotations[]` contains citation sources and snippets.
