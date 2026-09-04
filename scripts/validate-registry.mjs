@@ -12,6 +12,12 @@ const repoRoot = path.resolve(import.meta.dirname, '..');
 const schema = JSON.parse(
   fs.readFileSync(path.join(repoRoot, 'schemas', 'recipe.schema.json'), 'utf8'),
 );
+const taxonomy = JSON.parse(
+  fs.readFileSync(
+    path.join(repoRoot, 'config', 'recipe-taxonomy.json'),
+    'utf8',
+  ),
+);
 const executionTypes = JSON.parse(
   fs.readFileSync(
     path.join(repoRoot, 'config', 'execution-types.json'),
@@ -28,6 +34,45 @@ if (
   );
   process.exit(1);
 }
+
+function validateTaxonomyDimension(name) {
+  const entries = taxonomy[name];
+  if (!Array.isArray(entries) || entries.length === 0) {
+    console.error(
+      `config/recipe-taxonomy.json: ${name} must be a non-empty array.`,
+    );
+    process.exit(1);
+  }
+
+  const ids = entries.map((entry) => entry?.id);
+  const labels = entries.map((entry) => entry?.label);
+  if (
+    ids.some((id) => typeof id !== 'string' || !/^[a-z][a-z0-9-]*$/.test(id)) ||
+    labels.some((label) => typeof label !== 'string' || label.trim() === '')
+  ) {
+    console.error(
+      `config/recipe-taxonomy.json: every ${name} entry needs a kebab-case id and non-empty label.`,
+    );
+    process.exit(1);
+  }
+  if (new Set(ids).size !== ids.length) {
+    console.error(
+      `config/recipe-taxonomy.json: ${name} contains duplicate ids.`,
+    );
+    process.exit(1);
+  }
+
+  const schemaValues = schema.properties[name].items.enum;
+  if (JSON.stringify(ids) !== JSON.stringify(schemaValues)) {
+    console.error(
+      `config/recipe-taxonomy.json and schemas/recipe.schema.json declare different ${name}.`,
+    );
+    process.exit(1);
+  }
+}
+
+validateTaxonomyDimension('capabilities');
+validateTaxonomyDimension('surfaces');
 // Validate the per-recipe sources rather than the built registry.json, so a
 // failure names the file an author actually edits.
 const recipesDir = path.join(repoRoot, 'recipes');

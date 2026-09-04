@@ -53,8 +53,7 @@ those two commands in a site checkout to preview it. Do not create or edit the M
 
 Previewing is the only reason to run them: the result is scratch, not a change to submit. A
 recipe ships when it merges here, so **don't open a companion PR on the site to publish it** —
-the site's scheduled sync regenerates all of it and auto-merges its own PR. See
-[AGENTS.md](AGENTS.md) for the one exception, a recipe that adds a new enum value.
+the site's scheduled sync regenerates all of it and auto-merges its own PR.
 
 Do not commit generated plugin skills, manifests, or `build/` output in a recipe PR. The plugin's
 skills are generated from `registry.json` in CI and are committed automatically after the merge
@@ -99,9 +98,13 @@ clones just that directory (plus repo-root env var docs) into a fresh project.
 
 Recipe metadata is authored **one file per recipe**, at `recipes/{id}/recipe.json` — title,
 description, prerequisites, `aiPrompt`, everything a recipe's dev site page or the `glean-cookbook`
-plugin needs. The shape is `schemas/recipe.schema.json`, generated from
-[`src/types/recipe.ts`](https://github.com/gleanwork/glean-developer-site/blob/main/src/types/recipe.ts)
-in the dev site repo.
+plugin needs. The shape is defined by the canonical `schemas/recipe.schema.json` in this
+repo. The developer site's `src/types/recipe.ts` is a structural
+consumer adapter; capability and surface values are synced as data instead of duplicated there.
+
+Capability and surface values, display labels, and filter order live in
+`config/recipe-taxonomy.json`. Update that file and the matching schema enum together when
+adding one. `validate:registry` rejects drift between them.
 
 `registry.json` at the repo root is **generated** from those files and committed — the dev site syncs
 it as a single fetch, and the plugin's skills are generated from it. Don't hand-edit it; CI fails if
@@ -113,13 +116,10 @@ minutes and opens an auto-merging PR, so publishing a recipe needs nothing from 
 The sync generates one `docs/cookbook/{id}.mdx` per recipe, matched by filename === `id`.
 Those pages are generated output, not authored prose.
 
-The site validates each synced entry against its consumer adapter,
-[`src/types/recipe.ts`](https://github.com/gleanwork/glean-developer-site/blob/main/src/types/recipe.ts),
-and exits 1 on an enum value that adapter doesn't know — which fails the sync job for every
-recipe, not just yours, until the value is added there. A recipe introducing a new
-`capabilities`, `surfaces`, `category`, or `status` member is therefore the one case that
-needs a site PR of its own, and it carries the adapter change alone. `AGENTS.md` has the
-sequence.
+The sync copies `config/recipe-taxonomy.json` before compiling, so a new capability or
+surface still ships entirely from this repo. Enums with presentation behavior — such as a
+new category or status — may require consumer code, but generated recipe content still does
+not belong in that consumer PR.
 
 Use the visibility fields deliberately:
 
