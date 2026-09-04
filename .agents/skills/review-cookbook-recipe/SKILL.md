@@ -23,7 +23,7 @@ Every mode needs all four:
 
 - You walked the published page cold, in order.
 - The first printed command worked with no token and no special env.
-- The generated skill says the same steps as the page.
+- If `isPublicRecipe` is true, the generated skill says the same steps as the page. Hidden and preview recipes have no `/cookbook:{id}` skill. Skip that walk.
 - No Block finding is open.
 
 A green test suite proves none of them. Should-fix may ship with a named owner. Park is recorded and left.
@@ -43,7 +43,7 @@ Cause tags (launch only): `docs`, `scaffold/plugin`, `content/data`, `platform/A
 
 1. **Printed first run.** After copy and install, the printed command works with no token and no extra env.
 2. **Copy talks to the reader.** Second person. One human action per step. Expected results name what appears on screen.
-3. **One source.** Edit `recipe.json` and prompt files. Run `mise exec -- pnpm build`. Never hand-edit `registry.json`, plugin skills, or the site MDX.
+3. **One source.** Edit `recipe.json` and prompt files. Run `mise exec -- pnpm build` so plugin skills render locally. Commit `recipe.json` and regenerated `registry.json` only. Do not commit `plugin/shared`, `build/`, `.pluginpack`, or the README table. Never hand-edit those generated files.
 
 ## Walk
 
@@ -64,7 +64,7 @@ Copy this list and tick it:
 
 Walk `developers.glean.com/cookbook/<id>` cold, in order, from the published ref. Not the README. Not a local checkout. Not a remembered `.env`.
 
-Then walk `plugin/shared/cookbook/skills/<id>/SKILL.md` (`/cookbook:<id>`). It must say the same steps.
+Then walk `plugin/shared/cookbook/skills/<id>/SKILL.md` (`/cookbook:<id>`) when `isPublicRecipe` is true. It must say the same steps. Hidden and preview recipes have no skill file. That absence is not a Block.
 
 Freeze the first failure before diagnosing. Local source is diagnosis only.
 
@@ -97,9 +97,9 @@ Read `buildMethod` in `recipe.json`.
 
 ### 4. One source
 
-Edit `recipes/<id>/recipe.json` and prompt files. Run `mise exec -- pnpm build`, not `build:registry` alone, so the plugin skills render too.
+Edit `recipes/<id>/recipe.json` and prompt files. Authors pushing a recipe run `mise exec -- pnpm build:registry` as `CONTRIBUTING.md` says. A reader-pass review also runs `mise exec -- pnpm build` so `/cookbook:{id}` renders locally. Do not use `build:registry` alone when you need to walk that skill.
 
-A recipe PR commits `recipes/<id>/recipe.json` and the regenerated `registry.json`. It does not commit `plugin/shared`, `build/`, `.pluginpack`, or the README recipe table. After CI passes on `main`, `.github/workflows/sync-plugin.yml` runs `pnpm build` and commits those four. `CONTRIBUTING.md` says the same. Flag a recipe PR that commits any of them.
+A recipe PR commits authored recipe files and the regenerated `registry.json`. It does not commit `plugin/shared`, `build/`, `.pluginpack`, or the README recipe table. After CI passes on `main`, `.github/workflows/sync-plugin.yml` runs `pnpm build` and commits those four. Flag a recipe PR that commits any of them.
 
 Never hand-edit: `registry.json`, plugin skills, README recipe table, `styles/tokens.css`, and on the site `docs/cookbook/<id>.mdx`, `data/cookbook-registry.json`, `src/data/recipes.json`, preview assets.
 

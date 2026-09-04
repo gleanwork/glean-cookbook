@@ -123,6 +123,9 @@ Use the visibility fields deliberately:
 UX, copy, and first-run reviews follow
 [`.agents/skills/review-cookbook-recipe/SKILL.md`](.agents/skills/review-cookbook-recipe/SKILL.md).
 That is a reader pass of the published page, not a substitute for the gates below.
+A reader-pass walk of `/cookbook:{id}` needs `mise exec -- pnpm build` locally so the generated
+skill is current. Do not commit that plugin output. Recipe PRs still push with
+`mise exec -- pnpm build:registry` as above.
 
 What "verify" means depends on the recipe's `buildMethod`:
 
