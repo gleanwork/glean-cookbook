@@ -26,7 +26,7 @@ Load [SKILL.md](../SKILL.md) first. This file is the criterion list. Score each 
 | UI leaks no files/env/endpoints/raw SDK JSON; errors are `error` + `hint`                                                                                                | Should-fix          | runnable    |
 | `llmContext` within cap; `demoQueries` count and order unchanged                                                                                                         | Should-fix          | all         |
 | Authored recipe files plus regenerated `registry.json`; full `pnpm build` only to render locally; no `plugin/shared`, `build/`, `.pluginpack`, or README table in the PR | Block               | all         |
-| Generated skill contains no self-contradicting steps                                                                                                                     | Block               | all         |
+| Generated skill contains no self-contradicting steps                                                                                                                     | Block               | listed      |
 | `lastVerified` reset when `aiPrompt`/`llmContext` change                                                                                                                 | Should-fix          | all         |
 | `demoQueries` answerable on the reader's own instance; no seeded corpus                                                                                                  | Block               | live        |
 | Live copy claims only what holds on any corpus                                                                                                                           | Block               | live        |
