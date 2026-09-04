@@ -69,6 +69,8 @@ jobs:
       - run: npm --prefix recipes/pre-meeting-brief run verify:fixture
       - run: npm --prefix recipes/validate-and-publish-skill ci
       - run: npm --prefix recipes/validate-and-publish-skill test
+      - run: npm --prefix recipes/skill-publishing-pipeline ci
+      - run: npm --prefix recipes/skill-publishing-pipeline test
 
   format-check:
     name: Format check
