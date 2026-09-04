@@ -1,0 +1,39 @@
+{
+  "name": "skill-publishing-pipeline",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Validate, publish, version, inspect, and safely clean up a Glean skill bundle.",
+  "type": "module",
+  "scripts": {
+    "login": "node scripts/login.mjs",
+    "start": "tsx src/cli.ts",
+    "verify": "tsx src/cli.ts verify --yes",
+    "test": "vitest run",
+    "lint": "eslint src scripts",
+    "typecheck": "tsc --noEmit",
+    "test:all": "npm run test && npm run lint && npm run typecheck"
+  },
+  "dependencies": {
+    "@gleanwork/api-client": "0.20.4",
+    "@gleanwork/auth": "0.5.1",
+    "meow": "14.1.0",
+    "yauzl": "3.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.4.1",
+    "@types/yauzl": "3.4.0",
+    "eslint": "10.10.0",
+    "fflate": "0.8.3",
+    "tsx": "4.23.13",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.69.0",
+    "vitest": "5.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "fsevents": false
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

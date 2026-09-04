@@ -1,0 +1,218 @@
+{
+  "id": "skill-publishing-pipeline",
+  "title": "Publish a versioned skill bundle",
+  "description": "After a first persist, prove name-based version supersession, retrieve a specific version, stage downloaded bytes in a bounded zip sandbox, and delete only the run-owned skill.",
+  "sidebarLabel": "Version a skill",
+  "codeWalkthrough": {
+    "intro": "The runnable scaffold opts into the experimental Skills API through the official SDK, keeps validation separate from persistence, verifies version supersession directly, and treats downloaded archives as untrusted.",
+    "examples": [
+      {
+        "title": "Configure the Skills API client",
+        "description": "Resolve the reader's tenant, use the native Skills scopes or the recorded legacy compatibility mode, and enable experimental endpoints through the SDK constructor.",
+        "source": "src/client.ts",
+        "language": "typescript"
+      },
+      {
+        "title": "Prove supersession and inspect a version",
+        "description": "Publish the same unique name twice, confirm the skill ID is stable while the version advances, then retrieve that version's metadata and content directly.",
+        "source": "src/workflow.ts",
+        "language": "typescript"
+      },
+      {
+        "title": "Stage downloaded bundles safely",
+        "description": "Extract into a fresh sandbox while rejecting traversal, links, special files, overwrites, and configured size limits. Retrieved content is never executed.",
+        "source": "src/bundle.ts",
+        "language": "typescript"
+      }
+    ]
+  },
+  "surfaces": ["platform-api"],
+  "capabilities": ["skills"],
+  "status": "production-pattern",
+  "visibility": "preview",
+  "category": "workflow",
+  "level": "Intermediate",
+  "levels": {
+    "minimal": true,
+    "wow": false
+  },
+  "timeEstimate": "~20 min",
+  "requiredScopes": ["skills:read", "skills:write"],
+  "authMethod": ["client-api-oauth-or-token"],
+  "buildMethod": "scaffold",
+  "languages": ["typescript"],
+  "prerequisites": [
+    "Node.js 22.12.0 or newer",
+    "A Glean instance with the experimental Skills Platform APIs enabled",
+    "Your work email, or the complete Glean backend HTTPS origin",
+    "A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback",
+    "The Beginner validate-and-publish-skill quickstart, or an existing local SKILL.md, .zip, or .skill bundle"
+  ],
+  "demoQueries": [
+    {
+      "query": "Publish a uniquely named sample skill twice, inspect the new version, then clean up the run-owned skill",
+      "expectedBehavior": "Validation persists nothing, the second create keeps the captured skill ID and advances its version, listVersions/getVersion/getVersionContent match that version, bounded sandbox extraction succeeds, and cleanup deletes only that captured ID."
+    }
+  ],
+  "codeAssets": [
+    {
+      "repoPath": "recipes/skill-publishing-pipeline",
+      "language": "typescript",
+      "description": "TypeScript CLI using @gleanwork/api-client for Skills version supersession, version inspection, bounded zip sandboxing, and captured-ID cleanup"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Scaffold the project",
+      "description": "Copies the Skills versioning CLI, sample bundle, CI example, and credential-free fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
+      "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/skill-publishing-pipeline skill-publishing-pipeline",
+      "kind": "scaffold"
+    },
+    {
+      "title": "Install dependencies",
+      "command": "cd skill-publishing-pipeline && npm install",
+      "kind": "install"
+    },
+    {
+      "title": "Run the fixture tests",
+      "description": "Exercises name-based supersession, version retrieval, scope fallback classification, and adversarial archive handling without credentials or network access.",
+      "command": "cd skill-publishing-pipeline && npm test",
+      "kind": "manual"
+    },
+    {
+      "title": "Sign in with OAuth",
+      "description": "Requests skills:read and skills:write first. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. Use --server-url for an explicit backend, GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN as a user-scoped fallback.",
+      "command": "cd skill-publishing-pipeline && npm run login -- --email \"<work-email>\"",
+      "kind": "authenticate"
+    },
+    {
+      "title": "Verify versioning on your instance",
+      "description": "Creates a cryptographically unique sample, publishes a second version under the same name, retrieves and stages that version's content in a bounded sandbox, then permanently deletes only the ID returned by this run.",
+      "command": "cd skill-publishing-pipeline && npm run verify -- --email \"<work-email>\"",
+      "kind": "verify-live"
+    },
+    {
+      "title": "Publish a new version of your bundle",
+      "description": "Validates your bundle, confirms before name-based supersession if that display name already exists, stages the returned zip for review, and prints the exact ID needed for optional cleanup.",
+      "command": "cd skill-publishing-pipeline && npm start -- publish --bundle \"<skill-bundle-path>\" --email \"<work-email>\"",
+      "kind": "run"
+    },
+    {
+      "title": "Adapt the CI publishing example",
+      "description": "Review .github/workflows/publish-skill.yml, change its bundle path, and configure a user-scoped token secret plus backend-origin variable in your repository. CI publishing intentionally uses a stable skill name so each merge adds a version.",
+      "kind": "manual"
+    },
+    {
+      "title": "Clean up only when intended",
+      "description": "Deletion permanently removes every version. Use only the exact ID printed by your publish run and review the confirmation prompt.",
+      "command": "cd skill-publishing-pipeline && npm start -- cleanup --id \"PASTE_THE_ID_PRINTED_BY_PUBLISH\" --email \"<work-email>\"",
+      "kind": "manual"
+    }
+  ],
+  "execution": {
+    "type": "cli",
+    "questions": [
+      {
+        "id": "work-email",
+        "prompt": "What is your work email address?"
+      },
+      {
+        "id": "skill-bundle-path",
+        "prompt": "What local SKILL.md, .zip, or .skill bundle do you want to publish as a new version?"
+      }
+    ],
+    "auth": [
+      {
+        "kind": "oauth-with-token-fallback",
+        "scopes": ["skills:read", "skills:write"],
+        "setupCommand": "cd skill-publishing-pipeline && npm run login -- --email \"<work-email>\"",
+        "credentialVariable": "GLEAN_API_TOKEN"
+      }
+    ],
+    "verification": {
+      "kind": "automated",
+      "command": "cd skill-publishing-pipeline && npm run verify -- --email \"<work-email>\"",
+      "expectedDuration": "about 2 minutes after sign-in",
+      "startsOwnServer": false
+    },
+    "run": {
+      "command": "cd skill-publishing-pipeline && npm start -- publish --bundle \"<skill-bundle-path>\" --email \"<work-email>\"",
+      "userBrowser": false
+    }
+  },
+  "architecture": [
+    {
+      "label": "Your skill bundle",
+      "caption": "SKILL.md, .zip, or .skill",
+      "icon": "FileCode"
+    },
+    {
+      "label": "Validation",
+      "caption": "metadata and normalized layout",
+      "category": "workflow"
+    },
+    {
+      "label": "Versioned Skills API",
+      "caption": "stable ID, advancing version",
+      "category": "workflow",
+      "emphasized": true
+    },
+    {
+      "label": "Fresh sandbox",
+      "caption": "bounded zip extraction",
+      "icon": "Folder"
+    }
+  ],
+  "aiPrompt": "Scaffold and run the verified Skills versioning recipe. This is not the first persist; the Beginner validate-and-publish-skill quickstart owns that. Ask for the user's work email and local bundle path. Run credential-free fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique sample: validate it, create it twice under one name, confirm the returned skill ID is stable and the version advances, retrieve listVersions/getVersion/getVersionContent, stage the zip in a bounded sandbox, then delete only the captured run-owned ID. For the user's bundle, validate before create, confirm name-based supersession, print the returned ID, and do not delete automatically. Do not teach a hello-world list/create/delete path, do not import from GitHub, and do not use createVersion() or PATCH as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+  "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This Intermediate recipe is the versioning job: name-based create() supersession, listVersions/getVersion/getVersionContent, and bounded zip sandboxing. The first persist belongs to validate-and-publish-skill. Create with an owned existing name adds a version. Validation persists nothing. Retrieve content as untrusted bytes and extract only into a fresh sandbox with normalized relative paths, no links or special files, bounded sizes and counts, no overwrites, and non-executable permissions. Native OAuth scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and restrict deletion to those IDs. GitHub import/sync is a different recipe. Leave PATCH update and POST .../versions as take-it-further, not the first run.",
+  "goDependency": false,
+  "featured": false,
+  "hidden": false,
+  "tags": [
+    "skills",
+    "publishing",
+    "versioning",
+    "platform-api",
+    "experimental"
+  ],
+  "content": {
+    "problem": "After a first Skills persist, teams still need to prove a later publish becomes a version rather than a duplicate, retrieve that exact version, and inspect the stored zip without executing it. This recipe is that versioning job. The Beginner validate-and-publish-skill quickstart owns the first persist.",
+    "takeItFurther": [
+      "Use glean.skills.createVersion() when your system already tracks a specific skill ID and explicit version creation is clearer than name-based supersession.",
+      "PATCH a captured skill ID to enable or disable it without changing stored content.",
+      "Import and sync from GitHub with the import-skill-from-github recipe instead of folding that source of truth into this pipeline."
+    ],
+    "guardrails": [
+      {
+        "title": "Validate before persistence",
+        "rule": "Call validate first and stop on any error. Validation itself never creates or updates a skill."
+      },
+      {
+        "title": "Confirm supersession",
+        "rule": "If the validated display name already exists, show its ID and require confirmation before create adds a version."
+      },
+      {
+        "title": "Treat content as untrusted",
+        "rule": "Stage downloaded bundles in a fresh bounded sandbox, never overwrite files, and never execute bundle contents."
+      },
+      {
+        "title": "Delete by captured ID only",
+        "rule": "Deletion removes every version. Never choose a cleanup target by display name or a broad catalog search."
+      }
+    ],
+    "limitations": [
+      {
+        "title": "Experimental API",
+        "description": "The scaffold opts in with includeExperimental, but the Skills endpoints may still be unavailable on a tenant or change before general availability."
+      },
+      {
+        "title": "Publishing is not execution",
+        "description": "The API stores and distributes skill bundles. This recipe does not run the skill or prove how an agent host will interpret it."
+      },
+      {
+        "title": "OAuth policy varies by tenant",
+        "description": "Native Skills scopes may not yet be grantable everywhere. The login wrapper uses the legacy compatibility scope only for a recognized scope-grant failure; a user-scoped token remains an explicit fallback."
+      }
+    ]
+  }
+}
