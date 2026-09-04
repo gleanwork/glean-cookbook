@@ -46,12 +46,12 @@
     "A Glean instance with the experimental Skills Platform APIs enabled",
     "Your work email, or the complete Glean backend HTTPS origin",
     "A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback",
-    "The Beginner validate-and-publish-skill quickstart, or an existing local SKILL.md, .zip, or .skill bundle"
+    "The scaffold includes a sample SKILL.md at fixtures/sample-skill/SKILL.md; the later publish step can use that sample or your own bundle"
   ],
   "demoQueries": [
     {
       "query": "Publish a uniquely named sample skill twice, inspect the new version, then clean up the run-owned skill",
-      "expectedBehavior": "Validation persists nothing, the second create keeps the captured skill ID and advances its version, listVersions/getVersion/getVersionContent match that version, bounded sandbox extraction succeeds, and cleanup deletes only that captured ID."
+      "expectedBehavior": "Stdout ends with Verified <name> (<id>) at version <n>.<m>; cleanup completed. If delete fails, the process exits non-zero, prints the remaining ID and npm start -- cleanup --id <id> --yes, and does not print that success line."
     }
   ],
   "codeAssets": [
@@ -63,8 +63,8 @@
   ],
   "steps": [
     {
-      "title": "Scaffold the project",
-      "description": "Copies the Skills versioning CLI, sample bundle, CI example, and credential-free fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
+      "title": "Copy the project onto your machine",
+      "description": "Copy the Skills versioning CLI, sample bundle, CI example, and credential-free fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
       "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/skill-publishing-pipeline skill-publishing-pipeline",
       "kind": "scaffold"
     },
@@ -75,36 +75,36 @@
     },
     {
       "title": "Run the fixture tests",
-      "description": "Exercises name-based supersession, version retrieval, scope fallback classification, and adversarial archive handling without credentials or network access.",
+      "description": "Run name-based supersession, version retrieval, scope fallback classification, and adversarial archive tests without credentials or network access.",
       "command": "cd skill-publishing-pipeline && npm test",
       "kind": "manual"
     },
     {
       "title": "Sign in with OAuth",
-      "description": "Requests skills:read and skills:write first. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. Use --server-url for an explicit backend, GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN as a user-scoped fallback.",
+      "description": "Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. Use --server-url for an explicit backend. If DCR is restricted, set GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client. If OAuth is not available, set GLEAN_API_TOKEN later as a user-scoped fallback.",
       "command": "cd skill-publishing-pipeline && npm run login -- --email \"<work-email>\"",
       "kind": "authenticate"
     },
     {
       "title": "Verify versioning on your instance",
-      "description": "Creates a cryptographically unique sample, publishes a second version under the same name, retrieves and stages that version's content in a bounded sandbox, then permanently deletes only the ID returned by this run.",
+      "description": "Create a cryptographically unique sample, publish a second version under the same name, retrieve and stage that version's content in a bounded sandbox, then permanently delete only the ID returned by this run. Success prints a Verified line that ends with cleanup completed.",
       "command": "cd skill-publishing-pipeline && npm run verify -- --email \"<work-email>\"",
       "kind": "verify-live"
     },
     {
       "title": "Publish a new version of your bundle",
-      "description": "Validates your bundle, confirms before name-based supersession if that display name already exists, stages the returned zip for review, and prints the exact ID needed for optional cleanup.",
+      "description": "Validate your bundle, confirm before name-based supersession if that display name already exists, and stage the returned zip under staged/ID/vVERSION.MINOR so a second publish does not overwrite the first. Pass --stage-dir to choose a different parent folder. The command prints the exact ID needed for optional cleanup.",
       "command": "cd skill-publishing-pipeline && npm start -- publish --bundle \"<skill-bundle-path>\" --email \"<work-email>\"",
       "kind": "run"
     },
     {
-      "title": "Adapt the CI publishing example",
-      "description": "Review .github/workflows/publish-skill.yml, change its bundle path, and configure a user-scoped token secret plus backend-origin variable in your repository. CI publishing intentionally uses a stable skill name so each merge adds a version.",
+      "title": "Copy the CI publishing example into your repo",
+      "description": "Treat this scaffold directory as the GitHub repository root. Copy .github/workflows/publish-skill.yml as-is; it already points at fixtures/sample-skill/SKILL.md and runs npm ci from that root. Then set a user-scoped token secret and backend-origin variable in that repository.",
       "kind": "manual"
     },
     {
-      "title": "Clean up only when intended",
-      "description": "Deletion permanently removes every version. Use only the exact ID printed by your publish run and review the confirmation prompt.",
+      "title": "Delete the published skill only when you intend to",
+      "description": "Deletion permanently removes every version. Pass only the exact ID printed by your publish run and read the confirmation prompt.",
       "command": "cd skill-publishing-pipeline && npm start -- cleanup --id \"PASTE_THE_ID_PRINTED_BY_PUBLISH\" --email \"<work-email>\"",
       "kind": "manual"
     }
@@ -197,7 +197,7 @@
       },
       {
         "title": "Delete by captured ID only",
-        "rule": "Deletion removes every version. Never choose a cleanup target by display name or a broad catalog search."
+        "rule": "Deletion removes every version. Never choose a cleanup target by display name or a broad catalog search. If delete fails, do not report cleanup completed."
       }
     ],
     "limitations": [
