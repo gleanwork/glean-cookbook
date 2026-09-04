@@ -3,7 +3,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { strToU8, zipSync } from 'fflate';
 import { afterEach, expect, test } from 'vitest';
-import { verifyPublishingLifecycle, type SkillsApi } from './workflow.js';
+import { CleanupFailedError } from './errors.js';
+import {
+  verifiedSuccessLine,
+  verifyPublishingLifecycle,
+  type SkillsApi,
+} from './workflow.js';
 
 const roots: string[] = [];
 
@@ -17,7 +22,7 @@ function streamFor(manifest: string) {
   });
 }
 
-function fakeApi() {
+function fakeApi(options?: { deleteError?: Error }) {
   let currentManifest = '';
   let version = 0;
   let deleted = false;
@@ -106,6 +111,7 @@ function fakeApi() {
     },
     async delete(skillId: string) {
       expect(skillId).toBe('skill-run-owned');
+      if (options?.deleteError) throw options.deleteError;
       deleted = true;
     },
     async list() {
@@ -147,9 +153,39 @@ test('validates, supersedes, retrieves, and cleans up one captured skill', async
     version: 2,
     minorVersion: 0,
   });
+  expect(verifiedSuccessLine(result)).toMatch(/cleanup completed\.$/);
   expect(fixture.state()).toEqual({
     createCalls: 2,
     deleted: true,
     version: 2,
   });
+});
+
+test('failed delete exits without reporting cleanup completed', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-cleanup-fail-'));
+  roots.push(root);
+  const logs: string[] = [];
+  const fixture = fakeApi({
+    deleteError: Object.assign(new Error('conflict'), { statusCode: 409 }),
+  });
+
+  await expect(
+    verifyPublishingLifecycle(fixture.api, {
+      workDir: root,
+      cleanup: true,
+      log: (message) => logs.push(message),
+    }),
+  ).rejects.toSatisfy((error: unknown) => {
+    expect(error).toBeInstanceOf(CleanupFailedError);
+    expect(error).toMatchObject({
+      remainingIds: ['skill-run-owned'],
+      cleanupCommand: 'npm start -- cleanup --id skill-run-owned --yes',
+    });
+    expect(String(error)).not.toMatch(/cleanup completed/);
+    return true;
+  });
+
+  expect(logs.join('\n')).not.toMatch(/cleanup completed/);
+  expect(logs.join('\n')).not.toMatch(/Cleanup warning/);
+  expect(fixture.state().deleted).toBe(false);
 });

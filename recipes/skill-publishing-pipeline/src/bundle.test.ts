@@ -101,3 +101,20 @@ test('never overwrites an existing sandbox', async () => {
     code: 'EEXIST',
   });
 });
+
+test('stages a second version beside the first without overwriting', async () => {
+  const archive = Buffer.from(zipSync({ 'SKILL.md': strToU8('safe') }));
+  const root = await destination('versions');
+  const first = path.join(root, 'skill-run-owned', 'v1.0');
+  const second = path.join(root, 'skill-run-owned', 'v2.0');
+
+  await expect(stageDownloadedBundle(archive, first)).resolves.toEqual([
+    'SKILL.md',
+  ]);
+  await expect(stageDownloadedBundle(archive, second)).resolves.toEqual([
+    'SKILL.md',
+  ]);
+  await expect(stageDownloadedBundle(archive, first)).rejects.toMatchObject({
+    code: 'EEXIST',
+  });
+});

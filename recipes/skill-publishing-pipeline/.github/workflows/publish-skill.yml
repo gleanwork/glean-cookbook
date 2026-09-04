@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'skills/example/**'
+      - 'fixtures/sample-skill/**'
 
 jobs:
   publish:
@@ -20,4 +20,4 @@ jobs:
         env:
           GLEAN_API_TOKEN: ${{ secrets.GLEAN_SKILLS_API_TOKEN }}
           GLEAN_SERVER_URL: ${{ vars.GLEAN_SERVER_URL }}
-        run: npm start -- publish --bundle skills/example/SKILL.md --yes
+        run: npm start -- publish --bundle fixtures/sample-skill/SKILL.md --yes

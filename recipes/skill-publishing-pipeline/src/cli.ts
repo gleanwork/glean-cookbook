@@ -4,9 +4,12 @@ import { stdin, stdout } from 'node:process';
 import meow from 'meow';
 import { createGleanClient } from './client.js';
 import { readBundle, readStream, stageDownloadedBundle } from './bundle.js';
+import { missingCleanupConfirmation, printCliError } from './errors.js';
 import {
   findSkillByName,
   publishBundle,
+  stagingDestination,
+  verifiedSuccessLine,
   verifyPublishingLifecycle,
 } from './workflow.js';
 
@@ -70,11 +73,6 @@ async function main() {
     throw new Error(`Unexpected argument: ${cli.input[1]}`);
   }
 
-  const client = await createGleanClient({
-    email: cli.flags.email?.trim(),
-    serverUrl: cli.flags.serverUrl?.trim(),
-  });
-
   if (command === 'verify') {
     const cleanupApproved =
       cli.flags.yes ||
@@ -82,16 +80,21 @@ async function main() {
         'Verification creates one uniquely named skill, publishes a second version, stages that zip in a sandbox, and permanently deletes that run-owned skill.',
       ));
     if (!cleanupApproved) {
-      throw new Error('Verification requires explicit cleanup confirmation.');
+      throw new Error(missingCleanupConfirmation(stdin.isTTY));
     }
+    const client = await createGleanClient(
+      {
+        email: cli.flags.email?.trim(),
+        serverUrl: cli.flags.serverUrl?.trim(),
+      },
+      console.log,
+    );
     const result = await verifyPublishingLifecycle(client.skills, {
       workDir: path.resolve('.cookbook-runs'),
       cleanup: true,
       log: console.log,
     });
-    console.log(
-      `Verified ${result.displayName} (${result.id}) at version ${result.version}.${result.minorVersion}; cleanup completed.`,
-    );
+    console.log(verifiedSuccessLine(result));
     return;
   }
 
@@ -102,13 +105,27 @@ async function main() {
       (await confirm(
         `Permanently delete skill ${id} and every version? Only continue for an ID created by this run.`,
       ));
-    if (!approved) throw new Error('Cleanup cancelled.');
+    if (!approved) throw new Error(missingCleanupConfirmation(stdin.isTTY));
+    const client = await createGleanClient(
+      {
+        email: cli.flags.email?.trim(),
+        serverUrl: cli.flags.serverUrl?.trim(),
+      },
+      console.log,
+    );
     await client.skills.delete(id);
     console.log(`Deleted skill ${id}.`);
     return;
   }
 
   const bundlePath = required(cli.flags.bundle, '--bundle');
+  const client = await createGleanClient(
+    {
+      email: cli.flags.email?.trim(),
+      serverUrl: cli.flags.serverUrl?.trim(),
+    },
+    console.log,
+  );
   const bundle = await readBundle(bundlePath);
   const validation = await client.skills.validate({ file: bundle });
   const existingId = await findSkillByName(
@@ -125,8 +142,13 @@ async function main() {
   }
 
   const result = await publishBundle(client.skills, bundlePath);
+  const destination = stagingDestination(
+    cli.flags.stageDir,
+    result.id,
+    result.version,
+    result.minorVersion,
+  );
   const response = await client.skills.retrieveContent(result.id);
-  const destination = path.resolve(cli.flags.stageDir, result.id);
   const files = await stageDownloadedBundle(
     await readStream(response.result),
     destination,
@@ -141,16 +163,6 @@ async function main() {
 }
 
 main().catch((error: unknown) => {
-  const statusCode =
-    typeof error === 'object' && error && 'statusCode' in error
-      ? (error as { statusCode?: number }).statusCode
-      : undefined;
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(message);
-  if (statusCode === 404) {
-    console.error(
-      'This client already opts into experimental APIs. For create or validate, a 404 can mean Skills APIs are not enabled for this tenant; for retrieve or delete, confirm the exact skill ID.',
-    );
-  }
+  printCliError(error);
   process.exitCode = 1;
 });
