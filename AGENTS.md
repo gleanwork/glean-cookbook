@@ -41,24 +41,14 @@ There is no prose to hand-write over there. A recipe's page is generated from it
 hand looks completely correct — it renders, and it passes CI — and then disappears the next
 time the cron runs. The only lasting effect is a pull request somebody has to close.
 
-### The exception: teaching the site a value it does not know
+### Capabilities and surfaces are cookbook-owned
 
-Recipe fields are enums on both sides. The developer site validates each synced entry
-against its consumer adapter, `src/types/recipe.ts`, and **exits 1 on a value that adapter
-has never heard of**. A recipe introducing a new `capabilities`, `surfaces`, `category`, or
-`status` member therefore does not render badly — it fails the sync job before any pull
-request is opened, and keeps failing every 15 minutes, for every other recipe too, until
-someone adds the value there.
+Their values, display labels, and filter order live in `config/recipe-taxonomy.json`. To add
+one, update that file and the matching enum in `schemas/recipe.schema.json` in the same
+cookbook PR. `validate:registry` rejects drift between them. The developer site syncs the
+taxonomy before compiling recipes, so this does not require a site change or a sequenced PR.
 
-So when, and only when, you add an enum member:
-
-1. Open a developer-site pull request carrying the adapter change **alone**:
-   `src/types/recipe.ts` and its label map, `scripts/compile-recipes.ts` if the value needs
-   a filter facet, the tests, and the regenerated `schemas/recipe.schema.json`. No registry
-   snapshot, no `.mdx`, no `src/data/recipes.json` — the sync writes those.
-2. Merge it first. An enum member no recipe uses yet is inert, so it is safe to land ahead
-   of the recipe that needs it.
-3. Then merge the recipe here, and let the scheduled sync publish it.
-
-Keep `schemas/recipe.schema.json` here in step with that adapter — it is the contract
-`validate:registry` checks every `recipe.json` against.
+Other enums can carry presentation behavior rather than just labels. A new `category`,
+`status`, execution type, or similar value may still require site or plugin code. That is a
+feature change in the relevant consumer, not a companion registry sync: carry only the
+consumer behavior there and continue to let the scheduled sync publish the recipe.
