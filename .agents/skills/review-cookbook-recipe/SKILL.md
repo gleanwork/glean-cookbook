@@ -15,13 +15,18 @@ Reader pass, not a feature pass. Follow the published page as a stranger with a 
 
 Gold copy: [cookbook#48](https://github.com/gleanwork/glean-cookbook/pull/48) (Customer 360). Do not clone its seven-step list onto MCP, Lovable, Replit, or `integrate` recipes.
 
-Do not invent a new bar. Criteria and gotchas: [references/checklist.md](references/checklist.md), [references/gotchas.md](references/gotchas.md).
+Do not invent a new bar. The criteria live in [references/checklist.md](references/checklist.md). The traps that change a score live in [references/gotchas.md](references/gotchas.md).
 
 ## Pass
 
-The published page was walked cold. The first printed command worked with no token and no special env. Every claim on the page is reachable in the UI it names. The generated skill says the same steps. A green test suite is not proof. No open Block findings.
+Every mode needs all four:
 
-Should-fix may ship with a named owner. Park is recorded and left.
+- You walked the published page cold, in order.
+- The first printed command worked with no token and no special env.
+- The generated skill says the same steps as the page.
+- No Block finding is open.
+
+A green test suite proves none of them. Should-fix may ship with a named owner. Park is recorded and left.
 
 ## Mode
 
@@ -30,15 +35,15 @@ Should-fix may ship with a named owner. Park is recorded and left.
 | **Routine** | New recipe, rewrite, copy pass         | Block / Should-fix / Park                                     |
 | **Launch**  | Showpiece, Go-blocking, demo rehearsal | Per-cell PASS / FAIL / BLOCKED + cause, plus routine findings |
 
-Routine review does not require a live walkthrough to pass. Launch review does. A missing prerequisite is BLOCKED, not a quiet pass.
+Routine skips the own-instance live UI walk (step 5) unless the page asserts live behavior. Launch always runs step 5 on your own instance. A missing prerequisite is BLOCKED, not a quiet pass.
 
-Cause tags (launch only): `docs` | `scaffold/plugin` | `content/data` | `platform/API` | `credentials/environment` | `browser UX`.
+Cause tags (launch only): `docs`, `scaffold/plugin`, `content/data`, `platform/API`, `credentials/environment`, `browser UX`.
 
 ## Three moves
 
 1. **Printed first run.** After copy and install, the printed command works with no token and no extra env.
 2. **Copy talks to the reader.** Second person. One human action per step. Expected results name what appears on screen.
-3. **One source.** Edit `recipe.json` (and prompt files). Full `mise exec -- pnpm build`. Never hand-edit generated MDX, skills, or `registry.json`.
+3. **One source.** Edit `recipe.json` and prompt files. Run `mise exec -- pnpm build`. Never hand-edit `registry.json`, plugin skills, or the site MDX.
 
 ## Walk
 
@@ -50,7 +55,7 @@ Copy this list and tick it:
 - [ ] 3. Copy
 - [ ] 4. One source
 - [ ] 5. Live claims (if asserted, or launch mode)
-- [ ] 6. Dual path / auth (if two codeAssets or two planners)
+- [ ] 6. Dual path and auth (if two codeAssets or two planners)
 - [ ] 7. Third-party extras (if buildMethod is third-party-build)
 - [ ] 8. Park the rest
 ```
@@ -69,9 +74,9 @@ A step `description` in `recipe.json` is the only prose field a step has. It ren
 
 Read `buildMethod` in `recipe.json`.
 
-**All recipes.** No "ready" while required blanks are empty. `--help` is not a first run.
+**All recipes.** No "ready" while required blanks are empty. `--help` is not a first run. A GitHub SSH key is special env. Run the printed scaffold command on a host without one (see the scaffold gotcha).
 
-**`scaffold` / runnable.** If the app needs Glean, the printed default is the fixture or recorded path, as a numbered step. Live is a later "adapt to your corpus" section. Do not ship fake live mode. The UI states which mode it is in. The UI surfaces server errors (no 500 as an empty state). Sample buttons work in the mode that offers them. Verify spawns the documented command, not a hidden `tsx` with injected env. Verify loads `.env`. A stop-the-server note sits before verify.
+**`scaffold` (runnable).** If the app needs Glean, the printed default is the fixture or recorded path, as a numbered step. Live is a later "adapt to your corpus" section. Do not ship fake live mode. The UI states which mode it is in. The UI surfaces server errors (no 500 as an empty state). Sample buttons work in the mode that offers them. Verify spawns the documented command, not a hidden `tsx` with injected env. Verify loads `.env`. A stop-the-server note sits before verify.
 
 **`integrate`.** Blind rebuild from the generated `SKILL.md` alone. Do not inspect-and-patch `recipes/<id>/`. See `CONTRIBUTING.md`.
 
@@ -92,7 +97,9 @@ Read `buildMethod` in `recipe.json`.
 
 ### 4. One source
 
-Edit `recipes/<id>/recipe.json` and prompt files. Run `mise exec -- pnpm build` (not `build:registry` alone). Commit generated registry + plugin skills.
+Edit `recipes/<id>/recipe.json` and prompt files. Run `mise exec -- pnpm build`, not `build:registry` alone, so the plugin skills render too.
+
+A recipe PR commits `recipes/<id>/recipe.json` and the regenerated `registry.json`. It does not commit `plugin/shared`, `build/`, `.pluginpack`, or the README recipe table. After CI passes on `main`, `.github/workflows/sync-plugin.yml` runs `pnpm build` and commits those four. `CONTRIBUTING.md` says the same. Flag a recipe PR that commits any of them.
 
 Never hand-edit: `registry.json`, plugin skills, README recipe table, `styles/tokens.css`, and on the site `docs/cookbook/<id>.mdx`, `data/cookbook-registry.json`, `src/data/recipes.json`, preview assets.
 
@@ -149,7 +156,7 @@ Use only **Block**, **Should-fix**, **Park**.
 | **Should-fix** | Real defect. Reader can still succeed.                                                                                                                     |
 | **Park**       | Polish. Does not block the first run.                                                                                                                      |
 
-Old labels (`P0`–`P3`, `Act on`/`Consider`/`Leave alone`, `High`/`Medium`/`Low`): re-triage into this scale. `Act on` is not a gate.
+Old labels (`P0` to `P3`, `Act on`/`Consider`/`Leave alone`, `High`/`Medium`/`Low`): re-triage into this scale. `Act on` is not a gate.
 
 ## Report
 
@@ -176,7 +183,7 @@ Do not declare PASS from a subagent. The parent scores live.
 
 ## Machinery (do not restate)
 
-- `CONTRIBUTING.md` — verify gate, `buildMethod`, pinned SDKs, `lastVerified`
-- Developer-site `AGENTS.md` — generated files, `hidden`, `visibility: preview`
-- `plugin/shared/cookbook/skills/cookbook-conventions/SKILL.md` — auth handoff, no secrets in chat
-- `schemas/recipe.schema.json` — contract
+- `CONTRIBUTING.md` owns the verify gate, `buildMethod`, pinned SDKs, `lastVerified`, and which generated files a PR commits.
+- `plugin/scripts/generate-commands.mjs` (`isPublicRecipe`) and `schemas/recipe.schema.json` own `hidden` and `visibility: preview`.
+- Developer-site `AGENTS.md` owns the generated site files.
+- `plugin/shared/cookbook/skills/cookbook-conventions/SKILL.md` owns the auth handoff and no secrets in chat.

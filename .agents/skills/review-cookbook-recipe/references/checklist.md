@@ -1,51 +1,51 @@
 # Cookbook review checklist
 
-Load [SKILL.md](../SKILL.md) first. This file is the criterion list. Score each as Block, Should-fix, or Park. Skip rows that do not apply.
+Load [SKILL.md](../SKILL.md) first. This file is the criterion list. Score each as Block, Should-fix, or Park. Skip rows that do not apply. `live` rows apply when the page asserts live behavior or in launch mode. `launch` rows apply in launch mode only.
 
-| Criterion                                                                         | Gate                | Applies     |
-| --------------------------------------------------------------------------------- | ------------------- | ----------- |
-| Published page walked cold, in order, from the published ref                      | Block               | all         |
-| Generated `/cookbook:{id}` skill walked and says the same steps                   | Block               | all         |
-| First printed command works with no token and no special env                      | Block               | all         |
-| If the app needs Glean, fixture/recorded run is the printed default               | Block               | runnable    |
-| No working-but-undocumented path while the documented one is broken               | Block               | runnable    |
-| UI states which mode it is in                                                     | Block               | runnable    |
-| UI surfaces server errors; no 500 as empty state                                  | Block               | runnable    |
-| Sample buttons/nouns work in the mode that offers them                            | Block               | runnable    |
-| No fake live mode; non-portable `start:live` dies naming the env var              | Block               | runnable    |
-| Verify spawns the documented command                                              | Block               | runnable    |
-| Verify loads `.env`; stop-the-server note before verify                           | Should-fix          | runnable    |
-| Second person, one narrator, one human action per step                            | Block               | all         |
-| Step titles name a human action                                                   | Should-fix          | all         |
-| Sign-in separate from leftover env; `--require` lists blanks                      | Block               | all         |
-| OAuth vs copy-`.env.example` as two exclusive sentences; keys commented           | Block               | all         |
-| Tenant-sounding env names explained in place                                      | Block               | all         |
-| Expected results name on-screen outcomes                                          | Should-fix          | all         |
-| No em dashes, glyphs, markdown, or bare emails in `recipe.json` prose             | Should-fix          | all         |
-| No prereq the scaffold already satisfies                                          | Should-fix          | all         |
-| UI leaks no files/env/endpoints/raw SDK JSON; errors are `error` + `hint`         | Should-fix          | runnable    |
-| `llmContext` within cap; `demoQueries` count and order unchanged                  | Should-fix          | all         |
-| `recipe.json` is the only edit; full `pnpm build`; no hand-edited generated files | Block               | all         |
-| Generated skill contains no self-contradicting steps                              | Block               | all         |
-| `lastVerified` reset when `aiPrompt`/`llmContext` change                          | Should-fix          | all         |
-| `demoQueries` answerable on the reader's own instance; no seeded corpus           | Block               | live        |
-| Live copy claims only what holds on any corpus                                    | Block               | live        |
-| Citations present and grounded where promised                                     | Block/safety        | live        |
-| Off-corpus questions refuse or escalate; nothing invented                         | Block/safety        | live        |
-| If the recipe claims X, X is reachable in the UI                                  | Block               | live        |
-| Missing prerequisite scored BLOCKED, never a quiet pass                           | Block               | launch      |
-| Each `codeAssets` path walked separately; labels match the UI                     | Block               | dual-path   |
-| Auth rail shows selected path scopes; `requiredScopes` match calls                | Block               | dual-path   |
-| Agent never opens cookie-SSO URL; no `chatId` with `initialMessage`               | Block/safety        | web-sdk     |
-| Secrets only in ignored `.env`                                                    | Block/safety        | all         |
-| `recipe.steps` non-empty; first documented action correct with no local server    | Block               | third-party |
-| Copy button copies the builder prompt, not `aiPrompt`                             | Block               | third-party |
-| No clone-path instruction; instance value is the slug                             | Block               | third-party |
-| Token path, secret store, shared-token warning consistent                         | Should-fix          | third-party |
-| No credit for an unrun host build; untested is not `limitations`                  | Block               | third-party |
-| Clean-machine plugin install + timed rehearsal                                    | Block               | launch      |
-| In-app polish (KPI vs pills, unlabeled inputs, spacing, missing preview)          | Park                | all         |
-| Deliberate product cuts and API migrations                                        | Park                | all         |
-| Local sandbox/firewall obstruction                                                | Park (not a defect) | all         |
+| Criterion                                                                                                                                                                            | Gate                | Applies     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------- | ----------- |
+| Published page walked cold, in order, from the published ref                                                                                                                         | Block               | all         |
+| Generated `/cookbook:{id}` skill walked and says the same steps                                                                                                                      | Block               | all         |
+| First printed command works with no token and no special env                                                                                                                         | Block               | all         |
+| If the app needs Glean, fixture/recorded run is the printed default                                                                                                                  | Block               | runnable    |
+| No working-but-undocumented path while the documented one is broken                                                                                                                  | Block               | runnable    |
+| UI states which mode it is in                                                                                                                                                        | Block               | runnable    |
+| UI surfaces server errors; no 500 as empty state                                                                                                                                     | Block               | runnable    |
+| Sample buttons/nouns work in the mode that offers them                                                                                                                               | Block               | runnable    |
+| No fake live mode; non-portable `start:live` dies naming the env var                                                                                                                 | Block               | runnable    |
+| Verify spawns the documented command                                                                                                                                                 | Block               | runnable    |
+| Verify loads `.env`; stop-the-server note before verify                                                                                                                              | Should-fix          | runnable    |
+| Second person, one narrator, one human action per step                                                                                                                               | Block               | all         |
+| Step titles name a human action                                                                                                                                                      | Should-fix          | all         |
+| Sign-in separate from leftover env; `--require` lists blanks                                                                                                                         | Block               | all         |
+| OAuth vs copy-`.env.example` as two exclusive sentences; keys commented                                                                                                              | Block               | all         |
+| Tenant-sounding env names explained in place                                                                                                                                         | Block               | all         |
+| Expected results name on-screen outcomes                                                                                                                                             | Should-fix          | all         |
+| No em dashes, glyphs, markdown, or bare emails in `recipe.json` prose                                                                                                                | Should-fix          | all         |
+| No prereq the scaffold already satisfies                                                                                                                                             | Should-fix          | all         |
+| UI leaks no files/env/endpoints/raw SDK JSON; errors are `error` + `hint`                                                                                                            | Should-fix          | runnable    |
+| `llmContext` within cap; `demoQueries` count and order unchanged                                                                                                                     | Should-fix          | all         |
+| `recipe.json` and prompt files are the only authored edits; `registry.json` regenerated by full `pnpm build`; no `plugin/shared`, `build/`, `.pluginpack`, or README table in the PR | Block               | all         |
+| Generated skill contains no self-contradicting steps                                                                                                                                 | Block               | all         |
+| `lastVerified` reset when `aiPrompt`/`llmContext` change                                                                                                                             | Should-fix          | all         |
+| `demoQueries` answerable on the reader's own instance; no seeded corpus                                                                                                              | Block               | live        |
+| Live copy claims only what holds on any corpus                                                                                                                                       | Block               | live        |
+| Citations present and grounded where promised                                                                                                                                        | Block/safety        | live        |
+| Off-corpus questions refuse or escalate; nothing invented                                                                                                                            | Block/safety        | live        |
+| If the recipe claims X, X is reachable in the UI                                                                                                                                     | Block               | live        |
+| Missing prerequisite scored BLOCKED, never a quiet pass                                                                                                                              | Block               | launch      |
+| Each `codeAssets` path walked separately; labels match the UI                                                                                                                        | Block               | dual-path   |
+| Auth rail shows selected path scopes; `requiredScopes` match calls                                                                                                                   | Block               | dual-path   |
+| Agent never opens cookie-SSO URL; no `chatId` with `initialMessage`                                                                                                                  | Block/safety        | web-sdk     |
+| Secrets only in ignored `.env`                                                                                                                                                       | Block/safety        | all         |
+| `recipe.steps` non-empty; first documented action correct with no local server                                                                                                       | Block               | third-party |
+| Copy button copies the builder prompt, not `aiPrompt`                                                                                                                                | Block               | third-party |
+| No clone-path instruction; instance value is the slug                                                                                                                                | Block               | third-party |
+| Token path, secret store, shared-token warning consistent                                                                                                                            | Should-fix          | third-party |
+| No credit for an unrun host build; untested is not `limitations`                                                                                                                     | Block               | third-party |
+| Clean-machine plugin install + timed rehearsal                                                                                                                                       | Block               | launch      |
+| In-app polish (KPI vs pills, unlabeled inputs, spacing, missing preview)                                                                                                             | Park                | all         |
+| Deliberate product cuts and API migrations                                                                                                                                           | Park                | all         |
+| Local sandbox/firewall obstruction                                                                                                                                                   | Park (not a defect) | all         |
 
 Gold PRs: [#48](https://github.com/gleanwork/glean-cookbook/pull/48) C360, [#55](https://github.com/gleanwork/glean-cookbook/pull/55) onboarding, [#57](https://github.com/gleanwork/glean-cookbook/pull/57) on-call (with #56 first-run).
