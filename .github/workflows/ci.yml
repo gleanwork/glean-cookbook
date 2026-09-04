@@ -67,6 +67,8 @@ jobs:
       - run: npm --prefix recipes/gong-call-follow-up-n8n run verify:fixture
       - run: npm --prefix recipes/pre-meeting-brief ci
       - run: npm --prefix recipes/pre-meeting-brief run verify:fixture
+      - run: npm --prefix recipes/validate-and-publish-skill ci
+      - run: npm --prefix recipes/validate-and-publish-skill test
 
   format-check:
     name: Format check

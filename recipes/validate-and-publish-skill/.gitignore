@@ -1,0 +1,4 @@
+node_modules/
+.glean-scope-mode
+downloaded/
+.cookbook-runs/
