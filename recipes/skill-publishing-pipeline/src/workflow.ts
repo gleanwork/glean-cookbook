@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import type { Glean } from '@gleanwork/api-client';
+import { CleanupFailedError } from './errors.js';
 import { readBundle, readStream, stageDownloadedBundle } from './bundle.js';
 
 export type SkillsApi = Pick<
@@ -24,6 +25,27 @@ export interface PublishResult {
   minorVersion: number;
 }
 
+function rethrow(error: unknown): never {
+  throw error instanceof Error ? error : new Error('Verification failed.');
+}
+
+export function cleanupCommand(skillId: string) {
+  return `npm start -- cleanup --id ${skillId} --yes`;
+}
+
+export function verifiedSuccessLine(result: PublishResult) {
+  return `Verified ${result.displayName} (${result.id}) at version ${result.version}.${result.minorVersion}; cleanup completed.`;
+}
+
+export function stagingDestination(
+  stageDir: string,
+  id: string,
+  version: number,
+  minorVersion: number,
+) {
+  return path.resolve(stageDir, id, `v${version}.${minorVersion}`);
+}
+
 export async function findSkillByName(
   api: SkillsApi,
   displayName: string,
@@ -38,6 +60,23 @@ export async function findSkillByName(
     cursor = page.next_cursor ?? undefined;
   } while (cursor);
   return undefined;
+}
+
+export async function deleteCapturedIds(
+  api: SkillsApi,
+  ids: string[],
+  log: (message: string) => void,
+) {
+  const remaining: string[] = [];
+  for (const id of ids) {
+    log(`Deleting run-owned skill ${id}...`);
+    try {
+      await api.delete(id);
+    } catch {
+      remaining.push(id);
+    }
+  }
+  return remaining;
 }
 
 export async function publishBundle(
@@ -113,6 +152,8 @@ export async function verifyPublishingLifecycle(
   const firstPath = path.join(runRoot, 'v1', 'SKILL.md');
   const secondPath = path.join(runRoot, 'v2', 'SKILL.md');
   let createdId: string | undefined;
+  let result: PublishResult | undefined;
+  let workError: unknown;
 
   await fs.mkdir(path.dirname(firstPath), { recursive: true });
   await fs.mkdir(path.dirname(secondPath), { recursive: true });
@@ -197,23 +238,28 @@ export async function verifyPublishingLifecycle(
       second.skill.latest_version,
     );
 
-    return {
+    result = {
       id: createdId,
       displayName: second.skill.display_name,
       version: second.skill.latest_version,
       minorVersion: second.skill.latest_minor_version,
     };
-  } finally {
-    if (createdId && options.cleanup) {
-      log(`Deleting run-owned skill ${createdId}...`);
-      try {
-        await api.delete(createdId);
-      } catch (error) {
-        log(
-          `Cleanup warning: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
-    }
-    await fs.rm(runRoot, { recursive: true, force: true });
+  } catch (error) {
+    workError = error;
   }
+
+  const remaining =
+    createdId && options.cleanup
+      ? await deleteCapturedIds(api, [createdId], log)
+      : [];
+  await fs.rm(runRoot, { recursive: true, force: true });
+  if (remaining.length > 0) {
+    throw new CleanupFailedError(
+      remaining,
+      remaining.map((id) => cleanupCommand(id)).join('\n  '),
+    );
+  }
+  if (workError) rethrow(workError);
+  if (!result) throw new Error('Verification did not produce a result.');
+  return result;
 }
