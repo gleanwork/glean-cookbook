@@ -21,7 +21,7 @@ Do not invent a new bar. The criteria live in [references/checklist.md](referenc
 
 Every mode needs all four:
 
-- You walked the published page cold, in order.
+- If the recipe is not hidden, you walked the published page cold, in order. Hidden recipes have no docs page. Skip that walk. Preview uses `?ff_recipe=<id>`.
 - The first printed command worked with no token and no special env.
 - If `isPublicRecipe` is true, the generated skill says the same steps as the page. Hidden and preview recipes have no `/cookbook:{id}` skill. Skip that walk.
 - No Block finding is open.
@@ -62,7 +62,7 @@ Copy this list and tick it:
 
 ### 1. Surfaces
 
-Walk `developers.glean.com/cookbook/<id>` cold, in order, from the published ref. Not the README. Not a local checkout. Not a remembered `.env`.
+Walk `developers.glean.com/cookbook/<id>` cold, in order, from the published ref, when the recipe is not hidden. Preview: same path with `?ff_recipe=<id>`. Hidden recipes have no docs page. That absence is not a Block. Not the README. Not a local checkout. Not a remembered `.env`.
 
 Then walk `plugin/shared/cookbook/skills/<id>/SKILL.md` (`/cookbook:<id>`) when `isPublicRecipe` is true. It must say the same steps. Hidden and preview recipes have no skill file. That absence is not a Block.
 

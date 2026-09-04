@@ -1,10 +1,10 @@
 # Cookbook review checklist
 
-Load [SKILL.md](../SKILL.md) first. This file is the criterion list. Score each as Block, Should-fix, or Park. Skip rows that do not apply. `listed` rows apply when `isPublicRecipe` is true. Hidden and preview recipes have no plugin skill. `live` rows apply when the page asserts live behavior or in launch mode. `launch` rows apply in launch mode only.
+Load [SKILL.md](../SKILL.md) first. This file is the criterion list. Score each as Block, Should-fix, or Park. Skip rows that do not apply. `site` rows apply when `hidden` is not true. Preview uses `?ff_recipe=<id>`. Hidden recipes have no docs page. `listed` rows apply when `isPublicRecipe` is true. Hidden and preview recipes have no plugin skill. `live` rows apply when the page asserts live behavior or in launch mode. `launch` rows apply in launch mode only.
 
 | Criterion                                                                                                                                                                | Gate                | Applies     |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------- | ----------- |
-| Published page walked cold, in order, from the published ref                                                                                                             | Block               | all         |
+| Published page walked cold, in order, from the published ref                                                                                                             | Block               | site        |
 | Generated `/cookbook:{id}` skill walked and says the same steps                                                                                                          | Block               | listed      |
 | First printed command works with no token and no special env                                                                                                             | Block               | all         |
 | If the app needs Glean, fixture/recorded run is the printed default                                                                                                      | Block               | runnable    |

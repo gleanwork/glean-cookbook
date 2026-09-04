@@ -4,7 +4,7 @@ Load [SKILL.md](../SKILL.md) first. These traps change the score. Do not "fix" t
 
 ## Plugin path vs page as product
 
-Both are required. Aug 19 treated `/cookbook:{id}` as the intended reader path. Aug 20 treated the human page as the product because plugin-voice copy made the site unreadable. Walk the page first, then the skill. One `recipe.json` string feeds both, so copy is second-person enough for the page and precise enough for the skill. Do not add a second schema field. Do not hand-edit either generated surface.
+Both are required when `isPublicRecipe` is true. Hidden recipes have no docs page and no plugin skill. Preview has the `?ff_recipe=<id>` page only. Aug 19 treated `/cookbook:{id}` as the intended reader path. Aug 20 treated the human page as the product because plugin-voice copy made the site unreadable. Walk the page first, then the skill. One `recipe.json` string feeds both, so copy is second-person enough for the page and precise enough for the skill. Do not add a second schema field. Do not hand-edit either generated surface.
 
 ## Fixtures
 
