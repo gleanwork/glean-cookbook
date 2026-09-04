@@ -1,7 +1,7 @@
 {
   "id": "import-skill-from-github",
   "title": "Import a skill from GitHub",
-  "description": "Preview a pinned public GitHub skill with the official TypeScript API client, import the selected URL, sync that captured skill, confirm it with get and list, then delete only IDs this run created.",
+  "description": "Preview a public GitHub skill at a commit SHA with the official TypeScript API client, import the selected URL, sync that captured skill, confirm it with get and list, then delete only IDs this run created.",
   "sidebarLabel": "Import from GitHub",
   "codeWalkthrough": {
     "intro": "The runnable scaffold opts into the experimental Skills API through the official SDK, previews a GitHub URL without persisting a source, imports only selected URLs, and syncs one captured skill.",
@@ -40,25 +40,25 @@
     "A Glean instance with the experimental Skills Platform APIs enabled",
     "Your work email, or the complete Glean backend HTTPS origin",
     "A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback",
-    "A tenant that can fetch the pinned public GitHub fixture; verification fails rather than skipping if GitHub is unreachable"
+    "A tenant that can fetch the public GitHub skill-creator directory at commit 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f; verification fails rather than skipping if GitHub is unreachable"
   ],
   "demoQueries": [
     {
       "query": "Preview, import, and sync the pinned public GitHub skill-creator fixture, then delete run-owned IDs",
-      "expectedBehavior": "Preview returns the pinned skill-creator URL without persisting a source, import creates a captured skill ID, sync refreshes that ID from GitHub, get and list include it, and cleanup deletes only IDs this run created. If the tenant cannot fetch GitHub, the run fails instead of skipping."
+      "expectedBehavior": "Stdout ends with Imported skill-creator (<id>) from the commit-SHA GitHub URL at <sha>; cleanup completed. If the tenant cannot fetch GitHub, the run fails with a GitHub-fetch error instead of skipping. If delete fails, the process exits non-zero and does not print that success line."
     }
   ],
   "codeAssets": [
     {
       "repoPath": "recipes/import-skill-from-github",
       "language": "typescript",
-      "description": "TypeScript CLI using @gleanwork/api-client to preview, import, and sync a pinned public GitHub skill, then delete only run-owned IDs"
+      "description": "TypeScript CLI using @gleanwork/api-client to preview, import, and sync a public GitHub skill at a commit SHA, then delete only run-owned IDs"
     }
   ],
   "steps": [
     {
-      "title": "Scaffold the project",
-      "description": "Copies the runnable TypeScript GitHub import CLI and credential-free MSW fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
+      "title": "Copy the project onto your machine",
+      "description": "Copy the runnable TypeScript GitHub import CLI and credential-free MSW fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
       "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/import-skill-from-github import-skill-from-github",
       "kind": "scaffold"
     },
@@ -69,25 +69,25 @@
     },
     {
       "title": "Run the fixture tests",
-      "description": "Runs Vitest with recorded preview payloads and MSW, without GitHub or Glean credentials, covering JSON preview, optional SSE preview, import, sync, and captured-ID cleanup.",
+      "description": "Run Vitest with recorded preview payloads and MSW, without GitHub or Glean credentials, covering JSON preview, optional SSE preview, import, sync, and captured-ID cleanup.",
       "command": "cd import-skill-from-github && npm test",
       "kind": "manual"
     },
     {
       "title": "Sign in with OAuth",
-      "description": "Discovers your Glean backend from work email and requests skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. Use --server-url for an explicit backend, GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN as a user-scoped fallback.",
+      "description": "Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. Use --server-url for an explicit backend. If DCR is restricted, set GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client. If OAuth is not available, set GLEAN_API_TOKEN later as a user-scoped fallback.",
       "command": "cd import-skill-from-github && npm run login -- --email \"<work-email>\"",
       "kind": "authenticate"
     },
     {
       "title": "Verify against your instance",
-      "description": "Previews the pinned public GitHub fixture, imports the selected URL, syncs that captured skill, confirms get/list, then permanently deletes only IDs this run created. Fails if the tenant cannot fetch GitHub.",
+      "description": "Preview the public GitHub skill-creator directory at commit 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. Fails if the tenant cannot fetch GitHub. Success prints an Imported line that ends with cleanup completed.",
       "command": "cd import-skill-from-github && npm run verify -- --email \"<work-email>\"",
       "kind": "verify-live"
     },
     {
-      "title": "Import from GitHub",
-      "description": "Repeats the same preview → import → sync path against the pinned fixture. Add --stream to request repository scan progress as server-sent events.",
+      "title": "Import with scan progress",
+      "description": "Run the same preview, import, and sync path with --stream so repository scan progress arrives as server-sent events. This command still deletes the captured skill when it finishes; there is no keep path. Pass --yes when the terminal is not interactive.",
       "command": "cd import-skill-from-github && npm start -- --email \"<work-email>\" --yes --stream",
       "kind": "run"
     }
@@ -122,7 +122,7 @@
   "architecture": [
     {
       "label": "Public GitHub URL",
-      "caption": "pinned skill-creator fixture",
+      "caption": "skill-creator at a commit SHA",
       "icon": "Github"
     },
     {
@@ -142,16 +142,16 @@
       "icon": "RefreshCw"
     }
   ],
-  "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/main/skills/skill-creator with stream false by default. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list. Delete only IDs this run created. If the tenant cannot fetch GitHub, fail loudly instead of skipping. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
-  "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This Intermediate recipe is a different source of truth from local SKILL.md publishing: previewSource (stream false by default, optional stream true like Search --auto-select), import selected URLs, and sync one captured GitHub-imported skill. Pin https://github.com/anthropics/skills/tree/main/skills/skill-creator. Native OAuth scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and restrict deletion to those IDs. Fail, do not skip, when the tenant cannot fetch GitHub. Leave PATCH update and POST .../versions as take-it-further.",
+  "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator with stream false by default. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list, paginating list. Delete only IDs this run created. If cleanup cannot delete a captured ID, exit non-zero. If the tenant cannot fetch GitHub, fail loudly instead of skipping. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+  "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This Intermediate recipe is a different source of truth from local SKILL.md publishing: previewSource (stream false by default, optional stream true like Search --auto-select), import selected URLs, and sync one captured GitHub-imported skill. Default source is https://github.com/anthropics/skills/tree/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator. Native OAuth scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and restrict deletion to those IDs. Failed cleanup must not report success. Fail, do not skip, when the tenant cannot fetch GitHub. Leave PATCH update and POST .../versions as take-it-further.",
   "goDependency": false,
   "featured": false,
   "hidden": false,
   "tags": ["skills", "github", "import", "platform-api", "experimental"],
   "content": {
-    "problem": "Some teams keep Agent Skills in GitHub rather than a local SKILL.md. Previewing that URL, importing only the selected skills, and syncing a captured ID is a different job from the first persist or name-based versioning. This recipe uses a pinned public GitHub fixture so the run is answerable on the reader's tenant without a seeded corpus.",
+    "problem": "Some teams keep Agent Skills in GitHub rather than a local SKILL.md. Previewing that URL, importing only the selected skills, and syncing a captured ID is a different job from the first persist or name-based versioning. This recipe uses a public GitHub skill directory at a commit SHA so the run is answerable on the reader's tenant without a seeded corpus.",
     "takeItFurther": [
-      "Pass --source-url to preview a different public GitHub skill directory after the pinned fixture succeeds.",
+      "Pass --source-url to preview a different public GitHub skill directory after the default commit-SHA source succeeds.",
       "Use the Intermediate publishing recipe when the source of truth is a local bundle and you need version supersession or zip sandboxing.",
       "Call glean.skills.createVersion() or PATCH enable/disable only after you already have a captured skill ID."
     ],
@@ -170,7 +170,7 @@
       },
       {
         "title": "Delete by captured ID only",
-        "rule": "Cleanup deletes only IDs this run created. Never choose a cleanup target by display name or a broad catalog search."
+        "rule": "Cleanup deletes only IDs this run created. Never choose a cleanup target by display name or a broad catalog search. If delete fails, do not report cleanup completed."
       }
     ],
     "limitations": [

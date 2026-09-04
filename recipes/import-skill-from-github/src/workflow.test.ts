@@ -3,13 +3,14 @@ import { afterAll, afterEach, beforeAll, expect, test } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { createGleanClient } from './client.js';
+import { CleanupFailedError } from './errors.js';
 import {
   githubSkillFixture,
   PINNED_SOURCE_URL,
   PREVIEW_FIXTURE,
 } from './fixture.js';
 import { previewStreamFixture } from './preview.js';
-import { importSkillFromGithub } from './workflow.js';
+import { importedSuccessLine, importSkillFromGithub } from './workflow.js';
 
 const originalToken = process.env.GLEAN_API_TOKEN;
 const baseUrl = 'https://fixture.glean.example.com';
@@ -33,6 +34,8 @@ afterAll(() => {
 function defaultHandlers(options?: {
   preview?: () => Response;
   deleted?: string[];
+  paginated?: boolean;
+  deleteStatus?: number;
 }) {
   const deleted = options?.deleted ?? [];
   return [
@@ -63,14 +66,23 @@ function defaultHandlers(options?: {
         request_id: 'request-get-fixture',
       }),
     ),
-    http.get(`${baseUrl}/api/skills`, () =>
-      HttpResponse.json({
+    http.get(`${baseUrl}/api/skills`, ({ request }) => {
+      const cursor = new URL(request.url).searchParams.get('cursor');
+      if (options?.paginated && !cursor) {
+        return HttpResponse.json({
+          skills: [githubSkillFixture('skill-other')],
+          has_more: true,
+          next_cursor: 'page-2',
+          request_id: 'request-list-page-1',
+        });
+      }
+      return HttpResponse.json({
         skills: [skill],
         has_more: false,
         next_cursor: null,
         request_id: 'request-list-fixture',
-      }),
-    ),
+      });
+    }),
     http.post(`${baseUrl}/api/skills/${skill.id}/sync`, () =>
       HttpResponse.json({
         sync_status: 'UP_TO_DATE',
@@ -80,6 +92,22 @@ function defaultHandlers(options?: {
       }),
     ),
     http.delete(`${baseUrl}/api/skills/${skill.id}`, () => {
+      if (options?.deleteStatus && options.deleteStatus !== 204) {
+        return HttpResponse.json(
+          {
+            type: 'about:blank',
+            title: 'Conflict',
+            status: options.deleteStatus,
+            detail: 'Skill is in use',
+            code: 'conflict',
+            request_id: 'request-delete-failed',
+          },
+          {
+            status: options.deleteStatus,
+            headers: { 'Content-Type': 'application/problem+json' },
+          },
+        );
+      }
       deleted.push(skill.id);
       return new HttpResponse(null, { status: 204 });
     }),
@@ -103,6 +131,7 @@ test('previews, imports, syncs, and deletes only run-owned IDs', async () => {
     commitSha: 'fixture-commit-sha',
     updated: false,
   });
+  expect(importedSuccessLine(result)).toMatch(/cleanup completed\.$/);
   expect(deleted).toEqual([skill.id]);
 });
 
@@ -122,6 +151,18 @@ test('optional --stream consumes recorded SSE preview payloads', async () => {
 
   await expect(
     importSkillFromGithub(client.skills, { stream: true, cleanup: true }),
+  ).resolves.toMatchObject({ ids: [skill.id] });
+  expect(deleted).toEqual([skill.id]);
+});
+
+test('paginates list confirmation past the first 100 skills', async () => {
+  process.env.GLEAN_API_TOKEN = 'fixture-token';
+  const deleted: string[] = [];
+  server.use(...defaultHandlers({ deleted, paginated: true }));
+  const client = await createGleanClient({ serverUrl: baseUrl });
+
+  await expect(
+    importSkillFromGithub(client.skills, { cleanup: true }),
   ).resolves.toMatchObject({ ids: [skill.id] });
   expect(deleted).toEqual([skill.id]);
 });
@@ -152,4 +193,49 @@ test('fails loudly when the tenant cannot fetch GitHub', async () => {
     () => importSkillFromGithub(client.skills, { cleanup: true }),
     /could not fetch GitHub/,
   );
+});
+
+test('list miss is not reported as a GitHub fetch failure', async () => {
+  process.env.GLEAN_API_TOKEN = 'fixture-token';
+  server.use(
+    http.get(`${baseUrl}/api/skills`, () =>
+      HttpResponse.json({
+        skills: [githubSkillFixture('skill-other')],
+        has_more: false,
+        next_cursor: null,
+        request_id: 'request-list-miss',
+      }),
+    ),
+    ...defaultHandlers(),
+  );
+  const client = await createGleanClient({ serverUrl: baseUrl });
+
+  await expect(
+    importSkillFromGithub(client.skills, { cleanup: true }),
+  ).rejects.toThrow(/List did not include the skill this run just imported/);
+});
+
+test('failed delete exits without reporting cleanup completed', async () => {
+  process.env.GLEAN_API_TOKEN = 'fixture-token';
+  const logs: string[] = [];
+  server.use(...defaultHandlers({ deleteStatus: 409 }));
+  const client = await createGleanClient({ serverUrl: baseUrl });
+
+  await expect(
+    importSkillFromGithub(client.skills, {
+      cleanup: true,
+      log: (message) => logs.push(message),
+    }),
+  ).rejects.toSatisfy((error: unknown) => {
+    expect(error).toBeInstanceOf(CleanupFailedError);
+    expect(error).toMatchObject({
+      remainingIds: [skill.id],
+      cleanupCommand: `npm start -- cleanup --id ${skill.id} --yes`,
+    });
+    expect(String(error)).not.toMatch(/cleanup completed/);
+    return true;
+  });
+
+  expect(logs.join('\n')).not.toMatch(/cleanup completed/);
+  expect(logs.join('\n')).not.toMatch(/Cleanup warning/);
 });

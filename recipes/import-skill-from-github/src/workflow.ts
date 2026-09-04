@@ -1,6 +1,7 @@
 import type { Glean } from '@gleanwork/api-client';
 import { PreviewSourceAcceptEnum } from '@gleanwork/api-client/sdk/skills.js';
 import type { PlatformSkillSourcePreviewResponse } from '@gleanwork/api-client/models/components';
+import { CleanupFailedError, formatCliError } from './errors.js';
 import { PINNED_SOURCE_URL } from './fixture.js';
 import { parsePreviewResult } from './preview.js';
 
@@ -17,11 +18,50 @@ export interface ImportResult {
   updated: boolean;
 }
 
+function rethrow(error: unknown): never {
+  throw error instanceof Error ? error : new Error('Verification failed.');
+}
+
+export function cleanupCommand(skillId: string) {
+  return `npm start -- cleanup --id ${skillId} --yes`;
+}
+
+export function importedSuccessLine(result: ImportResult) {
+  return `Imported ${result.displayName} (${result.ids.join(', ')}) from ${result.sourceUrl} at ${result.commitSha}; cleanup completed.`;
+}
+
 function githubFetchError(error: unknown): Error {
-  const message = error instanceof Error ? error.message : String(error);
+  const summary = formatCliError(error).error;
   return new Error(
-    `This tenant could not fetch GitHub: ${message}. The import recipe fails rather than skipping.`,
+    `This tenant could not fetch GitHub: ${summary}. The import recipe fails rather than skipping.`,
   );
+}
+
+export async function findSkillById(api: SkillsApi, skillId: string) {
+  let cursor: string | undefined;
+  do {
+    const page = await api.list(100, cursor);
+    if (page.skills.some((skill) => skill.id === skillId)) return true;
+    cursor = page.next_cursor ?? undefined;
+  } while (cursor);
+  return false;
+}
+
+export async function deleteCapturedIds(
+  api: SkillsApi,
+  ids: string[],
+  log: (message: string) => void,
+) {
+  const remaining: string[] = [];
+  for (const id of ids) {
+    log(`Deleting run-owned skill ${id}...`);
+    try {
+      await api.delete(id);
+    } catch {
+      remaining.push(id);
+    }
+  }
+  return remaining;
 }
 
 export async function resolvePreview(
@@ -54,6 +94,8 @@ export async function importSkillFromGithub(
   const log = options.log ?? (() => undefined);
   const sourceUrl = options.sourceUrl?.trim() || PINNED_SOURCE_URL;
   const createdIds: string[] = [];
+  let result: ImportResult | undefined;
+  let workError: unknown;
 
   try {
     log(`Previewing ${sourceUrl} without persisting a source...`);
@@ -92,8 +134,7 @@ export async function importSkillFromGithub(
     if (retrieved.skill.id !== skill.id) {
       throw new Error('Direct retrieval returned a different skill.');
     }
-    const listed = await api.list(100);
-    if (!listed.skills.some((item) => item.id === skill.id)) {
+    if (!(await findSkillById(api, skill.id))) {
       throw new Error('List did not include the skill this run just imported.');
     }
 
@@ -105,25 +146,27 @@ export async function importSkillFromGithub(
       throw githubFetchError(error);
     }
 
-    return {
+    result = {
       ids: [...createdIds],
       displayName: retrieved.skill.display_name,
       sourceUrl: selected.source_url,
       commitSha: synced.commit_sha,
       updated: synced.updated,
     };
-  } finally {
-    if (options.cleanup) {
-      for (const id of createdIds) {
-        log(`Deleting run-owned skill ${id}...`);
-        try {
-          await api.delete(id);
-        } catch (error) {
-          log(
-            `Cleanup warning: ${error instanceof Error ? error.message : String(error)}`,
-          );
-        }
-      }
-    }
+  } catch (error) {
+    workError = error;
   }
+
+  const remaining = options.cleanup
+    ? await deleteCapturedIds(api, createdIds, log)
+    : [];
+  if (remaining.length > 0) {
+    throw new CleanupFailedError(
+      remaining,
+      remaining.map((id) => cleanupCommand(id)).join('\n  '),
+    );
+  }
+  if (workError) rethrow(workError);
+  if (!result) throw new Error('Verification did not produce a result.');
+  return result;
 }
