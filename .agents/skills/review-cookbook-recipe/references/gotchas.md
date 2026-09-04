@@ -1,6 +1,6 @@
 # Cookbook review gotchas
 
-Load [SKILL.md](SKILL.md) first. These traps change the score. Do not "fix" them back to an older bar.
+Load [SKILL.md](../SKILL.md) first. These traps change the score. Do not "fix" them back to an older bar.
 
 ## Plugin path vs page as product
 

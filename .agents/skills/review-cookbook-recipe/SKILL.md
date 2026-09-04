@@ -6,6 +6,7 @@ description: >-
   Use when reviewing a cookbook recipe, walking developers.glean.com/cookbook,
   checking recipe.json setup copy, plugin /cookbook:{id} skills, first-run
   npm start, Lovable or Replit prompts, or UX of recipes under recipes/<id>.
+license: MIT
 ---
 
 # Review a cookbook recipe
@@ -14,7 +15,7 @@ Reader pass, not a feature pass. Follow the published page as a stranger with a 
 
 Gold copy: [cookbook#48](https://github.com/gleanwork/glean-cookbook/pull/48) (Customer 360). Do not clone its seven-step list onto MCP, Lovable, Replit, or `integrate` recipes.
 
-Do not invent a new bar. Criteria and gotchas: [checklist.md](checklist.md), [gotchas.md](gotchas.md).
+Do not invent a new bar. Criteria and gotchas: [references/checklist.md](references/checklist.md), [references/gotchas.md](references/gotchas.md).
 
 ## Pass
 
@@ -24,10 +25,10 @@ Should-fix may ship with a named owner. Park is recorded and left.
 
 ## Mode
 
-| Mode | When | Score |
-| --- | --- | --- |
-| **Routine** | New recipe, rewrite, copy pass | Block / Should-fix / Park |
-| **Launch** | Showpiece, Go-blocking, demo rehearsal | Per-cell PASS / FAIL / BLOCKED + cause, plus routine findings |
+| Mode        | When                                   | Score                                                         |
+| ----------- | -------------------------------------- | ------------------------------------------------------------- |
+| **Routine** | New recipe, rewrite, copy pass         | Block / Should-fix / Park                                     |
+| **Launch**  | Showpiece, Go-blocking, demo rehearsal | Per-cell PASS / FAIL / BLOCKED + cause, plus routine findings |
 
 Routine review does not require a live walkthrough to pass. Launch review does. A missing prerequisite is BLOCKED, not a quiet pass.
 
@@ -142,11 +143,11 @@ Record and move on unless it blocks the first run: unlabeled inputs, KPI vs pill
 
 Use only **Block**, **Should-fix**, **Park**.
 
-| Gate | Meaning |
-| --- | --- |
-| **Block** | Printed path cannot be followed, a page claim is unreachable, or a safety property is false. Tag **Block/safety** for the workaround-forbidden list above. |
-| **Should-fix** | Real defect. Reader can still succeed. |
-| **Park** | Polish. Does not block the first run. |
+| Gate           | Meaning                                                                                                                                                    |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Block**      | Printed path cannot be followed, a page claim is unreachable, or a safety property is false. Tag **Block/safety** for the workaround-forbidden list above. |
+| **Should-fix** | Real defect. Reader can still succeed.                                                                                                                     |
+| **Park**       | Polish. Does not block the first run.                                                                                                                      |
 
 Old labels (`P0`–`P3`, `Act on`/`Consider`/`Leave alone`, `High`/`Medium`/`Low`): re-triage into this scale. `Act on` is not a gate.
 
@@ -154,15 +155,18 @@ Old labels (`P0`–`P3`, `Act on`/`Consider`/`Leave alone`, `High`/`Medium`/`Low
 
 ```markdown
 ## Verdict
+
 Mode: routine | launch
 Result: pass | fail
 Open Blocks: <n>
 (Launch only: cell table with PASS/FAIL/BLOCKED + cause)
 
 ## Findings
+
 | Gate | Finding | Surface | Evidence |
 
 ## Parked
+
 | Item | Why parked |
 ```
 

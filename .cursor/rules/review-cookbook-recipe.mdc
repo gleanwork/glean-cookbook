@@ -1,9 +1,9 @@
 ---
-description: Load the cookbook recipe review skill when changing recipe copy, first-run, or plugin skills.
-globs: recipes/**/recipe.json,recipes/**/README.md,plugin/shared/cookbook/skills/**
+description: Load the cookbook recipe review skill when changing a recipe's copy, first run, or steps under recipes/.
+globs: recipes/**
 alwaysApply: false
 ---
 
 When reviewing or changing a recipe's published steps, first run, copy, or
-`/cookbook:{id}` skill, follow `.cursor/skills/review-cookbook-recipe/SKILL.md`.
+`/cookbook:{id}` skill, follow `.agents/skills/review-cookbook-recipe/SKILL.md`.
 Do not invent a parallel bar.

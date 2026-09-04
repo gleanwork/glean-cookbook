@@ -117,7 +117,7 @@ Use the visibility fields deliberately:
 ## Verifying a recipe
 
 UX, copy, and first-run reviews follow
-[`.cursor/skills/review-cookbook-recipe/SKILL.md`](.cursor/skills/review-cookbook-recipe/SKILL.md).
+[`.agents/skills/review-cookbook-recipe/SKILL.md`](.agents/skills/review-cookbook-recipe/SKILL.md).
 That is a reader pass of the published page, not a substitute for the gates below.
 
 What "verify" means depends on the recipe's `buildMethod`:
