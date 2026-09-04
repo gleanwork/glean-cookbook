@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "login": "node scripts/login.mjs",
-    "start": "tsx src/cli.ts",
+    "start": "tsx src/cli.ts --bundle fixtures/sample-skill/SKILL.md",
     "verify": "tsx src/cli.ts --yes",
     "test": "vitest run",
     "lint": "eslint src scripts",

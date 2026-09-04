@@ -2,9 +2,18 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, expect, test } from 'vitest';
-import { verifyFirstPersist, type SkillsApi } from './workflow.js';
+import { CleanupFailedError } from './errors.js';
+import {
+  verifiedSuccessLine,
+  verifyFirstPersist,
+  type SkillsApi,
+} from './workflow.js';
 
 const roots: string[] = [];
+const sampleSkill = path.join(
+  import.meta.dirname,
+  '../fixtures/sample-skill/SKILL.md',
+);
 
 function streamFor(manifest: string) {
   return new ReadableStream<Uint8Array>({
@@ -15,7 +24,7 @@ function streamFor(manifest: string) {
   });
 }
 
-function fakeApi() {
+function fakeApi(options?: { deleteError?: Error }) {
   let currentManifest = '';
   let deleted = false;
   let createCalls = 0;
@@ -70,6 +79,7 @@ function fakeApi() {
     },
     async delete(skillId: string) {
       expect(skillId).toBe('skill-run-owned');
+      if (options?.deleteError) throw options.deleteError;
       deleted = true;
     },
     async list() {
@@ -118,9 +128,55 @@ test('validates, creates once, retrieves latest content, and cleans up', async (
     minorVersion: 0,
   });
   expect(result.contentBytes).toBeGreaterThan(0);
+  expect(verifiedSuccessLine(result)).toMatch(/cleanup completed\.$/);
   expect(fixture.state()).toEqual({
     createCalls: 1,
     deleted: true,
     listCalls: 1,
   });
+});
+
+test('validates the scaffold sample SKILL.md when --bundle is set', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-bundle-'));
+  roots.push(root);
+  const fixture = fakeApi();
+
+  const result = await verifyFirstPersist(fixture.api, {
+    workDir: root,
+    cleanup: true,
+    bundlePath: sampleSkill,
+  });
+
+  expect(result.displayName).toBe('cookbook-validate-and-publish');
+  expect(result.id).toBe('skill-run-owned');
+  expect(fixture.state().deleted).toBe(true);
+});
+
+test('failed delete exits without reporting cleanup completed', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-cleanup-fail-'));
+  roots.push(root);
+  const logs: string[] = [];
+  const fixture = fakeApi({
+    deleteError: Object.assign(new Error('conflict'), { statusCode: 409 }),
+  });
+
+  await expect(
+    verifyFirstPersist(fixture.api, {
+      workDir: root,
+      cleanup: true,
+      log: (message) => logs.push(message),
+    }),
+  ).rejects.toSatisfy((error: unknown) => {
+    expect(error).toBeInstanceOf(CleanupFailedError);
+    expect(error).toMatchObject({
+      remainingIds: ['skill-run-owned'],
+      cleanupCommand: 'npm start -- cleanup --id skill-run-owned --yes',
+    });
+    expect(String(error)).not.toMatch(/cleanup completed/);
+    return true;
+  });
+
+  expect(logs.join('\n')).not.toMatch(/cleanup completed/);
+  expect(logs.join('\n')).not.toMatch(/Cleanup warning/);
+  expect(fixture.state().deleted).toBe(false);
 });
