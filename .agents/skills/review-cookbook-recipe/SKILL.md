@@ -43,7 +43,7 @@ Cause tags (launch only): `docs`, `scaffold/plugin`, `content/data`, `platform/A
 
 1. **Printed first run.** After copy and install, the printed command works with no token and no extra env.
 2. **Copy talks to the reader.** Second person. One human action per step. Expected results name what appears on screen.
-3. **One source.** Edit `recipe.json` and prompt files. Run `mise exec -- pnpm build` so plugin skills render locally. Commit `recipe.json` and regenerated `registry.json` only. Do not commit `plugin/shared`, `build/`, `.pluginpack`, or the README table. Never hand-edit those generated files.
+3. **One source.** Edit `recipe.json` and prompt files. Run `mise exec -- pnpm build` so plugin skills render locally. Commit authored recipe files (including prompt files) and regenerated `registry.json`. Do not commit `plugin/shared`, `build/`, `.pluginpack`, or the README table. Never hand-edit those generated files.
 
 ## Walk
 
