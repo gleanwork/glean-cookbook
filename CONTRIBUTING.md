@@ -51,6 +51,11 @@ generates `docs/cookbook/{id}.mdx` from `registry.json` when it runs `pnpm regis
 `pnpm recipes:compile` (see [The registry](#the-registry)). Wait for that generated page, or run
 those two commands in a site checkout to preview it. Do not create or edit the MDX by hand.
 
+Previewing is the only reason to run them: the result is scratch, not a change to submit. A
+recipe ships when it merges here, so **don't open a companion PR on the site to publish it** —
+the site's scheduled sync regenerates all of it and auto-merges its own PR. See
+[AGENTS.md](AGENTS.md) for the one exception, a recipe that adds a new enum value.
+
 Do not commit generated plugin skills, manifests, or `build/` output in a recipe PR. The plugin's
 skills are generated from `registry.json` in CI and are committed automatically after the merge
 lands on `main`.
@@ -103,10 +108,18 @@ it as a single fetch, and the plugin's skills are generated from it. Don't hand-
 it's out of sync with the `recipe.json` files.
 
 The dev site pulls the built registry with `mise exec -- pnpm registry:sync` then
-`mise exec -- pnpm recipes:compile` — run
-both there after changing a recipe here, or wait for the `sync-cookbook-registry` workflow to open a
-PR automatically. The sync generates one `docs/cookbook/{id}.mdx` per recipe, matched by
-filename === `id`. Those pages are generated output, not authored prose.
+`mise exec -- pnpm recipes:compile`. Its `sync-cookbook-registry` workflow runs both every 15
+minutes and opens an auto-merging PR, so publishing a recipe needs nothing from you there.
+The sync generates one `docs/cookbook/{id}.mdx` per recipe, matched by filename === `id`.
+Those pages are generated output, not authored prose.
+
+The site validates each synced entry against its consumer adapter,
+[`src/types/recipe.ts`](https://github.com/gleanwork/glean-developer-site/blob/main/src/types/recipe.ts),
+and exits 1 on an enum value that adapter doesn't know — which fails the sync job for every
+recipe, not just yours, until the value is added there. A recipe introducing a new
+`capabilities`, `surfaces`, `category`, or `status` member is therefore the one case that
+needs a site PR of its own, and it carries the adapter change alone. `AGENTS.md` has the
+sequence.
 
 Use the visibility fields deliberately:
 

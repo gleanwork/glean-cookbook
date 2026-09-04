@@ -1,0 +1,13 @@
+---
+description: Recipe changes ship from this repo alone; the developer site regenerates its own copy on a schedule.
+globs: recipes/**,registry.json,schemas/**
+alwaysApply: false
+---
+
+Do not open a companion pull request on glean-developer-site to publish a recipe, and do
+not hand-write recipe content there. Its `sync-cookbook-registry` workflow regenerates the
+registry snapshot, `docs/cookbook/{id}.mdx`, `src/data/recipes.json`, and preview assets
+every 15 minutes, and deletes any page it did not write.
+
+The one exception, and the shape the developer-site pull request must then take, is in
+`AGENTS.md` under "Recipe work does not touch glean-developer-site".
