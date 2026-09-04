@@ -1,0 +1,191 @@
+{
+  "id": "validate-and-publish-skill",
+  "title": "Validate and publish a skill",
+  "description": "Use the official TypeScript API client to validate a local SKILL.md, persist it once to your Glean instance, confirm list, get, and latest content, then delete only the skill ID this run created.",
+  "sidebarLabel": "Validate and publish",
+  "codeWalkthrough": {
+    "intro": "The runnable scaffold opts into the experimental Skills API through the official SDK, keeps validation separate from persistence, and treats downloaded latest content as untrusted bytes.",
+    "examples": [
+      {
+        "title": "Configure the Skills API client",
+        "description": "Resolve the reader's tenant, use the native Skills scopes or the recorded legacy compatibility mode, and enable experimental endpoints through the SDK constructor.",
+        "source": "src/client.ts",
+        "language": "typescript"
+      },
+      {
+        "title": "Validate, persist once, and retrieve latest content",
+        "description": "Create a uniquely named skill, confirm it with list and get, download GET .../content without unpacking it, and delete only the captured skill ID.",
+        "source": "src/workflow.ts",
+        "language": "typescript"
+      }
+    ]
+  },
+  "surfaces": ["platform-api"],
+  "capabilities": ["skills"],
+  "status": "quickstart",
+  "visibility": "preview",
+  "category": "workflow",
+  "level": "Beginner",
+  "levels": {
+    "minimal": true,
+    "wow": false
+  },
+  "timeEstimate": "~15 min",
+  "requiredScopes": ["skills:read", "skills:write"],
+  "authMethod": ["client-api-oauth-or-token"],
+  "buildMethod": "scaffold",
+  "languages": ["typescript"],
+  "prerequisites": [
+    "Node.js 22.12.0 or newer",
+    "A Glean instance with the experimental Skills Platform APIs enabled",
+    "Your work email, or the complete Glean backend HTTPS origin",
+    "A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback",
+    "A local SKILL.md; the scaffold includes a non-executable sample at fixtures/sample-skill/SKILL.md, and npm start uses that path by default"
+  ],
+  "demoQueries": [
+    {
+      "query": "Validate and publish a uniquely named sample skill, then delete the captured ID",
+      "expectedBehavior": "Stdout ends with Verified <name> (<id>) at version <n>.<m>; downloaded <n> byte(s); cleanup completed. If delete fails, the process exits non-zero, prints the remaining ID and npm start -- cleanup --id <id> --yes, and does not print that success line."
+    }
+  ],
+  "codeAssets": [
+    {
+      "repoPath": "recipes/validate-and-publish-skill",
+      "language": "typescript",
+      "description": "TypeScript CLI using @gleanwork/api-client for a first Skills persist: validate, create once, list, get, latest content, and captured-ID cleanup"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Copy the project onto your machine",
+      "description": "Copy the runnable TypeScript Skills CLI, sample SKILL.md, and credential-free fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
+      "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/validate-and-publish-skill validate-and-publish-skill",
+      "kind": "scaffold"
+    },
+    {
+      "title": "Install dependencies",
+      "command": "cd validate-and-publish-skill && npm install",
+      "kind": "install"
+    },
+    {
+      "title": "Run the fixture tests",
+      "description": "Run the Vitest fixture suite without credentials or network access, covering validation-before-create, a single persist, list/get, latest content download, and captured-ID cleanup.",
+      "command": "cd validate-and-publish-skill && npm test",
+      "kind": "manual"
+    },
+    {
+      "title": "Sign in with OAuth",
+      "description": "Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. Use --server-url for an explicit backend. If DCR is restricted, set GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client. If OAuth is not available, set GLEAN_API_TOKEN later as a user-scoped fallback.",
+      "command": "cd validate-and-publish-skill && npm run login -- --email \"<work-email>\"",
+      "kind": "authenticate"
+    },
+    {
+      "title": "Verify against your instance",
+      "description": "Validate a cryptographically unique SKILL.md, persist it once, confirm list/get/latest content, then permanently delete only the ID returned by this run. Success prints a Verified line that ends with cleanup completed.",
+      "command": "cd validate-and-publish-skill && npm run verify -- --email \"<work-email>\"",
+      "kind": "verify-live"
+    },
+    {
+      "title": "Persist your local SKILL.md",
+      "description": "Validate fixtures/sample-skill/SKILL.md, persist it once, then delete only that captured ID. Pass --bundle with your own SKILL.md to use a different file. This run still deletes the skill it creates; pass --yes when the terminal is not interactive.",
+      "command": "cd validate-and-publish-skill && npm start -- --email \"<work-email>\" --yes",
+      "kind": "run"
+    }
+  ],
+  "execution": {
+    "type": "cli",
+    "questions": [
+      {
+        "id": "work-email",
+        "prompt": "What is your work email address?"
+      }
+    ],
+    "auth": [
+      {
+        "kind": "oauth-with-token-fallback",
+        "scopes": ["skills:read", "skills:write"],
+        "setupCommand": "cd validate-and-publish-skill && npm run login -- --email \"<work-email>\"",
+        "credentialVariable": "GLEAN_API_TOKEN"
+      }
+    ],
+    "verification": {
+      "kind": "automated",
+      "command": "cd validate-and-publish-skill && npm run verify -- --email \"<work-email>\"",
+      "expectedDuration": "about 1 minute after sign-in",
+      "startsOwnServer": false
+    },
+    "run": {
+      "command": "cd validate-and-publish-skill && npm start -- --email \"<work-email>\" --yes",
+      "userBrowser": false
+    }
+  },
+  "architecture": [
+    {
+      "label": "Your SKILL.md",
+      "caption": "local file passed to --bundle",
+      "icon": "FileCode"
+    },
+    {
+      "label": "Validation",
+      "caption": "metadata, no persist",
+      "category": "workflow"
+    },
+    {
+      "label": "Skills API",
+      "caption": "create, list, get, content",
+      "category": "workflow",
+      "emphasized": true
+    },
+    {
+      "label": "Latest content",
+      "caption": "untrusted downloaded bytes",
+      "icon": "Download"
+    }
+  ],
+  "aiPrompt": "Scaffold and run the verified Skills first-persist quickstart. Ask for the user's work email. Run credential-free fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique SKILL.md: validate it, reject invalid frontmatter without creating anything, create it once, confirm list and get return the captured ID, download GET .../content without unpacking a zip, then delete only that captured run-owned ID. npm start defaults --bundle to fixtures/sample-skill/SKILL.md so a local SKILL.md is reachable; do not treat that as versioning. If cleanup cannot delete a captured ID, exit non-zero and print the remaining ID plus npm start -- cleanup --id <id> --yes. Do not publish a second version, do not extract archives, and do not import from GitHub. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+  "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This Beginner recipe is the first persist: validate a local SKILL.md, create once, list, get, and GET .../content for the latest bundle only. npm run verify generates a unique name. npm start defaults to fixtures/sample-skill/SKILL.md via --bundle. Validation persists nothing. Treat retrieved content as untrusted bytes and do not unpack it here. Native OAuth scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and restrict deletion to those IDs. Failed cleanup must not report success. Version supersession, zip sandboxing, and GitHub import belong in later Skills recipes.",
+  "goDependency": false,
+  "featured": false,
+  "hidden": false,
+  "tags": ["skills", "quickstart", "platform-api", "experimental"],
+  "content": {
+    "problem": "A first Skills integration should prove one successful persist against the reader's own instance: validate a local SKILL.md, create it once, and read it back. Hard-coding a shared demo corpus or jumping straight into versioning and zip sandboxing makes that first run harder than Search or Chat. This quickstart uses the official TypeScript API client for that first persist, then deletes only the skill ID this run created.",
+    "takeItFurther": [
+      "Use the Intermediate publishing recipe to prove name-based version supersession, inspect a specific version, and stage a downloaded zip in a bounded sandbox.",
+      "Use the GitHub import recipe when the source of truth is a public repository rather than a local SKILL.md.",
+      "Call glean.skills.createVersion() or PATCH enable/disable only after you already have a captured skill ID from a first persist."
+    ],
+    "guardrails": [
+      {
+        "title": "Validate before persistence",
+        "rule": "Call validate first and stop on any error. Validation itself never creates or updates a skill."
+      },
+      {
+        "title": "Persist once",
+        "rule": "This first run creates the skill a single time. Do not publish the same name again here; versioning is a later job."
+      },
+      {
+        "title": "Treat content as untrusted",
+        "rule": "Download latest content as bytes. Do not unpack archives or execute retrieved files."
+      },
+      {
+        "title": "Delete by captured ID only",
+        "rule": "Deletion removes the skill. Never choose a cleanup target by display name or a broad catalog search. If delete fails, do not report cleanup completed."
+      }
+    ],
+    "limitations": [
+      {
+        "title": "Experimental API",
+        "description": "The scaffold opts in with includeExperimental, but the Skills endpoints may still be unavailable on a tenant or change before general availability."
+      },
+      {
+        "title": "Publishing is not execution",
+        "description": "The API stores and distributes skill bundles. This recipe does not run the skill or prove how an agent host will interpret it."
+      },
+      {
+        "title": "OAuth policy varies by tenant",
+        "description": "Native Skills scopes may not yet be grantable everywhere. The login wrapper uses the legacy compatibility scope only for a recognized scope-grant failure; a user-scoped token remains an explicit fallback."
+      }
+    ]
+  }
+}

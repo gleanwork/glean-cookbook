@@ -1,0 +1,36 @@
+{
+  "name": "validate-and-publish-skill",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Validate a local SKILL.md and persist it once with the Glean Skills API.",
+  "type": "module",
+  "scripts": {
+    "login": "node scripts/login.mjs",
+    "start": "tsx src/cli.ts --bundle fixtures/sample-skill/SKILL.md",
+    "verify": "tsx src/cli.ts --yes",
+    "test": "vitest run",
+    "lint": "eslint src scripts",
+    "typecheck": "tsc --noEmit",
+    "test:all": "npm run test && npm run lint && npm run typecheck"
+  },
+  "dependencies": {
+    "@gleanwork/api-client": "0.20.4",
+    "@gleanwork/auth": "0.5.1",
+    "meow": "14.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "eslint": "10.10.0",
+    "tsx": "4.23.13",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.69.0",
+    "vitest": "5.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "fsevents": false
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
