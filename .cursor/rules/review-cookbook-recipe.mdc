@@ -1,0 +1,9 @@
+---
+description: Load the cookbook recipe review skill when changing a recipe's copy, first run, or steps under recipes/.
+globs: recipes/**
+alwaysApply: false
+---
+
+When reviewing or changing a recipe's published steps, first run, copy, or
+`/cookbook:{id}` skill, follow `.agents/skills/review-cookbook-recipe/SKILL.md`.
+Do not invent a parallel bar.

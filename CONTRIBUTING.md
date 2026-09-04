@@ -41,11 +41,15 @@ mise exec -- npm --prefix plugin ci   # once — the plugin is its own npm proje
 
 ## Adding a recipe
 
-Adding a recipe means adding all three:
+Adding a recipe means adding both:
 
 1. `recipes/{id}/` with the runnable code (or a short README explaining why there isn't any)
 2. `recipes/{id}/recipe.json`, then `mise exec -- pnpm build:registry`
-3. a prose page at `docs/cookbook/{id}.mdx` in [glean-developer-site](https://github.com/gleanwork/glean-developer-site)
+
+There is no hand-written docs page. [glean-developer-site](https://github.com/gleanwork/glean-developer-site)
+generates `docs/cookbook/{id}.mdx` from `registry.json` when it runs `pnpm registry:sync` and
+`pnpm recipes:compile` (see [The registry](#the-registry)). Wait for that generated page, or run
+those two commands in a site checkout to preview it. Do not create or edit the MDX by hand.
 
 Do not commit generated plugin skills, manifests, or `build/` output in a recipe PR. The plugin's
 skills are generated from `registry.json` in CI and are committed automatically after the merge
@@ -101,8 +105,8 @@ it's out of sync with the `recipe.json` files.
 The dev site pulls the built registry with `mise exec -- pnpm registry:sync` then
 `mise exec -- pnpm recipes:compile` — run
 both there after changing a recipe here, or wait for the `sync-cookbook-registry` workflow to open a
-PR automatically. Its `docs/cookbook/{id}.mdx` files are prose-only and matched to their recipe by
-filename === `id`.
+PR automatically. The sync generates one `docs/cookbook/{id}.mdx` per recipe, matched by
+filename === `id`. Those pages are generated output, not authored prose.
 
 Use the visibility fields deliberately:
 
@@ -115,6 +119,13 @@ Use the visibility fields deliberately:
   `ff_recipe=<recipe-id>` query parameter.
 
 ## Verifying a recipe
+
+UX, copy, and first-run reviews follow
+[`.agents/skills/review-cookbook-recipe/SKILL.md`](.agents/skills/review-cookbook-recipe/SKILL.md).
+That is a reader pass of the published page, not a substitute for the gates below.
+A reader-pass walk of `/cookbook:{id}` needs `mise exec -- pnpm build` locally so the generated
+skill is current. Do not commit that plugin output. Recipe PRs still push with
+`mise exec -- pnpm build:registry` as above.
 
 What "verify" means depends on the recipe's `buildMethod`:
 
