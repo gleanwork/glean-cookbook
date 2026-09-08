@@ -1,0 +1,23 @@
+name: Publish Glean skill
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'fixtures/sample-skill/**'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Validate and publish
+        env:
+          GLEAN_API_TOKEN: ${{ secrets.GLEAN_SKILLS_API_TOKEN }}
+          GLEAN_SERVER_URL: ${{ vars.GLEAN_SERVER_URL }}
+        run: npm start -- publish --bundle fixtures/sample-skill/SKILL.md --yes
