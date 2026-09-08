@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll, expect, test } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { createGleanClient } from './client.js';
-import { CleanupFailedError } from './errors.js';
+import { CleanupFailedError, formatCliError } from './errors.js';
 import {
   githubSkillFixture,
   PINNED_SOURCE_URL,
@@ -148,11 +148,17 @@ test('optional --stream consumes recorded SSE preview payloads', async () => {
     }),
   );
   const client = await createGleanClient({ serverUrl: baseUrl });
+  const logs: string[] = [];
 
   await expect(
-    importSkillFromGithub(client.skills, { stream: true, cleanup: true }),
+    importSkillFromGithub(client.skills, {
+      stream: true,
+      cleanup: true,
+      log: (message) => logs.push(message),
+    }),
   ).resolves.toMatchObject({ ids: [skill.id] });
   expect(deleted).toEqual([skill.id]);
+  expect(logs.join('\n')).toMatch(/Scan progress: 1 item\(s\)/);
 });
 
 test('paginates list confirmation past the first 100 skills', async () => {
@@ -195,6 +201,38 @@ test('fails loudly when the tenant cannot fetch GitHub', async () => {
   );
 });
 
+test('Skills API 404s are not labeled as a GitHub fetch failure', async () => {
+  process.env.GLEAN_API_TOKEN = 'fixture-token';
+  server.use(
+    http.post(`${baseUrl}/api/skills/sources/preview`, () =>
+      HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Not Found',
+          status: 404,
+          detail: 'Not Found',
+          code: 'not_found',
+          request_id: 'request-preview-404',
+        },
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/problem+json' },
+        },
+      ),
+    ),
+  );
+  const client = await createGleanClient({ serverUrl: baseUrl });
+
+  await expect(
+    importSkillFromGithub(client.skills, { cleanup: true }),
+  ).rejects.toSatisfy((error: unknown) => {
+    expect(String(error)).not.toMatch(/could not fetch GitHub/);
+    const formatted = formatCliError(error);
+    expect(formatted.hint).toMatch(/Skills APIs are not enabled/);
+    return true;
+  });
+});
+
 test('list miss is not reported as a GitHub fetch failure', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   server.use(
@@ -230,7 +268,7 @@ test('failed delete exits without reporting cleanup completed', async () => {
     expect(error).toBeInstanceOf(CleanupFailedError);
     expect(error).toMatchObject({
       remainingIds: [skill.id],
-      cleanupCommand: `npm start -- cleanup --id ${skill.id} --yes`,
+      cleanupCommand: `npm start -- cleanup --id ${skill.id} --yes --email <your-work-email>`,
     });
     expect(String(error)).not.toMatch(/cleanup completed/);
     return true;

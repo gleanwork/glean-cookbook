@@ -1,4 +1,8 @@
 import type { Glean } from '@gleanwork/api-client';
+import {
+  GleanBaseError,
+  PlatformProblemDetailError,
+} from '@gleanwork/api-client/models/errors';
 import { PreviewSourceAcceptEnum } from '@gleanwork/api-client/sdk/skills.js';
 import type { PlatformSkillSourcePreviewResponse } from '@gleanwork/api-client/models/components';
 import { CleanupFailedError, formatCliError } from './errors.js';
@@ -22,8 +26,19 @@ function rethrow(error: unknown): never {
   throw error instanceof Error ? error : new Error('Verification failed.');
 }
 
-export function cleanupCommand(skillId: string) {
-  return `npm start -- cleanup --id ${skillId} --yes`;
+export function cleanupCommand(
+  skillId: string,
+  auth: { email?: string; serverUrl?: string } = {},
+) {
+  const parts = [`npm start -- cleanup --id ${skillId} --yes`];
+  if (auth.serverUrl?.trim()) {
+    parts.push(`--server-url ${auth.serverUrl.trim()}`);
+  } else if (auth.email?.trim()) {
+    parts.push(`--email ${auth.email.trim()}`);
+  } else {
+    parts.push('--email <your-work-email>');
+  }
+  return parts.join(' ');
 }
 
 export function importedSuccessLine(result: ImportResult) {
@@ -35,6 +50,23 @@ function githubFetchError(error: unknown): Error {
   return new Error(
     `This tenant could not fetch GitHub: ${summary}. The import recipe fails rather than skipping.`,
   );
+}
+
+function isSkillsApiNotFound(error: unknown) {
+  if (error instanceof PlatformProblemDetailError) return error.status === 404;
+  if (error instanceof GleanBaseError) return error.statusCode === 404;
+  return false;
+}
+
+function reraiseSourceError(error: unknown): never {
+  if (isSkillsApiNotFound(error)) throw error;
+  if (
+    error instanceof PlatformProblemDetailError ||
+    error instanceof GleanBaseError
+  ) {
+    throw githubFetchError(error);
+  }
+  throw error instanceof Error ? error : new Error('Verification failed.');
 }
 
 export async function findSkillById(api: SkillsApi, skillId: string) {
@@ -68,6 +100,7 @@ export async function resolvePreview(
   api: SkillsApi,
   sourceUrl: string,
   stream: boolean,
+  log: (message: string) => void = () => undefined,
 ): Promise<PlatformSkillSourcePreviewResponse> {
   try {
     const preview = await api.previewSource(
@@ -76,9 +109,9 @@ export async function resolvePreview(
         ? { acceptHeaderOverride: PreviewSourceAcceptEnum.textEventStream }
         : undefined,
     );
-    return parsePreviewResult(preview);
+    return parsePreviewResult(preview, log);
   } catch (error) {
-    throw githubFetchError(error);
+    reraiseSourceError(error);
   }
 }
 
@@ -88,6 +121,7 @@ export async function importSkillFromGithub(
     sourceUrl?: string;
     stream?: boolean;
     cleanup: boolean;
+    auth?: { email?: string; serverUrl?: string };
     log?: (message: string) => void;
   },
 ): Promise<ImportResult> {
@@ -103,6 +137,7 @@ export async function importSkillFromGithub(
       api,
       sourceUrl,
       options.stream === true,
+      log,
     );
     const selected = preview.skills.at(0);
     if (!selected) {
@@ -121,7 +156,7 @@ export async function importSkillFromGithub(
     try {
       imported = await api.import({ source_urls: [selected.source_url] });
     } catch (error) {
-      throw githubFetchError(error);
+      reraiseSourceError(error);
     }
     const skill = imported.skills.at(0);
     if (!skill) {
@@ -143,7 +178,7 @@ export async function importSkillFromGithub(
     try {
       synced = await api.sync(skill.id);
     } catch (error) {
-      throw githubFetchError(error);
+      reraiseSourceError(error);
     }
 
     result = {
@@ -163,7 +198,8 @@ export async function importSkillFromGithub(
   if (remaining.length > 0) {
     throw new CleanupFailedError(
       remaining,
-      remaining.map((id) => cleanupCommand(id)).join('\n  '),
+      remaining.map((id) => cleanupCommand(id, options.auth)).join('\n  '),
+      workError,
     );
   }
   if (workError) rethrow(workError);

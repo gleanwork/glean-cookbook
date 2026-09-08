@@ -75,9 +75,14 @@
     },
     {
       "title": "Sign in with OAuth",
-      "description": "Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. Use --server-url for an explicit backend. If DCR is restricted, set GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client. If OAuth is not available, set GLEAN_API_TOKEN later as a user-scoped fallback.",
+      "description": "Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.",
       "command": "cd import-skill-from-github && npm run login -- --email \"<work-email>\"",
       "kind": "authenticate"
+    },
+    {
+      "title": "Pass an explicit backend if you need one",
+      "description": "If email discovery is wrong, pass --server-url with the complete Glean backend HTTPS origin on login, verify, and start. If DCR is restricted, export GLEAN_OAUTH_CLIENT_ID in your shell before npm run login. npm run login does not read .env, so do not store that client id only in .env.",
+      "kind": "configure"
     },
     {
       "title": "Verify against your instance",
@@ -86,8 +91,8 @@
       "kind": "verify-live"
     },
     {
-      "title": "Import with scan progress",
-      "description": "Run the same preview, import, and sync path with --stream so repository scan progress arrives as server-sent events. This command still deletes the captured skill when it finishes; there is no keep path. Pass --yes when the terminal is not interactive.",
+      "title": "Watch repository scan progress",
+      "description": "Run the same preview, import, and sync path with --stream. Scan events print as the tenant walks the GitHub directory. This command still deletes the captured skill when it finishes; there is no keep path. Pass --yes when the terminal is not interactive.",
       "command": "cd import-skill-from-github && npm start -- --email \"<work-email>\" --yes --stream",
       "kind": "run"
     }
@@ -142,7 +147,7 @@
       "icon": "RefreshCw"
     }
   ],
-  "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator with stream false by default. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list, paginating list. Delete only IDs this run created. If cleanup cannot delete a captured ID, exit non-zero. If the tenant cannot fetch GitHub, fail loudly instead of skipping. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+  "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator with stream false by default. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list, paginating list. Delete only IDs this run created. If cleanup cannot delete a captured ID, exit non-zero. If the tenant cannot fetch GitHub, fail loudly instead of skipping. A 404 from Skills APIs is not a GitHub-fetch failure. With --stream, print scan progress events. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
   "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This Intermediate recipe is a different source of truth from local SKILL.md publishing: previewSource (stream false by default, optional stream true like Search --auto-select), import selected URLs, and sync one captured GitHub-imported skill. Default source is https://github.com/anthropics/skills/tree/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator. Native OAuth scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and restrict deletion to those IDs. Failed cleanup must not report success. Fail, do not skip, when the tenant cannot fetch GitHub. Leave PATCH update and POST .../versions as take-it-further.",
   "goDependency": false,
   "featured": false,

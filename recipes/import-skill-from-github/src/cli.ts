@@ -57,6 +57,13 @@ function required(value: string | undefined, flag: string) {
   return trimmed;
 }
 
+function authFlags() {
+  return {
+    email: cli.flags.email?.trim(),
+    serverUrl: cli.flags.serverUrl?.trim(),
+  };
+}
+
 async function main() {
   const command = cli.input[0];
   if (command && command !== 'cleanup') {
@@ -74,13 +81,7 @@ async function main() {
         `Permanently delete skill ${id}? Only continue for an ID created by this run.`,
       ));
     if (!approved) throw new Error(missingCleanupConfirmation(stdin.isTTY));
-    const client = await createGleanClient(
-      {
-        email: cli.flags.email?.trim(),
-        serverUrl: cli.flags.serverUrl?.trim(),
-      },
-      console.log,
-    );
+    const client = await createGleanClient(authFlags(), console.log);
     await client.skills.delete(id);
     console.log(`Deleted skill ${id}.`);
     return;
@@ -95,17 +96,12 @@ async function main() {
     throw new Error(missingCleanupConfirmation(stdin.isTTY));
   }
 
-  const client = await createGleanClient(
-    {
-      email: cli.flags.email?.trim(),
-      serverUrl: cli.flags.serverUrl?.trim(),
-    },
-    console.log,
-  );
+  const client = await createGleanClient(authFlags(), console.log);
   const result = await importSkillFromGithub(client.skills, {
     sourceUrl: cli.flags.sourceUrl,
     stream: cli.flags.stream,
     cleanup: true,
+    auth: authFlags(),
     log: console.log,
   });
   console.log(importedSuccessLine(result));
