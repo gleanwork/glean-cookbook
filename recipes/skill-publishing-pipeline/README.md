@@ -18,11 +18,11 @@ npm run login -- --email you@example.com
 npm run verify -- --email you@example.com
 ```
 
-To publish a new version of your own bundle (the scaffold sample is
+To publish a new version of your own bundle (`npm start -- publish` defaults to
 `fixtures/sample-skill/SKILL.md`):
 
 ```bash
-npm start -- publish --bundle fixtures/sample-skill/SKILL.md --email you@example.com
+npm start -- publish --email you@example.com
 ```
 
 Each version stages under `staged/<skill-id>/v<version>.<minor>/`. Pass

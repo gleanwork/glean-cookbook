@@ -3,25 +3,27 @@ import readline from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import meow from 'meow';
 import { createGleanClient } from './client.js';
-import { readBundle, readStream, stageDownloadedBundle } from './bundle.js';
+import { readBundle } from './bundle.js';
 import { missingCleanupConfirmation, printCliError } from './errors.js';
 import {
+  cleanupCommand,
   findSkillByName,
-  publishBundle,
-  stagingDestination,
+  publishAndStage,
   verifiedSuccessLine,
   verifyPublishingLifecycle,
 } from './workflow.js';
 
+const SAMPLE_BUNDLE = 'fixtures/sample-skill/SKILL.md';
+
 const cli = meow(
   `
     Usage
-      $ npm start -- publish --bundle <path> [options]
+      $ npm start -- publish [options]
       $ npm start -- verify [options]
       $ npm start -- cleanup --id <skill-id> [options]
 
     Options
-      --bundle       SKILL.md, .zip, or .skill to validate and publish
+      --bundle       SKILL.md, .zip, or .skill (publish default: ${SAMPLE_BUNDLE})
       --id           Exact run-owned skill ID to delete
       --email        Work email used to discover the Glean backend
       --server-url   Complete Glean backend origin; overrides --email
@@ -29,7 +31,8 @@ const cli = meow(
       --stage-dir    Sandbox for downloaded content (default: staged)
 
     Examples
-      $ npm start -- publish --bundle fixtures/sample-skill/SKILL.md --email you@example.com
+      $ npm start -- publish --email you@example.com
+      $ npm start -- publish --bundle path/to/SKILL.md --email you@example.com
       $ npm run verify -- --email you@example.com
   `,
   {
@@ -64,6 +67,13 @@ function required(value: string | undefined, flag: string) {
   return trimmed;
 }
 
+function authFlags() {
+  return {
+    email: cli.flags.email?.trim(),
+    serverUrl: cli.flags.serverUrl?.trim(),
+  };
+}
+
 async function main() {
   const command = cli.input[0];
   if (!command || !['publish', 'verify', 'cleanup'].includes(command)) {
@@ -77,21 +87,16 @@ async function main() {
     const cleanupApproved =
       cli.flags.yes ||
       (await confirm(
-        'Verification creates one uniquely named skill, publishes a second version, stages that zip in a sandbox, and permanently deletes that run-owned skill.',
+        'This run creates one uniquely named skill, publishes a second version, stages that zip in a sandbox, and permanently deletes that run-owned skill.',
       ));
     if (!cleanupApproved) {
       throw new Error(missingCleanupConfirmation(stdin.isTTY));
     }
-    const client = await createGleanClient(
-      {
-        email: cli.flags.email?.trim(),
-        serverUrl: cli.flags.serverUrl?.trim(),
-      },
-      console.log,
-    );
+    const client = await createGleanClient(authFlags(), console.log);
     const result = await verifyPublishingLifecycle(client.skills, {
       workDir: path.resolve('.cookbook-runs'),
       cleanup: true,
+      auth: authFlags(),
       log: console.log,
     });
     console.log(verifiedSuccessLine(result));
@@ -106,26 +111,14 @@ async function main() {
         `Permanently delete skill ${id} and every version? Only continue for an ID created by this run.`,
       ));
     if (!approved) throw new Error(missingCleanupConfirmation(stdin.isTTY));
-    const client = await createGleanClient(
-      {
-        email: cli.flags.email?.trim(),
-        serverUrl: cli.flags.serverUrl?.trim(),
-      },
-      console.log,
-    );
+    const client = await createGleanClient(authFlags(), console.log);
     await client.skills.delete(id);
     console.log(`Deleted skill ${id}.`);
     return;
   }
 
-  const bundlePath = required(cli.flags.bundle, '--bundle');
-  const client = await createGleanClient(
-    {
-      email: cli.flags.email?.trim(),
-      serverUrl: cli.flags.serverUrl?.trim(),
-    },
-    console.log,
-  );
+  const bundlePath = cli.flags.bundle?.trim() || SAMPLE_BUNDLE;
+  const client = await createGleanClient(authFlags(), console.log);
   const bundle = await readBundle(bundlePath);
   const validation = await client.skills.validate({ file: bundle });
   const existingId = await findSkillByName(
@@ -141,24 +134,14 @@ async function main() {
     if (!approved) throw new Error('Publish cancelled before supersession.');
   }
 
-  const result = await publishBundle(client.skills, bundlePath);
-  const destination = stagingDestination(
-    cli.flags.stageDir,
-    result.id,
-    result.version,
-    result.minorVersion,
-  );
-  const response = await client.skills.retrieveContent(result.id);
-  const files = await stageDownloadedBundle(
-    await readStream(response.result),
-    destination,
-  );
-  console.log(
-    `Published ${result.displayName} (${result.id}) at version ${result.version}.${result.minorVersion}.`,
-  );
+  const { result, files, destination } = await publishAndStage(client.skills, {
+    bundlePath,
+    stageDir: cli.flags.stageDir,
+    log: console.log,
+  });
   console.log(`Staged ${files.length} untrusted file(s) in ${destination}.`);
   console.log(
-    `Review the staged files. Nothing was executed. To remove this skill, run:\n  npm start -- cleanup --id ${result.id}`,
+    `Review the staged files. Nothing was executed. To remove this skill, run:\n  ${cleanupCommand(result.id, authFlags())}`,
   );
 }
 
