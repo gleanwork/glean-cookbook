@@ -1,0 +1,4 @@
+node_modules/
+.env
+.glean-scope-mode
+.cookbook-runs/
