@@ -5,6 +5,7 @@ import { strToU8, zipSync } from 'fflate';
 import { afterEach, expect, test } from 'vitest';
 import { CleanupFailedError } from './errors.js';
 import {
+  publishAndStage,
   verifiedSuccessLine,
   verifyPublishingLifecycle,
   type SkillsApi,
@@ -22,7 +23,7 @@ function streamFor(manifest: string) {
   });
 }
 
-function fakeApi(options?: { deleteError?: Error }) {
+function fakeApi(options?: { deleteError?: Error; invalidContent?: boolean }) {
   let currentManifest = '';
   let version = 0;
   let deleted = false;
@@ -74,6 +75,17 @@ function fakeApi(options?: { deleteError?: Error }) {
       };
     },
     async retrieveContent() {
+      if (options?.invalidContent) {
+        return {
+          Headers: {},
+          result: new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(Buffer.from('not-a-zip'));
+              controller.close();
+            },
+          }),
+        };
+      }
       return { Headers: {}, result: streamFor(currentManifest) };
     },
     async listVersions(skillId: string) {
@@ -179,7 +191,8 @@ test('failed delete exits without reporting cleanup completed', async () => {
     expect(error).toBeInstanceOf(CleanupFailedError);
     expect(error).toMatchObject({
       remainingIds: ['skill-run-owned'],
-      cleanupCommand: 'npm start -- cleanup --id skill-run-owned --yes',
+      cleanupCommand:
+        'npm start -- cleanup --id skill-run-owned --yes --email <your-work-email>',
     });
     expect(String(error)).not.toMatch(/cleanup completed/);
     return true;
@@ -188,4 +201,30 @@ test('failed delete exits without reporting cleanup completed', async () => {
   expect(logs.join('\n')).not.toMatch(/cleanup completed/);
   expect(logs.join('\n')).not.toMatch(/Cleanup warning/);
   expect(fixture.state().deleted).toBe(false);
+});
+
+test('staging failure after create still printed the skill ID', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-stage-fail-'));
+  roots.push(root);
+  const skillPath = path.join(root, 'SKILL.md');
+  await fs.writeFile(
+    skillPath,
+    '---\nname: staged-fail\ndescription: fixture\n---\n# Staging failure\n',
+    { flag: 'wx', mode: 0o600 },
+  );
+  const logs: string[] = [];
+  const fixture = fakeApi({ invalidContent: true });
+
+  await expect(
+    publishAndStage(fixture.api, {
+      bundlePath: skillPath,
+      stageDir: path.join(root, 'staged'),
+      log: (message) => logs.push(message),
+    }),
+  ).rejects.toThrow();
+
+  expect(logs.join('\n')).toMatch(
+    /Published staged-fail \(skill-run-owned\) at version 1\.0/,
+  );
+  expect(fixture.state().createCalls).toBe(1);
 });

@@ -8,14 +8,20 @@ import {
 export class CleanupFailedError extends Error {
   readonly remainingIds: string[];
   readonly cleanupCommand: string;
+  readonly workError?: unknown;
 
-  constructor(remainingIds: string[], cleanupCommand: string) {
+  constructor(
+    remainingIds: string[],
+    cleanupCommand: string,
+    workError?: unknown,
+  ) {
     super(
       `Cleanup did not delete ${remainingIds.join(', ')}. Those IDs remain in your tenant.`,
     );
     this.name = 'CleanupFailedError';
     this.remainingIds = remainingIds;
     this.cleanupCommand = cleanupCommand;
+    this.workError = workError;
   }
 }
 
@@ -38,11 +44,18 @@ function httpSummary(error: GleanBaseError): string {
   return `HTTP ${error.statusCode}`;
 }
 
+function isMissingOAuthSession(message: string) {
+  return (
+    /OAuth sign-in is required/i.test(message) ||
+    /Unable to obtain a Glean access token/i.test(message)
+  );
+}
+
 export function formatCliError(error: unknown): CliError {
   if (error instanceof CleanupFailedError) {
     return {
       error: error.message,
-      hint: `Delete only those captured IDs:\n  ${error.cleanupCommand}`,
+      hint: `Delete only those captured IDs. Pass the same --email or --server-url you used to sign in:\n  ${error.cleanupCommand}`,
     };
   }
 
@@ -77,7 +90,7 @@ export function formatCliError(error: unknown): CliError {
   }
 
   const message = error instanceof Error ? error.message : String(error);
-  if (/OAuth sign-in is required/i.test(message)) {
+  if (isMissingOAuthSession(message)) {
     return {
       error: message,
       hint: 'Run npm run login -- --email <your-work-email>.',
@@ -90,10 +103,15 @@ export function formatCliError(error: unknown): CliError {
 export function missingCleanupConfirmation(isTTY: boolean): string {
   return isTTY
     ? 'This run deletes the skill it creates. Confirm in the prompt, or pass --yes.'
-    : 'Verification requires --yes to confirm cleanup when the terminal is not interactive.';
+    : 'This run deletes the skill it creates. Pass --yes to confirm cleanup when the terminal is not interactive.';
 }
 
 export function printCliError(error: unknown, write = console.error): void {
+  if (error instanceof CleanupFailedError && error.workError) {
+    const work = formatCliError(error.workError);
+    write(`error: ${work.error}`);
+    if (work.hint) write(`hint: ${work.hint}`);
+  }
   const formatted = formatCliError(error);
   write(`error: ${formatted.error}`);
   if (formatted.hint) write(`hint: ${formatted.hint}`);

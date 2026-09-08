@@ -29,8 +29,23 @@ function rethrow(error: unknown): never {
   throw error instanceof Error ? error : new Error('Verification failed.');
 }
 
-export function cleanupCommand(skillId: string) {
-  return `npm start -- cleanup --id ${skillId} --yes`;
+export function cleanupCommand(
+  skillId: string,
+  auth: { email?: string; serverUrl?: string } = {},
+) {
+  const parts = [`npm start -- cleanup --id ${skillId} --yes`];
+  if (auth.serverUrl?.trim()) {
+    parts.push(`--server-url ${auth.serverUrl.trim()}`);
+  } else if (auth.email?.trim()) {
+    parts.push(`--email ${auth.email.trim()}`);
+  } else {
+    parts.push('--email <your-work-email>');
+  }
+  return parts.join(' ');
+}
+
+export function publishedSkillLine(result: PublishResult) {
+  return `Published ${result.displayName} (${result.id}) at version ${result.version}.${result.minorVersion}.`;
 }
 
 export function verifiedSuccessLine(result: PublishResult) {
@@ -97,6 +112,30 @@ export async function publishBundle(
   };
 }
 
+export async function publishAndStage(
+  api: SkillsApi,
+  options: {
+    bundlePath: string;
+    stageDir: string;
+    log: (message: string) => void;
+  },
+) {
+  const result = await publishBundle(api, options.bundlePath);
+  options.log(publishedSkillLine(result));
+  const destination = stagingDestination(
+    options.stageDir,
+    result.id,
+    result.version,
+    result.minorVersion,
+  );
+  const response = await api.retrieveContent(result.id);
+  const files = await stageDownloadedBundle(
+    await readStream(response.result),
+    destination,
+  );
+  return { result, files, destination };
+}
+
 function manifest(displayName: string, description: string) {
   return `---\nname: ${displayName}\ndescription: ${description}\n---\n\n# Publishing verification\n\nThis fixture verifies the Skills publishing lifecycle. It contains no executable code.\n`;
 }
@@ -143,6 +182,7 @@ export async function verifyPublishingLifecycle(
   options: {
     workDir: string;
     cleanup: boolean;
+    auth?: { email?: string; serverUrl?: string };
     log?: (message: string) => void;
   },
 ): Promise<PublishResult> {
@@ -256,7 +296,8 @@ export async function verifyPublishingLifecycle(
   if (remaining.length > 0) {
     throw new CleanupFailedError(
       remaining,
-      remaining.map((id) => cleanupCommand(id)).join('\n  '),
+      remaining.map((id) => cleanupCommand(id, options.auth)).join('\n  '),
+      workError,
     );
   }
   if (workError) rethrow(workError);
