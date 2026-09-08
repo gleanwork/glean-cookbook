@@ -98,21 +98,22 @@ export async function createGleanClient(
   }
 
   const staticToken = process.env.GLEAN_API_TOKEN?.trim();
-  const scopes = await configuredScopes(log);
+  let apiToken: string | ReturnType<typeof createGleanTokenProvider>;
   if (staticToken) {
     log('Using GLEAN_API_TOKEN from the environment.');
+    apiToken = staticToken;
   } else {
+    const scopes = await configuredScopes(log);
     log(`Using the OAuth session (${scopes.join(', ')}).`);
+    apiToken = createGleanTokenProvider({
+      serverUrl: server.origin,
+      scopes,
+    });
   }
 
   const options = {
     serverURL: server.origin,
-    apiToken:
-      staticToken ||
-      createGleanTokenProvider({
-        serverUrl: server.origin,
-        scopes,
-      }),
+    apiToken,
     includeExperimental: true,
     timeoutMs: 30_000,
     retryConfig: {

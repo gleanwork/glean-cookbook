@@ -2,11 +2,14 @@ import path from 'node:path';
 import readline from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import meow from 'meow';
+import {
+  persistBundlePath,
+  SAMPLE_BUNDLE,
+  verifyBundlePath,
+} from './bundle-path.js';
 import { createGleanClient } from './client.js';
 import { missingCleanupConfirmation, printCliError } from './errors.js';
 import { verifiedSuccessLine, verifyFirstPersist } from './workflow.js';
-
-const SAMPLE_BUNDLE = 'fixtures/sample-skill/SKILL.md';
 
 const cli = meow(
   `
@@ -58,9 +61,16 @@ function required(value: string | undefined, flag: string) {
   return trimmed;
 }
 
+function authFlags() {
+  return {
+    email: cli.flags.email?.trim(),
+    serverUrl: cli.flags.serverUrl?.trim(),
+  };
+}
+
 async function main() {
   const command = cli.input[0];
-  if (command && command !== 'cleanup') {
+  if (command && command !== 'cleanup' && command !== 'verify') {
     throw new Error(`Unexpected argument: ${command}`);
   }
   if (cli.input.length > 1) {
@@ -75,13 +85,7 @@ async function main() {
         `Permanently delete skill ${id}? Only continue for an ID created by this run.`,
       ));
     if (!approved) throw new Error(missingCleanupConfirmation(stdin.isTTY));
-    const client = await createGleanClient(
-      {
-        email: cli.flags.email?.trim(),
-        serverUrl: cli.flags.serverUrl?.trim(),
-      },
-      console.log,
-    );
+    const client = await createGleanClient(authFlags(), console.log);
     await client.skills.delete(id);
     console.log(`Deleted skill ${id}.`);
     return;
@@ -96,17 +100,15 @@ async function main() {
     throw new Error(missingCleanupConfirmation(stdin.isTTY));
   }
 
-  const client = await createGleanClient(
-    {
-      email: cli.flags.email?.trim(),
-      serverUrl: cli.flags.serverUrl?.trim(),
-    },
-    console.log,
-  );
+  const client = await createGleanClient(authFlags(), console.log);
   const result = await verifyFirstPersist(client.skills, {
     workDir: path.resolve('.cookbook-runs'),
     cleanup: true,
-    bundlePath: cli.flags.bundle?.trim(),
+    bundlePath:
+      command === 'verify'
+        ? verifyBundlePath(cli.flags.bundle)
+        : persistBundlePath(cli.flags.bundle),
+    auth: authFlags(),
     log: console.log,
   });
   console.log(verifiedSuccessLine(result));

@@ -27,8 +27,19 @@ function rethrow(error: unknown): never {
   throw error instanceof Error ? error : new Error('Verification failed.');
 }
 
-export function cleanupCommand(skillId: string) {
-  return `npm start -- cleanup --id ${skillId} --yes`;
+export function cleanupCommand(
+  skillId: string,
+  auth: { email?: string; serverUrl?: string } = {},
+) {
+  const parts = [`npm start -- cleanup --id ${skillId} --yes`];
+  if (auth.serverUrl?.trim()) {
+    parts.push(`--server-url ${auth.serverUrl.trim()}`);
+  } else if (auth.email?.trim()) {
+    parts.push(`--email ${auth.email.trim()}`);
+  } else {
+    parts.push('--email <your-work-email>');
+  }
+  return parts.join(' ');
 }
 
 export function verifiedSuccessLine(result: FirstPersistResult) {
@@ -97,6 +108,7 @@ export async function verifyFirstPersist(
     workDir: string;
     cleanup: boolean;
     bundlePath?: string;
+    auth?: { email?: string; serverUrl?: string };
     log?: (message: string) => void;
   },
 ): Promise<FirstPersistResult> {
@@ -190,7 +202,8 @@ export async function verifyFirstPersist(
   if (remaining.length > 0) {
     throw new CleanupFailedError(
       remaining,
-      remaining.map((id) => cleanupCommand(id)).join('\n  '),
+      remaining.map((id) => cleanupCommand(id, options.auth)).join('\n  '),
+      workError,
     );
   }
   if (workError) rethrow(workError);

@@ -24,7 +24,7 @@ function streamFor(manifest: string) {
   });
 }
 
-function fakeApi(options?: { deleteError?: Error }) {
+function fakeApi(options?: { deleteError?: Error; retrieveError?: Error }) {
   let currentManifest = '';
   let deleted = false;
   let createCalls = 0;
@@ -66,6 +66,7 @@ function fakeApi(options?: { deleteError?: Error }) {
       };
     },
     async retrieve(skillId: string) {
+      if (options?.retrieveError) throw options.retrieveError;
       return {
         skill: {
           id: skillId,
@@ -152,6 +153,35 @@ test('validates the scaffold sample SKILL.md when --bundle is set', async () => 
   expect(fixture.state().deleted).toBe(true);
 });
 
+test('failed delete after a work error still reports both failures', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-both-fail-'));
+  roots.push(root);
+  const fixture = fakeApi({
+    deleteError: Object.assign(new Error('conflict'), { statusCode: 409 }),
+    retrieveError: new Error('Direct retrieval returned a different skill.'),
+  });
+
+  await expect(
+    verifyFirstPersist(fixture.api, {
+      workDir: root,
+      cleanup: true,
+      auth: { email: 'you@example.com' },
+    }),
+  ).rejects.toSatisfy((error: unknown) => {
+    expect(error).toBeInstanceOf(CleanupFailedError);
+    expect(error).toMatchObject({
+      remainingIds: ['skill-run-owned'],
+      cleanupCommand:
+        'npm start -- cleanup --id skill-run-owned --yes --email you@example.com',
+    });
+    expect((error as CleanupFailedError).workError).toBeInstanceOf(Error);
+    expect(String((error as CleanupFailedError).workError)).toMatch(
+      /Direct retrieval returned a different skill/,
+    );
+    return true;
+  });
+});
+
 test('failed delete exits without reporting cleanup completed', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-cleanup-fail-'));
   roots.push(root);
@@ -170,7 +200,8 @@ test('failed delete exits without reporting cleanup completed', async () => {
     expect(error).toBeInstanceOf(CleanupFailedError);
     expect(error).toMatchObject({
       remainingIds: ['skill-run-owned'],
-      cleanupCommand: 'npm start -- cleanup --id skill-run-owned --yes',
+      cleanupCommand:
+        'npm start -- cleanup --id skill-run-owned --yes --email <your-work-email>',
     });
     expect(String(error)).not.toMatch(/cleanup completed/);
     return true;
