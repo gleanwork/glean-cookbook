@@ -7,7 +7,7 @@
   "scripts": {
     "login": "node scripts/login.mjs",
     "start": "tsx src/cli.ts",
-    "verify": "tsx src/cli.ts --yes",
+    "verify": "tsx src/cli.ts verify --yes",
     "test": "vitest run",
     "lint": "eslint src scripts",
     "typecheck": "tsc --noEmit",

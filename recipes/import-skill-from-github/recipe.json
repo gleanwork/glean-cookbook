@@ -40,7 +40,7 @@
     "A Glean instance with the experimental Skills Platform APIs enabled",
     "Your work email, or the complete Glean backend HTTPS origin",
     "A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback",
-    "A tenant that can fetch the public GitHub skill-creator directory at commit 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f; verification fails rather than skipping if GitHub is unreachable"
+    "Tenant-side GitHub source fetching enabled for Skills; the pinned public skill-creator directory and commit were confirmed reachable on 2026-09-09, and verification fails rather than skipping if the tenant cannot preview them"
   ],
   "demoQueries": [
     {
@@ -86,7 +86,7 @@
     },
     {
       "title": "Verify against your instance",
-      "description": "Preview the public GitHub skill-creator directory at commit 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. Fails if the tenant cannot fetch GitHub. Success prints an Imported line that ends with cleanup completed.",
+      "description": "Preview the public GitHub skill-creator directory at commit 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. If the pinned URL returns HTTP 400, ask your Glean administrator or support contact to confirm that GitHub-backed Skills import is enabled for the tenant. Success prints an Imported line that ends with cleanup completed.",
       "command": "cd import-skill-from-github && npm run verify -- --email \"<work-email>\"",
       "kind": "verify-live"
     },
@@ -185,7 +185,7 @@
       },
       {
         "title": "GitHub must be fetchable",
-        "description": "Preview, import, and sync require the Glean tenant to fetch the public GitHub fixture. A blocked or unconfigured GitHub fetch is a failed verify, not a skipped one."
+        "description": "Preview, import, and sync require tenant-side GitHub source fetching for Skills. The pinned commit and SKILL.md were confirmed public and reachable on 2026-09-09, so an HTTP 400 for that source requires an administrator or support contact to check tenant enablement. It is a failed verify, not a skipped one."
       },
       {
         "title": "OAuth policy varies by tenant",

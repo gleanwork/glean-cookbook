@@ -11,6 +11,13 @@ update covers precisely the interval the group has not seen.
 For the trigger model and endpoint contract, see the [Triggers guide](https://developers.glean.com/guides/triggers/overview)
 and the [Triggers API reference](https://developers.glean.com/api/platform-api/triggers-overview).
 
+## Copy the project
+
+```bash
+npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/pre-meeting-brief pre-meeting-brief
+cd pre-meeting-brief
+```
+
 ## Configure Cursor
 
 At [cursor.com/automations](https://cursor.com/automations), or `/automate` in a Cursor agent
@@ -32,18 +39,25 @@ description, and the prompt shipped here is the part worth keeping.
 
 ## Register the 30-minute trigger
 
-Copy `.env.example` to `.env`, sign in with the shipped Glean login script, and set the two Cursor
-values plus `GLEAN_TRIGGER_INPUT_TITLE` — the same reviewed pattern the automation prompt accepts, so
-Glean filters by title at the source instead of sending events the automation only discards. Then run:
+Copy `.env.example` to `.env`, then authenticate with a token that includes
+`TRIGGERS`. A token limited to `SEARCH` and `CHAT` cannot read presets or
+register a trigger and receives `403 insufficient_permissions`.
 
 The login flow discovers your tenant from the work email and writes the normalized API backend
 (`https://<instance>-be.glean.com`) to `.env`; you do not need to find or paste the backend host
 manually. Discovery can return a legacy frontend URL such as `*.askscio.com`, which the resolver
 converts before making API calls.
 
+For a token-first tenant, skip login and set `GLEAN_SERVER_URL` plus a
+user-scoped `GLEAN_API_TOKEN` with `TRIGGERS` in `.env`.
+
+Set the two Cursor values plus `GLEAN_TRIGGER_INPUT_TITLE`, which is the same
+reviewed pattern the automation prompt accepts. Glean then filters by title at
+the source instead of sending events the automation only discards. Then run:
+
 ```bash
 npm run verify:fixture   # no credentials, no network
-npm run login            # OAuth via dynamic client registration
+npm run login -- --email "you@company.com" # OAuth requests TRIGGERS
 npm run preview          # what your deployment serves, and real event titles
 npm run test:webhook     # safe non-matching delivery; writes nothing
 npm run setup            # registers the trigger

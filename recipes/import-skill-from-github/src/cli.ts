@@ -66,7 +66,7 @@ function authFlags() {
 
 async function main() {
   const command = cli.input[0];
-  if (command && command !== 'cleanup') {
+  if (command && command !== 'cleanup' && command !== 'verify') {
     throw new Error(`Unexpected argument: ${command}`);
   }
   if (cli.input.length > 1) {

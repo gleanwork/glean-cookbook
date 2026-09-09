@@ -17,6 +17,13 @@ const check = (label, condition, detail = '') => {
   }
 };
 
+const resolverPath = path.join(root, 'scripts', 'resolve-backend.mjs');
+check(
+  'the scaffold includes its documented backend resolver',
+  fs.existsSync(resolverPath) &&
+    /discoverBackend/u.test(fs.readFileSync(resolverPath, 'utf8')),
+);
+
 const workflow = JSON.parse(
   fs.readFileSync(path.join(root, 'workflow.json'), 'utf8'),
 );

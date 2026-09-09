@@ -31,6 +31,10 @@ function executionTarget(recipe, execution) {
 
 async function oauthScaffolds({ repoRoot }) {
   const targets = new Set(['plugin/shared/cookbook']);
+  // The n8n workflow resolves a backend before it is imported, but n8n owns
+  // the live credentials. It still needs the shared discovery runtime because
+  // the scaffold must work without an installed cookbook plugin.
+  targets.add('recipes/gong-call-follow-up-n8n');
   // Any scaffold already shipping the runtime is a target, whatever its auth
   // kind says -- the web-sdk ones call `configure` but declare `browser-cookie`,
   // so they held copies `artifacts:check` could not see.
@@ -137,6 +141,20 @@ export default defineArtifacts([
     content: ({ repoRoot }) =>
       fs.readFile(path.join(repoRoot, 'scripts/recipe-auth.mjs')),
     targets: oauthScaffolds,
+    mode: 0o755,
+  },
+  {
+    id: 'backend-resolver',
+    content: ({ repoRoot }) =>
+      fs.readFile(
+        path.join(
+          repoRoot,
+          'plugin/shared/cookbook/scripts/resolve-backend.mjs',
+        ),
+      ),
+    targets: async () => [
+      'recipes/gong-call-follow-up-n8n/scripts/resolve-backend.mjs',
+    ],
     mode: 0o755,
   },
   {

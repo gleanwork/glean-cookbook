@@ -45,10 +45,20 @@ export function importedSuccessLine(result: ImportResult) {
   return `Imported ${result.displayName} (${result.ids.join(', ')}) from ${result.sourceUrl} at ${result.commitSha}; cleanup completed.`;
 }
 
-function githubFetchError(error: unknown): Error {
+function githubFetchError(error: unknown, sourceUrl?: string): Error {
   const summary = formatCliError(error).error;
+  const status =
+    error instanceof PlatformProblemDetailError
+      ? error.status
+      : error instanceof GleanBaseError
+        ? error.statusCode
+        : undefined;
+  const tenantHint =
+    status === 400 && sourceUrl === PINNED_SOURCE_URL
+      ? ' The pinned commit and SKILL.md are public and were confirmed reachable on 2026-09-09. Ask your Glean administrator or support contact to confirm that GitHub-backed Skills import is enabled for this tenant.'
+      : '';
   return new Error(
-    `This tenant could not fetch GitHub: ${summary}. The import recipe fails rather than skipping.`,
+    `This tenant could not fetch GitHub: ${summary}.${tenantHint} The import recipe fails rather than skipping.`,
   );
 }
 
@@ -58,13 +68,13 @@ function isSkillsApiNotFound(error: unknown) {
   return false;
 }
 
-function reraiseSourceError(error: unknown): never {
+function reraiseSourceError(error: unknown, sourceUrl?: string): never {
   if (isSkillsApiNotFound(error)) throw error;
   if (
     error instanceof PlatformProblemDetailError ||
     error instanceof GleanBaseError
   ) {
-    throw githubFetchError(error);
+    throw githubFetchError(error, sourceUrl);
   }
   throw error instanceof Error ? error : new Error('Verification failed.');
 }
@@ -111,7 +121,7 @@ export async function resolvePreview(
     );
     return parsePreviewResult(preview, log);
   } catch (error) {
-    reraiseSourceError(error);
+    reraiseSourceError(error, sourceUrl);
   }
 }
 
@@ -156,7 +166,7 @@ export async function importSkillFromGithub(
     try {
       imported = await api.import({ source_urls: [selected.source_url] });
     } catch (error) {
-      reraiseSourceError(error);
+      reraiseSourceError(error, selected.source_url);
     }
     const skill = imported.skills.at(0);
     if (!skill) {
@@ -178,7 +188,7 @@ export async function importSkillFromGithub(
     try {
       synced = await api.sync(skill.id);
     } catch (error) {
-      reraiseSourceError(error);
+      reraiseSourceError(error, selected.source_url);
     }
 
     result = {

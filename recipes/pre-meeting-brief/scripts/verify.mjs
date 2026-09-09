@@ -547,6 +547,11 @@ check(
   /x-glean-include-experimental/u.test(api),
 );
 check(
+  'a 403 points to the missing TRIGGERS scope',
+  /response\.status === 403/u.test(api) &&
+    /SEARCH and CHAT are not sufficient/u.test(api),
+);
+check(
   'no script builds its own Triggers request headers',
   !/authorization:\s*`Bearer/u.test(setup) &&
     !/authorization:\s*`Bearer/u.test(preview),

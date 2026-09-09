@@ -201,6 +201,34 @@ test('fails loudly when the tenant cannot fetch GitHub', async () => {
   );
 });
 
+test('explains the tenant prerequisite for the reachable pinned source', async () => {
+  process.env.GLEAN_API_TOKEN = 'fixture-token';
+  server.use(
+    http.post(`${baseUrl}/api/skills/sources/preview`, () =>
+      HttpResponse.json(
+        {
+          type: 'about:blank',
+          title: 'Bad Request',
+          status: 400,
+          detail: 'GitHub source could not be previewed',
+          code: 'bad_request',
+          request_id: 'request-preview-unavailable',
+        },
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/problem+json' },
+        },
+      ),
+    ),
+  );
+  const client = await createGleanClient({ serverUrl: baseUrl });
+
+  await assert.rejects(
+    () => importSkillFromGithub(client.skills, { cleanup: true }),
+    /GitHub-backed Skills import is enabled for this tenant/,
+  );
+});
+
 test('Skills API 404s are not labeled as a GitHub fetch failure', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   server.use(

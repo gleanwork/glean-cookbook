@@ -30,6 +30,8 @@ GitHub-specific lives in `skills/review-trigger/SKILL.md`.
 ## Local verification
 
 ```bash
+npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/github-pr-review-monitor github-pr-review-monitor
+cd github-pr-review-monitor
 npm run verify:fixture
 ```
 
@@ -40,12 +42,21 @@ carries no submit field.
 ## Live setup
 
 1. Copy `.env.example` to `.env`.
-2. `npm run login -- --email "you@company.com"`.
-3. `npm start`, then expose `http://127.0.0.1:8787` over HTTPS and put `<public-url>/webhook` in
+2. Authenticate with a token that includes `TRIGGERS`. A token limited to
+   `SEARCH` and `CHAT` cannot read presets or register triggers and receives
+   `403 insufficient_permissions`.
+   - OAuth: `npm run login -- --email "you@company.com"`. The login requests
+     `TRIGGERS` and stops if the token response explicitly omits it.
+   - Token-first tenant: set `GLEAN_SERVER_URL` and a user-scoped
+     `GLEAN_API_TOKEN` with `TRIGGERS` in `.env`, and skip login.
+3. Install `cloudflared` if you do not already have a public HTTPS endpoint.
+   Follow the [Cloudflare package instructions](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/),
+   or run `brew install cloudflared` on macOS.
+4. `npm start`, then expose `http://127.0.0.1:8787` over HTTPS and put `<public-url>/webhook` in
    `GLEAN_WEBHOOK_URL`. The receiver starts unready and picks up the secrets as soon as setup runs.
-4. `npm run setup`. Registration is all-or-none — a partial set looks like it worked and misses the
+5. `npm run setup`. Registration is all-or-none — a partial set looks like it worked and misses the
    events it did not cover.
-5. `claude plugin validate . --strict`, then `claude --plugin-dir .` from the repository you review.
+6. `claude plugin validate . --strict`, then `claude --plugin-dir .` from the repository you review.
 
 The login flow discovers your tenant from the work email and writes the normalized API backend
 (`https://<instance>-be.glean.com`) to `.env`; you do not need to find or paste the backend host
@@ -59,7 +70,8 @@ Monitors start at session start, so **installing the plugin needs a session rest
 
 `npm run doctor` walks the whole path and names the broken link: configuration, the local
 receiver, the public URL, whether each trigger still points at the current `GLEAN_WEBHOOK_URL`,
-and whether the GitHub CLI is signed in. A running `cloudflared` is not a working tunnel — it
+whether the token can call the `TRIGGERS` API, and whether the GitHub CLI is signed in. A running
+`cloudflared` is not a working tunnel — it
 stays alive retrying after Cloudflare withdraws its hostname, so check the path, not the process.
 
 ```bash

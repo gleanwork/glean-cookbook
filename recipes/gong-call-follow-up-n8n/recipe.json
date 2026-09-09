@@ -52,7 +52,8 @@
   },
   "languages": ["javascript"],
   "prerequisites": [
-    "Glean Triggers enabled with the Gong preset available, Gong calls indexed, and credentials scoped for Triggers, Search, and Chat",
+    "Glean Triggers enabled with the Gong preset available and Gong calls indexed",
+    "A Glean Trigger credential with TRIGGERS plus a separate Glean Client credential with SEARCH and CHAT; SEARCH and CHAT alone cannot read trigger presets or register triggers",
     "A publicly reachable n8n instance, or a local one exposed with npx n8n start --tunnel",
     "Permission to install the Glean n8n community nodes",
     "Salesforce and Slack credentials with the required write access",
@@ -79,14 +80,14 @@
       "kind": "manual"
     },
     {
-      "title": "Scaffold the workflow",
-      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/gong-call-follow-up-n8n gong-call-follow-up-n8n",
+      "title": "Copy the workflow onto your machine",
+      "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/gong-call-follow-up-n8n gong-call-follow-up-n8n",
       "kind": "scaffold"
     },
     {
       "title": "Resolve the Glean backend",
-      "command": "cd gong-call-follow-up-n8n && node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"",
-      "description": "Run the cookbook resolver with the work email. It may see a legacy frontend address such as `*.askscio.com`, but it returns the API backend `https://<instance>-be.glean.com`. Use that result for Glean Chat; do not paste the discovery address into the workflow.",
+      "command": "cd gong-call-follow-up-n8n && node scripts/resolve-backend.mjs \"<work-email>\"",
+      "description": "Run the resolver included in the scaffold with your work email. It may see a legacy frontend address such as *.askscio.com, but it returns the API backend https://<instance>-be.glean.com. Use that result for Glean Chat; do not paste the discovery address into the workflow.",
       "kind": "authenticate"
     },
     {
@@ -101,7 +102,7 @@
     },
     {
       "title": "Attach credentials",
-      "description": "Attach a Glean Trigger credential with `TRIGGERS`, a Glean Client credential with `SEARCH` and `CHAT`, plus your Salesforce and Slack credentials. The trigger follows the Glean credential owner; there is no separate user to select.",
+      "description": "Attach a Glean Trigger credential with TRIGGERS, a separate Glean Client credential with SEARCH and CHAT, plus your Salesforce and Slack credentials. A Client credential with only SEARCH and CHAT receives 403 insufficient_permissions when it tries to list presets or register a trigger. The trigger follows the Glean credential owner; there is no separate user to select.",
       "kind": "authenticate"
     },
     {
@@ -153,7 +154,7 @@
       "icon": "slack"
     }
   ],
-  "aiPrompt": "Before downloading the workflow, ask whether the user will use n8n Cloud or local/self-hosted n8n. For local/self-hosted, require a public HTTPS webhook origin before publishing; offer n8n's development --tunnel, Cloudflare Tunnel, or another public ingress, and never accept localhost as reachable by Glean. Ask for the user's work email, then run the cookbook plugin's resolve-backend.mjs script and use its normalized https://<instance>-be.glean.com result for the Glean Chat URL; do not paste a legacy *.askscio.com discovery URL into the workflow. For trigger concepts or endpoint details, consult https://developers.glean.com/guides/triggers/overview and https://developers.glean.com/api/platform-api/triggers-overview. Scaffold the shipped n8n workflow, install exactly @gleanwork/n8n-nodes-gleanclient@0.4.2, and attach host-managed credentials rather than writing secrets into JSON. Keep the live Glean preset selected by semantics, not only by cached id. Configure either one reviewed central Slack destination or a reviewed Account-to-channel map. Preserve the single-account gate and the completed Salesforce activity pattern. Run the offline workflow verifier, publish only after every credential and mapping is configured, then verify one real Gong call end to end.",
+  "aiPrompt": "Before downloading the workflow, ask whether the user will use n8n Cloud or local/self-hosted n8n. For local/self-hosted, require a public HTTPS webhook origin before publishing; offer n8n's development --tunnel, Cloudflare Tunnel, or another public ingress, and never accept localhost as reachable by Glean. Scaffold the shipped n8n workflow, ask for the user's work email, then run its scripts/resolve-backend.mjs and use the normalized https://<instance>-be.glean.com result for the Glean Chat URL; do not paste a legacy *.askscio.com discovery URL into the workflow. For trigger concepts or endpoint details, consult https://developers.glean.com/guides/triggers/overview and https://developers.glean.com/api/platform-api/triggers-overview. Install exactly @gleanwork/n8n-nodes-gleanclient@0.4.2. Before setup, require a Glean Trigger credential with TRIGGERS and a separate Glean Client credential with SEARCH and CHAT; explain that SEARCH and CHAT alone receive 403 insufficient_permissions from trigger preset and registration calls. Keep all credentials host-managed rather than writing secrets into JSON. Keep the live Glean preset selected by semantics, not only by cached id. Configure either one reviewed central Slack destination or a reviewed Account-to-channel map. Preserve the single-account gate and the completed Salesforce activity pattern. Run the offline workflow verifier, publish only after every credential and mapping is configured, then verify one real Gong call end to end.",
   "llmContext": "The published Glean n8n package is 0.4.2. It includes a Glean Trigger node and a Glean Search action, not a Glean Chat node. The trigger registers POST /api/triggers on activation, stores the returned signing secret, verifies Standard Webhooks delivery, and deletes the trigger on deactivation. Glean event payloads are thin, so retrieve permission-aware context before summarization. n8n credentials must remain host-managed. Do not write to Salesforce or Slack if the account is absent, ambiguous, or unsupported by evidence.",
   "goDependency": false,
   "featured": false,

@@ -67,6 +67,7 @@
   "languages": ["javascript"],
   "prerequisites": [
     "Glean Triggers enabled with an ahead-of-event calendar preset available and Google Calendar events indexed",
+    "A user-scoped token or OAuth grant that includes TRIGGERS; SEARCH and CHAT alone cannot read trigger presets or register triggers",
     "A Cursor plan with Automations and webhook triggers, which is a paid feature",
     "Cursor connected to the project tracker over MCP with permission to read issues and write project updates; Glean MCP is optional",
     "Node 20+"
@@ -92,7 +93,7 @@
   "steps": [
     {
       "title": "Set up the automation kit",
-      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/pre-meeting-brief pre-meeting-brief",
+      "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/pre-meeting-brief pre-meeting-brief",
       "kind": "scaffold"
     },
     {
@@ -109,7 +110,7 @@
     {
       "title": "Sign in to Glean",
       "command": "cd pre-meeting-brief && npm run login -- --email \"<work-email>\"",
-      "description": "Use the shipped OAuth flow; it discovers your tenant and registers a client dynamically. If OAuth is unavailable, use a `TRIGGERS`-scoped API token.",
+      "description": "Use the shipped OAuth flow to discover your tenant and request TRIGGERS before setup. A token with only SEARCH and CHAT receives 403 insufficient_permissions. For a token-first tenant, skip login and put GLEAN_SERVER_URL plus a user-scoped GLEAN_API_TOKEN with TRIGGERS in the ignored .env file.",
       "kind": "authenticate"
     },
     {
