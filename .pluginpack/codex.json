@@ -11,6 +11,7 @@
     "build/codex/cookbook/skills/browse-cookbook/SKILL.md",
     "build/codex/cookbook/skills/cookbook-conventions/SKILL.md",
     "build/codex/cookbook/skills/customer-360/SKILL.md",
+    "build/codex/cookbook/skills/import-skill-from-github/SKILL.md",
     "build/codex/cookbook/skills/no-code-it-helpdesk-lovable/SKILL.md",
     "build/codex/cookbook/skills/no-code-it-helpdesk-lovable/lovable-prompt.md",
     "build/codex/cookbook/skills/no-code-pto-lookup-replit/SKILL.md",
@@ -19,6 +20,8 @@
     "build/codex/cookbook/skills/oncall-copilot/SKILL.md",
     "build/codex/cookbook/skills/rfp-responder/SKILL.md",
     "build/codex/cookbook/skills/search-with-discovered-filters/SKILL.md",
-    "build/codex/cookbook/skills/streaming-chat-with-citations/SKILL.md"
+    "build/codex/cookbook/skills/skill-publishing-pipeline/SKILL.md",
+    "build/codex/cookbook/skills/streaming-chat-with-citations/SKILL.md",
+    "build/codex/cookbook/skills/validate-and-publish-skill/SKILL.md"
   ]
 }
