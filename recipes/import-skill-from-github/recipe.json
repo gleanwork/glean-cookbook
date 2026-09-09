@@ -1,7 +1,7 @@
 {
   "id": "import-skill-from-github",
   "title": "Import a skill from GitHub",
-  "description": "Preview a public GitHub skill at a commit SHA with the official TypeScript API client, import the selected URL, sync that captured skill, confirm it with get and list, then delete only IDs this run created.",
+  "description": "Preview a public GitHub skill on a branch URL with the official TypeScript API client, import the selected URL, sync that captured skill, confirm it with get and list, then delete only IDs this run created.",
   "sidebarLabel": "Import from GitHub",
   "codeWalkthrough": {
     "intro": "The runnable scaffold opts into the experimental Skills API through the official SDK, previews a GitHub URL without persisting a source, imports only selected URLs, and syncs one captured skill.",
@@ -40,19 +40,19 @@
     "A Glean instance with the experimental Skills Platform APIs enabled",
     "Your work email, or the complete Glean backend HTTPS origin",
     "A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback",
-    "Tenant-side GitHub source fetching enabled for Skills; the pinned public skill-creator directory and commit were confirmed reachable on 2026-09-09, and verification fails rather than skipping if the tenant cannot preview them"
+    "Tenant-side GitHub source fetching enabled for Skills; the default source is the public skill-creator directory on main, and verification fails rather than skipping if the tenant cannot preview it"
   ],
   "demoQueries": [
     {
-      "query": "Preview, import, and sync the pinned public GitHub skill-creator fixture, then delete run-owned IDs",
-      "expectedBehavior": "Stdout ends with Imported skill-creator (<id>) from the commit-SHA GitHub URL at <sha>; cleanup completed. If the tenant cannot fetch GitHub, the run fails with a GitHub-fetch error instead of skipping. If delete fails, the process exits non-zero and does not print that success line."
+      "query": "Preview, import, and sync the public GitHub skill-creator fixture, then delete run-owned IDs",
+      "expectedBehavior": "Stdout ends with Imported skill-creator (<id>) from the branch GitHub URL at <sha>; cleanup completed. If the tenant cannot fetch GitHub, the run fails with a GitHub-fetch error instead of skipping. HTTP 400 means a rejected source URL or tenant policy; HTTP 503 means a transient fetch failure. If delete fails, the process exits non-zero and does not print that success line."
     }
   ],
   "codeAssets": [
     {
       "repoPath": "recipes/import-skill-from-github",
       "language": "typescript",
-      "description": "TypeScript CLI using @gleanwork/api-client to preview, import, and sync a public GitHub skill at a commit SHA, then delete only run-owned IDs"
+      "description": "TypeScript CLI using @gleanwork/api-client to preview, import, and sync a public GitHub skill from a branch URL, then delete only run-owned IDs"
     }
   ],
   "steps": [
@@ -86,7 +86,7 @@
     },
     {
       "title": "Verify against your instance",
-      "description": "Preview the public GitHub skill-creator directory at commit 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. If the pinned URL returns HTTP 400, ask your Glean administrator or support contact to confirm that GitHub-backed Skills import is enabled for the tenant. Success prints an Imported line that ends with cleanup completed.",
+      "description": "Preview the public GitHub skill-creator directory on main, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. HTTP 400 means the Skills API rejected the source URL or tenant policy still blocks GitHub import. HTTP 503 means GitHub fetch is temporarily unavailable. Success prints an Imported line that ends with cleanup completed.",
       "command": "cd import-skill-from-github && npm run verify -- --email \"<work-email>\"",
       "kind": "verify-live"
     },
@@ -127,7 +127,7 @@
   "architecture": [
     {
       "label": "Public GitHub URL",
-      "caption": "skill-creator at a commit SHA",
+      "caption": "skill-creator on main",
       "icon": "Github"
     },
     {
@@ -147,16 +147,16 @@
       "icon": "RefreshCw"
     }
   ],
-  "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator with stream false by default. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list, paginating list. Delete only IDs this run created. If cleanup cannot delete a captured ID, exit non-zero. If the tenant cannot fetch GitHub, fail loudly instead of skipping. A 404 from Skills APIs is not a GitHub-fetch failure. With --stream, print scan progress events. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
-  "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This Intermediate recipe is a different source of truth from local SKILL.md publishing: previewSource (stream false by default, optional stream true like Search --auto-select), import selected URLs, and sync one captured GitHub-imported skill. Default source is https://github.com/anthropics/skills/tree/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator. Native OAuth scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and restrict deletion to those IDs. Failed cleanup must not report success. Fail, do not skip, when the tenant cannot fetch GitHub. Leave PATCH update and POST .../versions as take-it-further.",
+  "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/main/skills/skill-creator with stream false by default. Do not pass a commit permalink or SHA-pinned GitHub URL. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list, paginating list. Delete only IDs this run created. If cleanup cannot delete a captured ID, exit non-zero. If the tenant cannot fetch GitHub, fail loudly instead of skipping. HTTP 400 means a rejected source URL or tenant policy; HTTP 503 means a transient GitHub fetch failure. A 404 from Skills APIs is not a GitHub-fetch failure. With --stream, print scan progress events. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+  "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This Intermediate recipe is a different source of truth from local SKILL.md publishing: previewSource (stream false by default, optional stream true like Search --auto-select), import selected URLs, and sync one captured GitHub-imported skill. Default source is https://github.com/anthropics/skills/tree/main/skills/skill-creator. The Skills API rejects commit permalinks and SHA-pinned GitHub URLs. Native OAuth scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and restrict deletion to those IDs. Failed cleanup must not report success. Fail, do not skip, when the tenant cannot fetch GitHub. HTTP 400 is a rejected source or tenant policy; HTTP 503 is transient. Leave PATCH update and POST .../versions as take-it-further.",
   "goDependency": false,
   "featured": false,
   "hidden": false,
   "tags": ["skills", "github", "import", "platform-api", "experimental"],
   "content": {
-    "problem": "Some teams keep Agent Skills in GitHub rather than a local SKILL.md. Previewing that URL, importing only the selected skills, and syncing a captured ID is a different job from the first persist or name-based versioning. This recipe uses a public GitHub skill directory at a commit SHA so the run is answerable on the reader's tenant without a seeded corpus.",
+    "problem": "Some teams keep Agent Skills in GitHub rather than a local SKILL.md. Previewing that URL, importing only the selected skills, and syncing a captured ID is a different job from the first persist or name-based versioning. This recipe uses a public GitHub skill directory on the main branch so the run is answerable on the reader's tenant without a seeded corpus.",
     "takeItFurther": [
-      "Pass --source-url to preview a different public GitHub skill directory after the default commit-SHA source succeeds.",
+      "Pass --source-url to preview a different public GitHub skill directory after the default branch source succeeds.",
       "Use the Intermediate publishing recipe when the source of truth is a local bundle and you need version supersession or zip sandboxing.",
       "Call glean.skills.createVersion() or PATCH enable/disable only after you already have a captured skill ID."
     ],
@@ -185,7 +185,7 @@
       },
       {
         "title": "GitHub must be fetchable",
-        "description": "Preview, import, and sync require tenant-side GitHub source fetching for Skills. The pinned commit and SKILL.md were confirmed public and reachable on 2026-09-09, so an HTTP 400 for that source requires an administrator or support contact to check tenant enablement. It is a failed verify, not a skipped one."
+        "description": "Preview, import, and sync require tenant-side GitHub source fetching for Skills. The default source is a branch URL. HTTP 400 means the Skills API rejected the source shape, such as a commit permalink, or tenant policy still blocks GitHub import. HTTP 503 means GitHub fetch is temporarily unavailable. Either status is a failed verify, not a skipped one."
       },
       {
         "title": "OAuth policy varies by tenant",

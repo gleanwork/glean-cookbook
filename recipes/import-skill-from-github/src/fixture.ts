@@ -1,12 +1,12 @@
-export const PINNED_SOURCE_URL =
-  'https://github.com/anthropics/skills/tree/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator';
+export const DEFAULT_SOURCE_URL =
+  'https://github.com/anthropics/skills/tree/main/skills/skill-creator';
 
 export const PREVIEW_FIXTURE = {
   skills: [
     {
       display_name: 'skill-creator',
       description: 'Guide for creating effective skills.',
-      source_url: PINNED_SOURCE_URL,
+      source_url: DEFAULT_SOURCE_URL,
       commit_sha: 'fixture-commit-sha',
       main_content:
         '---\nname: skill-creator\ndescription: Guide for creating effective skills.\n---\n',
@@ -28,7 +28,7 @@ export function githubSkillFixture(id = 'skill-imported') {
     status: 'DRAFT',
     origin: 'CUSTOM',
     source_provenance: {
-      source_url: PINNED_SOURCE_URL,
+      source_url: DEFAULT_SOURCE_URL,
       commit_sha: 'fixture-commit-sha',
       imported_at: '2026-09-04T00:00:00.000Z',
       last_synced_at: '2026-09-04T00:00:00.000Z',

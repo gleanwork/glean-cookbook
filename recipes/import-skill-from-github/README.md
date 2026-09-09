@@ -1,6 +1,6 @@
 # Import a skill from GitHub
 
-Preview a public GitHub skill at a pinned commit, import it into your Glean
+Preview a public GitHub skill on the `main` branch, import it into your Glean
 instance, and sync the imported copy with its source.
 
 ## Prerequisites
@@ -29,7 +29,7 @@ credentials yet. A successful run ends with:
 
 ```text
 Test Files  4 passed (4)
-Tests       21 passed (21)
+Tests       22 passed (22)
 ```
 
 ## Sign in
@@ -53,30 +53,29 @@ cp .env.example .env
 
 When you use `.env`, omit `--email` from the commands below.
 
-## Import the pinned skill
+## Import the public skill
 
 ```bash
 npm run verify -- --email you@example.com
 ```
 
-The command previews the public `skill-creator` directory at commit
-`41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f`, imports it, confirms the stored
-skill, syncs it, and deletes only the ID it created. You should see:
+The command previews the public `skill-creator` directory on `main`, imports
+it, confirms the stored skill, syncs it, and deletes only the ID it created.
+You should see:
 
 ```text
 Imported skill-creator (…) from … at …; cleanup completed.
 ```
 
-The pinned source is:
+The default source is:
 
-`https://github.com/anthropics/skills/tree/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator`
+`https://github.com/anthropics/skills/tree/main/skills/skill-creator`
 
-The pinned commit and `SKILL.md` were confirmed public and reachable on
-2026-09-09. If the pinned URL returns `HTTP 400: GitHub source could not be
-previewed`, the request reached the Skills API but that tenant could not use
-GitHub source fetching. Ask your Glean administrator or support contact to
-confirm that GitHub-backed Skills import is enabled. Verification fails instead
-of skipping; changing to an unpinned branch does not fix tenant-side fetching.
+The Skills API rejects commit permalinks and SHA-pinned GitHub URLs. If you
+see `HTTP 400: GitHub source could not be previewed`, the source shape was
+rejected or tenant policy still blocks GitHub import. `HTTP 503` means GitHub
+fetch is temporarily unavailable; retry later. Verification fails instead of
+skipping.
 
 To watch repository scan progress, run:
 

@@ -3,7 +3,7 @@ import { stdin, stdout } from 'node:process';
 import meow from 'meow';
 import { createGleanClient } from './client.js';
 import { missingCleanupConfirmation, printCliError } from './errors.js';
-import { PINNED_SOURCE_URL } from './fixture.js';
+import { DEFAULT_SOURCE_URL } from './fixture.js';
 import { importedSuccessLine, importSkillFromGithub } from './workflow.js';
 
 const cli = meow(
@@ -16,7 +16,7 @@ const cli = meow(
     Options
       --email        Work email used to discover the Glean backend
       --server-url   Complete Glean backend origin; overrides --email
-      --source-url   GitHub skill directory URL (default: skill-creator at commit 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f)
+      --source-url   GitHub skill directory URL (default: skill-creator on main)
       --stream       Request repository scan progress as server-sent events
       --id           Exact run-owned skill ID to delete
       --yes          Confirm cleanup non-interactively
@@ -30,7 +30,7 @@ const cli = meow(
     flags: {
       email: { type: 'string' },
       serverUrl: { type: 'string' },
-      sourceUrl: { type: 'string', default: PINNED_SOURCE_URL },
+      sourceUrl: { type: 'string', default: DEFAULT_SOURCE_URL },
       stream: { type: 'boolean', default: false },
       id: { type: 'string' },
       yes: { type: 'boolean', default: false },
