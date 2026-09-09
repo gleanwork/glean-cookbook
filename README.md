@@ -41,13 +41,16 @@ the coding agent must not substitute its isolated browser for your Glean SSO ses
 | Recipe                                                            | Level        | Time    | Build it                                   |
 | ----------------------------------------------------------------- | ------------ | ------- | ------------------------------------------ |
 | **Customer 360: an account page built from your own content**     | Intermediate | ~1 hr   | `/cookbook:customer-360`                   |
+| **Import a skill from GitHub**                                    | Intermediate | ~20 min | `/cookbook:import-skill-from-github`       |
 | **Build an IT helpdesk page in Lovable**                          | Beginner     | ~45 min | `/cookbook:no-code-it-helpdesk-lovable`    |
 | **Build a PTO lookup page in Replit**                             | Beginner     | ~45 min | `/cookbook:no-code-pto-lookup-replit`      |
 | **Onboarding Hub: a day-one checklist grounded in your own docs** | Intermediate | ~45 min | `/cookbook:onboarding-hub`                 |
 | **On-call Copilot**                                               | Advanced     | ~1.5 hr | `/cookbook:oncall-copilot`                 |
 | **Answer an RFP or security questionnaire**                       | Intermediate | ~45 min | `/cookbook:rfp-responder`                  |
 | **Search Glean with discovered filters**                          | Beginner     | ~15 min | `/cookbook:search-with-discovered-filters` |
+| **Publish a versioned skill bundle**                              | Intermediate | ~20 min | `/cookbook:skill-publishing-pipeline`      |
 | **Stream a cited Chat response**                                  | Beginner     | ~20 min | `/cookbook:streaming-chat-with-citations`  |
+| **Validate and publish a skill**                                  | Beginner     | ~15 min | `/cookbook:validate-and-publish-skill`     |
 
 <!-- pluginpack-generated:recipes:end -->
 

@@ -23,7 +23,7 @@
   "surfaces": ["platform-api"],
   "capabilities": ["skills"],
   "status": "production-pattern",
-  "visibility": "preview",
+  "visibility": "public",
   "category": "workflow",
   "level": "Intermediate",
   "levels": {
