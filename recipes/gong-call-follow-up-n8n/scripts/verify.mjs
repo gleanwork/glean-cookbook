@@ -181,6 +181,15 @@ check(
     /SLACK_CHANNEL/u.test(note?.parameters.content ?? '') &&
       /YOUR-INSTANCE/u.test(note?.parameters.content ?? ''),
   );
+  check(
+    'and its help link is public while this recipe stays hidden',
+    /developers\.glean\.com\/guides\/triggers\/overview/u.test(
+      note?.parameters.content ?? '',
+    ) &&
+      !/developers\.glean\.com\/cookbook\/gong-call-follow-up-n8n/u.test(
+        note?.parameters.content ?? '',
+      ),
+  );
 }
 
 // ---- Extract call ----------------------------------------------------------
