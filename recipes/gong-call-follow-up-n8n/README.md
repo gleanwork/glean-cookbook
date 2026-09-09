@@ -18,6 +18,11 @@ and the [Triggers API reference](https://developers.glean.com/api/platform-api/t
 | Retrieval | Glean node, Search action | Client API   | `SEARCH`   |
 | Summary   | HTTP Request              | Client API   | `CHAT`     |
 
+Create two Glean credentials before you publish. The Trigger credential must
+include `TRIGGERS`. A Client API credential with only `SEARCH` and `CHAT`
+cannot list trigger presets or register the webhook and receives
+`403 insufficient_permissions`.
+
 The package ships two nodes — a Trigger and a Search action — and **no Chat node**, so summarisation
 is an HTTP Request. Search is not strictly required, since Chat retrieves too; it is there so the
 evidence is visible in the execution log and assertable in the gate.
@@ -68,22 +73,22 @@ Before downloading the workflow, decide where n8n will run:
   run, use `npx n8n@latest start --tunnel`. For a persistent setup, use Cloudflare Tunnel or another
   public ingress and set `N8N_WEBHOOK_URL` to that origin. Glean cannot deliver to localhost.
 
-Ask for the user's work email and resolve the Glean backend before importing:
+Get the files:
 
 ```bash
-node <cookbook-plugin-root>/scripts/resolve-backend.mjs "you@company.com"
+npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/gong-call-follow-up-n8n gong-call-follow-up-n8n
+cd gong-call-follow-up-n8n
+```
+
+Then resolve your Glean backend with the script included in the scaffold:
+
+```bash
+node scripts/resolve-backend.mjs "you@company.com"
 ```
 
 Use the returned `https://<instance>-be.glean.com` value for the Glean Chat URL. Discovery may
 return a legacy frontend URL such as `https://<instance>.askscio.com`; do not paste that value into
 the workflow—the resolver normalizes it to the API backend.
-
-Get the files:
-
-```bash
-npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/gong-call-follow-up-n8n gong-call-follow-up-n8n
-cd gong-call-follow-up-n8n
-```
 
 Then in n8n:
 

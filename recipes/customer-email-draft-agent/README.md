@@ -4,11 +4,6 @@ Build and publish this agent from Claude Code or Cursor using Glean's headless a
 watches Gmail threads from one customer domain, drafts a reply when the message needs one, and DMs
 the owner in Slack. It never sends the email.
 
-The full walkthrough is at
-[developers.glean.com/cookbook/customer-email-draft-agent](https://developers.glean.com/cookbook/customer-email-draft-agent),
-or run `/cookbook:customer-email-draft-agent`. What follows is only the part that is easy to get
-wrong and hard to discover from the steps.
-
 For the underlying workflow, see [Create an agent with the headless builder](https://docs.glean.com/agents/create-agents/create-agent-via-headless-builder).
 
 The recipe ships no agent files. Generating `spec.yaml` and `instructions.md` from a description is

@@ -1182,6 +1182,7 @@
     "languages": ["javascript"],
     "prerequisites": [
       "Glean Triggers enabled with GitHub review presets available in your deployment",
+      "A user-scoped token or OAuth grant that includes TRIGGERS; SEARCH and CHAT alone cannot read trigger presets or register triggers",
       "GitHub content indexed in Glean",
       "A local checkout of the repository, with the GitHub CLI signed in as the reviewer",
       "An interactive Claude Code session, or the terminal stream where Monitor is unavailable",
@@ -1207,8 +1208,8 @@
     "scaffoldActions": [],
     "steps": [
       {
-        "title": "Scaffold the receiver and plugin",
-        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/github-pr-review-monitor github-pr-review-monitor",
+        "title": "Copy the receiver and plugin onto your machine",
+        "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/github-pr-review-monitor github-pr-review-monitor",
         "kind": "scaffold"
       },
       {
@@ -1220,7 +1221,7 @@
       {
         "title": "Sign in to Glean",
         "command": "cd github-pr-review-monitor && npm run login -- --email \"<work-email>\"",
-        "description": "Sign in to discover your tenant and save GLEAN_SERVER_URL and GLEAN_API_TOKEN to the ignored .env file. An exported GLEAN_API_TOKEN takes precedence over .env, and the scripts warn you when it does.",
+        "description": "Sign in to discover your tenant and request TRIGGERS before setup. A token with only SEARCH and CHAT receives 403 insufficient_permissions from the preset and trigger APIs. For a token-first tenant, skip login and put GLEAN_SERVER_URL plus a user-scoped GLEAN_API_TOKEN with TRIGGERS in the ignored .env file. An exported token takes precedence over .env.",
         "kind": "authenticate"
       },
       {
@@ -1228,6 +1229,11 @@
         "command": "cd github-pr-review-monitor && npm start",
         "description": "Keep the receiver running. It listens on loopback, verifies signatures, and queues each webhook ID once.",
         "kind": "run"
+      },
+      {
+        "title": "Install Cloudflare Tunnel if you need it",
+        "description": "If you do not already have a public HTTPS endpoint, install cloudflared using Cloudflare's package instructions. On macOS, run brew install cloudflared. Confirm cloudflared --version works before continuing.",
+        "kind": "install"
       },
       {
         "title": "Expose the receiver over HTTPS",
@@ -1356,7 +1362,8 @@
     },
     "languages": ["javascript"],
     "prerequisites": [
-      "Glean Triggers enabled with the Gong preset available, Gong calls indexed, and credentials scoped for Triggers, Search, and Chat",
+      "Glean Triggers enabled with the Gong preset available and Gong calls indexed",
+      "A Glean Trigger credential with TRIGGERS plus a separate Glean Client credential with SEARCH and CHAT; SEARCH and CHAT alone cannot read trigger presets or register triggers",
       "A publicly reachable n8n instance, or a local one exposed with npx n8n start --tunnel",
       "Permission to install the Glean n8n community nodes",
       "Salesforce and Slack credentials with the required write access",
@@ -1383,14 +1390,14 @@
         "kind": "manual"
       },
       {
-        "title": "Scaffold the workflow",
-        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/gong-call-follow-up-n8n gong-call-follow-up-n8n",
+        "title": "Copy the workflow onto your machine",
+        "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/gong-call-follow-up-n8n gong-call-follow-up-n8n",
         "kind": "scaffold"
       },
       {
         "title": "Resolve the Glean backend",
-        "command": "cd gong-call-follow-up-n8n && node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"",
-        "description": "Run the cookbook resolver with the work email. It may see a legacy frontend address such as `*.askscio.com`, but it returns the API backend `https://<instance>-be.glean.com`. Use that result for Glean Chat; do not paste the discovery address into the workflow.",
+        "command": "cd gong-call-follow-up-n8n && node scripts/resolve-backend.mjs \"<work-email>\"",
+        "description": "Run the resolver included in the scaffold with your work email. It may see a legacy frontend address such as *.askscio.com, but it returns the API backend https://<instance>-be.glean.com. Use that result for Glean Chat; do not paste the discovery address into the workflow.",
         "kind": "authenticate"
       },
       {
@@ -1405,7 +1412,7 @@
       },
       {
         "title": "Attach credentials",
-        "description": "Attach a Glean Trigger credential with `TRIGGERS`, a Glean Client credential with `SEARCH` and `CHAT`, plus your Salesforce and Slack credentials. The trigger follows the Glean credential owner; there is no separate user to select.",
+        "description": "Attach a Glean Trigger credential with TRIGGERS, a separate Glean Client credential with SEARCH and CHAT, plus your Salesforce and Slack credentials. A Client credential with only SEARCH and CHAT receives 403 insufficient_permissions when it tries to list presets or register a trigger. The trigger follows the Glean credential owner; there is no separate user to select.",
         "kind": "authenticate"
       },
       {
@@ -1457,7 +1464,7 @@
         "icon": "slack"
       }
     ],
-    "aiPrompt": "Before downloading the workflow, ask whether the user will use n8n Cloud or local/self-hosted n8n. For local/self-hosted, require a public HTTPS webhook origin before publishing; offer n8n's development --tunnel, Cloudflare Tunnel, or another public ingress, and never accept localhost as reachable by Glean. Ask for the user's work email, then run the cookbook plugin's resolve-backend.mjs script and use its normalized https://<instance>-be.glean.com result for the Glean Chat URL; do not paste a legacy *.askscio.com discovery URL into the workflow. For trigger concepts or endpoint details, consult https://developers.glean.com/guides/triggers/overview and https://developers.glean.com/api/platform-api/triggers-overview. Scaffold the shipped n8n workflow, install exactly @gleanwork/n8n-nodes-gleanclient@0.4.2, and attach host-managed credentials rather than writing secrets into JSON. Keep the live Glean preset selected by semantics, not only by cached id. Configure either one reviewed central Slack destination or a reviewed Account-to-channel map. Preserve the single-account gate and the completed Salesforce activity pattern. Run the offline workflow verifier, publish only after every credential and mapping is configured, then verify one real Gong call end to end.",
+    "aiPrompt": "Before downloading the workflow, ask whether the user will use n8n Cloud or local/self-hosted n8n. For local/self-hosted, require a public HTTPS webhook origin before publishing; offer n8n's development --tunnel, Cloudflare Tunnel, or another public ingress, and never accept localhost as reachable by Glean. Scaffold the shipped n8n workflow, ask for the user's work email, then run its scripts/resolve-backend.mjs and use the normalized https://<instance>-be.glean.com result for the Glean Chat URL; do not paste a legacy *.askscio.com discovery URL into the workflow. For trigger concepts or endpoint details, consult https://developers.glean.com/guides/triggers/overview and https://developers.glean.com/api/platform-api/triggers-overview. Install exactly @gleanwork/n8n-nodes-gleanclient@0.4.2. Before setup, require a Glean Trigger credential with TRIGGERS and a separate Glean Client credential with SEARCH and CHAT; explain that SEARCH and CHAT alone receive 403 insufficient_permissions from trigger preset and registration calls. Keep all credentials host-managed rather than writing secrets into JSON. Keep the live Glean preset selected by semantics, not only by cached id. Configure either one reviewed central Slack destination or a reviewed Account-to-channel map. Preserve the single-account gate and the completed Salesforce activity pattern. Run the offline workflow verifier, publish only after every credential and mapping is configured, then verify one real Gong call end to end.",
     "llmContext": "The published Glean n8n package is 0.4.2. It includes a Glean Trigger node and a Glean Search action, not a Glean Chat node. The trigger registers POST /api/triggers on activation, stores the returned signing secret, verifies Standard Webhooks delivery, and deletes the trigger on deactivation. Glean event payloads are thin, so retrieve permission-aware context before summarization. n8n credentials must remain host-managed. Do not write to Salesforce or Slack if the account is absent, ambiguous, or unsupported by evidence.",
     "goDependency": false,
     "featured": false,
@@ -1508,7 +1515,7 @@
           "description": "Call previewSource with stream false by default, import the selected GitHub URL, sync that captured skill, and delete only IDs this run created.",
           "source": "src/workflow.ts",
           "language": "typescript",
-          "code": "import type { Glean } from '@gleanwork/api-client';\nimport {\n  GleanBaseError,\n  PlatformProblemDetailError,\n} from '@gleanwork/api-client/models/errors';\nimport { PreviewSourceAcceptEnum } from '@gleanwork/api-client/sdk/skills.js';\nimport type { PlatformSkillSourcePreviewResponse } from '@gleanwork/api-client/models/components';\nimport { CleanupFailedError, formatCliError } from './errors.js';\nimport { PINNED_SOURCE_URL } from './fixture.js';\nimport { parsePreviewResult } from './preview.js';\n\nexport type SkillsApi = Pick<\n  Glean['skills'],\n  'delete' | 'import' | 'list' | 'previewSource' | 'retrieve' | 'sync'\n>;\n\nexport interface ImportResult {\n  ids: string[];\n  displayName: string;\n  sourceUrl: string;\n  commitSha: string;\n  updated: boolean;\n}\n\nfunction rethrow(error: unknown): never {\n  throw error instanceof Error ? error : new Error('Verification failed.');\n}\n\nexport function cleanupCommand(\n  skillId: string,\n  auth: { email?: string; serverUrl?: string } = {},\n) {\n  const parts = [`npm start -- cleanup --id ${skillId} --yes`];\n  if (auth.serverUrl?.trim()) {\n    parts.push(`--server-url ${auth.serverUrl.trim()}`);\n  } else if (auth.email?.trim()) {\n    parts.push(`--email ${auth.email.trim()}`);\n  } else {\n    parts.push('--email <your-work-email>');\n  }\n  return parts.join(' ');\n}\n\nexport function importedSuccessLine(result: ImportResult) {\n  return `Imported ${result.displayName} (${result.ids.join(', ')}) from ${result.sourceUrl} at ${result.commitSha}; cleanup completed.`;\n}\n\nfunction githubFetchError(error: unknown): Error {\n  const summary = formatCliError(error).error;\n  return new Error(\n    `This tenant could not fetch GitHub: ${summary}. The import recipe fails rather than skipping.`,\n  );\n}\n\nfunction isSkillsApiNotFound(error: unknown) {\n  if (error instanceof PlatformProblemDetailError) return error.status === 404;\n  if (error instanceof GleanBaseError) return error.statusCode === 404;\n  return false;\n}\n\nfunction reraiseSourceError(error: unknown): never {\n  if (isSkillsApiNotFound(error)) throw error;\n  if (\n    error instanceof PlatformProblemDetailError ||\n    error instanceof GleanBaseError\n  ) {\n    throw githubFetchError(error);\n  }\n  throw error instanceof Error ? error : new Error('Verification failed.');\n}\n\nexport async function findSkillById(api: SkillsApi, skillId: string) {\n  let cursor: string | undefined;\n  do {\n    const page = await api.list(100, cursor);\n    if (page.skills.some((skill) => skill.id === skillId)) return true;\n    cursor = page.next_cursor ?? undefined;\n  } while (cursor);\n  return false;\n}\n\nexport async function deleteCapturedIds(\n  api: SkillsApi,\n  ids: string[],\n  log: (message: string) => void,\n) {\n  const remaining: string[] = [];\n  for (const id of ids) {\n    log(`Deleting run-owned skill ${id}...`);\n    try {\n      await api.delete(id);\n    } catch {\n      remaining.push(id);\n    }\n  }\n  return remaining;\n}\n\nexport async function resolvePreview(\n  api: SkillsApi,\n  sourceUrl: string,\n  stream: boolean,\n  log: (message: string) => void = () => undefined,\n): Promise<PlatformSkillSourcePreviewResponse> {\n  try {\n    const preview = await api.previewSource(\n      { source_url: sourceUrl, stream },\n      stream\n        ? { acceptHeaderOverride: PreviewSourceAcceptEnum.textEventStream }\n        : undefined,\n    );\n    return parsePreviewResult(preview, log);\n  } catch (error) {\n    reraiseSourceError(error);\n  }\n}\n\nexport async function importSkillFromGithub(\n  api: SkillsApi,\n  options: {\n    sourceUrl?: string;\n    stream?: boolean;\n    cleanup: boolean;\n    auth?: { email?: string; serverUrl?: string };\n    log?: (message: string) => void;\n  },\n): Promise<ImportResult> {\n  const log = options.log ?? (() => undefined);\n  const sourceUrl = options.sourceUrl?.trim() || PINNED_SOURCE_URL;\n  const createdIds: string[] = [];\n  let result: ImportResult | undefined;\n  let workError: unknown;\n\n  try {\n    log(`Previewing ${sourceUrl} without persisting a source...`);\n    const preview = await resolvePreview(\n      api,\n      sourceUrl,\n      options.stream === true,\n      log,\n    );\n    const selected = preview.skills.at(0);\n    if (!selected) {\n      const failures = preview.failures\n        .map((failure) => `${failure.code}: ${failure.detail}`)\n        .join('; ');\n      throw new Error(\n        failures\n          ? `GitHub preview returned no importable skills (${failures}).`\n          : 'GitHub preview returned no importable skills.',\n      );\n    }\n\n    log(`Importing ${selected.source_url}...`);\n    let imported;\n    try {\n      imported = await api.import({ source_urls: [selected.source_url] });\n    } catch (error) {\n      reraiseSourceError(error);\n    }\n    const skill = imported.skills.at(0);\n    if (!skill) {\n      throw new Error('Import returned no skills.');\n    }\n    createdIds.push(...imported.skills.map((item) => item.id));\n\n    log('Confirming get and list return the imported skill...');\n    const retrieved = await api.retrieve(skill.id);\n    if (retrieved.skill.id !== skill.id) {\n      throw new Error('Direct retrieval returned a different skill.');\n    }\n    if (!(await findSkillById(api, skill.id))) {\n      throw new Error('List did not include the skill this run just imported.');\n    }\n\n    log(`Syncing imported skill ${skill.id} from its stored GitHub URL...`);\n    let synced;\n    try {\n      synced = await api.sync(skill.id);\n    } catch (error) {\n      reraiseSourceError(error);\n    }\n\n    result = {\n      ids: [...createdIds],\n      displayName: retrieved.skill.display_name,\n      sourceUrl: selected.source_url,\n      commitSha: synced.commit_sha,\n      updated: synced.updated,\n    };\n  } catch (error) {\n    workError = error;\n  }\n\n  const remaining = options.cleanup\n    ? await deleteCapturedIds(api, createdIds, log)\n    : [];\n  if (remaining.length > 0) {\n    throw new CleanupFailedError(\n      remaining,\n      remaining.map((id) => cleanupCommand(id, options.auth)).join('\\n  '),\n      workError,\n    );\n  }\n  if (workError) rethrow(workError);\n  if (!result) throw new Error('Verification did not produce a result.');\n  return result;\n}\n"
+          "code": "import type { Glean } from '@gleanwork/api-client';\nimport {\n  GleanBaseError,\n  PlatformProblemDetailError,\n} from '@gleanwork/api-client/models/errors';\nimport { PreviewSourceAcceptEnum } from '@gleanwork/api-client/sdk/skills.js';\nimport type { PlatformSkillSourcePreviewResponse } from '@gleanwork/api-client/models/components';\nimport { CleanupFailedError, formatCliError } from './errors.js';\nimport { PINNED_SOURCE_URL } from './fixture.js';\nimport { parsePreviewResult } from './preview.js';\n\nexport type SkillsApi = Pick<\n  Glean['skills'],\n  'delete' | 'import' | 'list' | 'previewSource' | 'retrieve' | 'sync'\n>;\n\nexport interface ImportResult {\n  ids: string[];\n  displayName: string;\n  sourceUrl: string;\n  commitSha: string;\n  updated: boolean;\n}\n\nfunction rethrow(error: unknown): never {\n  throw error instanceof Error ? error : new Error('Verification failed.');\n}\n\nexport function cleanupCommand(\n  skillId: string,\n  auth: { email?: string; serverUrl?: string } = {},\n) {\n  const parts = [`npm start -- cleanup --id ${skillId} --yes`];\n  if (auth.serverUrl?.trim()) {\n    parts.push(`--server-url ${auth.serverUrl.trim()}`);\n  } else if (auth.email?.trim()) {\n    parts.push(`--email ${auth.email.trim()}`);\n  } else {\n    parts.push('--email <your-work-email>');\n  }\n  return parts.join(' ');\n}\n\nexport function importedSuccessLine(result: ImportResult) {\n  return `Imported ${result.displayName} (${result.ids.join(', ')}) from ${result.sourceUrl} at ${result.commitSha}; cleanup completed.`;\n}\n\nfunction githubFetchError(error: unknown, sourceUrl?: string): Error {\n  const summary = formatCliError(error).error;\n  const status =\n    error instanceof PlatformProblemDetailError\n      ? error.status\n      : error instanceof GleanBaseError\n        ? error.statusCode\n        : undefined;\n  const tenantHint =\n    status === 400 && sourceUrl === PINNED_SOURCE_URL\n      ? ' The pinned commit and SKILL.md are public and were confirmed reachable on 2026-09-09. Ask your Glean administrator or support contact to confirm that GitHub-backed Skills import is enabled for this tenant.'\n      : '';\n  return new Error(\n    `This tenant could not fetch GitHub: ${summary}.${tenantHint} The import recipe fails rather than skipping.`,\n  );\n}\n\nfunction isSkillsApiNotFound(error: unknown) {\n  if (error instanceof PlatformProblemDetailError) return error.status === 404;\n  if (error instanceof GleanBaseError) return error.statusCode === 404;\n  return false;\n}\n\nfunction reraiseSourceError(error: unknown, sourceUrl?: string): never {\n  if (isSkillsApiNotFound(error)) throw error;\n  if (\n    error instanceof PlatformProblemDetailError ||\n    error instanceof GleanBaseError\n  ) {\n    throw githubFetchError(error, sourceUrl);\n  }\n  throw error instanceof Error ? error : new Error('Verification failed.');\n}\n\nexport async function findSkillById(api: SkillsApi, skillId: string) {\n  let cursor: string | undefined;\n  do {\n    const page = await api.list(100, cursor);\n    if (page.skills.some((skill) => skill.id === skillId)) return true;\n    cursor = page.next_cursor ?? undefined;\n  } while (cursor);\n  return false;\n}\n\nexport async function deleteCapturedIds(\n  api: SkillsApi,\n  ids: string[],\n  log: (message: string) => void,\n) {\n  const remaining: string[] = [];\n  for (const id of ids) {\n    log(`Deleting run-owned skill ${id}...`);\n    try {\n      await api.delete(id);\n    } catch {\n      remaining.push(id);\n    }\n  }\n  return remaining;\n}\n\nexport async function resolvePreview(\n  api: SkillsApi,\n  sourceUrl: string,\n  stream: boolean,\n  log: (message: string) => void = () => undefined,\n): Promise<PlatformSkillSourcePreviewResponse> {\n  try {\n    const preview = await api.previewSource(\n      { source_url: sourceUrl, stream },\n      stream\n        ? { acceptHeaderOverride: PreviewSourceAcceptEnum.textEventStream }\n        : undefined,\n    );\n    return parsePreviewResult(preview, log);\n  } catch (error) {\n    reraiseSourceError(error, sourceUrl);\n  }\n}\n\nexport async function importSkillFromGithub(\n  api: SkillsApi,\n  options: {\n    sourceUrl?: string;\n    stream?: boolean;\n    cleanup: boolean;\n    auth?: { email?: string; serverUrl?: string };\n    log?: (message: string) => void;\n  },\n): Promise<ImportResult> {\n  const log = options.log ?? (() => undefined);\n  const sourceUrl = options.sourceUrl?.trim() || PINNED_SOURCE_URL;\n  const createdIds: string[] = [];\n  let result: ImportResult | undefined;\n  let workError: unknown;\n\n  try {\n    log(`Previewing ${sourceUrl} without persisting a source...`);\n    const preview = await resolvePreview(\n      api,\n      sourceUrl,\n      options.stream === true,\n      log,\n    );\n    const selected = preview.skills.at(0);\n    if (!selected) {\n      const failures = preview.failures\n        .map((failure) => `${failure.code}: ${failure.detail}`)\n        .join('; ');\n      throw new Error(\n        failures\n          ? `GitHub preview returned no importable skills (${failures}).`\n          : 'GitHub preview returned no importable skills.',\n      );\n    }\n\n    log(`Importing ${selected.source_url}...`);\n    let imported;\n    try {\n      imported = await api.import({ source_urls: [selected.source_url] });\n    } catch (error) {\n      reraiseSourceError(error, selected.source_url);\n    }\n    const skill = imported.skills.at(0);\n    if (!skill) {\n      throw new Error('Import returned no skills.');\n    }\n    createdIds.push(...imported.skills.map((item) => item.id));\n\n    log('Confirming get and list return the imported skill...');\n    const retrieved = await api.retrieve(skill.id);\n    if (retrieved.skill.id !== skill.id) {\n      throw new Error('Direct retrieval returned a different skill.');\n    }\n    if (!(await findSkillById(api, skill.id))) {\n      throw new Error('List did not include the skill this run just imported.');\n    }\n\n    log(`Syncing imported skill ${skill.id} from its stored GitHub URL...`);\n    let synced;\n    try {\n      synced = await api.sync(skill.id);\n    } catch (error) {\n      reraiseSourceError(error, selected.source_url);\n    }\n\n    result = {\n      ids: [...createdIds],\n      displayName: retrieved.skill.display_name,\n      sourceUrl: selected.source_url,\n      commitSha: synced.commit_sha,\n      updated: synced.updated,\n    };\n  } catch (error) {\n    workError = error;\n  }\n\n  const remaining = options.cleanup\n    ? await deleteCapturedIds(api, createdIds, log)\n    : [];\n  if (remaining.length > 0) {\n    throw new CleanupFailedError(\n      remaining,\n      remaining.map((id) => cleanupCommand(id, options.auth)).join('\\n  '),\n      workError,\n    );\n  }\n  if (workError) rethrow(workError);\n  if (!result) throw new Error('Verification did not produce a result.');\n  return result;\n}\n"
         }
       ]
     },
@@ -1529,7 +1536,7 @@
       "A Glean instance with the experimental Skills Platform APIs enabled",
       "Your work email, or the complete Glean backend HTTPS origin",
       "A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback",
-      "A tenant that can fetch the public GitHub skill-creator directory at commit 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f; verification fails rather than skipping if GitHub is unreachable"
+      "Tenant-side GitHub source fetching enabled for Skills; the pinned public skill-creator directory and commit were confirmed reachable on 2026-09-09, and verification fails rather than skipping if the tenant cannot preview them"
     ],
     "demoQueries": [
       {
@@ -1575,7 +1582,7 @@
       },
       {
         "title": "Verify against your instance",
-        "description": "Preview the public GitHub skill-creator directory at commit 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. Fails if the tenant cannot fetch GitHub. Success prints an Imported line that ends with cleanup completed.",
+        "description": "Preview the public GitHub skill-creator directory at commit 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. If the pinned URL returns HTTP 400, ask your Glean administrator or support contact to confirm that GitHub-backed Skills import is enabled for the tenant. Success prints an Imported line that ends with cleanup completed.",
         "command": "cd import-skill-from-github && npm run verify -- --email \"<work-email>\"",
         "kind": "verify-live"
       },
@@ -1671,7 +1678,7 @@
         },
         {
           "title": "GitHub must be fetchable",
-          "description": "Preview, import, and sync require the Glean tenant to fetch the public GitHub fixture. A blocked or unconfigured GitHub fetch is a failed verify, not a skipped one."
+          "description": "Preview, import, and sync require tenant-side GitHub source fetching for Skills. The pinned commit and SKILL.md were confirmed public and reachable on 2026-09-09, so an HTTP 400 for that source requires an administrator or support contact to check tenant enablement. It is a failed verify, not a skipped one."
         },
         {
           "title": "OAuth policy varies by tenant",
@@ -2774,6 +2781,7 @@
     "languages": ["javascript"],
     "prerequisites": [
       "Glean Triggers enabled with an ahead-of-event calendar preset available and Google Calendar events indexed",
+      "A user-scoped token or OAuth grant that includes TRIGGERS; SEARCH and CHAT alone cannot read trigger presets or register triggers",
       "A Cursor plan with Automations and webhook triggers, which is a paid feature",
       "Cursor connected to the project tracker over MCP with permission to read issues and write project updates; Glean MCP is optional",
       "Node 20+"
@@ -2799,7 +2807,7 @@
     "steps": [
       {
         "title": "Set up the automation kit",
-        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/pre-meeting-brief pre-meeting-brief",
+        "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/pre-meeting-brief pre-meeting-brief",
         "kind": "scaffold"
       },
       {
@@ -2816,7 +2824,7 @@
       {
         "title": "Sign in to Glean",
         "command": "cd pre-meeting-brief && npm run login -- --email \"<work-email>\"",
-        "description": "Use the shipped OAuth flow; it discovers your tenant and registers a client dynamically. If OAuth is unavailable, use a `TRIGGERS`-scoped API token.",
+        "description": "Use the shipped OAuth flow to discover your tenant and request TRIGGERS before setup. A token with only SEARCH and CHAT receives 403 insufficient_permissions. For a token-first tenant, skip login and put GLEAN_SERVER_URL plus a user-scoped GLEAN_API_TOKEN with TRIGGERS in the ignored .env file.",
         "kind": "authenticate"
       },
       {

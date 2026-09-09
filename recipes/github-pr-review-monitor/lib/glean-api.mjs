@@ -35,9 +35,11 @@ export async function request(path, options = {}, env = process.env) {
     // that the token is malformed or the scope is missing -- a token can carry
     // `triggers` and still be refused. Re-running the login command is the fix.
     const hint =
-      response.status === 401
-        ? ' -- if the token looks valid, sign in again: the stored grant may have been revoked'
-        : '';
+      response.status === 403
+        ? ' -- this token cannot use the Triggers API. Use a user-scoped token or OAuth grant that includes TRIGGERS; SEARCH and CHAT are not sufficient'
+        : response.status === 401
+          ? ' -- if the token looks valid, sign in again: the stored grant may have been revoked'
+          : '';
     throw new Error(`${response.status} ${JSON.stringify(body)}${hint}`);
   }
   return body;

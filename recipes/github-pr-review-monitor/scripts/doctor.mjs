@@ -36,16 +36,18 @@ const webhookUrl = env.GLEAN_WEBHOOK_URL || '';
 const origin = webhookUrl.replace(/\/webhook$/u, '');
 
 console.log('configuration');
-for (const key of [
-  'GLEAN_SERVER_URL',
-  'GLEAN_API_TOKEN',
-  'GLEAN_WEBHOOK_URL',
+for (const [key, missingHint] of [
+  ['GLEAN_SERVER_URL', 'run npm run login, or set the backend in .env'],
+  [
+    'GLEAN_API_TOKEN',
+    'run npm run login, or set a user-scoped token with TRIGGERS in .env',
+  ],
+  [
+    'GLEAN_WEBHOOK_URL',
+    'start your HTTPS tunnel, then set its public origin plus /webhook in .env',
+  ],
 ]) {
-  report(
-    Boolean(env[key]),
-    `${key} is set`,
-    env[key] ? '' : 'run npm run login, or fill it in .env',
-  );
+  report(Boolean(env[key]), `${key} is set`, env[key] ? '' : missingHint);
 }
 report(
   Boolean(env.GLEAN_WEBHOOK_SECRETS),

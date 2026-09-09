@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Two values this workflow needs\\n\\n**Glean Chat** node -> the URL has to point at your Glean backend. Still says `YOUR-INSTANCE-be.glean.com`? Replace it.\\n\\n**Resolve channel** node -> `SLACK_CHANNEL` at the top holds one channel id, or `ACCOUNT_CHANNELS` a per-account map. Both empty means nothing is routed yet.\\n\\nn8n Variables are a paid feature, so neither is required. Where they exist, `GLEAN_SERVER_URL`, `GONG_SLACK_CHANNEL` and `GONG_ACCOUNT_CHANNELS` override both.\\n\\nCredentials: Glean Trigger (TRIGGERS), Glean Client (SEARCH + CHAT), Salesforce, Slack.\\n\\nDocs: https://developers.glean.com/cookbook/gong-call-follow-up-n8n",
+        "content": "## Two values this workflow needs\\n\\n**Glean Chat** node -> the URL has to point at your Glean backend. Still says `YOUR-INSTANCE-be.glean.com`? Replace it.\\n\\n**Resolve channel** node -> `SLACK_CHANNEL` at the top holds one channel id, or `ACCOUNT_CHANNELS` a per-account map. Both empty means nothing is routed yet.\\n\\nn8n Variables are a paid feature, so neither is required. Where they exist, `GLEAN_SERVER_URL`, `GONG_SLACK_CHANNEL` and `GONG_ACCOUNT_CHANNELS` override both.\\n\\nCredentials: Glean Trigger (TRIGGERS), Glean Client (SEARCH + CHAT), Salesforce, Slack.\\n\\nTriggers guide: https://developers.glean.com/guides/triggers/overview",
         "height": 320,
         "width": 460,
         "color": 4

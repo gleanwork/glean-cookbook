@@ -17,6 +17,13 @@ const check = (label, condition, detail = '') => {
   }
 };
 
+const resolverPath = path.join(root, 'scripts', 'resolve-backend.mjs');
+check(
+  'the scaffold includes its documented backend resolver',
+  fs.existsSync(resolverPath) &&
+    /discoverBackend/u.test(fs.readFileSync(resolverPath, 'utf8')),
+);
+
 const workflow = JSON.parse(
   fs.readFileSync(path.join(root, 'workflow.json'), 'utf8'),
 );
@@ -173,6 +180,15 @@ check(
     'and the note names both values that must be filled in',
     /SLACK_CHANNEL/u.test(note?.parameters.content ?? '') &&
       /YOUR-INSTANCE/u.test(note?.parameters.content ?? ''),
+  );
+  check(
+    'and its help link is public while this recipe stays hidden',
+    /developers\.glean\.com\/guides\/triggers\/overview/u.test(
+      note?.parameters.content ?? '',
+    ) &&
+      !/developers\.glean\.com\/cookbook\/gong-call-follow-up-n8n/u.test(
+        note?.parameters.content ?? '',
+      ),
   );
 }
 

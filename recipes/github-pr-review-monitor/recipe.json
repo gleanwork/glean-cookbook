@@ -58,6 +58,7 @@
   "languages": ["javascript"],
   "prerequisites": [
     "Glean Triggers enabled with GitHub review presets available in your deployment",
+    "A user-scoped token or OAuth grant that includes TRIGGERS; SEARCH and CHAT alone cannot read trigger presets or register triggers",
     "GitHub content indexed in Glean",
     "A local checkout of the repository, with the GitHub CLI signed in as the reviewer",
     "An interactive Claude Code session, or the terminal stream where Monitor is unavailable",
@@ -83,8 +84,8 @@
   "scaffoldActions": [],
   "steps": [
     {
-      "title": "Scaffold the receiver and plugin",
-      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/github-pr-review-monitor github-pr-review-monitor",
+      "title": "Copy the receiver and plugin onto your machine",
+      "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/github-pr-review-monitor github-pr-review-monitor",
       "kind": "scaffold"
     },
     {
@@ -96,7 +97,7 @@
     {
       "title": "Sign in to Glean",
       "command": "cd github-pr-review-monitor && npm run login -- --email \"<work-email>\"",
-      "description": "Sign in to discover your tenant and save GLEAN_SERVER_URL and GLEAN_API_TOKEN to the ignored .env file. An exported GLEAN_API_TOKEN takes precedence over .env, and the scripts warn you when it does.",
+      "description": "Sign in to discover your tenant and request TRIGGERS before setup. A token with only SEARCH and CHAT receives 403 insufficient_permissions from the preset and trigger APIs. For a token-first tenant, skip login and put GLEAN_SERVER_URL plus a user-scoped GLEAN_API_TOKEN with TRIGGERS in the ignored .env file. An exported token takes precedence over .env.",
       "kind": "authenticate"
     },
     {
@@ -104,6 +105,11 @@
       "command": "cd github-pr-review-monitor && npm start",
       "description": "Keep the receiver running. It listens on loopback, verifies signatures, and queues each webhook ID once.",
       "kind": "run"
+    },
+    {
+      "title": "Install Cloudflare Tunnel if you need it",
+      "description": "If you do not already have a public HTTPS endpoint, install cloudflared using Cloudflare's package instructions. On macOS, run brew install cloudflared. Confirm cloudflared --version works before continuing.",
+      "kind": "install"
     },
     {
       "title": "Expose the receiver over HTTPS",

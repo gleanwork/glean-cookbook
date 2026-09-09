@@ -184,6 +184,11 @@ console.log('\nexperimental opt-in');
     'the shared client sends x-glean-include-experimental',
     /x-glean-include-experimental/u.test(api),
   );
+  check(
+    'a 403 points to the missing TRIGGERS scope',
+    /response\.status === 403/u.test(api) &&
+      /SEARCH and CHAT are not sufficient/u.test(api),
+  );
   const callers = [
     'setup-trigger',
     'preview-events',
