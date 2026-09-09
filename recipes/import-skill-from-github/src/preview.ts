@@ -73,7 +73,7 @@ export function parsePreviewResult(
 
   if (streamError) {
     throw new Error(
-      `This tenant could not fetch GitHub: ${streamError}. The import recipe fails rather than skipping.`,
+      `GitHub import failed: ${streamError}. The import recipe fails rather than skipping.`,
     );
   }
   if (!result) {

@@ -47,10 +47,16 @@ export function importedSuccessLine(result: ImportResult) {
 
 export function githubFetchStatusHint(status?: number) {
   if (status === 400) {
-    return ' HTTP 400 means the Skills API rejected this source URL. Commit permalinks and SHA-pinned GitHub URLs are rejected; use a branch URL such as .../tree/main/.... Tenant policy can also refuse GitHub import.';
+    return ' HTTP 400 means this GitHub URL or ref is not supported. Commit permalinks and 40-character SHA URLs are rejected. Use a branch or tag URL such as .../tree/main/....';
   }
   if (status === 503) {
-    return ' HTTP 503 means GitHub fetch is temporarily unavailable. Retry later.';
+    return ' HTTP 503 means GitHub import is disabled or unavailable.';
+  }
+  if (status === 403) {
+    return ' HTTP 403 means this credential cannot import from GitHub.';
+  }
+  if (status === 429) {
+    return ' HTTP 429 means GitHub import is rate-limited. Wait and retry.';
   }
   return '';
 }
@@ -64,7 +70,7 @@ function githubFetchError(error: unknown): Error {
         ? error.statusCode
         : undefined;
   return new Error(
-    `This tenant could not fetch GitHub: ${summary}.${githubFetchStatusHint(status)} The import recipe fails rather than skipping.`,
+    `GitHub import failed: ${summary}.${githubFetchStatusHint(status)} The import recipe fails rather than skipping.`,
   );
 }
 

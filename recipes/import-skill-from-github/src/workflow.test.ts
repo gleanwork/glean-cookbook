@@ -201,7 +201,7 @@ test('fails loudly when the tenant cannot fetch GitHub', async () => {
 
   await assert.rejects(
     () => importSkillFromGithub(client.skills, { cleanup: true }),
-    /could not fetch GitHub/,
+    /cannot import from GitHub/,
   );
 });
 
@@ -229,15 +229,17 @@ test('explains HTTP 400 as a rejected source URL', async () => {
 
   await assert.rejects(
     () => importSkillFromGithub(client.skills, { cleanup: true }),
-    /rejected this source URL/,
+    /not supported/,
   );
 });
 
-test('distinguishes HTTP 400 source rejection from HTTP 503 unavailability', () => {
-  expect(githubFetchStatusHint(400)).toMatch(/rejected this source URL/);
+test('distinguishes unsupported URL, disabled import, forbidden, and rate-limit errors', () => {
+  expect(githubFetchStatusHint(400)).toMatch(/not supported/);
   expect(githubFetchStatusHint(400)).toMatch(/Commit permalinks/);
-  expect(githubFetchStatusHint(503)).toMatch(/temporarily unavailable/);
-  expect(githubFetchStatusHint(403)).toBe('');
+  expect(githubFetchStatusHint(400)).not.toMatch(/admin|Third-party|enable/i);
+  expect(githubFetchStatusHint(503)).toMatch(/disabled or unavailable/);
+  expect(githubFetchStatusHint(403)).toMatch(/cannot import from GitHub/);
+  expect(githubFetchStatusHint(429)).toMatch(/rate-limited/);
 });
 
 test('Skills API 404s are not labeled as a GitHub fetch failure', async () => {
@@ -265,7 +267,7 @@ test('Skills API 404s are not labeled as a GitHub fetch failure', async () => {
   await expect(
     importSkillFromGithub(client.skills, { cleanup: true }),
   ).rejects.toSatisfy((error: unknown) => {
-    expect(String(error)).not.toMatch(/could not fetch GitHub/);
+    expect(String(error)).not.toMatch(/GitHub import failed/);
     const formatted = formatCliError(error);
     expect(formatted.hint).toMatch(/Skills APIs are not enabled/);
     return true;

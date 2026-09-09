@@ -71,11 +71,12 @@ The default source is:
 
 `https://github.com/anthropics/skills/tree/main/skills/skill-creator`
 
-The Skills API rejects commit permalinks and SHA-pinned GitHub URLs. If you
-see `HTTP 400: GitHub source could not be previewed`, the source shape was
-rejected or tenant policy still blocks GitHub import. `HTTP 503` means GitHub
-fetch is temporarily unavailable; retry later. Verification fails instead of
-skipping.
+GitHub commit permalinks and 40-character SHA URLs are not supported. Use a
+branch or tag URL. `HTTP 400` means that source URL or ref is unsupported, not
+that Third-party skills need to be enabled. `HTTP 503` means GitHub import is
+disabled or unavailable. `HTTP 403` means this credential cannot import from
+GitHub. `HTTP 429` means the import is rate-limited. Verification fails instead
+of skipping.
 
 To watch repository scan progress, run:
 
