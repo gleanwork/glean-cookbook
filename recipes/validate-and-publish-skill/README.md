@@ -1,23 +1,19 @@
 # Validate and publish a skill
 
-Validate a local `SKILL.md` and persist it once with the official TypeScript
-SDK. `npm start` uses `fixtures/sample-skill/SKILL.md` by default (or pass
-`--bundle` with your own file). `npm run verify` generates a unique name,
-confirms `list` / `get` / latest content, then deletes only the ID returned by
-that run.
-
-The Skills API stores and distributes bundles. It does not execute them. This
-quickstart does not version a skill, unpack a zip, or import from GitHub.
+Publish a local `SKILL.md` to your Glean instance, read it back, and confirm
+that its stored content matches what you sent.
 
 ## Prerequisites
 
 - Node.js 22.12.0 or newer
 - A Glean instance with the experimental Skills Platform APIs enabled
 - Your work email, or the complete Glean backend HTTPS origin
-- A tenant that grants `skills:read` and `skills:write`, the legacy `SKILLS`
-  compatibility scope, or a user-scoped token
+- A tenant that grants Skills read and write access through OAuth or a
+  user-scoped token
 
-Skills are still experimental and may not be enabled on every tenant.
+Skills are still experimental and may not be enabled on every tenant. This
+quickstart stores one bundle; it does not run the skill or create another
+version.
 
 ## Copy and test the project
 
@@ -28,31 +24,48 @@ npm install
 npm test
 ```
 
-The test run uses fixtures and does not need Glean credentials. It ends with a
-passing Vitest summary.
+You test with fixtures, so you do not need Glean credentials yet. A successful
+run ends with:
 
-## Authenticate and run
+```text
+Test Files  6 passed (6)
+Tests       19 passed (19)
+```
 
-OAuth is the default:
+## Sign in
+
+Sign in with OAuth so the API calls use your own permissions:
 
 ```bash
 npm run login -- --email you@example.com
-npm run verify -- --email you@example.com
-npm start -- --email you@example.com --yes
 ```
 
-If native `skills:read` and `skills:write` OAuth scopes are unavailable, the
-login wrapper retries with legacy `SKILLS` only when the authorization failure
-is specifically a scope-grant failure.
+Your browser opens for approval, and the auth package stores your refreshable
+credentials outside this project. If your tenant uses the older Skills
+permission, the login command retries with that compatibility permission.
 
-For a token-first tenant, skip login and put the fallback beside the rest of
-your setup:
+For a token-first tenant, skip login:
 
 ```bash
 cp .env.example .env
 # Set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN in .env.
-npm run verify
 ```
 
-The verify run prints a final `Verified ...; cleanup completed.` line and
-deletes only the skill ID it created.
+When you use `.env`, omit `--email` from the commands below.
+
+## Verify against your instance
+
+```bash
+npm run verify -- --email you@example.com
+```
+
+You should see `Verified …; cleanup completed.` The command creates a uniquely
+named sample, reads it back, and deletes only the skill ID it created.
+
+To publish the included sample through the same create-and-clean-up path, run:
+
+```bash
+npm start -- --email you@example.com --yes
+```
+
+Pass `--bundle path/to/SKILL.md` to use your own file.

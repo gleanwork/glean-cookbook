@@ -1,23 +1,18 @@
 # Skill publishing pipeline
 
-Prove name-based version supersession with the official TypeScript SDK. After a
-first persist, this recipe publishes the same unique name twice, retrieves the
-new version directly, stages the zip in a bounded sandbox, then deletes only
-the ID returned by that run.
-
-The Skills API stores and distributes bundles. It does not execute them. The
-Beginner `validate-and-publish-skill` quickstart owns the first persist. GitHub
-import and sync are a different recipe.
+Publish a new version of a skill bundle, retrieve that exact version from
+Glean, and inspect the downloaded files safely before you use them elsewhere.
 
 ## Prerequisites
 
 - Node.js 22.12.0 or newer
 - A Glean instance with the experimental Skills Platform APIs enabled
 - Your work email, or the complete Glean backend HTTPS origin
-- A tenant that grants `skills:read` and `skills:write`, the legacy `SKILLS`
-  compatibility scope, or a user-scoped token
+- A tenant that grants Skills read and write access through OAuth or a
+  user-scoped token
 
-Skills are still experimental and may not be enabled on every tenant.
+Skills are still experimental and may not be enabled on every tenant. This
+recipe stores and downloads bundles; it does not run their contents.
 
 ## Copy and test the project
 
@@ -28,47 +23,59 @@ npm install
 npm test
 ```
 
-The test run uses fixtures and does not need Glean credentials. It ends with a
-passing Vitest summary.
+You test versioning and archive safety with fixtures, so you do not need Glean
+credentials yet. A successful run ends with:
 
-## Authenticate and verify
+```text
+Test Files  4 passed (4)
+Tests       17 passed (17)
+```
 
-OAuth is the default:
+## Sign in
+
+Sign in with OAuth so the API calls use your own permissions:
 
 ```bash
 npm run login -- --email you@example.com
-npm run verify -- --email you@example.com
 ```
+
+Your browser opens for approval, and the auth package stores your refreshable
+credentials outside this project. If your tenant uses the older Skills
+permission, the login command retries with that compatibility permission.
 
 For a token-first tenant, skip login:
 
 ```bash
 cp .env.example .env
 # Set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN in .env.
-npm run verify
 ```
 
-The verify command publishes a unique fixture twice, stages the downloaded
-version in a temporary directory, checks it, deletes that temporary directory,
-and deletes only the skill ID it created. It does not leave output under
+When you use `.env`, omit `--email` from the commands below.
+
+## Verify version publishing
+
+```bash
+npm run verify -- --email you@example.com
+```
+
+You should see `Verified …; cleanup completed.` The command publishes a unique
+sample twice under one name, retrieves the new version, and deletes only the
+skill ID it created. It checks the downloaded files in a temporary directory
+and removes that directory silently, so `verify` leaves nothing under
 `staged/`.
 
-To publish a new version of your own bundle (`npm start -- publish` defaults to
-`fixtures/sample-skill/SKILL.md`):
+## Publish your bundle
+
+The publish command defaults to `fixtures/sample-skill/SKILL.md`:
 
 ```bash
 npm start -- publish --email you@example.com
 ```
 
-Unlike verify, `npm start -- publish` keeps its downloaded output. Each publish
-stages under `staged/<skill-id>/v<version>.<minor>/`. Pass `--stage-dir` to
-choose a different parent. The sandbox still refuses to overwrite an existing
-folder.
+Pass `--bundle path/to/SKILL.md` to publish your own bundle. Unlike `verify`,
+this command keeps the downloaded version under
+`staged/<skill-id>/v<version>.<minor>/`; use `--stage-dir` to choose another
+parent.
 
-The CLI stages downloaded zip content with restrictive permissions. It rejects
-unsafe archive paths, links, special files, overwrites, and oversized bundles.
-It never executes retrieved content.
-
-If native `skills:read` and `skills:write` OAuth scopes are unavailable, the
-login wrapper retries with legacy `SKILLS` only when the authorization failure
-is specifically a scope-grant failure.
+The sandbox treats downloaded bundles as untrusted. It rejects unsafe archives,
+refuses to overwrite an existing folder, and never executes retrieved content.
