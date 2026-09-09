@@ -6,11 +6,15 @@ import { createGleanClient } from './client.js';
 import { CleanupFailedError, formatCliError } from './errors.js';
 import {
   githubSkillFixture,
-  PINNED_SOURCE_URL,
+  DEFAULT_SOURCE_URL,
   PREVIEW_FIXTURE,
 } from './fixture.js';
 import { previewStreamFixture } from './preview.js';
-import { importedSuccessLine, importSkillFromGithub } from './workflow.js';
+import {
+  importedSuccessLine,
+  importSkillFromGithub,
+  githubFetchStatusHint,
+} from './workflow.js';
 
 const originalToken = process.env.GLEAN_API_TOKEN;
 const baseUrl = 'https://fixture.glean.example.com';
@@ -48,13 +52,13 @@ function defaultHandlers(options?: {
         source_url?: string;
         stream?: boolean;
       };
-      expect(body.source_url).toBe(PINNED_SOURCE_URL);
+      expect(body.source_url).toBe(DEFAULT_SOURCE_URL);
       expect(body.stream).toBe(false);
       return HttpResponse.json(PREVIEW_FIXTURE);
     }),
     http.post(`${baseUrl}/api/skills/import`, async ({ request }) => {
       const body = (await request.json()) as { source_urls?: string[] };
-      expect(body.source_urls).toEqual([PINNED_SOURCE_URL]);
+      expect(body.source_urls).toEqual([DEFAULT_SOURCE_URL]);
       return HttpResponse.json({
         skills: [skill],
         request_id: 'request-import-fixture',
@@ -127,7 +131,7 @@ test('previews, imports, syncs, and deletes only run-owned IDs', async () => {
   expect(result).toMatchObject({
     ids: [skill.id],
     displayName: 'skill-creator',
-    sourceUrl: PINNED_SOURCE_URL,
+    sourceUrl: DEFAULT_SOURCE_URL,
     commitSha: 'fixture-commit-sha',
     updated: false,
   });
@@ -197,11 +201,11 @@ test('fails loudly when the tenant cannot fetch GitHub', async () => {
 
   await assert.rejects(
     () => importSkillFromGithub(client.skills, { cleanup: true }),
-    /could not fetch GitHub/,
+    /cannot import from GitHub/,
   );
 });
 
-test('explains the tenant prerequisite for the reachable pinned source', async () => {
+test('explains HTTP 400 as a rejected source URL', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   server.use(
     http.post(`${baseUrl}/api/skills/sources/preview`, () =>
@@ -225,8 +229,17 @@ test('explains the tenant prerequisite for the reachable pinned source', async (
 
   await assert.rejects(
     () => importSkillFromGithub(client.skills, { cleanup: true }),
-    /GitHub-backed Skills import is enabled for this tenant/,
+    /not supported/,
   );
+});
+
+test('distinguishes unsupported URL, disabled import, forbidden, and rate-limit errors', () => {
+  expect(githubFetchStatusHint(400)).toMatch(/not supported/);
+  expect(githubFetchStatusHint(400)).toMatch(/Commit permalinks/);
+  expect(githubFetchStatusHint(400)).not.toMatch(/admin|Third-party|enable/i);
+  expect(githubFetchStatusHint(503)).toMatch(/disabled or unavailable/);
+  expect(githubFetchStatusHint(403)).toMatch(/cannot import from GitHub/);
+  expect(githubFetchStatusHint(429)).toMatch(/rate-limited/);
 });
 
 test('Skills API 404s are not labeled as a GitHub fetch failure', async () => {
@@ -254,7 +267,7 @@ test('Skills API 404s are not labeled as a GitHub fetch failure', async () => {
   await expect(
     importSkillFromGithub(client.skills, { cleanup: true }),
   ).rejects.toSatisfy((error: unknown) => {
-    expect(String(error)).not.toMatch(/could not fetch GitHub/);
+    expect(String(error)).not.toMatch(/GitHub import failed/);
     const formatted = formatCliError(error);
     expect(formatted.hint).toMatch(/Skills APIs are not enabled/);
     return true;

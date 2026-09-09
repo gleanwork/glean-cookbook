@@ -35,5 +35,5 @@ test('fails loudly on a recorded SSE GitHub error', () => {
     'data: [DONE]',
     '',
   ].join('\n');
-  expect(() => parsePreviewResult(sse)).toThrow(/could not fetch GitHub/);
+  expect(() => parsePreviewResult(sse)).toThrow(/GitHub import failed/);
 });

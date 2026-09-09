@@ -6,7 +6,7 @@ import {
 import { PreviewSourceAcceptEnum } from '@gleanwork/api-client/sdk/skills.js';
 import type { PlatformSkillSourcePreviewResponse } from '@gleanwork/api-client/models/components';
 import { CleanupFailedError, formatCliError } from './errors.js';
-import { PINNED_SOURCE_URL } from './fixture.js';
+import { DEFAULT_SOURCE_URL } from './fixture.js';
 import { parsePreviewResult } from './preview.js';
 
 export type SkillsApi = Pick<
@@ -45,7 +45,23 @@ export function importedSuccessLine(result: ImportResult) {
   return `Imported ${result.displayName} (${result.ids.join(', ')}) from ${result.sourceUrl} at ${result.commitSha}; cleanup completed.`;
 }
 
-function githubFetchError(error: unknown, sourceUrl?: string): Error {
+export function githubFetchStatusHint(status?: number) {
+  if (status === 400) {
+    return ' HTTP 400 means this GitHub URL or ref is not supported. Commit permalinks and 40-character SHA URLs are rejected. Use a branch or tag URL such as .../tree/main/....';
+  }
+  if (status === 503) {
+    return ' HTTP 503 means GitHub import is disabled or unavailable.';
+  }
+  if (status === 403) {
+    return ' HTTP 403 means this credential cannot import from GitHub.';
+  }
+  if (status === 429) {
+    return ' HTTP 429 means GitHub import is rate-limited. Wait and retry.';
+  }
+  return '';
+}
+
+function githubFetchError(error: unknown): Error {
   const summary = formatCliError(error).error;
   const status =
     error instanceof PlatformProblemDetailError
@@ -53,12 +69,8 @@ function githubFetchError(error: unknown, sourceUrl?: string): Error {
       : error instanceof GleanBaseError
         ? error.statusCode
         : undefined;
-  const tenantHint =
-    status === 400 && sourceUrl === PINNED_SOURCE_URL
-      ? ' The pinned commit and SKILL.md are public and were confirmed reachable on 2026-09-09. Ask your Glean administrator or support contact to confirm that GitHub-backed Skills import is enabled for this tenant.'
-      : '';
   return new Error(
-    `This tenant could not fetch GitHub: ${summary}.${tenantHint} The import recipe fails rather than skipping.`,
+    `GitHub import failed: ${summary}.${githubFetchStatusHint(status)} The import recipe fails rather than skipping.`,
   );
 }
 
@@ -68,13 +80,13 @@ function isSkillsApiNotFound(error: unknown) {
   return false;
 }
 
-function reraiseSourceError(error: unknown, sourceUrl?: string): never {
+function reraiseSourceError(error: unknown): never {
   if (isSkillsApiNotFound(error)) throw error;
   if (
     error instanceof PlatformProblemDetailError ||
     error instanceof GleanBaseError
   ) {
-    throw githubFetchError(error, sourceUrl);
+    throw githubFetchError(error);
   }
   throw error instanceof Error ? error : new Error('Verification failed.');
 }
@@ -121,7 +133,7 @@ export async function resolvePreview(
     );
     return parsePreviewResult(preview, log);
   } catch (error) {
-    reraiseSourceError(error, sourceUrl);
+    reraiseSourceError(error);
   }
 }
 
@@ -136,7 +148,7 @@ export async function importSkillFromGithub(
   },
 ): Promise<ImportResult> {
   const log = options.log ?? (() => undefined);
-  const sourceUrl = options.sourceUrl?.trim() || PINNED_SOURCE_URL;
+  const sourceUrl = options.sourceUrl?.trim() || DEFAULT_SOURCE_URL;
   const createdIds: string[] = [];
   let result: ImportResult | undefined;
   let workError: unknown;
@@ -166,7 +178,7 @@ export async function importSkillFromGithub(
     try {
       imported = await api.import({ source_urls: [selected.source_url] });
     } catch (error) {
-      reraiseSourceError(error, selected.source_url);
+      reraiseSourceError(error);
     }
     const skill = imported.skills.at(0);
     if (!skill) {
@@ -188,7 +200,7 @@ export async function importSkillFromGithub(
     try {
       synced = await api.sync(skill.id);
     } catch (error) {
-      reraiseSourceError(error, selected.source_url);
+      reraiseSourceError(error);
     }
 
     result = {
