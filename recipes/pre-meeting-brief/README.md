@@ -20,22 +20,24 @@ cd pre-meeting-brief
 
 ## Configure Cursor
 
-At [cursor.com/automations](https://cursor.com/automations), or `/automate` in a Cursor agent
-session — though not `/automate` for this one: it writes its own instructions from a plain-language
-description, and the prompt shipped here is the part worth keeping.
+Open [cursor.com/automations](https://cursor.com/automations) and create the webhook automation
+there. Paste the prompt from this recipe into that automation. Do not use `/automate` in a Cursor
+agent session: that command invents new instructions from a description, and it will not keep the
+reviewed prompt shipped here.
 
-1. Create an Automation with a **Webhook** trigger. Save it — the URL and API key only exist
-   afterwards.
-2. Set repository scope to **none**. This reads a tracker and writes one update; it touches no code.
-3. Turn **Memories** and **Computer use** off. Both are on by default, and the delivery carries
-   calendar titles, which are untrusted text. Leave the Slack and pull-request tools off too.
-4. Connect the tracker over MCP — read on issues, write on project updates. Optionally connect
-   **Glean MCP** for cited context on the largest changes.
-5. Paste the fenced block from [`automation-prompt.md`](automation-prompt.md) and replace all three
-   placeholders.
-6. Run `npm run test:webhook` from this directory before registering anything with Glean. Cursor has
-   no test button; the default command posts a non-matching delivery and writes nothing. After that
-   succeeds, approve one tracker update explicitly before running `npm run test:webhook -- --write`.
+1. Create an Automation and choose a **Webhook** trigger. Save it. Cursor then shows the webhook URL
+   and API key; those values exist only after you save.
+2. Set repository scope to **none**. The automation reads a tracker and writes one update. It does
+   not touch code.
+3. Turn **Memories** and **Computer use** off. Both default on, and the delivery includes calendar
+   titles, which are untrusted text. Leave Slack and pull-request tools off too.
+4. Connect the tracker over MCP with read on issues and write on project updates. Optionally connect
+   **Glean MCP** if you want cited context on the largest changes.
+5. Copy the fenced block from [`automation-prompt.md`](automation-prompt.md), paste it into the
+   automation, and replace all three placeholders.
+6. From this directory, run `npm run test:webhook` before you register anything with Glean. Cursor
+   has no test button. The default command posts a non-matching delivery and writes nothing. After
+   that succeeds, approve one tracker update, then run `npm run test:webhook -- --write`.
 
 ## Register the 30-minute trigger
 

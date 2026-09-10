@@ -20,6 +20,7 @@ process.env.GLEAN_REVIEW_STATE_DIR = fs.mkdtempSync(
 
 const { recipeRoot, stateDir, withoutTrigger } =
   await import('../lib/config.mjs');
+const { checkTriggers } = await import('../lib/doctor.mjs');
 const { demoSecret, sign } = await import('../lib/signature.mjs');
 const { resolveInputs, selectPresets } = await import('../lib/presets.mjs');
 const { createReceiver, secretValues } = await import('./server.mjs');
@@ -226,6 +227,38 @@ console.log('\nexperimental opt-in');
         'utf8',
       ),
     ),
+  );
+}
+
+console.log('\ndoctor API probe');
+{
+  let calls = 0;
+  const reports = [];
+  await checkTriggers({
+    env: { GLEAN_TRIGGER_IDS: '' },
+    getTriggers: async () => {
+      calls += 1;
+      return [];
+    },
+    report: (ok, label, detail = '') => reports.push({ ok, label, detail }),
+  });
+  check(
+    'doctor calls the Triggers API when this checkout has no trigger IDs',
+    calls === 1,
+  );
+  check(
+    'doctor separates API access from setup not having run',
+    reports.some(
+      ({ ok, label }) =>
+        ok === true && label === 'your token can call the Triggers API',
+    ) &&
+      reports.some(
+        ({ ok, label, detail }) =>
+          ok === false &&
+          label === 'this checkout has trigger IDs from setup' &&
+          /Triggers API answered/u.test(detail) &&
+          /no stored IDs yet/u.test(detail),
+      ),
   );
 }
 
