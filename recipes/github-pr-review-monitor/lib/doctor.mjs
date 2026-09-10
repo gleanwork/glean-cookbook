@@ -30,7 +30,7 @@ export async function checkTriggers({
         report(
           false,
           `${id} still exists`,
-          'it was deleted on the tenant; re-run npm run setup',
+          `it was deleted from Glean; run npm run triggers -- --delete ${id}, then npm run setup`,
         );
         continue;
       }
