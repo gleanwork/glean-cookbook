@@ -68,21 +68,27 @@ Monitors start at session start, so **installing the plugin needs a session rest
 
 ## When nothing arrives
 
-Run `npm run doctor`. It prints `ok` or `FAIL` for each hop: configuration, the local receiver, the
-public URL, the Triggers API, each stored trigger's delivery URL, and the GitHub CLI. It calls the
-Triggers API even when `GLEAN_TRIGGER_IDS` is empty, so a first-time checkout still proves the token.
+Run `npm run doctor`. It checks the path in order: your `.env`, the local receiver, the public URL,
+the Triggers API, the triggers saved by this checkout, and the GitHub CLI. An `ok` line passed. A
+`FAIL` line names what failed and prints the next action underneath it.
 
-Read each `triggers` line on its own:
+Doctor calls the Triggers API even when `GLEAN_TRIGGER_IDS` is empty. In the `triggers` section:
 
-- `ok  your token can call the Triggers API` means the token has `TRIGGERS` and the API answered.
-- `FAIL  your token can call the Triggers API` followed by `403 insufficient_permissions` means the
-  token is missing `TRIGGERS`. `SEARCH` and `CHAT` are not enough. Sign in again with a grant that
-  includes `TRIGGERS`, or put a user-scoped token with that scope in `.env`.
-- `FAIL  this checkout has trigger IDs from setup` after an `ok` API line means the API is
-  reachable; this checkout has not stored trigger IDs yet. Run `npm run setup`. That is not a
-  scope failure.
-- `FAIL` on a stored trigger's URL or status means the trigger exists but points at an old tunnel or
-  is disabled. Run `npm run repoint`, or re-run setup.
+- `ok  your token can call the Triggers API` means the API accepted the token.
+- `FAIL  your token can call the Triggers API` with `403 insufficient_permissions` means the token
+  cannot use the Triggers API. Sign in again with a grant that includes `TRIGGERS`, or put a
+  user-scoped token with that scope in `.env`. `SEARCH` and `CHAT` are not enough.
+- `FAIL  this checkout has trigger IDs from setup` after the token line says `ok` means the token
+  works, but this checkout has no saved trigger IDs. Run `npm run setup`. You do not need a
+  different token.
+- `FAIL  <trigger-id> still exists` means a saved trigger was deleted from Glean. Run
+  `npm run triggers -- --delete <trigger-id>` to clear its stale local ID, then run
+  `npm run setup`.
+- `FAIL  <preset-id> delivers to the current URL` means the trigger still points at an old tunnel.
+  Restart the tunnel, update `GLEAN_WEBHOOK_URL`, and run `npm run repoint`.
+- `FAIL  <preset-id> is enabled` means the trigger exists but is not enabled. Run
+  `npm run triggers` to inspect it. If you intend to replace it, delete that ID with
+  `npm run triggers -- --delete <trigger-id>`, then run `npm run setup`.
 
 A running `cloudflared` process is not a working tunnel. Cloudflare can withdraw the hostname while
 the process stays alive and retries. Doctor hits the public `/health` URL; trust that result, not
