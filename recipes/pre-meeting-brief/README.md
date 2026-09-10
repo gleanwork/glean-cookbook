@@ -20,9 +20,10 @@ cd pre-meeting-brief
 
 ## Configure Cursor
 
-At [cursor.com/automations](https://cursor.com/automations), or `/automate` in a Cursor agent
-session — though not `/automate` for this one: it writes its own instructions from a plain-language
-description, and the prompt shipped here is the part worth keeping.
+Open [cursor.com/automations](https://cursor.com/automations) and create the automation there. Paste
+the prompt shipped with this recipe instead of using `/automate`: that command invents new
+instructions from a plain-language description rather than preserving the reviewed instructions
+you already have.
 
 1. Create an Automation with a **Webhook** trigger. Save it — the URL and API key only exist
    afterwards.

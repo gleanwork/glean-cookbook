@@ -8,7 +8,7 @@
 import { spawnSync } from 'node:child_process';
 
 import { loadEnv } from '../lib/config.mjs';
-import { listTriggers } from '../lib/glean-api.mjs';
+import { checkTriggers } from '../lib/doctor.mjs';
 
 loadEnv();
 
@@ -88,46 +88,7 @@ if (!origin) {
 }
 
 console.log('\ntriggers');
-try {
-  const ids = (env.GLEAN_TRIGGER_IDS || '')
-    .split(',')
-    .map((v) => v.trim())
-    .filter(Boolean);
-  report(
-    ids.length > 0,
-    'this checkout owns triggers',
-    ids.length ? '' : 'run npm run setup',
-  );
-  if (ids.length > 0) {
-    const known = new Map((await listTriggers()).map((t) => [t.trigger_id, t]));
-    for (const id of ids) {
-      const trigger = known.get(id);
-      if (!trigger) {
-        report(
-          false,
-          `${id} still exists`,
-          'it was deleted on the tenant; re-run npm run setup',
-        );
-        continue;
-      }
-      const current = trigger.delivery?.webhook_url;
-      report(
-        current === webhookUrl,
-        `${trigger.preset_id} delivers to the current URL`,
-        current === webhookUrl
-          ? ''
-          : `points at ${current} -- run npm run repoint`,
-      );
-      report(
-        trigger.status === 'ENABLED',
-        `${trigger.preset_id} is enabled`,
-        trigger.status === 'ENABLED' ? '' : `status is ${trigger.status}`,
-      );
-    }
-  }
-} catch (error) {
-  report(false, 'the Triggers API answered', error.message);
-}
+await checkTriggers({ env, report });
 
 console.log('\ngithub cli');
 // The skill reads the diff and writes the pending review through `gh`, so an

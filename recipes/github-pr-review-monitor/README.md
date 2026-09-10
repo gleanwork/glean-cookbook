@@ -70,9 +70,11 @@ Monitors start at session start, so **installing the plugin needs a session rest
 
 `npm run doctor` walks the whole path and names the broken link: configuration, the local
 receiver, the public URL, whether each trigger still points at the current `GLEAN_WEBHOOK_URL`,
-whether the token can call the `TRIGGERS` API, and whether the GitHub CLI is signed in. A running
-`cloudflared` is not a working tunnel — it
-stays alive retrying after Cloudflare withdraws its hostname, so check the path, not the process.
+whether the token can call the `TRIGGERS` API, and whether the GitHub CLI is signed in. It probes the
+Triggers API even before setup. If the API is reachable but this checkout has no trigger IDs, doctor
+tells you setup has not run yet; a `403 insufficient_permissions` instead tells you the token needs
+the `TRIGGERS` scope. A running `cloudflared` is not a working tunnel — it stays alive retrying after
+Cloudflare withdraws its hostname, so check the path, not the process.
 
 ```bash
 npm run doctor
