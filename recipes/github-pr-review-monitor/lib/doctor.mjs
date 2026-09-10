@@ -7,7 +7,7 @@ export async function checkTriggers({
 }) {
   try {
     const triggers = await getTriggers(env);
-    report(true, 'the token can call the Triggers API');
+    report(true, 'your token can call the Triggers API');
 
     const ids = (env.GLEAN_TRIGGER_IDS || '')
       .split(',')
@@ -15,10 +15,10 @@ export async function checkTriggers({
       .filter(Boolean);
     report(
       ids.length > 0,
-      'this checkout owns triggers',
+      'this checkout has trigger IDs from setup',
       ids.length
         ? ''
-        : 'the API is reachable, but setup has not run for this checkout; run npm run setup',
+        : 'the Triggers API answered; this checkout has no stored IDs yet. Run npm run setup',
     );
 
     const known = new Map(
@@ -49,6 +49,6 @@ export async function checkTriggers({
       );
     }
   } catch (error) {
-    report(false, 'the token can call the Triggers API', error.message);
+    report(false, 'your token can call the Triggers API', error.message);
   }
 }

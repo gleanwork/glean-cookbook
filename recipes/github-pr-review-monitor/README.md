@@ -68,13 +68,25 @@ Monitors start at session start, so **installing the plugin needs a session rest
 
 ## When nothing arrives
 
-`npm run doctor` walks the whole path and names the broken link: configuration, the local
-receiver, the public URL, whether each trigger still points at the current `GLEAN_WEBHOOK_URL`,
-whether the token can call the `TRIGGERS` API, and whether the GitHub CLI is signed in. It probes the
-Triggers API even before setup. If the API is reachable but this checkout has no trigger IDs, doctor
-tells you setup has not run yet; a `403 insufficient_permissions` instead tells you the token needs
-the `TRIGGERS` scope. A running `cloudflared` is not a working tunnel — it stays alive retrying after
-Cloudflare withdraws its hostname, so check the path, not the process.
+Run `npm run doctor`. It prints `ok` or `FAIL` for each hop: configuration, the local receiver, the
+public URL, the Triggers API, each stored trigger's delivery URL, and the GitHub CLI. It calls the
+Triggers API even when `GLEAN_TRIGGER_IDS` is empty, so a first-time checkout still proves the token.
+
+Read each `triggers` line on its own:
+
+- `ok  your token can call the Triggers API` means the token has `TRIGGERS` and the API answered.
+- `FAIL  your token can call the Triggers API` followed by `403 insufficient_permissions` means the
+  token is missing `TRIGGERS`. `SEARCH` and `CHAT` are not enough. Sign in again with a grant that
+  includes `TRIGGERS`, or put a user-scoped token with that scope in `.env`.
+- `FAIL  this checkout has trigger IDs from setup` after an `ok` API line means the API is
+  reachable; this checkout has not stored trigger IDs yet. Run `npm run setup`. That is not a
+  scope failure.
+- `FAIL` on a stored trigger's URL or status means the trigger exists but points at an old tunnel or
+  is disabled. Run `npm run repoint`, or re-run setup.
+
+A running `cloudflared` process is not a working tunnel. Cloudflare can withdraw the hostname while
+the process stays alive and retries. Doctor hits the public `/health` URL; trust that result, not
+the process list.
 
 ```bash
 npm run doctor

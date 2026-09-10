@@ -250,14 +250,14 @@ console.log('\ndoctor API probe');
     'doctor separates API access from setup not having run',
     reports.some(
       ({ ok, label }) =>
-        ok === true && label === 'the token can call the Triggers API',
+        ok === true && label === 'your token can call the Triggers API',
     ) &&
       reports.some(
         ({ ok, label, detail }) =>
           ok === false &&
-          label === 'this checkout owns triggers' &&
-          /API is reachable/u.test(detail) &&
-          /setup has not run/u.test(detail),
+          label === 'this checkout has trigger IDs from setup' &&
+          /Triggers API answered/u.test(detail) &&
+          /no stored IDs yet/u.test(detail),
       ),
   );
 }
