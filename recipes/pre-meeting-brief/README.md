@@ -26,8 +26,8 @@ does not install the reviewed instructions in this recipe.
 
 1. Create an Automation and select **Webhook** as its trigger. Save it. The page then shows the
    webhook URL and API key that you will copy into `.env`.
-2. Set repository scope to **none**. The automation reads a tracker and writes one update; it does
-   not need a code repository.
+2. Under **Repositories**, choose **No repository**. The automation reads a tracker and writes one
+   update; it does not need a code repository.
 3. Turn **Memories** and **Computer use** off. Both start on, and the webhook includes untrusted
    calendar titles. Leave the Slack and pull-request tools off too.
 4. Connect your tracker over MCP. Give it permission to read issues and write project updates.
