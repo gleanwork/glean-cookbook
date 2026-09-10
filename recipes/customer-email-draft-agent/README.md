@@ -14,12 +14,12 @@ files; do not manually author or edit them.
 ## Installing the plugin
 
 ```bash
-claude plugin marketplace add gleanwork/glean-plugins-vnext
-claude plugin install glean-vnext@glean-plugins-vnext --scope user
+claude plugin marketplace add gleanwork/claude-plugins
+claude plugin install glean@glean-plugins --scope user
 ```
 
 The CLI form is what works unattended — only a person can type a slash command. In Cursor, open
-**Customize** in the sidebar, find **Glean vNext**, and select **Install** at user scope. A team
+**Customize** in the sidebar, find **Glean**, and select **Install** at user scope. A team
 admin can instead add the marketplace under **Dashboard → Plugins → Add Marketplace → Import from
 Repo**.
 
