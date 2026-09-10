@@ -14,7 +14,7 @@
     "test:all": "npm run test && npm run lint && npm run typecheck"
   },
   "dependencies": {
-    "@gleanwork/api-client": "0.20.2",
+    "@gleanwork/api-client": "0.20.11",
     "@gleanwork/auth": "0.5.1",
     "meow": "14.1.0"
   },
