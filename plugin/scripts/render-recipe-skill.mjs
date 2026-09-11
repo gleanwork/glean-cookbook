@@ -2,6 +2,7 @@ import fs from 'node:fs';
 
 import Handlebars from 'handlebars';
 import YAML from 'yaml';
+import { humanizeStepCommands } from './step-commands.mjs';
 
 const EXECUTION_TYPES = JSON.parse(
   fs.readFileSync(
@@ -73,6 +74,7 @@ function humanize(value) {
 }
 
 function executionView(execution, steps = []) {
+  steps = humanizeStepCommands(steps);
   if (!execution) {
     return {
       steps: steps.map((step, index) => ({
