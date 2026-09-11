@@ -6,6 +6,35 @@ Load [SKILL.md](../SKILL.md) first. These traps change the score. Do not "fix" t
 
 Both are required when `isPublicRecipe` is true. Hidden recipes have no docs page and no plugin skill. Preview has the `?ff_recipe=<id>` page only. Aug 19 treated `/cookbook:{id}` as the intended reader path. Aug 20 treated the human page as the product because plugin-voice copy made the site unreadable. Walk the page first, then the skill. One `recipe.json` string feeds both, so copy is second-person enough for the page and precise enough for the skill. Do not add a second schema field. Do not hand-edit either generated surface.
 
+## Fix repeated directory changes in the recipe
+
+A rejected fix added `humanizeStepCommands` to remove repeated `cd` prefixes when rendering
+skills. It left the bad source intact because a checker required each command to run
+independently. Matching an existing site workaround did not make that decision correct.
+
+Wrong authored sequence in one shell:
+
+```bash
+cd example && npm install
+cd example && npm test
+```
+
+Correct the recipe itself:
+
+```bash
+cd example && npm install
+npm test
+```
+
+Update matching execution metadata and fix the conflicting checker assumption. Keep
+scaffold pinning and initial-directory checks. Add a regression that executes the raw
+sequence in a real shell and fails on the old source, then verify generated output preserves
+the corrected commands. Stubbing network/auth operations can test directory behavior, but
+must not be reported as live verification.
+
+Do not add a renderer repair, a per-recipe exception, or another command abstraction.
+The source-first decision rule lives in [AGENTS.md](../../../../AGENTS.md#fix-the-authored-recipe-not-its-presentation).
+
 ## Fixtures
 
 If the app cannot run without Glean, a fixture or recorded first run is required and printed. Live is "adapt to your corpus," not the quickstart. Do not flip `GLEAN_USE_FIXTURE` to make a live claim green. Do not ship fake live mode.

@@ -133,9 +133,28 @@ Use the visibility fields deliberately:
 
 ## Verifying a recipe
 
-UX, copy, and first-run reviews follow
-[`.agents/skills/review-cookbook-recipe/SKILL.md`](.agents/skills/review-cookbook-recipe/SKILL.md).
-That is a reader pass of the published page, not a substitute for the gates below.
+A recipe is a recommended reference implementation, not a demo patched until it passes.
+Its authored code and instructions should be the approach we would tell a developer to use
+from scratch, within the stated scope. Fix incorrect assumptions and unnecessary mechanisms
+at their source; generated output must not compensate for them.
+
+Every recipe must pass three quality gates: it works as documented, reads as developer
+instructions rather than an agent prompt, and teaches idiomatic composition with supported
+packages rather than rebuilding supporting infrastructure. Use the existing
+[review skill](.agents/skills/review-cookbook-recipe/SKILL.md) and its
+[ordered release checklist and evidence record](.agents/skills/review-cookbook-recipe/references/checklist.md)
+as the single review procedure. It covers fresh-directory execution, authorized live outcomes,
+failure and cleanup behavior, writing, composition, generated surfaces, regression checks,
+and deployment confirmation. The executable gates below support that procedure; they do not
+replace the walkthrough.
+
+Record each gate as PASS, FAIL, BLOCKED, or N/A with a reason, tied to the candidate revision.
+Missing credentials, hosts, or a candidate preview are BLOCKED, never a pass. A recipe is
+**ready to deploy** only after all applicable pre-deployment gates pass. It is **deployed and
+verified** only after the existing site sync and deployment are confirmed and the production
+page, intended discovery paths, and applicable distributed plugin are checked. A visibility
+flag, merge, or HTTP 200 response alone is insufficient. This evidence applies to the tested
+revision and environment; it is not a guarantee against future platform changes.
 A reader-pass walk of `/cookbook:{id}` needs `mise exec -- pnpm build` locally so the generated
 skill is current. Do not commit that plugin output. Recipe PRs still push with
 `mise exec -- pnpm build:registry` as above.

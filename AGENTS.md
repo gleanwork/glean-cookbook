@@ -18,6 +18,54 @@ mise exec -- pnpm format
 mise exec -- pnpm test
 ```
 
+## Recipes are recommended implementations, not patched demos
+
+A cookbook recipe shows how a good Glean engineer would recommend building the advertised
+capability. Running successfully is necessary, but not sufficient. The authored code,
+commands, defaults, and explanations must be correct and worth copying on their own.
+Generated surfaces present that source; they must not compensate for defects in it.
+
+When a failure appears, step back before patching:
+
+1. State the developer outcome and the supported, idiomatic way to achieve it.
+2. Identify the incorrect assumption or design choice that caused the failure. Do not
+   assume the current implementation deserves to be preserved.
+3. Correct the owning design or source. Prefer removing unnecessary machinery over adding
+   another workaround. The smallest textual patch is not the cleanest fix if it preserves
+   the wrong design.
+4. Verify the corrected instructions end to end, then confirm the code still teaches the
+   approach we would recommend starting from scratch.
+
+Use supported SDKs, packages, and runtime facilities. Verify current API and scope support
+before adding compatibility behavior. Do not invent fallback layers to preserve an
+unsupported path. Keep examples focused, but make production-relevant safety and limitations
+explicit. A deliberate, documented simplification is different from a workaround that makes
+a flawed example look complete. Passing CI, matching another consumer, or reaching a release
+date cannot substitute for this quality bar.
+
+## Fix the authored recipe, not its presentation
+
+The developer's documented workflow is the contract. Existing checkers, generators, and
+workarounds are implementation details, not evidence that incorrect instructions must stay.
+
+- Fix bad commands, copy, scopes, and defaults in `recipes/{id}/recipe.json` or the owning
+  recipe code. Keep execution metadata and the README consistent with those instructions.
+- Treat numbered commands as one sequential shell session unless the recipe explicitly
+  tells the developer to start a new one. Directory and environment changes persist.
+- Do not add renderer normalization, command rewriting, hidden directory resets, or
+  compatibility wrappers to make broken authored instructions appear correct. Presentation
+  formatting is fine; silently repairing command semantics is not.
+- If a checker requires the wrong developer workflow, correct that assumption in the
+  checker and add a focused regression test. Preserve its valid safety checks. Do not
+  distort the recipe just to satisfy the checker or remove checks merely to get green CI.
+- Change a shared renderer only when a minimal example shows it mishandles **valid authored
+  input**, or when a shared feature is explicitly requested. An existing workaround in
+  another consumer is not sufficient justification. Prefer the smallest change in the
+  component that owns the defect; do not generalize one recipe fix into new infrastructure.
+- Test the raw authored command sequence without a repair transform, then confirm the
+  generated page and skill preserve it. A test of transformed output alone cannot prove
+  that the source instructions are correct. Fixtures do not replace a live reader pass.
+
 ## Recipe work does not touch glean-developer-site
 
 A recipe ships when it merges here. Do not open a companion pull request on
