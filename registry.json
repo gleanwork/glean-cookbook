@@ -3743,7 +3743,7 @@
       },
       {
         "title": "Run the fixture tests",
-        "description": "Run the tests without credentials or network access. They check the workflow, ZIP content comparison, and failure handling against a fake API. CLI tests block network requests. Passing these tests does not verify access to your Glean instance.",
+        "description": "Run the tests without real credentials or network access. Workflow tests use the real SDK with MSW HTTP handlers to check content comparison and failure handling. Unhandled requests fail. CLI smoke tests cover help and local argument handling. Passing these tests does not verify access to your Glean instance.",
         "command": "npm test",
         "kind": "manual"
       },

@@ -8,15 +8,19 @@ const recipeRoot = fileURLToPath(new URL('..', import.meta.url));
 const tsx = path.join(recipeRoot, 'node_modules', '.bin', 'tsx');
 
 function runCli(args: string[]) {
-  return spawnSync(
-    tsx,
-    ['--import', './fixtures/no-network.mjs', 'src/cli.ts', ...args],
-    {
-      cwd: recipeRoot,
-      encoding: 'utf8',
-      env: { ...process.env, NO_COLOR: '1' },
+  // Only help and local parse failures run in subprocesses. Network workflows
+  // use the real client with MSW in workflow.test.ts.
+  return spawnSync(tsx, ['src/cli.ts', ...args], {
+    cwd: recipeRoot,
+    encoding: 'utf8',
+    timeout: 5_000,
+    env: {
+      ...process.env,
+      GLEAN_API_TOKEN: 'fixture-token',
+      GLEAN_SERVER_URL: 'https://example.test',
+      NO_COLOR: '1',
     },
-  );
+  });
 }
 
 test('start script does not hardcode --bundle', () => {

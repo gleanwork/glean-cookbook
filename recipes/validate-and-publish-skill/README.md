@@ -26,8 +26,10 @@ npm install
 npm test
 ```
 
-All tests should pass. They use a fake API and need no credentials or network
-access. Passing them does not verify access to your Glean instance.
+All tests should pass without real credentials or network access. Workflow tests
+use the real SDK with MSW HTTP handlers, following the other API recipes. Unhandled
+requests fail instead of reaching a live service. CLI smoke tests cover help and
+local argument handling. Passing tests does not verify access to your Glean instance.
 
 ## Choose one authentication path
 
