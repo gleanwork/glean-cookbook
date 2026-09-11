@@ -2,147 +2,207 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { strToU8, zipSync } from 'fflate';
-import { afterEach, expect, test } from 'vitest';
+import { afterAll, afterEach, beforeAll, expect, test } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
+import { createGleanClient } from './client.js';
 import { CleanupFailedError } from './errors.js';
 import {
   publishAndStage,
   verifiedSuccessLine,
   verifyPublishingLifecycle,
-  type SkillsApi,
 } from './workflow.js';
 
 const roots: string[] = [];
+const originalToken = process.env.GLEAN_API_TOKEN;
+const baseUrl = 'https://fixture.glean.example.com';
+const skillId = 'skill-run-owned';
+const server = setupServer();
 
-function streamFor(manifest: string) {
-  const archive = zipSync({ 'skill/SKILL.md': strToU8(manifest) });
-  return new ReadableStream<Uint8Array>({
-    start(controller) {
-      controller.enqueue(archive);
-      controller.close();
-    },
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'error' });
+});
+
+afterAll(() => {
+  server.close();
+});
+
+async function uploadedManifest(request: Request) {
+  expect(request.headers.get('authorization')).toBe('Bearer fixture-token');
+  expect(request.headers.get('content-type')).toMatch(/^multipart\/form-data;/);
+  const form = await request.formData();
+  const file = form.get('file');
+  if (!file || typeof file === 'string') {
+    throw new Error('Expected a multipart file upload.');
+  }
+  expect(file.name).toBe('SKILL.md');
+  return file.text();
+}
+
+function zipResponse(manifest: string) {
+  const archive = zipSync({ 'SKILL.md': strToU8(manifest) });
+  return new HttpResponse(Uint8Array.from(archive).buffer, {
+    headers: { 'Content-Type': 'application/octet-stream' },
   });
 }
 
-function fakeApi(options?: { deleteError?: Error; invalidContent?: boolean }) {
-  let currentManifest = '';
-  let version = 0;
+function defaultHandlers(options?: {
+  deleteStatus?: number;
+  invalidContent?: boolean;
+}) {
+  const manifests: string[] = [];
+  const contentPaths: string[] = [];
   let deleted = false;
   let createCalls = 0;
 
-  const api = {
-    async validate(request: { file: { content: Uint8Array } }) {
-      const content = Buffer.from(request.file.content).toString('utf8');
+  function skill() {
+    const currentManifest = manifests.at(-1) ?? '';
+    return {
+      id: skillId,
+      display_name: /^name:\s*(.+)$/mu.exec(currentManifest)?.[1] ?? '',
+      description: /^description:\s*(.+)$/mu.exec(currentManifest)?.[1] ?? '',
+      latest_version: manifests.length,
+      latest_minor_version: 0,
+      status: 'DRAFT',
+      origin: 'CUSTOM',
+      owner: { name: 'Fixture User' },
+      created_at: '2026-09-04T00:00:00Z',
+      updated_at: '2026-09-04T00:00:00Z',
+    };
+  }
+
+  function version(requestedVersion: number) {
+    return {
+      skill_id: skillId,
+      version: requestedVersion,
+      minor_version: 0,
+      is_latest: requestedVersion === manifests.length,
+      created_by: { name: 'Fixture User' },
+      created_at: '2026-09-04T00:00:00Z',
+      updated_at: '2026-09-04T00:00:00Z',
+    };
+  }
+
+  const handlers = [
+    http.post(`${baseUrl}/api/skills/validation`, async ({ request }) => {
+      const content = await uploadedManifest(request);
       const name = /^name:\s*(.+)$/mu.exec(content)?.[1];
       const description = /^description:\s*(.+)$/mu.exec(content)?.[1];
-      if (!name || !description) throw new Error('invalid frontmatter');
-      return {
+      if (!name || !description) {
+        return HttpResponse.json(
+          {
+            type: 'about:blank',
+            title: 'Bad Request',
+            status: 400,
+            detail: 'Invalid frontmatter',
+            code: 'bad_request',
+            request_id: 'request-validate-invalid',
+          },
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/problem+json' },
+          },
+        );
+      }
+      return HttpResponse.json({
         metadata: { display_name: name, description },
         files: [
-          { path: 'SKILL.md', size_bytes: content.length, is_manifest: true },
+          {
+            path: 'SKILL.md',
+            size_bytes: Buffer.byteLength(content),
+            is_manifest: true,
+          },
         ],
         warnings: [],
         request_id: 'request-validate',
-      };
-    },
-    async create(request: { file: { content: Uint8Array } }) {
+      });
+    }),
+    http.post(`${baseUrl}/api/skills`, async ({ request }) => {
       createCalls += 1;
-      version += 1;
-      currentManifest = Buffer.from(request.file.content).toString('utf8');
-      const displayName = /^name:\s*(.+)$/mu.exec(currentManifest)?.[1] ?? '';
-      return {
-        skill: {
-          id: 'skill-run-owned',
-          display_name: displayName,
-          description: 'fixture',
-          latest_version: version,
-          latest_minor_version: 0,
-          status: 'DRAFT',
-          origin: 'CUSTOM',
-          owner: { name: 'Fixture User' },
-          created_at: '2026-09-04T00:00:00Z',
-          updated_at: '2026-09-04T00:00:00Z',
-        },
-        request_id: `request-create-${version}`,
-      };
-    },
-    async retrieve(skillId: string) {
-      return {
-        skill: {
-          id: skillId,
-          display_name: /^name:\s*(.+)$/mu.exec(currentManifest)?.[1] ?? '',
-        },
-        request_id: 'request-get',
-      };
-    },
-    async retrieveContent() {
+      const content = await uploadedManifest(request);
+      expect(content).toMatch(/^name:\s*.+$/mu);
+      expect(content).toMatch(/^description:\s*.+$/mu);
+      manifests.push(content);
+      return HttpResponse.json({
+        skill: skill(),
+        request_id: `request-create-${manifests.length}`,
+      });
+    }),
+    http.get(`${baseUrl}/api/skills/${skillId}`, () =>
+      HttpResponse.json({ skill: skill(), request_id: 'request-get' }),
+    ),
+    http.get(`${baseUrl}/api/skills/${skillId}/content`, ({ request }) => {
+      contentPaths.push(new URL(request.url).pathname);
       if (options?.invalidContent) {
-        return {
-          Headers: {},
-          result: new ReadableStream<Uint8Array>({
-            start(controller) {
-              controller.enqueue(Buffer.from('not-a-zip'));
-              controller.close();
-            },
-          }),
-        };
+        return new HttpResponse('not-a-zip', {
+          headers: { 'Content-Type': 'application/octet-stream' },
+        });
       }
-      return { Headers: {}, result: streamFor(currentManifest) };
-    },
-    async listVersions(skillId: string) {
-      return {
-        versions: Array.from({ length: version }, (_, index) => ({
-          skill_id: skillId,
-          version: index + 1,
-          minor_version: 0,
-          is_latest: index + 1 === version,
-          created_by: { name: 'Fixture User' },
-          created_at: '2026-09-04T00:00:00Z',
-          updated_at: '2026-09-04T00:00:00Z',
-        })),
+      return zipResponse(manifests.at(-1) ?? '');
+    }),
+    http.get(`${baseUrl}/api/skills/${skillId}/versions`, ({ request }) => {
+      expect(new URL(request.url).searchParams.get('page_size')).toBe('100');
+      return HttpResponse.json({
+        versions: manifests.map((_, index) => version(index + 1)),
         has_more: false,
         next_cursor: null,
         request_id: 'request-versions',
-      };
-    },
-    async retrieveVersion(skillId: string, requestedVersion: number) {
-      return {
-        version: {
-          skill_id: skillId,
-          version: requestedVersion,
-          minor_version: 0,
-          is_latest: requestedVersion === version,
-          created_by: { name: 'Fixture User' },
-          created_at: '2026-09-04T00:00:00Z',
-          updated_at: '2026-09-04T00:00:00Z',
-        },
-        request_id: 'request-version',
-      };
-    },
-    async retrieveVersionContent() {
-      return { Headers: {}, result: streamFor(currentManifest) };
-    },
-    async delete(skillId: string) {
-      expect(skillId).toBe('skill-run-owned');
-      if (options?.deleteError) throw options.deleteError;
+      });
+    }),
+    http.get(
+      `${baseUrl}/api/skills/${skillId}/versions/:version`,
+      ({ params }) => {
+        const requestedVersion = Number(params.version);
+        expect(manifests[requestedVersion - 1]).toBeDefined();
+        return HttpResponse.json({
+          version: version(requestedVersion),
+          request_id: 'request-version',
+        });
+      },
+    ),
+    http.get(
+      `${baseUrl}/api/skills/${skillId}/versions/:version/content`,
+      ({ params, request }) => {
+        contentPaths.push(new URL(request.url).pathname);
+        const manifest = manifests[Number(params.version) - 1];
+        expect(manifest).toBeDefined();
+        return zipResponse(manifest!);
+      },
+    ),
+    http.delete(`${baseUrl}/api/skills/:skillId`, ({ params }) => {
+      expect(params.skillId).toBe(skillId);
+      if (options?.deleteStatus) {
+        return HttpResponse.json(
+          {
+            type: 'about:blank',
+            title: 'Conflict',
+            status: options.deleteStatus,
+            detail: 'Skill is in use',
+            code: 'conflict',
+            request_id: 'request-delete-failed',
+          },
+          {
+            status: options.deleteStatus,
+            headers: { 'Content-Type': 'application/problem+json' },
+          },
+        );
+      }
       deleted = true;
-    },
-    async list() {
-      return {
-        skills: [],
-        has_more: false,
-        next_cursor: null,
-        request_id: 'request-list',
-      };
-    },
-  } as unknown as SkillsApi;
+      return new HttpResponse(null, { status: 204 });
+    }),
+  ];
 
   return {
-    api,
-    state: () => ({ createCalls, deleted, version }),
+    handlers,
+    contentPaths,
+    state: () => ({ createCalls, deleted, version: manifests.length }),
   };
 }
 
 afterEach(async () => {
+  server.resetHandlers();
+  if (originalToken === undefined) delete process.env.GLEAN_API_TOKEN;
+  else process.env.GLEAN_API_TOKEN = originalToken;
   await Promise.all(
     roots
       .splice(0)
@@ -153,9 +213,12 @@ afterEach(async () => {
 test('validates, supersedes, retrieves, and cleans up one captured skill', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-workflow-test-'));
   roots.push(root);
-  const fixture = fakeApi();
+  process.env.GLEAN_API_TOKEN = 'fixture-token';
+  const fixture = defaultHandlers();
+  server.use(...fixture.handlers);
+  const client = await createGleanClient({ serverUrl: baseUrl });
 
-  const result = await verifyPublishingLifecycle(fixture.api, {
+  const result = await verifyPublishingLifecycle(client.skills, {
     workDir: root,
     cleanup: true,
   });
@@ -171,18 +234,23 @@ test('validates, supersedes, retrieves, and cleans up one captured skill', async
     deleted: true,
     version: 2,
   });
+  expect(fixture.contentPaths).toEqual([
+    `/api/skills/${skillId}/content`,
+    `/api/skills/${skillId}/versions/2/content`,
+  ]);
 });
 
 test('failed delete exits without reporting cleanup completed', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-cleanup-fail-'));
   roots.push(root);
   const logs: string[] = [];
-  const fixture = fakeApi({
-    deleteError: Object.assign(new Error('conflict'), { statusCode: 409 }),
-  });
+  process.env.GLEAN_API_TOKEN = 'fixture-token';
+  const fixture = defaultHandlers({ deleteStatus: 409 });
+  server.use(...fixture.handlers);
+  const client = await createGleanClient({ serverUrl: baseUrl });
 
   await expect(
-    verifyPublishingLifecycle(fixture.api, {
+    verifyPublishingLifecycle(client.skills, {
       workDir: root,
       cleanup: true,
       log: (message) => logs.push(message),
@@ -213,10 +281,13 @@ test('staging failure after create still printed the skill ID', async () => {
     { flag: 'wx', mode: 0o600 },
   );
   const logs: string[] = [];
-  const fixture = fakeApi({ invalidContent: true });
+  process.env.GLEAN_API_TOKEN = 'fixture-token';
+  const fixture = defaultHandlers({ invalidContent: true });
+  server.use(...fixture.handlers);
+  const client = await createGleanClient({ serverUrl: baseUrl });
 
   await expect(
-    publishAndStage(fixture.api, {
+    publishAndStage(client.skills, {
       bundlePath: skillPath,
       stageDir: path.join(root, 'staged'),
       log: (message) => logs.push(message),
