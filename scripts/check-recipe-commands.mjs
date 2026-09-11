@@ -43,11 +43,13 @@ for (const entry of fs.readdirSync(recipesRoot, { withFileTypes: true })) {
 
   for (const [location, steps] of commandLists(recipe)) {
     let target;
+    let enteredTarget = false;
     for (const [index, step] of steps.entries()) {
       if (!step.command) continue;
       const nextTarget = scaffoldTarget(step.command);
       if (nextTarget) {
         target = nextTarget;
+        enteredTarget = false;
         if (!/\btiged@2\.12\.8\b/.test(step.command)) {
           errors.push(
             `${recipe.id} ${location}[${index}] must pin tiged@2.12.8: ${step.command}`,
@@ -60,13 +62,13 @@ for (const entry of fs.readdirSync(recipesRoot, { withFileTypes: true })) {
         }
         continue;
       }
-      if (
-        target &&
-        !isExplicitlyCwdIndependent(step.command) &&
-        !runsFromTarget(step.command, target)
-      ) {
+      if (!target || isExplicitlyCwdIndependent(step.command)) continue;
+      if (runsFromTarget(step.command, target)) {
+        // A normal cd persists across the documented steps; a subshell does not.
+        if (!step.command.trim().startsWith('(')) enteredTarget = true;
+      } else if (!enteredTarget) {
         errors.push(
-          `${recipe.id} ${location}[${index}] must run from ${target} independently: ${step.command}`,
+          `${recipe.id} ${location}[${index}] must enter ${target} before running project commands: ${step.command}`,
         );
       }
     }
@@ -79,4 +81,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log('Recipe commands are pinned and independently cwd-safe.');
+console.log('Recipe scaffold pins and initial working directories are valid.');

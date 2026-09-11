@@ -3730,19 +3730,20 @@
       },
       {
         "title": "Install dependencies",
+        "description": "Enter the project directory and install its dependencies. Run the remaining commands from this directory.",
         "command": "cd validate-and-publish-skill && npm install",
         "kind": "install"
       },
       {
         "title": "Run the fixture tests",
         "description": "Run the tests without credentials or network access. They check the workflow and failure handling against a fake API. Passing these tests does not verify access to your Glean instance.",
-        "command": "cd validate-and-publish-skill && npm test",
+        "command": "npm test",
         "kind": "manual"
       },
       {
         "title": "Sign in with OAuth",
         "description": "Sign in to your Glean instance with the SKILLS scope. The official authentication library handles login and secure credential storage. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.",
-        "command": "cd validate-and-publish-skill && npm run login -- --email \"<work-email>\"",
+        "command": "npm run login -- --email \"<work-email>\"",
         "kind": "authenticate"
       },
       {
@@ -3753,13 +3754,13 @@
       {
         "title": "Verify against your instance",
         "description": "Create a uniquely named test skill, retrieve it, download its content, and permanently delete it. Success prints a Verified line ending with cleanup completed. With token authentication, run npm run verify instead of the OAuth command below. A nonempty download confirms availability, not file integrity or skill execution.",
-        "command": "cd validate-and-publish-skill && npm run verify -- --email \"<work-email>\"",
+        "command": "npm run verify -- --email \"<work-email>\"",
         "kind": "verify-live"
       },
       {
         "title": "Test your own SKILL.md",
         "description": "The command uses the included sample file. Add --bundle with a path to test your own SKILL.md. Choose an unused name and do not publish that name concurrently. This command also deletes the test skill afterward; it does not leave a published skill for you to use. With token authentication, run npm start -- --yes instead.",
-        "command": "cd validate-and-publish-skill && npm start -- --email \"<work-email>\" --yes",
+        "command": "npm start -- --email \"<work-email>\" --yes",
         "kind": "run"
       }
     ],
@@ -3772,18 +3773,18 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["SKILLS"],
-          "setupCommand": "cd validate-and-publish-skill && npm run login -- --email \"<work-email>\"",
+          "setupCommand": "npm run login -- --email \"<work-email>\"",
           "credentialVariable": "GLEAN_API_TOKEN"
         }
       ],
       "verification": {
         "kind": "automated",
-        "command": "cd validate-and-publish-skill && npm run verify -- --email \"<work-email>\"",
+        "command": "npm run verify -- --email \"<work-email>\"",
         "expectedDuration": "about 1 minute after sign-in",
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd validate-and-publish-skill && npm start -- --email \"<work-email>\" --yes",
+        "command": "npm start -- --email \"<work-email>\" --yes",
         "userBrowser": false
       }
     },
