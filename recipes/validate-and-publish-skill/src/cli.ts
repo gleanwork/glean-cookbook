@@ -19,7 +19,7 @@ const cli = meow(
       $ npm start -- cleanup --id <skill-id> [options]
 
     Options
-      --bundle       Local SKILL.md to validate and persist (npm start default: ${SAMPLE_BUNDLE})
+      --bundle       Local SKILL.md to create, retrieve, and delete (npm start default: ${SAMPLE_BUNDLE})
       --id           Exact run-owned skill ID to delete
       --email        Work email used to discover the Glean backend
       --server-url   Complete Glean backend origin; overrides --email
@@ -94,7 +94,7 @@ async function main() {
   const cleanupApproved =
     cli.flags.yes ||
     (await confirm(
-      'This run creates one skill, downloads its latest content, and permanently deletes that run-owned skill.',
+      'This run creates a test skill, downloads its content, and permanently deletes the test skill afterward.',
     ));
   if (!cleanupApproved) {
     throw new Error(missingCleanupConfirmation(stdin.isTTY));

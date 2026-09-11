@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, expect, test } from 'vitest';
+import { PlatformProblemDetailError } from '@gleanwork/api-client/models/errors';
 import { CleanupFailedError } from './errors.js';
 import {
   verifiedSuccessLine,
@@ -24,7 +25,31 @@ function streamFor(manifest: string) {
   });
 }
 
-function fakeApi(options?: { deleteError?: Error; retrieveError?: Error }) {
+function validationError() {
+  return new PlatformProblemDetailError(
+    {
+      type: 'about:blank',
+      title: 'Invalid request',
+      status: 400,
+      detail: 'SKILL.md must contain frontmatter.',
+      code: 'invalid_request',
+      request_id: 'fixture-request',
+    },
+    {
+      request: new Request('https://example.test/api/skills/validation'),
+      response: new Response(null, { status: 400 }),
+      body: '',
+    },
+  );
+}
+
+function fakeApi(options?: {
+  deleteError?: Error;
+  retrieveError?: Error;
+  invalidValidationError?: Error;
+  createdVersion?: number;
+  content?: string;
+}) {
   let currentManifest = '';
   let deleted = false;
   let createCalls = 0;
@@ -35,7 +60,9 @@ function fakeApi(options?: { deleteError?: Error; retrieveError?: Error }) {
       const content = Buffer.from(request.file.content).toString('utf8');
       const name = /^name:\s*(.+)$/mu.exec(content)?.[1];
       const description = /^description:\s*(.+)$/mu.exec(content)?.[1];
-      if (!name || !description) throw new Error('invalid frontmatter');
+      if (!name || !description) {
+        throw options?.invalidValidationError ?? validationError();
+      }
       return {
         metadata: { display_name: name, description },
         files: [
@@ -54,7 +81,7 @@ function fakeApi(options?: { deleteError?: Error; retrieveError?: Error }) {
           id: 'skill-run-owned',
           display_name: displayName,
           description: 'fixture',
-          latest_version: 1,
+          latest_version: options?.createdVersion ?? 1,
           latest_minor_version: 0,
           status: 'DRAFT',
           origin: 'CUSTOM',
@@ -76,7 +103,10 @@ function fakeApi(options?: { deleteError?: Error; retrieveError?: Error }) {
       };
     },
     async retrieveContent() {
-      return { Headers: {}, result: streamFor(currentManifest) };
+      return {
+        Headers: {},
+        result: streamFor(options?.content ?? currentManifest),
+      };
     },
     async delete(skillId: string) {
       expect(skillId).toBe('skill-run-owned');
@@ -113,6 +143,42 @@ afterEach(async () => {
   );
 });
 
+test.each([
+  new Error('HTTP 503 unavailable'),
+  new Error('HTTP 401 authentication required'),
+  new Error('connection timed out'),
+])('does not mistake %s for invalid-frontmatter rejection', async (failure) => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-validation-'));
+  roots.push(root);
+  const fixture = fakeApi({ invalidValidationError: failure });
+  await expect(
+    verifyFirstPersist(fixture.api, { workDir: root, cleanup: true }),
+  ).rejects.toThrow(failure);
+  expect(fixture.state().createCalls).toBe(0);
+});
+
+test('does not delete a captured skill when create returned a later version', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-ownership-'));
+  roots.push(root);
+  const fixture = fakeApi({ createdVersion: 2 });
+  await expect(
+    verifyFirstPersist(fixture.api, { workDir: root, cleanup: true }),
+  ).rejects.toThrow(/later version.*skill-run-owned/);
+  expect(fixture.state().deleted).toBe(false);
+});
+
+test('disables SDK retries when creating a skill', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-retry-'));
+  roots.push(root);
+  const fixture = fakeApi();
+  const create = fixture.api.create.bind(fixture.api);
+  fixture.api.create = async (request, options) => {
+    expect(options?.retries).toEqual({ strategy: 'none' });
+    return create(request, options);
+  };
+  await verifyFirstPersist(fixture.api, { workDir: root, cleanup: true });
+});
+
 test('validates, creates once, retrieves latest content, and cleans up', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-first-persist-'));
   roots.push(root);
@@ -135,6 +201,29 @@ test('validates, creates once, retrieves latest content, and cleans up', async (
     deleted: true,
     listCalls: 1,
   });
+});
+
+test('rejects an empty download and still deletes the test skill', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-empty-'));
+  roots.push(root);
+  const fixture = fakeApi({ content: '' });
+  await expect(
+    verifyFirstPersist(fixture.api, { workDir: root, cleanup: true }),
+  ).rejects.toThrow('Latest skill content was empty.');
+  expect(fixture.state().deleted).toBe(true);
+});
+
+test('treats nonempty downloaded content as opaque bytes, not verified files', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-download-'));
+  roots.push(root);
+  const fixture = fakeApi({ content: 'PKnot a valid archive' });
+  const result = await verifyFirstPersist(fixture.api, {
+    workDir: root,
+    cleanup: true,
+  });
+  expect(result.contentBytes).toBe(21);
+  expect(verifiedSuccessLine(result)).toContain('downloaded 21 byte(s)');
+  expect(fixture.state().deleted).toBe(true);
 });
 
 test('validates the scaffold sample SKILL.md when --bundle is set', async () => {
@@ -200,8 +289,7 @@ test('failed delete exits without reporting cleanup completed', async () => {
     expect(error).toBeInstanceOf(CleanupFailedError);
     expect(error).toMatchObject({
       remainingIds: ['skill-run-owned'],
-      cleanupCommand:
-        'npm start -- cleanup --id skill-run-owned --yes --email <your-work-email>',
+      cleanupCommand: 'npm start -- cleanup --id skill-run-owned --yes',
     });
     expect(String(error)).not.toMatch(/cleanup completed/);
     return true;

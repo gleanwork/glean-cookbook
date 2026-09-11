@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import type { Glean } from '@gleanwork/api-client';
+import { PlatformProblemDetailError } from '@gleanwork/api-client/models/errors';
 import { CleanupFailedError } from './errors.js';
 import { readSkillMd, readStream, saveLatestContent } from './skill-md.js';
 
@@ -20,7 +21,7 @@ export interface FirstPersistResult {
 }
 
 function manifest(displayName: string) {
-  return `---\nname: ${displayName}\ndescription: Cookbook first-persist verification for the Skills API.\n---\n\n# First persist verification\n\nThis fixture verifies a first Skills persist. It contains no executable code.\n`;
+  return `---\nname: ${displayName}\ndescription: Test publishing and retrieving a skill with the Skills API.\n---\n\n# Publishing test\n\nThis sample tests creating and retrieving a skill. It contains no executable code.\n`;
 }
 
 function rethrow(error: unknown): never {
@@ -36,9 +37,8 @@ export function cleanupCommand(
     parts.push(`--server-url ${auth.serverUrl.trim()}`);
   } else if (auth.email?.trim()) {
     parts.push(`--email ${auth.email.trim()}`);
-  } else {
-    parts.push('--email <your-work-email>');
   }
+  // With no flags, the retry uses the same .env/token path as the original run.
   return parts.join(' ');
 }
 
@@ -96,7 +96,18 @@ async function rejectInvalidFrontmatter(api: SkillsApi, runRoot: string) {
   let rejected = false;
   try {
     await api.validate({ file: await readSkillMd(invalidPath) });
-  } catch {
+  } catch (error) {
+    if (
+      !(error instanceof PlatformProblemDetailError) ||
+      error.status !== 400 ||
+      ![
+        'invalid_request',
+        'missing_required_field',
+        'invalid_parameter',
+      ].includes(error.code)
+    ) {
+      throw error;
+    }
     rejected = true;
   }
   if (!rejected) throw new Error('Invalid SKILL.md unexpectedly validated.');
@@ -132,7 +143,7 @@ export async function verifyFirstPersist(
   }
 
   try {
-    log('Validating the local SKILL.md without persisting it...');
+    log('Validating the local SKILL.md without saving it...');
     const bundle = await readSkillMd(skillPath);
     const validation = await api.validate({ file: bundle });
     const displayName = validation.metadata.display_name;
@@ -147,13 +158,25 @@ export async function verifyFirstPersist(
       const existing = await findSkillByName(api, displayName);
       if (existing) {
         throw new Error(
-          `A skill named "${displayName}" already exists as ${existing}. This first persist does not add versions.`,
+          `A skill named "${displayName}" already exists as ${existing}. Choose an unused name; this quickstart does not add versions.`,
         );
       }
     }
 
     log('Publishing the skill once...');
-    const created = await api.create({ file: bundle });
+    // Create can add a version to an existing name. Never retry an ambiguous write.
+    const created = await api.create(
+      { file: bundle },
+      { retries: { strategy: 'none' } },
+    );
+    if (
+      created.skill.latest_version !== 1 ||
+      created.skill.latest_minor_version !== 0
+    ) {
+      throw new Error(
+        `Create returned a later version for ${created.skill.id}. This may be an existing skill; it was not deleted. Inspect it before continuing.`,
+      );
+    }
     createdId = created.skill.id;
     if (created.skill.display_name !== displayName) {
       throw new Error('Created skill name does not match validated metadata.');
@@ -174,12 +197,8 @@ export async function verifyFirstPersist(
     if (bytes.byteLength === 0) {
       throw new Error('Latest skill content was empty.');
     }
-    const isZip = bytes.length >= 2 && bytes[0] === 0x50 && bytes[1] === 0x4b;
-    if (!bytes.toString('utf8').includes(displayName) && !isZip) {
-      throw new Error(
-        'Downloaded content does not include the published name.',
-      );
-    }
+    // This checks download availability, not archive integrity or skill execution.
+    // Do not infer either from a magic prefix or a matching name.
     const saved = await saveLatestContent(bytes, contentPath);
 
     result = {
