@@ -1,11 +1,13 @@
 # Validate and publish a skill
 
 Validate a local `SKILL.md`, create a skill in your Glean instance, retrieve it,
-and download its content. **Both commands delete the test skill afterward.**
+and confirm that its downloaded `SKILL.md` matches the upload byte for byte.
+**Both commands delete the test skill afterward.**
 They do not leave a published skill for you to use.
 
-The example confirms that content is available to download. It does not
-verify file integrity, unpack archives, or execute the skill.
+The API returns a ZIP archive. The example uses `yauzl` to read its single root
+`SKILL.md` in memory, checks its checksum, and compares its bytes with the uploaded
+file. It never extracts files to disk or executes the skill.
 
 ## Prerequisites
 
@@ -60,7 +62,8 @@ Node.js to load `.env`; existing shell variables take precedence.
 ## Verify against your instance
 
 This command creates a uniquely named test skill, retrieves it by its returned
-ID, downloads its content, and permanently deletes the test skill.
+ID, verifies its downloaded content against the upload, and permanently deletes
+the test skill. A mismatch fails verification; cleanup still runs.
 
 With OAuth:
 
@@ -77,10 +80,11 @@ npm run verify
 Success ends with a line like this:
 
 ```text
-Verified <name> (<id>) at version 1.0; downloaded <n> byte(s); cleanup completed.
+Verified <name> (<id>) at version 1.0; downloaded <n> byte(s); SKILL.md matches the upload; cleanup completed.
 ```
 
-Authentication, validation, retrieval, and cleanup failures exit with an error.
+Authentication, validation, retrieval, content-comparison, and cleanup failures
+exit with an error.
 A failed delete prints the remaining skill ID and a cleanup command. Inspect
 that ID before using the command; never delete a skill found only by its name.
 
@@ -113,8 +117,12 @@ deletes the test skill afterward.** It does not modify your local file.
 - Creation has no automatic retries. If a request times out after the server
   saves the skill, its ID may not be available for automatic cleanup. Inspect
   your instance before trying again.
-- A nonempty download confirms availability only. It does not prove that the
-  files are valid or identical to the upload. Downloaded files are never opened
-  or executed.
+- This quickstart uploads one `SKILL.md`, so the downloaded ZIP must contain
+  exactly that regular file at its root. Missing, extra, or symbolic-link entries,
+  malformed ZIPs, checksum errors, and changed file bytes fail verification.
+- Downloads are limited to 10 MiB. Decompression is bounded by the uploaded file's
+  byte length, even if the archive declares a false size. Nothing is extracted to
+  disk or executed. Matching file bytes does not prove that an agent will execute
+  the skill correctly.
 - The API is experimental. Instance availability, scope policy, and response
   behavior still require live verification.

@@ -1,10 +1,10 @@
 {
   "id": "validate-and-publish-skill",
   "title": "Validate and publish a skill",
-  "description": "Validate a local SKILL.md, create a skill in your Glean instance, retrieve it, and delete the test skill using the official TypeScript API client.",
+  "description": "Validate a local SKILL.md, create a skill in Glean, confirm the downloaded file matches your upload, and delete the test skill using the official TypeScript API client.",
   "sidebarLabel": "Validate and publish",
   "codeWalkthrough": {
-    "intro": "The example uses the official SDK to validate your file before creating a skill. It retrieves the saved skill, downloads its content, and cleans up afterward. It does not open or execute downloaded files.",
+    "intro": "The example uses the official SDK to validate your file before creating a skill. It retrieves the saved skill, compares the downloaded SKILL.md with the upload, and cleans up afterward. It never extracts files to disk or executes them.",
     "examples": [
       {
         "title": "Configure the Skills API client",
@@ -14,8 +14,14 @@
       },
       {
         "title": "Create, retrieve, and delete a test skill",
-        "description": "Validate the file, create a skill without automatic retries, and retrieve it by the returned ID. Confirm that content is available to download, then delete the test skill. Stop without deleting if the API returns a later version of an existing skill.",
+        "description": "Validate the file, create a skill without automatic retries, and retrieve it by the returned ID. Compare downloaded content with the upload, then delete the test skill even if comparison fails. Stop without deleting if the API returns a later version of an existing skill.",
         "source": "src/workflow.ts",
+        "language": "typescript"
+      },
+      {
+        "title": "Compare the stored file with the upload",
+        "description": "Use yauzl to read the ZIP in memory. Require one regular SKILL.md at the root, bound decompression by the uploaded file size, check its checksum, and compare bytes. Do not compare ZIP bytes: compression and timestamps can differ.",
+        "source": "src/skill-md.ts",
         "language": "typescript"
       }
     ]
@@ -44,14 +50,14 @@
   "demoQueries": [
     {
       "query": "Validate and publish a uniquely named sample skill, then delete the captured ID",
-      "expectedBehavior": "Stdout ends with Verified <name> (<id>) at version <n>.<m>; downloaded <n> byte(s); cleanup completed. If delete fails, the process exits non-zero, prints the remaining ID and a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run, and does not print that success line."
+      "expectedBehavior": "Stdout ends with Verified <name> (<id>) at version 1.0; downloaded <n> byte(s); SKILL.md matches the upload; cleanup completed. The downloaded ZIP must contain one regular root SKILL.md whose checksum and bytes match the upload. Invalid archives or mismatches fail verification and still trigger cleanup. If delete fails, the process exits non-zero, prints the remaining ID and a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run, and does not print that success line."
     }
   ],
   "codeAssets": [
     {
       "repoPath": "recipes/validate-and-publish-skill",
       "language": "typescript",
-      "description": "TypeScript CLI that validates a file, creates and retrieves a test skill, downloads its content, and deletes it afterward"
+      "description": "TypeScript CLI that validates a file, creates and retrieves a test skill, compares its downloaded content with the upload, and deletes it afterward"
     }
   ],
   "steps": [
@@ -69,7 +75,7 @@
     },
     {
       "title": "Run the fixture tests",
-      "description": "Run the tests without credentials or network access. They check the workflow and failure handling against a fake API. Passing these tests does not verify access to your Glean instance.",
+      "description": "Run the tests without credentials or network access. They check the workflow, ZIP content comparison, and failure handling against a fake API. CLI tests block network requests. Passing these tests does not verify access to your Glean instance.",
       "command": "npm test",
       "kind": "manual"
     },
@@ -86,7 +92,7 @@
     },
     {
       "title": "Verify against your instance",
-      "description": "Create a uniquely named test skill, retrieve it, download its content, and permanently delete it. Success prints a Verified line ending with cleanup completed. With token authentication, run npm run verify instead of the OAuth command below. A nonempty download confirms availability, not file integrity or skill execution.",
+      "description": "Create a uniquely named test skill, retrieve it, compare the downloaded SKILL.md byte for byte with the upload, and permanently delete it. A mismatch fails verification but still triggers cleanup. Success prints a Verified line ending with cleanup completed. With token authentication, run npm run verify instead of the OAuth command below. Files are not extracted to disk or executed.",
       "command": "npm run verify -- --email \"<work-email>\"",
       "kind": "verify-live"
     },
@@ -143,18 +149,18 @@
     },
     {
       "label": "Latest content",
-      "caption": "download only; do not open or execute",
+      "caption": "compare SKILL.md bytes; never execute",
       "icon": "Download"
     }
   ],
-  "aiPrompt": "Scaffold and run the Skills create-and-retrieve quickstart. Ask for the user's work email. Run credential-free fixture tests before authentication. Use the supported SKILLS scope for OAuth and token authentication. Run the official glean-auth CLI directly; do not add a scope-fallback wrapper. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique SKILL.md: validate it, reject invalid frontmatter without creating anything, create it once without automatic retries, confirm list and get return the captured ID, and confirm a nonempty content download without unpacking it or claiming integrity verification. Delete the captured ID only when the response identifies a first version. If a later version is returned, stop without deleting it. npm start with no --bundle uses fixtures/sample-skill/SKILL.md; pass --bundle for a different local SKILL.md. Do not put --bundle in the npm start script. npm run verify is the verify subcommand and generates a unique name when --bundle is omitted. If cleanup cannot delete a captured ID, exit non-zero, print the work error, and print the remaining ID plus a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run. Do not publish a second version, do not extract archives, and do not import from GitHub. Never execute retrieved files or infer cleanup targets from names or catalog search.",
-  "llmContext": "Use @gleanwork/api-client 0.20.4 with includeExperimental. Validate SKILL.md, create without retries, list, retrieve, and confirm a nonempty content download. Do not claim file integrity or execute downloaded files. Delete only the captured ID from a first-version response; failed cleanup must fail verification. npm run verify generates a unique name. npm start defaults to fixtures/sample-skill/SKILL.md in cli.ts; --bundle selects another file. Check supplied names for collisions, but do not treat that check as atomic. The supported scope is SKILLS. Do not request the not-yet-supported skills:read or skills:write scopes. OAuth and token storage belong to @gleanwork/auth. Node.js loads .env. Version management and GitHub import belong in later recipes.",
+  "aiPrompt": "Scaffold and run the Skills create-and-retrieve quickstart. Ask for the user's work email. Run credential-free fixture tests before authentication. Use the supported SKILLS scope for OAuth and token authentication. Run the official glean-auth CLI directly; do not add a scope-fallback wrapper. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique SKILL.md: validate it, reject invalid frontmatter without creating anything, create it once without automatic retries, confirm list and get return the captured ID, and verify the downloaded ZIP contains exactly one regular root SKILL.md matching the uploaded bytes. Use yauzl to read the archive in memory, bound decompression by the uploaded file size, and check CRC-32 with node:zlib. Reject malformed archives, unexpected entries, checksum errors, and changed content. A mismatch must still trigger cleanup. Delete the captured ID only when the response identifies a first version. If a later version is returned, stop without deleting it. npm start with no --bundle uses fixtures/sample-skill/SKILL.md; pass --bundle for a different local SKILL.md. Do not put --bundle in the npm start script. npm run verify is the verify subcommand and generates a unique name when --bundle is omitted. If cleanup cannot delete a captured ID, exit non-zero, print the work error, and print the remaining ID plus a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run. Do not publish a second version, do not extract archive files to disk, and do not import from GitHub. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+  "llmContext": "Use @gleanwork/api-client 0.20.4 with includeExperimental. Validate, create without retries, list, retrieve, and compare the ZIP's single regular root SKILL.md byte-for-byte with the upload. Use yauzl with bounded decompression and node:zlib CRC-32. Reject malformed archives, unexpected entries, bad checksums, and mismatches. Never extract files to disk or execute them. Delete only the captured first-version ID; cleanup failures fail verification. npm run verify generates a unique name. npm start defaults to fixtures/sample-skill/SKILL.md; --bundle overrides it. Name checks are not atomic. Use SKILLS, not skills:read or skills:write. Use official @gleanwork/auth; Node loads .env. Version management and GitHub import are out of scope.",
   "goDependency": false,
   "featured": false,
   "hidden": false,
   "tags": ["skills", "quickstart", "platform-api", "experimental"],
   "content": {
-    "problem": "You have a local SKILL.md file and want to publish it to your Glean instance. Before adding version management or GitHub imports, start by validating the file, creating a skill, and checking that you can retrieve it. This quickstart uses the official TypeScript API client to complete that workflow, then deletes the test skill. It checks that content is available to download, but does not verify the downloaded files or execute the skill.",
+    "problem": "You have a local SKILL.md file and want to publish it to your Glean instance. Before adding version management or GitHub imports, start by validating the file, creating a skill, and checking that you can retrieve it. This quickstart uses the official TypeScript API client to complete that workflow, then deletes the test skill. It verifies that the downloaded SKILL.md matches the uploaded file byte for byte, without extracting files to disk or executing the skill.",
     "takeItFurther": [
       "Use the skill-publishing-pipeline recipe to publish another version, inspect a specific version, and examine a downloaded archive safely.",
       "Use the GitHub import recipe when the source of truth is a public repository rather than a local SKILL.md.",
@@ -171,7 +177,7 @@
       },
       {
         "title": "Treat content as untrusted",
-        "rule": "Download latest content as bytes. Do not unpack archives or execute retrieved files."
+        "rule": "Limit the ZIP download to 10 MiB. Read its single regular root SKILL.md in memory, with decompression bounded by the uploaded file size. Require a valid checksum and exact file bytes. Do not extract files to disk or execute retrieved content."
       },
       {
         "title": "Delete by captured ID only",
@@ -185,7 +191,7 @@
       },
       {
         "title": "Publishing is not execution",
-        "description": "The API stores and distributes skill bundles. A nonempty download does not prove that its files are valid or match the upload. This recipe does not unpack the download, run the skill, or test how an agent host interprets it."
+        "description": "The API stores and distributes skill bundles. This quickstart verifies the bytes of a single uploaded SKILL.md, not multi-file bundles or skill execution. It does not run the skill or test how an agent host interprets it."
       },
       {
         "title": "Sign-in permissions vary by instance",

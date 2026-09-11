@@ -4,7 +4,12 @@ import { randomBytes } from 'node:crypto';
 import type { Glean } from '@gleanwork/api-client';
 import { PlatformProblemDetailError } from '@gleanwork/api-client/models/errors';
 import { CleanupFailedError } from './errors.js';
-import { readSkillMd, readStream, saveLatestContent } from './skill-md.js';
+import {
+  readSkillMd,
+  readStream,
+  saveLatestContent,
+  verifyDownloadedSkill,
+} from './skill-md.js';
 
 export type SkillsApi = Pick<
   Glean['skills'],
@@ -43,7 +48,7 @@ export function cleanupCommand(
 }
 
 export function verifiedSuccessLine(result: FirstPersistResult) {
-  return `Verified ${result.displayName} (${result.id}) at version ${result.version}.${result.minorVersion}; downloaded ${result.contentBytes} byte(s); cleanup completed.`;
+  return `Verified ${result.displayName} (${result.id}) at version ${result.version}.${result.minorVersion}; downloaded ${result.contentBytes} byte(s); SKILL.md matches the upload; cleanup completed.`;
 }
 
 export async function findSkillById(api: SkillsApi, skillId: string) {
@@ -129,7 +134,7 @@ export async function verifyFirstPersist(
   const skillPath = options.bundlePath
     ? path.resolve(options.bundlePath)
     : path.join(runRoot, 'SKILL.md');
-  const contentPath = path.join(runRoot, 'downloaded', `${uniqueName}.content`);
+  const contentPath = path.join(runRoot, 'downloaded', `${uniqueName}.zip`);
   let createdId: string | undefined;
   let result: FirstPersistResult | undefined;
   let workError: unknown;
@@ -191,14 +196,13 @@ export async function verifyFirstPersist(
       throw new Error('Direct retrieval returned a different skill.');
     }
 
-    log('Downloading the latest skill content without unpacking it...');
+    log('Downloading the skill ZIP and comparing SKILL.md with the upload...');
     const response = await api.retrieveContent(createdId);
     const bytes = await readStream(response.result);
     if (bytes.byteLength === 0) {
       throw new Error('Latest skill content was empty.');
     }
-    // This checks download availability, not archive integrity or skill execution.
-    // Do not infer either from a magic prefix or a matching name.
+    await verifyDownloadedSkill(bytes, bundle.content);
     const saved = await saveLatestContent(bytes, contentPath);
 
     result = {
