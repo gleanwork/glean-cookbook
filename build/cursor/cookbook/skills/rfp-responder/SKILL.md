@@ -40,9 +40,11 @@ Build "Answer an RFP or security questionnaire" following https://developers.gle
    cd rfp-responder && npm start
    ```
 
-   Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
-   link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
-   the first verification action.
+   Keep the server running and report its exact printed local URL as a clickable Markdown link.
+   For a non-cookie-SSO path, use available authorized browser tools to exercise the documented
+   workflow and verify the result. Hand off only actions that require the user. If tooling or
+   access is unavailable, report the blocker and the exact action needed; do not claim a live pass.
+   Cookie-SSO paths use the separate user-browser handoff and must not be automated.
 
 5. **Load the sample and check the refusals**
    Click Try the bundled sample, then Confirm and draft answers. The app parses 20 rows and merges the exact SSO duplicate before drafting 19 questions. SEC-01 and SEC-02 get cited answers. ACC-02 and ACC-03 are marked weak. ACC-04 and CMP-01 stay blank and need a subject matter expert.

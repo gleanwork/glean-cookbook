@@ -14,12 +14,18 @@ disable-model-invocation: true
 
 Build "Import a skill from GitHub" following https://developers.glean.com/cookbook/import-skill-from-github
 
-Ask these before running commands. Ask one at a time, waiting for each answer before asking the
-next — do not put them all in one message:
+Use nonsecret inputs the user already supplied. Ask only for missing information needed by the
+selected recipe path, resolving dependent choices before continuing. Do not request credential
+values in conversation; use the recipe's documented secure sign-in or secret-entry path. Required
+questions for this recipe are:
 
 - What is your work email address?
 
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+Follow the selected authentication path. If OAuth is selected, run the recipe's shipped login
+command with its declared scopes. If the documented token path is selected, skip OAuth login
+and use that path's declared secure configuration. Keep sign-in and secret entry user-controlled.
+Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
+path when the documented one fails.
 
 1. **Copy the project onto your machine**
    Copy the runnable TypeScript GitHub import CLI and credential-free MSW fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.

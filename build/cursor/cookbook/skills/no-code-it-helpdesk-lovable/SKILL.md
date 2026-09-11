@@ -12,8 +12,10 @@ disable-model-invocation: true
 
 Build "Build an IT helpdesk page in Lovable" following https://developers.glean.com/cookbook/no-code-it-helpdesk-lovable
 
-Ask these before running commands. Ask one at a time, waiting for each answer before asking the
-next — do not put them all in one message:
+Use nonsecret inputs the user already supplied. Ask only for missing information needed by the
+selected recipe path, resolving dependent choices before continuing. Do not request credential
+values in conversation; use the recipe's documented secure sign-in or secret-entry path. Required
+questions for this recipe are:
 
 - What is your work email? It is used once to discover your Glean tenant.
 - What IT topic do you know your docs cover?

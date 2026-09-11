@@ -13,14 +13,20 @@ disable-model-invocation: true
 
 Build "Stream a cited Chat response" following https://developers.glean.com/cookbook/streaming-chat-with-citations
 
-Ask these before running commands. Ask one at a time, waiting for each answer before asking the
-next — do not put them all in one message:
+Use nonsecret inputs the user already supplied. Ask only for missing information needed by the
+selected recipe path, resolving dependent choices before continuing. Do not request credential
+values in conversation; use the recipe's documented secure sign-in or secret-entry path. Required
+questions for this recipe are:
 
 - What is your work email address?
 - What question do you want to ask about content in your Glean instance?
 - What follow-up question should use the same conversation?
 
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+Follow the selected authentication path. If OAuth is selected, run the recipe's shipped login
+command with its declared scopes. If the documented token path is selected, skip OAuth login
+and use that path's declared secure configuration. Keep sign-in and secret entry user-controlled.
+Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
+path when the documented one fails.
 
 1. **Scaffold the project**
    Copies the runnable TypeScript Chat CLI and fixture tests into a new directory. OAuth login and secure token storage come from the pinned `@gleanwork/auth` package.

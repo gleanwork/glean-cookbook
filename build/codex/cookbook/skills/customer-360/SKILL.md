@@ -25,23 +25,32 @@ Path A — parallel Platform Search tiles + Platform Chat synthesis
 
 ### Select the run mode
 
-Before asking setup questions, silently check whether `GLEAN_COOKBOOK_DEMO` is exactly `true`; do
-not print the environment or the variable value.
+This applies only when the selected recipe explicitly declares a presentation-demo path.
+Do not infer demo support merely because this shared instruction is present. Where supported,
+check whether `GLEAN_COOKBOOK_DEMO` is exactly `true` without printing environment values.
 
-- When it is `true`, use the bundled sample-data path: skip all setup questions, authentication,
-  and fixture verification output; after scaffolding and installing, run `npm run demo` and follow
-  the standard browser handoff.
-- Otherwise, never mention or offer demo, sample, or fixture mode. Skip the fixture-only step and
-  follow the normal configured run, including its setup questions, authentication, and live
-  verification.
+- When enabled, follow the recipe's documented sample-data command and its applicable handoff.
+  Skip only configuration and authentication that the documented demo does not need. Label the
+  result as a demo, not live verification.
+- Otherwise, follow the normal configured path. Do not offer an undeclared or gated demo or
+  silently replace live calls with sample data.
 
-Ask these before running commands. Ask one at a time, waiting for each answer before asking the
-next — do not put them all in one message:
+Offline fixture tests are separate from presentation demos. Run required tests in either mode;
+do not suppress their failures or skip them just because demo mode is disabled.
+
+Use nonsecret inputs the user already supplied. Ask only for missing information needed by the
+selected recipe path, resolving dependent choices before continuing. Do not request credential
+values in conversation; use the recipe's documented secure sign-in or secret-entry path. Required
+questions for this recipe are:
 
 - What is your work email? It is used once to discover your Glean tenant.
 - Which of your customers should this page be about? Use the name the way your Glean documents spell it, not your own company or Glean instance name.
 
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+Follow the selected authentication path. If OAuth is selected, run the recipe's shipped login
+command with its declared scopes. If the documented token path is selected, skip OAuth login
+and use that path's declared secure configuration. Keep sign-in and secret entry user-controlled.
+Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
+path when the documented one fails.
 
 1. **Copy the project onto your machine**
    Creates a customer-360 folder in whatever directory you run this from. Every command after this one runs inside that folder.
@@ -86,22 +95,30 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```bash
    cd customer-360 && npm start
    ```
-   Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
-   link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
-   the first verification action.
+   Keep the server running and report its exact printed local URL as a clickable Markdown link.
+   For a non-cookie-SSO path, use available authorized browser tools to exercise the documented
+   workflow and verify the result. Hand off only actions that require the user. If tooling or
+   access is unavailable, report the blocker and the exact action needed; do not claim a live pass.
+   Cookie-SSO paths use the separate user-browser handoff and must not be automated.
 
 ### Platform Agents
 
 Path B — Platform Agents createRun for prescriptive account briefs
 
-Ask these before running commands. Ask one at a time, waiting for each answer before asking the
-next — do not put them all in one message:
+Use nonsecret inputs the user already supplied. Ask only for missing information needed by the
+selected recipe path, resolving dependent choices before continuing. Do not request credential
+values in conversation; use the recipe's documented secure sign-in or secret-entry path. Required
+questions for this recipe are:
 
 - What is your work email? It is used once to discover your Glean tenant.
 - Which of your customers should this page be about? Use the name the way your Glean documents spell it, not your own company or Glean instance name.
 - What is the ID of your Account Brief agent? It must be a conversational agent, not a form-triggered one.
 
-Use the scaffold's shipped login command. Never implement or modify OAuth during setup.
+Follow the selected authentication path. If OAuth is selected, run the recipe's shipped login
+command with its declared scopes. If the documented token path is selected, skip OAuth login
+and use that path's declared secure configuration. Keep sign-in and secret entry user-controlled.
+Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
+path when the documented one fails.
 
 1. **Build the Account Brief agent**
    In Agent Builder, create a conversational agent that writes an account brief, and copy its ID from the browser URL. It must be conversational, because this page sends it a question and reads the reply. A form-triggered agent will not work here.
@@ -142,6 +159,8 @@ Use the scaffold's shipped login command. Never implement or modify OAuth during
    ```bash
    cd customer-360 && npm start
    ```
-   Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
-   link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
-   the first verification action.
+   Keep the server running and report its exact printed local URL as a clickable Markdown link.
+   For a non-cookie-SSO path, use available authorized browser tools to exercise the documented
+   workflow and verify the result. Hand off only actions that require the user. If tooling or
+   access is unavailable, report the blocker and the exact action needed; do not claim a live pass.
+   Cookie-SSO paths use the separate user-browser handoff and must not be automated.

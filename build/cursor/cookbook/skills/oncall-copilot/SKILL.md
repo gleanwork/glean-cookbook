@@ -40,9 +40,11 @@ Build "On-call Copilot" following https://developers.glean.com/cookbook/oncall-c
    cd oncall-copilot && npm start
    ```
 
-   Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
-   link. Ask the user to click the link in their normal browser and confirm the page is ready. Then give
-   the first verification action.
+   Keep the server running and report its exact printed local URL as a clickable Markdown link.
+   For a non-cookie-SSO path, use available authorized browser tools to exercise the documented
+   workflow and verify the result. Hand off only actions that require the user. If tooling or
+   access is unavailable, report the blocker and the exact action needed; do not claim a live pass.
+   Cookie-SSO paths use the separate user-browser handoff and must not be automated.
 
 5. **Fire the alarms and test the gate**
    The trigger row has one button per alarm. PAY-2231 gets a probable cause and the past incident it rests on. PAY-2232 gets no cause, because no past incident matches it, and its proposed fix drops to filing a ticket. PAY-2233 has the agent name an action that is not in the registry, so it is refused before any approval card appears. For a refused approval, select PAY-2231 or PAY-2232 in the queue, switch Acting as to the person who is neither on call nor the owner, and approve anyway: the request comes back 403 and the audit log records it. To watch a proposal hand off without executing, force the approval on that same incident to expire.
