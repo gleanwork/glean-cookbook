@@ -9,7 +9,7 @@
     "start": "tsx src/cli.ts",
     "verify": "tsx src/cli.ts verify --yes",
     "test": "vitest run",
-    "lint": "eslint src",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:all": "npm run test && npm run lint && npm run typecheck"
   },
