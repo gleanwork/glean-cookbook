@@ -13,19 +13,25 @@ mise exec -- pnpm install
 mise exec -- pnpm test
 ```
 
-Open a PR against `main`; one approving review is required.
+Recipe, checker, generator, and runtime changes go through a PR against `main` with an
+approving review. Instruction-only changes may go directly to `main` when a maintainer
+explicitly authorizes that action and repository policy permits it. Never bypass required
+checks or branch rules.
 
 Before pushing, run:
 
 ```bash
+mise exec -- pnpm build:registry
 mise exec -- pnpm format
 mise exec -- pnpm validate:registry
-mise exec -- pnpm build:registry
 ```
 
 Recipe PRs update `registry.json`, but do not include generated plugin output. CI renders and
 validates the plugin in a temporary workspace. After CI succeeds on `main`, the `Sync plugin
-outputs` workflow commits the generated plugin output to `main` automatically.
+outputs` workflow commits the generated plugin output to `main` automatically. Hand-authored
+`plugin/partials/*.md`, the conventions skill, and unmarked prose in the browse skill are
+shared instruction sources, not generated recipe skills. Review changes to those sources
+separately from recipe implementation changes; never edit their generated copies.
 
 `pnpm test` also discovers every npm package under `recipes/` and `examples/`. It runs `check` when
 a package declares it, otherwise `test`, after installing from that package's own lockfile. Keep
@@ -51,33 +57,41 @@ generates `docs/cookbook/{id}.mdx` from `registry.json` when it runs `pnpm regis
 `pnpm recipes:compile` (see [The registry](#the-registry)). Wait for that generated page, or run
 those two commands in a site checkout to preview it. Do not create or edit the MDX by hand.
 
-Previewing is the only reason to run them: the result is scratch, not a change to submit. A
-recipe ships when it merges here, so **don't open a companion PR on the site to publish it** —
-the site's scheduled sync regenerates all of it and auto-merges its own PR.
+Previewing is the only reason to run them locally: the result is scratch, not a change to
+submit. **Do not open a companion PR on the site to publish recipe content.** The existing
+scheduled sync generates its own PR with auto-merge enabled. Confirm required approvals,
+checks, and deployment have completed; neither a merge here nor the schedule proves that
+the page is deployed. See [Release and verification lifecycle](#release-and-verification-lifecycle).
 
 Do not commit generated plugin skills, manifests, or `build/` output in a recipe PR. The plugin's
 skills are generated from `registry.json` in CI and are committed automatically after the merge
 lands on `main`.
 
-If you're building a recipe from a spec handed to you (e.g. a Linear ticket with a validated registry
-entry attached), the entry is normative — copy it in unchanged and build the code to match what it
-promises. Demo queries must be answerable on a reader's own instance, and `aiPrompt` must actually
-scaffold what it claims to.
+A supplied spec or ticket defines the agreed developer outcome. Review its proposed registry
+entry and implementation details against current supported APIs before copying them. Correct
+bad commands, scopes, and assumptions at their source, with a documented rationale. A change
+to the promised capability, safety guarantees, or scope needs explicit agreement from the
+scope owner; do not weaken expectations just to pass verification. Keep `demoQueries` and
+`expectedBehavior` accurate and meaningful. Examples must work with appropriate content from
+a reader's own instance, and `aiPrompt` must produce what it promises.
 
 ## Recipe directory conventions
 
 Each `recipes/{id}/` directory is a **self-contained, runnable example** — it should work if someone
-clones just that directory (plus repo-root env var docs) into a fresh project.
+copies just that directory into a fresh project. Include all required setup documentation
+and templates in the copied directory; do not require unstated repo-root files.
 
 - **Language subdirectories** where a recipe ships more than one client (e.g.
   `recipes/permissions-aware-retrieval/python/`, `.../typescript/`).
-- **A `README.md` per recipe** — the quickstart for someone browsing GitHub directly. Prose lives on
-  the dev site page instead. Recipes with no standalone runnable code (e.g.
+- **A `README.md` per recipe** — the quickstart for someone browsing GitHub directly. Keep its
+  commands and explanations consistent with the page source in `recipe.json`. Recipes with no standalone runnable code (e.g.
   `build-engineering-portal/`, `embed-search-chat/`) still get a directory with a short README
   explaining why.
-- **No hardcoded credentials, ever.** All recipes read `GLEAN_INSTANCE` and `GLEAN_API_TOKEN` (or the
-  recipe-specific scoped token) from the environment. Include a `.env.example` if the recipe needs
-  more than those two.
+- **No hardcoded credentials, ever.** Use the recipe's declared authentication path: a supported
+  auth library and its secure store, documented environment variables, a host secret store, or
+  browser SSO. Do not require API tokens for a cookie-SSO path. Include `.env.example` when that
+  path uses `.env`, with required variable names and comments matching the actual code. Never
+  request secrets in conversation, log them, or embed their values in commands.
 - **Pinned dependencies.** Glean SDKs (`glean-api-client`, `@gleanwork/api-client`,
   `@gleanwork/web-sdk`, `glean-indexing-sdk`) are pinned to an exact released version — no `^`, `~`,
   or `latest`. CI (`pinned-deps`) fails a recipe that isn't, for both npm and Python (including PEP
@@ -112,7 +126,8 @@ it's out of sync with the `recipe.json` files.
 
 The dev site pulls the built registry with `mise exec -- pnpm registry:sync` then
 `mise exec -- pnpm recipes:compile`. Its `sync-cookbook-registry` workflow runs both every 15
-minutes and opens an auto-merging PR, so publishing a recipe needs nothing from you there.
+minutes and opens a PR with auto-merge enabled. This is the publication path, not evidence that a
+particular sync or deployment has completed.
 The sync generates one `docs/cookbook/{id}.mdx` per recipe, matched by filename === `id`.
 Those pages are generated output, not authored prose.
 
@@ -148,16 +163,54 @@ failure and cleanup behavior, writing, composition, generated surfaces, regressi
 and deployment confirmation. The executable gates below support that procedure; they do not
 replace the walkthrough.
 
-Record each gate as PASS, FAIL, BLOCKED, or N/A with a reason, tied to the candidate revision.
-Missing credentials, hosts, or a candidate preview are BLOCKED, never a pass. A recipe is
-**ready to deploy** only after all applicable pre-deployment gates pass. It is **deployed and
-verified** only after the existing site sync and deployment are confirmed and the production
-page, intended discovery paths, and applicable distributed plugin are checked. A visibility
-flag, merge, or HTTP 200 response alone is insufficient. This evidence applies to the tested
-revision and environment; it is not a guarantee against future platform changes.
+Record each gate as PASS, FAIL, BLOCKED, or N/A with a reason, tied to the tested revision.
+Missing credentials, hosts, or a required rendered page are BLOCKED, never a pass. A reproduced
+failure of promised behavior is FAIL even when the cause is in the platform. Keep the cause
+separate from the verdict. This evidence applies to the tested revision and environment; it
+is not a guarantee against future platform changes.
 A reader-pass walk of `/cookbook:{id}` needs `mise exec -- pnpm build` locally so the generated
 skill is current. Do not commit that plugin output. Recipe PRs still push with
 `mise exec -- pnpm build:registry` as above.
+
+### Release and verification lifecycle
+
+Use these states consistently. A later state requires its own evidence:
+
+1. **Ready for review:** the authored design, commands, and copy meet the quality bar, and
+   applicable local tests and repository checks pass. Known safety defects are resolved.
+   This is not an end-to-end or live verification claim.
+2. **Merged:** an authorized, reviewed source change is on Cookbook `main`. The site and
+   distributed plugin may still be on an older revision.
+3. **Deployed for review:** the existing sync and deployment expose the intended revision.
+   Prefer preview visibility for new recipes that still need a reader pass. A preview is
+   unlisted, not hidden. Public promotion is an explicit publication decision.
+4. **End-to-end verified:** read the actual deployed page (preview or public), then execute
+   each printed command in order from a fresh directory as a developer would. Fill only
+   documented inputs. Do not rewrite commands, inject unpublished fixes, or substitute a
+   local test suite. Verify each promised outcome, advertised variant, and authentication
+   path with authorized live checks. Record code, page, and distributed-artifact revisions.
+5. **Published and verified:** the public page and intended discovery/navigation paths work,
+   and the distributed plugin agrees with the verified source where applicable. A preview
+   can be end-to-end verified without being publicly published.
+
+A failure restarts the loop: record the first failure, correct its owning source, rerun local
+checks, submit the fix, confirm the next sync/deployment, and repeat the affected cold run.
+Do not call an existing public recipe verified merely because it was already public. Keep
+its ticket open until publication, verified merge into another recipe, or explicit verified
+retirement meets the agreed acceptance criteria.
+
+Hidden integrations can be assessed internally using a scratch render from the existing
+recipe-skill renderer, without changing visibility or shipping that render. This checks the
+candidate instructions only. A hidden recipe cannot satisfy the deployed-page gate; expose
+an authorized preview before claiming end-to-end verification. For preview integrations,
+use an internal skill render from the same source revision for the blind-build check; do
+not expect a public plugin skill to exist yet.
+
+Fixture tests and recorded examples are useful local evidence. A runnable demo mode is
+optional and appropriate only when it helps teach the capability. Keep it explicitly labeled
+and opt-in; do not require an artificial demo mode for every live API quickstart. For existing
+presentation demos, honor `GLEAN_COOKBOOK_DEMO` and the recipe's declared demo support. An
+optional demo never replaces testing the normal configured path or required offline tests.
 
 What "verify" means depends on the recipe's `buildMethod`:
 
@@ -172,7 +225,10 @@ What "verify" means depends on the recipe's `buildMethod`:
 - **`third-party-build`** recipes (Lovable, Replit) put the builder paste in a four-backtick `text`
   fence and name that file as `pastePromptFile`. The docs copy button inlines that fence as
   `pastePrompt` so a reader can copy without cloning this repo. `aiPrompt` is only for a coding
-  assistant filling placeholders, not for pasting into the builder.
+  assistant filling placeholders, not for pasting into the builder. Put the actual hosted
+  verification actions and expected outcomes in the authored steps. Structured skills render
+  those steps; they do not automatically include the unstructured verification partials.
+  Inspect the generated instructions rather than assuming a shared partial reaches every recipe.
 
 For integrate recipes especially, verify with a **genuinely fresh build, not inspect-and-patch**:
 spawn an isolated agent (a fresh subagent, or a scratch git worktree) whose _only_ input is the
@@ -195,26 +251,31 @@ It requires real credentials and **fails rather than skipping** when they're abs
 that quietly skips reports success for an unverified recipe, which is worse than no gate at all. Each
 module declares the environment it needs, so a run stops with a list of what to set.
 
-Two recipes have no module by design. `buildMethod: 'third-party-build'` means the app is built and
-run by Lovable or Replit, so there is nothing of ours to drive — the driver prints the manual
-checklist (each `demoQuery` with its `expectedBehavior`) for a human to walk instead. `integrate`
-recipes ship no code either, so theirs verify the platform behaviour the recipe tells readers to
-build on, not a reader's integration. If those fail, the recipe is pointing people at something that
-doesn't work.
+For `third-party-build` recipes, the app runs in the named host. The driver prints the
+acceptance scenarios; it does not verify the hosted app. Execute those scenarios in that
+host with the available authorized tools, handing off only actions that require the user.
+If access is unavailable, record BLOCKED rather than treating the printed scenarios as a pass.
+For `integrate` recipes, a platform-only verifier does not prove that the generated integration
+works. Build from the instructions and test the integration in its declared environment.
 
-Once you've verified, set `lastVerified` to that date in the recipe's registry entry.
+Once the required rendered-page and live checks succeed, set `lastVerified` to that date
+in the authored `recipe.json` and rebuild the registry. A fixture or test-suite pass alone
+does not qualify.
 `mise exec -- pnpm check:freshness` (also runs in CI, informational only) reports which recipes
 have never been
 verified this way, or haven't been re-checked in 90+ days — treat either as the trigger to schedule a
 fresh-build pass.
 
-It does **not** detect a recipe whose `aiPrompt`/`llmContext` changed without a fresh `lastVerified`
-bump. If you edit either field, reset `lastVerified` to `unset` (or schedule the re-run yourself)
-rather than relying on the freshness report to notice for you.
+The freshness report does not infer whether an edit invalidated previous evidence. Remove
+`lastVerified` when changes to prompts, commands, authentication, dependencies, or runtime
+behavior invalidate the verified path. Restore it only after rerunning affected checks.
+Omit the property to represent an unverified recipe; the schema does not accept the literal
+string `unset`. Scheduling a run is not evidence that it passed.
 
 ## Styling a recipe UI
 
-Don't hand-roll CSS. Every recipe that renders a UI links one shared stylesheet:
+For standalone cookbook UI scaffolds, compose the supplied shared stylesheet rather than
+rebuilding its styling primitives:
 
 ```html
 <link rel="stylesheet" href="/glean-cookbook.css" />
@@ -239,6 +300,10 @@ Two sources, both at the repo root:
 distributes the shared authentication and local-server runtimes. Those copies are committed—a recipe
 is scaffolded one directory at a time with `tiged`, so root files would never reach it. CI evaluates
 the plan in read-only mode and fails if any output is stale.
+
+Integrations into an existing app should follow that app's design system; do not impose a
+second global stylesheet. Third-party builders follow the recipe's host-specific styling
+instructions. Style the surrounding page, not the internals of embedded Glean components.
 
 Primitives are presentational and carry no copy. What an empty state _says_ is a per-recipe decision;
 how it _looks_ is not.

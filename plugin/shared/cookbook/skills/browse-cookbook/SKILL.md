@@ -6,11 +6,12 @@ description: Use when the user asks what Glean cookbook recipes exist, wants to 
 # Browse the Glean cookbook
 
 Each recipe below has a matching slash command, `/cookbook:{recipe-id}`, that guides the build
-against the user's own Glean instance. Some recipes require a browser, an admin-console step, or a
-handoff to another tool; keep those steps with the user. If the user names a use case rather than a recipe id (e.g.
+against the user's own Glean instance. Use available authorized tools to follow the selected
+recipe. Hand off only actions requiring the user, such as sign-in, cookie SSO, or unavailable
+host controls. If the user names a use case rather than a recipe id (e.g.
 "a Q&A page" or "an onboarding flow"), match it to the closest recipe from the list and confirm
 before running its command. Full write-ups live at
-[developers.glean.com/cookbook](https://developers.glean.com/cookbook/{recipe-id}).
+[developers.glean.com/cookbook](https://developers.glean.com/cookbook).
 
 <!-- pluginpack-generated:recipes:start -->
 

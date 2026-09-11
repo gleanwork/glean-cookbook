@@ -1,8 +1,8 @@
 # Glean Cookbook
 
-Customer-ready examples of building on the [Glean platform](https://developers.glean.com) — the Indexing API, Platform API, Web SDK, Connector SDK, MCP, and Agents. This repo is the code companion to the **Cookbooks** section of [developers.glean.com](https://developers.glean.com). Each recipe includes a runnable scaffold, integration instructions, or a build prompt appropriate to the surface it teaches.
+Examples and guides for building on the [Glean platform](https://developers.glean.com) — the Indexing API, Platform API, Web SDK, Connector SDK, MCP, and Agents. This repo is the code companion to the **Cookbooks** section of [developers.glean.com](https://developers.glean.com). Each recipe includes a runnable scaffold, integration instructions, or a build prompt appropriate to the surface it teaches.
 
-> **Status:** public. Recipes marked hidden are still in development and are not customer-ready.
+> **Status:** public repository. Individual recipes may be public, unlisted previews, or hidden development work. Visibility alone does not establish that a recipe has been verified.
 
 ## Build a recipe
 
@@ -62,7 +62,7 @@ Full write-ups for each live at
 Every recipe has a directory under `recipes/{id}/` with its own README. Scaffold recipes are
 self-contained and runnable when their documented prerequisites are met. Integration recipes provide
 snippets for an existing app; third-party recipes provide a prompt for their hosted builder. Recipes
-that need credentials read them from environment variables or a server-side secret store. Web SDK
+that need credentials use their documented auth library, environment variables, or host secret store. Web SDK
 SSO paths use the signed-in user's browser session and require no API token.
 
 ```
@@ -81,5 +81,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for adding a recipe, the registry, verifi
 ## Related
 
 - [developers.glean.com/cookbook](https://developers.glean.com/cookbook) — the published recipes
-- [glean-developer-site](https://github.com/gleanwork/glean-developer-site) — the dev site repo; owns the recipe schema and MDX pages
+- [glean-developer-site](https://github.com/gleanwork/glean-developer-site) — consumes this repo's canonical schema and registry to generate the developer-site pages
 - Linear project: **Glean Cookbook (GO)** (team PACT) — tracks every recipe, the brand kit, the corpus, and the `glean-cookbook` plugin

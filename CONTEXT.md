@@ -1,11 +1,15 @@
 # Glean Cookbook
 
-The cookbook describes repeatable ways to build with Glean and the interaction contracts coding agents use to deliver them.
+The cookbook teaches the implementations we recommend for building with Glean. Its authored
+recipes are the source of truth for developer instructions and coding-agent execution contracts.
+Rendered pages and skills present that source; they do not repair it.
 
 ## Language
 
 **Recipe**:
-A customer-facing, repeatable build or integration outcome composed from one or more Glean platform capabilities.
+A customer-facing, repeatable build or integration outcome composed from supported Glean
+capabilities and idiomatic packages. It is a recommended implementation within a stated scope,
+not merely a runnable demo.
 
 **Variant**:
 One implementation path within a recipe. Variants may use different surfaces, authentication methods, or execution types while producing the same recipe outcome.
@@ -26,6 +30,12 @@ _Avoid_: Recipe type
 
 **Demo mode**:
 An explicitly enabled sample-data execution path. It is available only when the cookbook demo environment flag is present and is never offered during a configured run.
+
+**Verification**:
+Evidence that the actual deployed instructions produce the promised outcome when followed cold
+in the declared environment. Local tests, a merge, a visibility flag, and deployment alone are
+not verification. See the [release lifecycle](CONTRIBUTING.md#release-and-verification-lifecycle)
+for the distinct review, merge, deployment, verification, and publication states.
 
 ## Build architecture
 

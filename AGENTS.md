@@ -34,7 +34,8 @@ When a failure appears, step back before patching:
    another workaround. The smallest textual patch is not the cleanest fix if it preserves
    the wrong design.
 4. Verify the corrected instructions end to end, then confirm the code still teaches the
-   approach we would recommend starting from scratch.
+   approach we would recommend starting from scratch. Do not weaken a promised outcome or
+   safety guarantee to fit the implementation; a scope reduction needs explicit approval.
 
 Use supported SDKs, packages, and runtime facilities. Verify current API and scope support
 before adding compatibility behavior. Do not invent fallback layers to preserve an
@@ -66,15 +67,30 @@ workarounds are implementation details, not evidence that incorrect instructions
   generated page and skill preserve it. A test of transformed output alone cannot prove
   that the source instructions are correct. Fixtures do not replace a live reader pass.
 
-## Recipe work does not touch glean-developer-site
+## Instruction ownership
 
-A recipe ships when it merges here. Do not open a companion pull request on
+- This file owns the quality bar and source-first decision rules.
+- `CONTEXT.md` owns domain terms. `CONTRIBUTING.md` owns authoring, the release lifecycle,
+  and executable checks. The review skill applies those rules; it does not create exceptions.
+- Schemas define valid structure, not proof of correct behavior. Tickets define the agreed
+  outcome, not immutable implementation details. If either contains a defect, resolve it at
+  the owning source rather than silently working around it or reducing the agreed outcome.
+- Checkers, generated output, historical examples, and consumer workarounds are not higher
+  authorities. Correct conflicting assumptions and preserve valid safety checks.
+
+## Recipe publication uses the existing developer-site sync
+
+Merging here makes recipe source available for the existing sync. It does not prove that
+sync, deployment, discoverability, or live verification has completed. Follow the lifecycle
+in `CONTRIBUTING.md`: review source and run local checks, merge with authorization, confirm
+sync and deployment, then execute the rendered instructions cold. Do not open a companion pull request on
 [glean-developer-site](https://github.com/gleanwork/glean-developer-site) to publish it,
 and do not write recipe content into that repository by hand.
 
 The developer site regenerates its entire copy of the cookbook on a 15-minute schedule
 (`sync-cookbook-registry`), which runs `registry:sync` and `recipes:compile` there and opens
-a pull request with auto-merge enabled:
+a pull request with auto-merge enabled. Required checks or approvals can still delay it;
+confirm its actual state rather than assuming the schedule guarantees publication:
 
 | generated on the developer site      | built from                                                                       |
 | ------------------------------------ | -------------------------------------------------------------------------------- |

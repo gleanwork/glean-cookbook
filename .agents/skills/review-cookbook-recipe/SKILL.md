@@ -1,209 +1,164 @@
 ---
 name: review-cookbook-recipe
 description: >-
-  Reviews Glean cookbook recipes for deployability: documented execution,
-  developer-facing writing, idiomatic package composition, and deployment evidence.
-  Use when reviewing a cookbook recipe, walking developers.glean.com/cookbook,
-  checking recipe.json setup copy, plugin /cookbook:{id} skills, first-run
-  npm start, Lovable or Replit prompts, or UX of recipes under recipes/<id>.
+  Reviews Glean cookbook recipes for reference-quality design, developer-facing
+  writing, documented execution, and end-to-end verification. Use when reviewing
+  recipe.json, a Cookbook page, a generated recipe skill, a first run, or recipe
+  publication readiness.
 license: MIT
 ---
 
 # Review a cookbook recipe
 
-Follow the rendered page as a developer with a Glean instance. Review documented execution, developer-facing writing, and idiomatic composition together. Use the ordered release checklist and evidence record in [references/checklist.md](references/checklist.md) for every recipe. Do not claim deployability from tests or source review alone.
-
-Gold copy: [cookbook#48](https://github.com/gleanwork/glean-cookbook/pull/48) (Customer 360). Do not clone its seven-step list onto MCP, Lovable, Replit, or `integrate` recipes.
-
-Do not invent a new bar. The criteria live in [references/checklist.md](references/checklist.md). The traps that change a score live in [references/gotchas.md](references/gotchas.md).
-
-## Pass
-
-The ordered release checklist defines **ready to deploy** and **deployed and verified**. These are separate claims. Every applicable gate needs evidence tied to the reviewed revision. Missing access is BLOCKED; an observed defect is FAIL. Resolve all defects in the three required quality gates before declaring deployability.
-
-Every mode also needs all four:
-
-- If the recipe is not hidden, you walked the published page cold, in order. Hidden recipes have no docs page. Skip that walk. Preview uses `?ff_recipe=<id>`.
-- The first printed command worked with no token and no special env.
-- If `isPublicRecipe` is true, the generated skill says the same steps as the page. Hidden and preview recipes have no `/cookbook:{id}` skill. Skip that walk.
-- No Block finding is open.
-
-A green test suite proves none of them. Should-fix exceptions outside the required quality gates need explicit reviewer acceptance, a rationale, owner, and review date. Park is recorded and left. Never waive a false safety claim or a broken documented path.
-
-## Mode
-
-| Mode        | When                                   | Score                                                         |
-| ----------- | -------------------------------------- | ------------------------------------------------------------- |
-| **Routine** | New recipe, rewrite, copy pass         | Block / Should-fix / Park                                     |
-| **Launch**  | Showpiece, Go-blocking, demo rehearsal | Per-cell PASS / FAIL / BLOCKED + cause, plus routine findings |
-
-Routine skips the own-instance live UI walk (step 5) only when the recipe makes no live claim. Deployability reviews must verify every promised live outcome. Launch always runs step 5 on your own instance. A missing prerequisite is BLOCKED, not a quiet pass.
-
-Cause tags (launch only): `docs`, `scaffold/plugin`, `content/data`, `platform/API`, `credentials/environment`, `browser UX`.
-
-## Working principles
-
-Apply the [recommended-implementation bar](../../../AGENTS.md#recipes-are-recommended-implementations-not-patched-demos), not merely a working-demo bar. Before fixing a failure, state the recommended developer path and the assumption or design choice that is wrong. Compare correcting that design with adding another mechanism. Prefer the smallest coherent root correction, not a patch that preserves the wrong design. Do not certify an implementation we would advise a developer to replace.
-
-1. **Printed first run.** After copy and install, the printed command works with no token and no extra env.
-2. **Copy talks to the reader.** Second person. One human action per step. Expected results name what appears on screen.
-3. **Compose, do not rebuild.** Prefer supported SDKs, runtime facilities, and established packages for supporting concerns. Keep recipe-specific sequencing small. Document and test any retained custom adapter against an actual package gap.
-4. **Fix the owning source first.** Follow [AGENTS.md](../../../AGENTS.md#fix-the-authored-recipe-not-its-presentation). Do not preserve bad instructions to satisfy a checker or repair them in a renderer. A shared-layer change needs a minimal failing example with valid authored input, or an explicitly requested shared feature.
-5. **One source.** Edit `recipe.json` and prompt files. Run `mise exec -- pnpm build` so plugin skills render locally. Commit authored recipe files (including prompt files) and regenerated `registry.json`. Do not commit `plugin/shared`, `build/`, `.pluginpack`, or the README table. Never hand-edit those generated files.
-
-## Walk
-
-Use the ordered release checklist as the execution record. This list indexes the detailed review guidance:
-
-```
-- [ ] 1. Surfaces
-- [ ] 2. Printed first run
-- [ ] 3. Copy
-- [ ] 4. One source
-- [ ] 5. Live claims (if asserted, or launch mode)
-- [ ] 6. Dual path and auth (if two codeAssets or two planners)
-- [ ] 7. Third-party extras (if buildMethod is third-party-build)
-- [ ] 8. Idiomatic composition
-- [ ] 9. Park the rest
-```
-
-### 1. Surfaces
-
-Walk `developers.glean.com/cookbook/<id>` cold, in order, from the published ref, when the recipe is not hidden. Preview: same path with `?ff_recipe=<id>`. Hidden recipes have no docs page. That absence is not a Block. Not the README. Not a local checkout. Not a remembered `.env`.
-
-Then walk `plugin/shared/cookbook/skills/<id>/SKILL.md` (`/cookbook:<id>`) when `isPublicRecipe` is true. It must say the same steps. Hidden and preview recipes have no skill file. That absence is not a Block.
-
-Freeze the first failure before diagnosing. Use local source to locate and fix the defect, not as substitute evidence for the published walkthrough. Classify the cause before editing: incorrect authored instructions, correct instructions mishandled by a consumer, or a stale generated/deployed revision. Fix that cause rather than adding a workaround in a downstream component.
-
-A step `description` in `recipe.json` is the only prose field a step has. It renders as raw text on the site and as markdown in the skill. Write for both.
-
-### 2. Printed first run
-
-Read `buildMethod` in `recipe.json`.
-
-**All recipes.** Execute the raw authored command sequence in one shell unless a new shell is explicitly documented. Do not insert directory resets or normalize commands in the test. Confirm the generated instructions preserve that sequence. See [the source-repair gotcha](references/gotchas.md#fix-repeated-directory-changes-in-the-recipe).
-
-No "ready" while required blanks are empty. `--help` is not a first run. A GitHub SSH key is special env. Run the printed scaffold command on a host without one (see the scaffold gotcha).
-
-**`scaffold` (runnable).** If the app needs Glean, the printed default is the fixture or recorded path, as a numbered step. Live is a later "adapt to your corpus" section. Do not ship fake live mode. The UI states which mode it is in. The UI surfaces server errors (no 500 as an empty state). Sample buttons work in the mode that offers them. Verify spawns the documented command, not a hidden `tsx` with injected env. Verify loads `.env`. A stop-the-server note sits before verify.
-
-**`integrate`.** Blind rebuild from the generated `SKILL.md` alone. Do not inspect-and-patch `recipes/<id>/`. See `CONTRIBUTING.md`.
-
-**`third-party-build`.** Step 7.
-
-### 3. Copy
-
-Review every reader-facing surface, not only the Problem paragraph: summary, prerequisites, commands, expected output, code walkthrough, architecture labels, guardrails, limitations, next steps, README, and generated skill. Load the clear-writing skill when available. If absent, use the available writing guidance and record that substitution; do not claim to have used a missing skill. Keep agent-only instructions in `aiPrompt`, `llmContext`, or execution machinery, not in shared page prose.
-
-- Second person, present tense, one narrator. Never "the user supplied" / "answers already supplied" / "Enter the user's work email."
-- One human action per step. Sign-in fills URL + token only. Leftovers (`GLEAN_ACCOUNT_NAME`, agent id, prefixes, `WATCHED_SERVICES`) are a later step. `login --require` lists blanks instead of printing ready. `--require` must catch missing keys, not only empty assignments.
-- Step titles name a human action: "Copy the project onto your machine", "Sign in to Glean". Banned: "Scaffold the project", "Set credentials", "Run it."
-- OAuth vs copy-`.env.example` as two exclusive sentences. Comment each `.env.example` key: what login fills vs what the reader fills.
-- Tenant-sounding names explained in place (`GLEAN_ACCOUNT_NAME` is the customer's company, not the Glean tenant). Do not rename it.
-- Expected results name on-screen outcomes (button, card, cited answer). Not theses, not internals.
-- No em dashes, glyphs (`·`, `→`), markdown, or bare emails in `description` fields.
-- Drop prereqs the scaffold already sends.
-- UI chrome leaks no file names, env vars, Path A/B badges, endpoints, or raw SDK JSON. Errors are `error` + `hint` on every path.
-- Do not change `demoQueries` count or order. Reword free.
-
-### 4. One source
-
-Edit `recipes/<id>/recipe.json` and prompt files. Authors pushing a recipe run `mise exec -- pnpm build:registry` as `CONTRIBUTING.md` says. A reader-pass review also runs `mise exec -- pnpm build` so `/cookbook:{id}` renders locally. Do not use `build:registry` alone when you need to walk that skill.
-
-A recipe PR commits authored recipe files and the regenerated `registry.json`. It does not commit `plugin/shared`, `build/`, `.pluginpack`, or the README recipe table. After CI passes on `main`, `.github/workflows/sync-plugin.yml` runs `pnpm build` and commits those four. Flag a recipe PR that commits any of them.
-
-Never hand-edit: `registry.json`, plugin skills, README recipe table, `styles/tokens.css`, and on the site `docs/cookbook/<id>.mdx`, `data/cookbook-registry.json`, `src/data/recipes.json`, preview assets.
-
-Site preview of unpushed work: `GLEAN_COOKBOOK_REF=<branch> pnpm registry:sync && pnpm recipes:compile`. `registry:sync` pulls GitHub `main` by default.
-
-If `aiPrompt` or `llmContext` changed, set `lastVerified` to unset.
-
-### 5. Live claims
-
-Apply when the page asserts live behavior, or in launch mode.
-
-- Own instance. No seeded corpus. No Acme / Alex Kim / Globex / "November" as live facts.
-- Live copy claims only what holds on any corpus. Fixture-corpus evidence (named incidents, SOC 2 rows) stays on the fixture path.
-- Citations present and grounded where promised. Off-corpus refuses or escalates. Nothing invented. Blank KPIs until cited.
-- If the recipe exists to teach X, X is reachable by clicking. A green `verify:fixture` HTTP assert is not a UI pass.
-- Fully exercise the app or stop. Do not score around a browser you cannot drive.
-- Socket Firewall / sandbox TLS in the agent wrapper is not a recipe defect. A missing platform capability is `platform/API`, not a recipe FAIL.
-- Secrets stay in ignored `.env` files, the authentication library's secure store, or the host secret store. Never through the conversation. Ask about shape, never value.
-
-Workarounds cannot cover: secret exposure, permission leak, unauthorized mutation, missing citations, false safety claims, act-as, or the agent driving a cookie-SSO URL.
-
-### 6. Dual path and auth
-
-Each `codeAssets` path is its own walkthrough. Path A passing carries nothing to Path B. Path labels must match the UI. If the page offers one scaffold with an optional planner, the copy says that.
-
-Auth rail shows the selected path's scopes, not the union. Cookie Web SDK declares `scopes: []` and that empty list wins. `requiredScopes` match actual calls.
-
-Cookie SSO: hand the reader a clickable URL. Do not open or automate it. No `chatId` with `initialMessage`.
-
-Per-instance files are not recipe files (`steps.example.json`, not `steps.json`).
-
-### 7. Third-party (`buildMethod: third-party-build`)
-
-- `recipe.steps` is not empty. First documented action is correct with no local `npm start`.
-- Copy button copies `pastePromptFile` (builder prompt), not `recipe.aiPrompt`.
-- Docs readers never clone this repo. Never "open `recipes/.../file`". Never a plugin-only helper as a numbered docs step.
-- Plugin users fill the prompt and stop. The topic the plugin asks for appears in the generated prompt.
-- Token path is Client API tokens (`?tab=client`) on every surface. Instance value is the slug (`acme`), not `app.glean.com`.
-- Secrets in the host secret store. Shared-token / keep-private warning stays.
-- Do not credit an unrun host build. `lastVerified` stays unset. `pnpm verify:recipe` prints the manual checklist and must not fake a pass. Untested does not belong in `limitations`.
-- `recipe.json`, prompt file, and README name the same verify pair.
-
-### 8. Idiomatic composition
-
-Inspect implementation, not just dependency names. Map authentication, credential storage, configuration, HTTP, retries, validation, and UI primitives to the packages or runtime facilities that own them. Keep the scaffold standalone and dependencies pinned as CONTRIBUTING requires.
-
-A short imperative sequence such as validate, create, retrieve, and delete is appropriate. A hand-written OAuth client, token store, `.env` parser, or HTTP abstraction is not justified when a supported package or runtime already supplies it. Thin adapters may handle a verified compatibility gap; record the gap, alternatives considered, and focused tests. Review retry safety for mutations separately from read retries. Prefer Platform APIs; unresolved capability gaps need an explicit decision, not an invented workaround.
-
-### 9. Park
-
-Record and move on for polish that does not affect a required gate: unlabeled inputs, KPI vs pills, spacing, architecture-diagram layout, and deliberate product cuts. A missing preview needed for verification is BLOCKED, not polish. An API migration can be deferred only when it is not required by the agreed recipe scope.
-
-## Severity
-
-Use only **Block**, **Should-fix**, **Park**.
-
-| Gate           | Meaning                                                                                                                                                    |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Block**      | Printed path cannot be followed, a page claim is unreachable, or a safety property is false. Tag **Block/safety** for the workaround-forbidden list above. |
-| **Should-fix** | Real defect. Reader can still succeed.                                                                                                                     |
-| **Park**       | Polish. Does not block the first run.                                                                                                                      |
-
-Old labels (`P0` to `P3`, `Act on`/`Consider`/`Leave alone`, `High`/`Medium`/`Low`): re-triage into this scale. `Act on` is not a gate.
-
-## Report
-
-```markdown
-## Verdict
-
-Mode: routine | launch
-Result: pass | fail | blocked
-Release: not ready | ready to deploy | deployed and verified
-Open Blocks: <n>
-Evidence: completed ordered checklist, candidate revision, reviewer, date
-Missing prerequisites: <explicit list or none>
-(Launch only: cell table with PASS/FAIL/BLOCKED + cause)
-
-## Findings
-
-| Gate | Finding | Surface | Evidence |
-
-## Parked
-
-| Item | Why parked |
-```
-
-Surfaces: `recipe.json` | published page | `SKILL.md` | README | running app.
-
-Do not declare PASS from a subagent. The parent scores live.
-
-## Machinery (do not restate)
-
-- `CONTRIBUTING.md` owns the verify gate, `buildMethod`, pinned SDKs, `lastVerified`, and which generated files a PR commits.
-- `plugin/scripts/generate-commands.mjs` (`isPublicRecipe`) and `schemas/recipe.schema.json` own `hidden` and `visibility: preview`.
-- Developer-site `AGENTS.md` owns the generated site files.
-- `plugin/shared/cookbook/skills/cookbook-conventions/SKILL.md` owns the auth handoff and no secrets in chat.
+Review the implementation we would recommend to a developer starting from scratch, not a
+demo repaired until it passes. A narrower copy or code review is useful, but cannot establish
+end-to-end verification.
+
+## Authority and scope
+
+- [AGENTS.md](../../../AGENTS.md) owns the quality bar and source-first correction rules.
+- [CONTEXT.md](../../../CONTEXT.md) defines the domain terms.
+- [CONTRIBUTING.md](../../../CONTRIBUTING.md) owns authoring, executable checks, and the
+  [release lifecycle](../../../CONTRIBUTING.md#release-and-verification-lifecycle).
+- [references/checklist.md](references/checklist.md) is the execution/evidence record.
+- [references/gotchas.md](references/gotchas.md) records known traps, not alternative rules.
+
+Confirm the requested scope: review-only, implementation, or release verification. A review
+request does not authorize edits, commits, pushes, merges, live mutations, or communications.
+When implementation is authorized and findings are actionable, make bounded corrections and
+rerun the affected checks rather than repeatedly producing new audits.
+
+## Choose the correct fix
+
+State the intended developer outcome and the supported, idiomatic way to achieve it. Identify
+which assumption or design choice caused the failure; do not assume the existing design must
+be preserved. Distinguish bad authored source, a consumer mishandling valid source, and a stale
+generated/deployed revision.
+
+Correct the owning source. Do not repair command semantics in a renderer, add hidden directory
+resets, or keep unsupported behavior behind a compatibility wrapper. Correct a conflicting
+checker assumption while retaining its valid safety checks. Shared-layer changes require a
+minimal failure with valid authored input or an explicitly requested shared feature.
+
+A spec or ticket protects the agreed outcome, not defective commands or assumptions. Correct
+errors with evidence. Do not weaken the promised capability, safety guarantees, or acceptance
+criteria to fit the implementation without explicit scope-owner approval.
+
+## Walk the developer path
+
+1. Record the source revision, build method, variants, authentication paths, and intended
+   visibility. Review source design and copy and run applicable local checks before submission.
+2. After an authorized merge, trace the existing sync and deployment. Confirm the rendered page
+   and downloaded code correspond to the intended revision. Do not infer deployment from a
+   visibility flag, HTTP 200, merge, or successful sync workflow alone.
+3. Read `developers.glean.com/cookbook/<id>` cold. For a preview, use `?ff_recipe=<id>`.
+   Follow every rendered step from a fresh directory, filling only documented inputs. Record
+   the first failure before diagnosing it. Local source is for diagnosis, not substitute
+   evidence for the deployed walkthrough.
+4. Treat numbered commands as one shell session unless a new one is explicitly documented.
+   Test the raw authored sequence without rewriting and confirm the generated instructions
+   preserve it. `--help` or a fixture assertion is not the promised developer outcome.
+5. Exercise the actual interface and every advertised variant. For a CLI, execute its commands
+   and check results; for an app, exercise the UI; for a host configuration, use that host.
+   Use available authorized tools yourself. Hand off only actions requiring user participation,
+   such as sign-in, cookie SSO, or a host operation the tools cannot perform.
+6. For a public recipe, walk the generated and distributed `/cookbook:<id>` skill too. Verify
+   commands, authentication, scopes, outcomes, and public discoverability. Do not mark the
+   tracking issue Done until its agreed publication, merge, or retirement is verified.
+
+### Build-method differences
+
+- **Scaffold:** run the literal scaffold and package commands. Check clean installation,
+  declared runtime versions, pinned dependencies, and install-script policy. Do not regenerate
+  code from prose or silently patch the downloaded project during the reader pass.
+- **Integrate:** rebuild blindly from generated instructions, not by reading and repairing the
+  reference implementation. Test the resulting integration in the declared environment.
+- **Third-party build:** use the named host and the `pastePromptFile`/copied builder prompt,
+  not a local substitute or an agent-only prompt. Verify the hosted result. Missing host access
+  is BLOCKED, not a reason to assert success or automatically delegate the whole test to the user.
+
+Hidden recipes have no deployed page or public skill. An internal scratch render from the
+existing recipe-skill renderer can support source and blind-build review without changing
+visibility. Preview integrations can use such a render from the matching source revision.
+These are not distributed-plugin passes. An authorized deployed preview is required before
+claiming end-to-end verification of a hidden candidate.
+
+### Tests and optional demos
+
+Offline tests are required where appropriate, but a demo mode is not mandatory for every
+recipe. For existing presentation demos, honor the documented `GLEAN_COOKBOOK_DEMO` opt-in and
+verify that the recipe actually supports the demo command. Do not substitute sample results
+for live behavior, invent a demo mode, or skip required offline tests because demo mode is off.
+Any offered mode must be labeled and its controls must work in that mode.
+
+## Review all reader-facing writing
+
+Read title, summary, problem, prerequisites, steps, expected results, walkthrough, architecture
+labels, guardrails, limitations, next steps, README, and generated skill. Use the clear-writing
+skill when available; otherwise record the writing guidance used.
+
+Use direct developer language, consistent terminology, and actionable step titles. Explain
+what happens and what success looks like. Keep agent-only directions in agent fields. Remove
+unexplained jargon, internal harness language, redundant prerequisites, and false promises.
+Formatting must render correctly on each surface; punctuation or a fixed phrase list is not
+a substitute for judging clarity. Keep necessary commands, paths, and actionable errors visible.
+
+Separate authentication alternatives. State which values the login library supplies, what the
+developer must configure, and where credentials are stored. Explain permanent writes/deletes
+before execution. Code, steps, execution metadata, README, and expected behavior must agree.
+
+Acceptance examples may be corrected or extended with a documented reason. Preserve the
+agreed capability and safety requirements; never rewrite assertions merely to get a pass.
+
+## Review idiomatic composition and safety
+
+Map supporting concerns to the SDKs, packages, and runtime features that should own them.
+Inspect actual calls, not just dependency names. A small imperative workflow is appropriate;
+a replacement OAuth client, token store, `.env` parser, HTTP layer, or response-stream parser
+needs a demonstrated gap in supported facilities. Remove unnecessary mechanisms. Keep any
+justified adapter small, documented, and tested. Verify current API and scope support.
+
+- Use only the selected path's authentication and minimum required scopes. Never combine
+  scopes across variants or add API tokens to a cookie-SSO path.
+- Keep secrets in the declared ignored environment file, secure auth-library store, or host
+  secret store. Never request, log, or paste secret values in conversation or commands.
+- Cookie SSO uses the user's normal signed-in browser. Do not open or automate that path.
+  For other browser paths, use authorized tools where available. Record who verified each action.
+- Verify permission boundaries, expected invalid-input errors, failure output, mutation
+  ownership, retry safety, cleanup, and recovery. An unrelated exception must not count as
+  successful validation. A partial failure must not print success.
+- Use appropriate topics from the actual instance. Do not require a seeded corpus or claim
+  named fixture facts as live evidence. Check grounding, citations, refusals, and approval
+  boundaries wherever promised. Never bypass safety properties to make verification pass.
+- Missing review credentials or tooling means BLOCKED. Reproduced failure of a promised
+  capability means FAIL, even when caused by the platform. Record cause separately.
+
+## Source and generated output
+
+Edit authored recipe files and rebuild `registry.json`; never hand-edit generated output.
+Run a full build in scratch when inspecting skills. A recipe change must not include generated
+recipe skills, marketplace manifests, build output, or generated README blocks. The conventions
+skill and plugin partials are hand-authored shared instructions; changing them is a separate
+shared-instruction concern, not permission to edit generated recipe skills.
+
+Remote site sync sees a pushed GitHub ref, not local uncommitted changes. If using an internal
+candidate preview, record its exact ref and rendering method; it does not replace the actual
+post-merge developer-site run. No companion site-content PR is needed.
+
+Remove `lastVerified` when changes invalidate the recorded path. Do not write the literal
+string `unset`. Restore the date only after the required deployed-page and live checks pass.
+
+## Evidence and report
+
+Use the ordered checklist. Record PASS, FAIL, BLOCKED, or N/A with a reason for each applicable
+check. Keep local checks, user-reported checks, agent-executed checks, and unrun checks distinct.
+A subagent assessment or a green test suite alone cannot establish end-to-end verification.
+
+Findings use **Block** (broken instructions/outcome or unmet required gate), **Should-fix**
+(a defect outside required acceptance that does not prevent success), or **Park** (polish).
+Never waive safety or the three required quality gates. Other exceptions require reviewer
+acceptance, rationale, owner, and review date. A missing prerequisite is a blocker, not polish.
+
+Report the current lifecycle state, scoped verdict, revisions, findings with evidence, and
+remaining blockers. Do not equate ready for review, merged, deployed for review, end-to-end
+verified, or published and verified. No further changes are authorized by the report itself.

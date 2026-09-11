@@ -3,8 +3,10 @@ For scaffolded recipes, link `/glean-cookbook.css` and compose its existing prim
 `.assistant-composer`, `.pill`, `.note`, `.empty`, `.hit`, `.citations`, `.step`, `.msg`, `.kpi`,
 and `.sdk-embed`. Use the supplied design tokens for recipe-specific CSS.
 
-Use `public/glean-logomark.svg`; do not recreate the mark. For a build without scaffolded assets,
-copy the tokens and mark from `https://github.com/gleanwork/glean-cookbook/tree/main/brand`.
+Use the asset paths supplied by the recipe; do not recreate the mark. If integrating into an
+existing app, keep its design system rather than adding another global stylesheet. For a build
+without scaffolded assets, follow the recipe's explicit asset setup and host conventions; do
+not assume paths from a different scaffold.
 
 Style only the surrounding page for Web SDK components. The embedded Glean UI supplies its own
 branding. If the user wants their company's identity, replace the logo and accent consistently.

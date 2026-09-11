@@ -1,11 +1,14 @@
 ### Select the run mode
 
-Before asking setup questions, silently check whether `GLEAN_COOKBOOK_DEMO` is exactly `true`; do
-not print the environment or the variable value.
+This applies only when the selected recipe explicitly declares a presentation-demo path.
+Do not infer demo support merely because this shared instruction is present. Where supported,
+check whether `GLEAN_COOKBOOK_DEMO` is exactly `true` without printing environment values.
 
-- When it is `true`, use the bundled sample-data path: skip all setup questions, authentication,
-  and fixture verification output; after scaffolding and installing, run `npm run demo` and follow
-  the standard browser handoff.
-- Otherwise, never mention or offer demo, sample, or fixture mode. Skip the fixture-only step and
-  follow the normal configured run, including its setup questions, authentication, and live
-  verification.
+- When enabled, follow the recipe's documented sample-data command and its applicable handoff.
+  Skip only configuration and authentication that the documented demo does not need. Label the
+  result as a demo, not live verification.
+- Otherwise, follow the normal configured path. Do not offer an undeclared or gated demo or
+  silently replace live calls with sample data.
+
+Offline fixture tests are separate from presentation demos. Run required tests in either mode;
+do not suppress their failures or skip them just because demo mode is disabled.

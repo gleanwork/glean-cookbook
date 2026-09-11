@@ -1,4 +1,6 @@
-The recipe needs a secret issued by a third-party service. Tell the user which value to obtain and
-where it appears, then have them write it directly into the recipe's ignored `.env`. Never ask for
-the value in chat, never echo it, and never place it in a command. Confirm the file is filled and
-carry on — the shipped scripts read `.env` themselves.
+The recipe needs a secret issued by a third-party service. Explain which credential is needed
+and where to obtain it, then have the user enter it directly into the recipe's declared ignored
+environment file or host secret store. Never request its value in chat, echo it, or place it
+in a command. Use the documented configuration-loading path; do not assume every script reads
+`.env`. If that path is missing or broken, report the source defect rather than adding a hidden
+credential-loading workaround.

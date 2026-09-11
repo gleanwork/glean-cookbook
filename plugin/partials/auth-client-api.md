@@ -1,4 +1,7 @@
-Run the scaffold's shipped login command. It discovers the tenant from the user's work email, uses
-OAuth when the tenant supports it, and writes local configuration to ignored `.env`. If OAuth is
-unavailable, ask the user to enter a narrowly scoped Glean API token in `.env` without exposing it in
-chat or command output. Never implement or modify an authentication flow while setting up a recipe.
+Use only the authentication path and scopes declared by the selected recipe. Run its shipped
+login command when OAuth is selected; use the supported auth library for sign-in, refresh,
+and credential storage. Do not assume login writes `.env`: follow the documented storage
+and configuration contract. For token authentication, have the user enter the token directly
+into the declared ignored environment file or host secret store, never chat or command output.
+Do not implement or alter authentication while merely setting up a recipe. If the documented
+path is wrong, stop and report the source defect rather than silently substituting another flow.
