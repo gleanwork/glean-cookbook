@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
-import http from 'node:http';
-import { afterEach, test } from 'node:test';
+import { after, afterEach, before, test } from 'node:test';
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
 import {
   askPlatformChat,
   buildPlatformChatRequest,
@@ -8,13 +9,26 @@ import {
   withEscalate,
 } from './chat.ts';
 
+const baseUrl = 'https://fixture.glean.example.com';
+const server = setupServer();
+
+before(() => {
+  server.listen({ onUnhandledRequest: 'error' });
+});
+
+after(() => {
+  server.close();
+});
+
 const originalEnv = {
   GLEAN_API_TOKEN: process.env.GLEAN_API_TOKEN,
   GLEAN_SERVER_URL: process.env.GLEAN_SERVER_URL,
   GLEAN_USE_FIXTURE: process.env.GLEAN_USE_FIXTURE,
+  X_GLEAN_INCLUDE_EXPERIMENTAL: process.env.X_GLEAN_INCLUDE_EXPERIMENTAL,
 };
 
 afterEach(() => {
+  server.resetHandlers();
   for (const [name, value] of Object.entries(originalEnv)) {
     if (value === undefined) delete process.env[name];
     else process.env[name] = value;
@@ -184,17 +198,14 @@ test('askPlatformChat serves a recorded cited answer without credentials', async
   assert.equal(result.escalate, false);
 });
 
-test('askPlatformChat posts an ephemeral request and retries empty output once', async (t) => {
+test('askPlatformChat posts an ephemeral request and retries empty output once', async () => {
   let requests = 0;
   const bodies: unknown[] = [];
-  const server = http.createServer(async (request, response) => {
-    requests += 1;
-    const chunks: Buffer[] = [];
-    for await (const chunk of request) chunks.push(chunk as Buffer);
-    bodies.push(JSON.parse(Buffer.concat(chunks).toString()));
-    response.writeHead(200, { 'Content-Type': 'application/json' });
-    response.end(
-      JSON.stringify({
+  server.use(
+    http.post(`${baseUrl}/api/chat`, async ({ request }) => {
+      requests += 1;
+      bodies.push(await request.json());
+      return HttpResponse.json({
         id: `resp-${requests}`,
         object: 'RESPONSE',
         created_at: '2026-08-21T21:31:00Z',
@@ -208,15 +219,11 @@ test('askPlatformChat posts an ephemeral request and retries empty output once',
         ],
         store: false,
         request_id: `request-${requests}`,
-      }),
-    );
-  });
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-  t.after(() => server.close());
+      });
+    }),
+  );
 
-  const address = server.address();
-  assert(address && typeof address !== 'string');
-  process.env.GLEAN_SERVER_URL = `http://127.0.0.1:${address.port}`;
+  process.env.GLEAN_SERVER_URL = baseUrl;
   process.env.GLEAN_API_TOKEN = 'test-token';
   delete process.env.GLEAN_USE_FIXTURE;
 
