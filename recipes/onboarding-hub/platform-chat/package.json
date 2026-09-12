@@ -21,14 +21,12 @@
   "devDependencies": {
     "@types/node": "26.1.1",
     "eslint": "10.8.0",
-    "msw": "2.11.3",
     "tsx": "4.23.1",
     "typescript": "6.0.3",
     "typescript-eslint": "8.65.0"
   },
   "allowScripts": {
     "esbuild@0.28.1": true,
-    "fsevents": false,
-    "msw@2.11.3": true
+    "fsevents": false
   }
 }

@@ -24,7 +24,6 @@
     "@types/yauzl": "3.4.0",
     "eslint": "10.10.0",
     "fflate": "0.8.3",
-    "msw": "2.11.3",
     "tsx": "4.23.13",
     "typescript": "6.0.3",
     "typescript-eslint": "8.69.0",
@@ -32,8 +31,7 @@
   },
   "allowScripts": {
     "esbuild@0.28.2": true,
-    "fsevents": false,
-    "msw@2.11.3": true
+    "fsevents": false
   },
   "engines": {
     "node": ">=22.12.0"

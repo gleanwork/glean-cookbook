@@ -1,33 +1,19 @@
 import assert from 'node:assert/strict';
-import { after, afterEach, before, test } from 'node:test';
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
+import http from 'node:http';
+import { afterEach, test } from 'node:test';
 import {
   askChat,
   ChatUnfinishedError,
   parsePlatformChatResponse,
 } from './chat.ts';
 
-const baseUrl = 'https://fixture.glean.example.com';
-const server = setupServer();
-
-before(() => {
-  server.listen({ onUnhandledRequest: 'error' });
-});
-
-after(() => {
-  server.close();
-});
-
 const originalEnv = {
-  X_GLEAN_INCLUDE_EXPERIMENTAL: process.env.X_GLEAN_INCLUDE_EXPERIMENTAL,
   GLEAN_API_TOKEN: process.env.GLEAN_API_TOKEN,
   GLEAN_SERVER_URL: process.env.GLEAN_SERVER_URL,
   GLEAN_USE_FIXTURE: process.env.GLEAN_USE_FIXTURE,
 };
 
 afterEach(() => {
-  server.resetHandlers();
   for (const [name, value] of Object.entries(originalEnv)) {
     if (value === undefined) delete process.env[name];
     else process.env[name] = value;
@@ -103,16 +89,19 @@ test('parsePlatformChatResponse keeps refusal distinct from unfinished', () => {
   );
 });
 
-test('askChat posts an ephemeral Platform request and retries unfinished output', async () => {
+test('askChat posts an ephemeral Platform request and retries unfinished output', async (t) => {
   let requests = 0;
   const bodies: unknown[] = [];
-  server.use(
-    http.post(`${baseUrl}/api/chat`, async ({ request }) => {
-      requests += 1;
-      assert.equal(new URL(request.url).pathname, '/api/chat');
-      assert.equal(request.headers.get('x-glean-include-experimental'), 'true');
-      bodies.push(await request.json());
-      return HttpResponse.json({
+  const server = http.createServer(async (request, response) => {
+    requests += 1;
+    assert.equal(request.url, '/api/chat');
+    assert.equal(request.headers['x-glean-include-experimental'], 'true');
+    const chunks: Buffer[] = [];
+    for await (const chunk of request) chunks.push(chunk as Buffer);
+    bodies.push(JSON.parse(Buffer.concat(chunks).toString()));
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.end(
+      JSON.stringify({
         id: `resp_${requests}`,
         object: 'RESPONSE',
         created_at: '2026-08-21T21:31:00Z',
@@ -126,10 +115,15 @@ test('askChat posts an ephemeral Platform request and retries unfinished output'
         ],
         store: false,
         request_id: `req_${requests}`,
-      });
-    }),
-  );
-  process.env.GLEAN_SERVER_URL = baseUrl;
+      }),
+    );
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+
+  const address = server.address();
+  assert(address && typeof address !== 'string');
+  process.env.GLEAN_SERVER_URL = `http://127.0.0.1:${address.port}`;
   process.env.GLEAN_API_TOKEN = 'test-token';
   delete process.env.GLEAN_USE_FIXTURE;
 
