@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
-import http from 'node:http';
-import { afterEach, test } from 'node:test';
+import { after, afterEach, before, test } from 'node:test';
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
 import {
   askPlatformChat,
   buildPlatformChatRequest,
@@ -8,7 +9,19 @@ import {
   parsePlatformChatResponse,
 } from './chat.ts';
 
+const baseUrl = 'https://fixture.glean.example.com';
+const server = setupServer();
+
+before(() => {
+  server.listen({ onUnhandledRequest: 'error' });
+});
+
+after(() => {
+  server.close();
+});
+
 const originalEnv = {
+  X_GLEAN_INCLUDE_EXPERIMENTAL: process.env.X_GLEAN_INCLUDE_EXPERIMENTAL,
   GLEAN_API_TOKEN: process.env.GLEAN_API_TOKEN,
   GLEAN_SERVER_URL: process.env.GLEAN_SERVER_URL,
   GLEAN_USE_FIXTURE: process.env.GLEAN_USE_FIXTURE,
@@ -16,6 +29,7 @@ const originalEnv = {
 };
 
 afterEach(() => {
+  server.resetHandlers();
   for (const [name, value] of Object.entries(originalEnv)) {
     if (value === undefined) delete process.env[name];
     else process.env[name] = value;
@@ -101,17 +115,14 @@ test('askPlatformChat throws when the fixture key is missing', async () => {
   );
 });
 
-test('askPlatformChat posts the framed prompt to /api/chat', async (t) => {
+test('askPlatformChat posts the framed prompt to /api/chat', async () => {
   const bodies: unknown[] = [];
-  const server = http.createServer(async (request, response) => {
-    assert.equal(request.url, '/api/chat');
-    assert.equal(request.headers['x-glean-include-experimental'], 'true');
-    const chunks: Buffer[] = [];
-    for await (const chunk of request) chunks.push(chunk as Buffer);
-    bodies.push(JSON.parse(Buffer.concat(chunks).toString()));
-    response.writeHead(200, { 'Content-Type': 'application/json' });
-    response.end(
-      JSON.stringify({
+  server.use(
+    http.post(`${baseUrl}/api/chat`, async ({ request }) => {
+      assert.equal(new URL(request.url).pathname, '/api/chat');
+      assert.equal(request.headers.get('x-glean-include-experimental'), 'true');
+      bodies.push(await request.json());
+      return HttpResponse.json({
         id: 'resp_customer_360',
         object: 'RESPONSE',
         created_at: '2026-08-21T21:31:00Z',
@@ -131,15 +142,10 @@ test('askPlatformChat posts the framed prompt to /api/chat', async (t) => {
         ],
         store: false,
         request_id: 'req_customer_360',
-      }),
-    );
-  });
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-  t.after(() => server.close());
-
-  const address = server.address();
-  assert(address && typeof address !== 'string');
-  process.env.GLEAN_SERVER_URL = `http://127.0.0.1:${address.port}`;
+      });
+    }),
+  );
+  process.env.GLEAN_SERVER_URL = baseUrl;
   process.env.GLEAN_API_TOKEN = 'test-token';
   process.env.GLEAN_ACCOUNT_NAME = 'Globex';
   delete process.env.GLEAN_USE_FIXTURE;
