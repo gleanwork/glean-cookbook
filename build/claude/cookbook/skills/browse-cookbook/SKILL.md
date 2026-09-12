@@ -25,6 +25,6 @@ before running its command. Full write-ups live at
 - **Search Glean with discovered filters** (`/cookbook:search-with-discovered-filters`) — Use the official TypeScript API client to search across all of your Glean content by default, or discover datasources and common filter fields before applying an explicit selection to permission-aware Platform Search.
 - **Publish a versioned skill bundle** (`/cookbook:skill-publishing-pipeline`) — After a first persist, prove name-based version supersession, retrieve a specific version, stage downloaded bytes in a bounded zip sandbox, and delete only the run-owned skill.
 - **Stream a cited Chat response** (`/cookbook:streaming-chat-with-citations`) — Use the modern Platform Chat API to send a permission-aware question, continue the conversation, and read server-sent events with the official TypeScript API client's `createStream` `EventStream`.
-- **Validate and publish a skill** (`/cookbook:validate-and-publish-skill`) — Use the official TypeScript API client to validate a local SKILL.md, persist it once to your Glean instance, confirm list, get, and latest content, then delete only the skill ID this run created.
+- **Validate and publish a skill** (`/cookbook:validate-and-publish-skill`) — Validate a local SKILL.md, create a skill in Glean, confirm the downloaded file matches your upload, and delete the test skill using the official TypeScript API client.
 
 <!-- pluginpack-generated:recipes:end -->

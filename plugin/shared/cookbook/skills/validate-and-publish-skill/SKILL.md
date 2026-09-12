@@ -1,6 +1,6 @@
 ---
 name: validate-and-publish-skill
-description: 'Use the official TypeScript API client to validate a local SKILL.md, persist it once to your Glean instance, confirm list, get, and latest content, then delete only the skill ID this run created.'
+description: 'Validate a local SKILL.md, create a skill in Glean, confirm the downloaded file matches your upload, and delete the test skill using the official TypeScript API client.'
 disable-model-invocation: true
 ---
 
@@ -9,8 +9,7 @@ disable-model-invocation: true
 - Node.js 22.12.0 or newer
 - A Glean instance with the experimental Skills Platform APIs enabled
 - Your work email, or the complete Glean backend HTTPS origin
-- A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback
-- A local SKILL.md; the scaffold includes a non-executable sample at fixtures/sample-skill/SKILL.md, and npm start uses that path by default
+- Permission to create and delete test skills, using OAuth or a user-scoped token with the SKILLS scope.
 
 Build "Validate and publish a skill" following https://developers.glean.com/cookbook/validate-and-publish-skill
 
@@ -28,38 +27,39 @@ Build "Validate and publish a skill" following https://developers.glean.com/cook
    ```
 
 2. **Install dependencies**
+   Enter the project directory and install its dependencies. Run the remaining commands from this directory.
 
    ```bash
    cd validate-and-publish-skill && npm install
    ```
 
 3. **Run the fixture tests**
-   Run the Vitest fixture suite without credentials or network access, covering validation-before-create, a single persist, list/get, latest content download, and captured-ID cleanup.
+   Run the tests without real credentials or network access. Workflow tests use the real SDK with MSW HTTP handlers to check content comparison and failure handling. Unhandled requests fail. CLI smoke tests cover help and local argument handling. Passing these tests does not verify access to your Glean instance.
 
    ```bash
-   cd validate-and-publish-skill && npm test
+   npm test
    ```
 
 4. **Sign in with OAuth**
-   Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.
+   Sign in to your Glean instance with the SKILLS scope. The official authentication library handles login and secure credential storage. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.
 
    ```bash
-   cd validate-and-publish-skill && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
-5. **Pass an explicit backend if you need one**
-   If email discovery is wrong, pass --server-url with the complete Glean backend HTTPS origin on login, verify, and start. If DCR is restricted, export GLEAN_OAUTH_CLIENT_ID in your shell before npm run login. npm run login does not read .env, so do not store that client id only in .env.
+5. **Choose how to connect to your instance**
+   The commands below use OAuth and your work email. With token authentication, omit --email and use GLEAN_SERVER_URL from .env. If email discovery finds the wrong instance, replace --email with --server-url and your complete backend HTTPS origin. If your administrator supplies an OAuth client ID, export GLEAN_OAUTH_CLIENT_ID before login; login does not read .env.
 
 6. **Verify against your instance**
-   Validate a cryptographically unique SKILL.md, persist it once, confirm list/get/latest content, then permanently delete only the ID returned by this run. Success prints a Verified line that ends with cleanup completed.
+   Create a uniquely named test skill, retrieve it, compare the downloaded SKILL.md byte for byte with the upload, and permanently delete it. A mismatch fails verification but still triggers cleanup. Success prints a Verified line ending with cleanup completed. With token authentication, run npm run verify instead of the OAuth command below. Files are not extracted to disk or executed.
 
    ```bash
-   cd validate-and-publish-skill && npm run verify -- --email "<work-email>"
+   npm run verify -- --email "<work-email>"
    ```
 
-7. **Persist your local SKILL.md**
-   Validate fixtures/sample-skill/SKILL.md, persist it once, then delete only that captured ID. Pass --bundle with your own SKILL.md to use a different file. This run still deletes the skill it creates; pass --yes when the terminal is not interactive.
+7. **Test your own SKILL.md**
+   The command uses the included sample file. Add --bundle with a path to test your own SKILL.md. Choose an unused name and do not publish that name concurrently. This command also deletes the test skill afterward; it does not leave a published skill for you to use. With token authentication, run npm start -- --yes instead.
    ```bash
-   cd validate-and-publish-skill && npm start -- --email "<work-email>" --yes
+   npm start -- --email "<work-email>" --yes
    ```
    {{> run-cli}}
