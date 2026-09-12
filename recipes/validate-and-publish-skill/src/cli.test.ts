@@ -8,10 +8,18 @@ const recipeRoot = fileURLToPath(new URL('..', import.meta.url));
 const tsx = path.join(recipeRoot, 'node_modules', '.bin', 'tsx');
 
 function runCli(args: string[]) {
+  // Only help and local parse failures run in subprocesses. Network workflows
+  // use the real client with MSW in workflow.test.ts.
   return spawnSync(tsx, ['src/cli.ts', ...args], {
     cwd: recipeRoot,
     encoding: 'utf8',
-    env: { ...process.env, NO_COLOR: '1' },
+    timeout: 5_000,
+    env: {
+      ...process.env,
+      GLEAN_API_TOKEN: 'fixture-token',
+      GLEAN_SERVER_URL: 'https://example.test',
+      NO_COLOR: '1',
+    },
   });
 }
 
@@ -27,13 +35,14 @@ test('npm start -- --bundle path/to/SKILL.md parses', () => {
   const result = runCli([
     '--bundle',
     'path/to/SKILL.md',
-    '--email',
-    'you@example.com',
+    '--server-url',
+    'https://example.test',
     '--yes',
   ]);
   const output = `${result.stdout}\n${result.stderr}`;
   expect(output).not.toMatch(/can only be set once/i);
   expect(output).toMatch(/ENOENT|no such file or directory/i);
+  expect(result.status).toBe(1);
 });
 
 test('npm start -- --help prints help', () => {
