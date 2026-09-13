@@ -1,0 +1,12 @@
+filegroup(
+    name = "skills",
+    srcs = glob(["*/SKILL.md"]),
+    visibility = ["//visibility:public"],
+)
+
+# Marker used by consumers to locate this directory in a Bazel sandbox.
+filegroup(
+    name = "skills_dir_marker",
+    srcs = ["BUILD.bazel"],
+    visibility = ["//visibility:public"],
+)

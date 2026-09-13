@@ -1,0 +1,4 @@
+module(
+    name = "glean_cookbook",
+    version = "0.1.0",
+)
