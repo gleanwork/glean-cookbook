@@ -8,8 +8,8 @@ Glean, and inspect the downloaded files safely before you use them elsewhere.
 - Node.js 22.12.0 or newer
 - A Glean instance with the experimental Skills Platform APIs enabled
 - Your work email, or the complete Glean backend HTTPS origin
-- A tenant that grants Skills read and write access through OAuth or a
-  user-scoped token
+- Permission to publish, inspect, and delete skills using the `SKILLS` OAuth
+  scope or the `SKILLS` permission on a user-scoped token
 
 Skills are still experimental and may not be enabled on every tenant. This
 recipe stores and downloads bundles; it does not run their contents.
@@ -31,17 +31,17 @@ Test Files  4 passed (4)
 Tests       17 passed (17)
 ```
 
-## Sign in
+## Sign in with dynamic client registration
 
-Sign in with OAuth so the API calls use your own permissions:
+The official auth package discovers your instance, registers the OAuth client
+dynamically, and stores credentials securely.
 
 ```bash
 npm run login -- --email you@example.com
 ```
 
-Your browser opens for approval, and the auth package stores your refreshable
-credentials outside this project. If your tenant uses the older Skills
-permission, the login command retries with that compatibility permission.
+Complete authorization in your browser and wait for the command to report
+success.
 
 For a token-first tenant, skip login:
 

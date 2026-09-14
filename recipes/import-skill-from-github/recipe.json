@@ -8,7 +8,7 @@
     "examples": [
       {
         "title": "Configure the Skills API client",
-        "description": "Resolve the reader's tenant, use the native Skills scopes or the recorded legacy compatibility mode, and enable experimental endpoints through the SDK constructor.",
+        "description": "Resolve the reader's tenant, authenticate with the SKILLS scope through dynamic client registration, and enable experimental endpoints through the SDK constructor.",
         "source": "src/client.ts",
         "language": "typescript"
       },
@@ -31,7 +31,7 @@
     "wow": false
   },
   "timeEstimate": "~20 min",
-  "requiredScopes": ["skills:read", "skills:write"],
+  "requiredScopes": ["SKILLS"],
   "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",
   "languages": ["typescript"],
@@ -39,7 +39,7 @@
     "Node.js 22.12.0 or newer",
     "A Glean instance with the experimental Skills Platform APIs enabled",
     "Your work email, or the complete Glean backend HTTPS origin",
-    "A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback",
+    "Permission to import, sync, and delete skills using the SKILLS OAuth scope or the SKILLS permission on a user-scoped token",
     "Tenant-side GitHub source fetching enabled for Skills; the default source is the public skill-creator directory on main, and verification fails rather than skipping if the tenant cannot preview it"
   ],
   "demoQueries": [
@@ -58,7 +58,7 @@
   "steps": [
     {
       "title": "Copy the project onto your machine",
-      "description": "Copy the runnable TypeScript GitHub import CLI and credential-free MSW fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
+      "description": "Copy the runnable TypeScript GitHub import CLI and credential-free MSW fixture tests into a new directory. OAuth uses the official @gleanwork/auth package.",
       "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/import-skill-from-github import-skill-from-github",
       "kind": "scaffold"
     },
@@ -74,15 +74,15 @@
       "kind": "manual"
     },
     {
-      "title": "Sign in with OAuth",
-      "description": "Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.",
-      "command": "cd import-skill-from-github && npm run login -- --email \"<work-email>\"",
-      "kind": "authenticate"
+      "title": "Choose an authentication path",
+      "description": "OAuth is the default. @gleanwork/auth discovers your instance, registers the OAuth client dynamically, and stores credentials securely. If OAuth is unavailable, copy .env.example to .env, set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN with the SKILLS permission, and skip the next step. Omit --email from the remaining commands. If email discovery finds the wrong instance, replace --email with --server-url and your complete backend HTTPS origin on the login and live commands.",
+      "kind": "configure"
     },
     {
-      "title": "Pass an explicit backend if you need one",
-      "description": "If email discovery is wrong, pass --server-url with the complete Glean backend HTTPS origin on login, verify, and start. If DCR is restricted, export GLEAN_OAUTH_CLIENT_ID in your shell before npm run login. npm run login does not read .env, so do not store that client id only in .env.",
-      "kind": "configure"
+      "title": "Sign in with OAuth",
+      "description": "Run the login command with the SKILLS scope and complete authorization in your browser. Wait for the command to report success before continuing. Skip this step if you configured a token in .env.",
+      "command": "cd import-skill-from-github && npm run login -- --email \"<work-email>\"",
+      "kind": "authenticate"
     },
     {
       "title": "Verify against your instance",
@@ -91,8 +91,8 @@
       "kind": "verify-live"
     },
     {
-      "title": "Watch repository scan progress",
-      "description": "Run the same preview, import, and sync path with --stream. Scan events print as the tenant walks the GitHub directory. This command still deletes the captured skill when it finishes; there is no keep path. Pass --yes when the terminal is not interactive.",
+      "title": "Use the streaming preview",
+      "description": "Run the same preview, import, and sync path with --stream. The command prints any scan events returned by the API and still succeeds when a small source produces only the final result event. It deletes the captured skill when it finishes; there is no keep path. Pass --yes when the terminal is not interactive.",
       "command": "cd import-skill-from-github && npm start -- --email \"<work-email>\" --yes --stream",
       "kind": "run"
     }
@@ -108,7 +108,7 @@
     "auth": [
       {
         "kind": "oauth-with-token-fallback",
-        "scopes": ["skills:read", "skills:write"],
+        "scopes": ["SKILLS"],
         "setupCommand": "cd import-skill-from-github && npm run login -- --email \"<work-email>\"",
         "credentialVariable": "GLEAN_API_TOKEN"
       }
@@ -147,8 +147,8 @@
       "icon": "RefreshCw"
     }
   ],
-  "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/main/skills/skill-creator with stream false by default. Do not pass a commit permalink or SHA-pinned GitHub URL; the API rejects those with HTTP 400. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list, paginating list. Delete only IDs this run created. If cleanup cannot delete a captured ID, exit non-zero. If GitHub import fails, fail loudly instead of skipping. HTTP 400 means an unsupported URL or ref. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means the credential cannot import. HTTP 429 means rate-limiting. Do not treat HTTP 400 as a missing Third-party skills enablement flag. A 404 from Skills APIs is not a GitHub-import failure. With --stream, print scan progress events. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
-  "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This recipe calls previewSource with stream false by default, imports selected URLs, and syncs one captured skill. Default source is https://github.com/anthropics/skills/tree/main/skills/skill-creator. github_import rejects 40-character commit-SHA permalinks; pass a branch or tag URL. Native scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and delete only those. Failed cleanup must not report success. Fail, do not skip, when import fails. HTTP 400 is an unsupported URL or ref, not a Third-party skills enablement miss; 503 is import disabled or unavailable; 403 is credential; 429 is rate-limiting. Leave PATCH update and POST .../versions as take-it-further.",
+  "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Sign in with the SKILLS scope through the official @gleanwork/auth dynamic client registration flow. Enable experimental APIs through the SDK constructor. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/main/skills/skill-creator with stream false by default. Do not pass a commit permalink or SHA-pinned GitHub URL; the API rejects those with HTTP 400. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list, paginating list. Delete only IDs this run created. If cleanup cannot delete a captured ID, exit non-zero. If GitHub import fails, fail loudly instead of skipping. HTTP 400 means an unsupported URL or ref. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means the credential cannot import. HTTP 429 means rate-limiting. Do not treat HTTP 400 as a missing Third-party skills enablement flag. A 404 from Skills APIs is not a GitHub-import failure. With --stream, print scan progress events. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+  "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This recipe calls previewSource with stream false by default, imports selected URLs, and syncs one captured skill. Default source is https://github.com/anthropics/skills/tree/main/skills/skill-creator. github_import rejects 40-character commit-SHA permalinks; pass a branch or tag URL. Use the SKILLS OAuth scope through @gleanwork/auth dynamic client registration. Capture mutation IDs and delete only those. Failed cleanup must not report success. Fail, do not skip, when import fails. HTTP 400 is an unsupported URL or ref, not a Third-party skills enablement miss; 503 is import disabled or unavailable; 403 is credential; 429 is rate-limiting. Leave PATCH update and POST .../versions as take-it-further.",
   "goDependency": false,
   "featured": false,
   "hidden": false,
@@ -188,8 +188,8 @@
         "description": "Preview, import, and sync require GitHub import. The default source is a branch URL because commit permalinks are unsupported. HTTP 400 means an unsupported URL or ref. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means this credential cannot import. HTTP 429 means rate-limiting. Any of those statuses is a failed verify, not a skipped one."
       },
       {
-        "title": "OAuth policy varies by tenant",
-        "description": "Native Skills scopes may not yet be grantable everywhere. The login wrapper uses the legacy compatibility scope only for a recognized scope-grant failure; a user-scoped token remains an explicit fallback."
+        "title": "Skills permission is required",
+        "description": "Your instance must allow the SKILLS OAuth scope or the SKILLS permission on a user-scoped token."
       }
     ]
   }

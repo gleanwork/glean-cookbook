@@ -8,8 +8,8 @@ instance, and sync the imported copy with its source.
 - Node.js 22.12.0 or newer
 - A Glean instance with the experimental Skills Platform APIs enabled
 - Your work email, or the complete Glean backend HTTPS origin
-- A tenant that grants Skills read and write access through OAuth or a
-  user-scoped token
+- Permission to import, sync, and delete skills using the `SKILLS` OAuth scope
+  or the `SKILLS` permission on a user-scoped token
 - Tenant-side GitHub source fetching enabled for Skills
 
 Skills are still experimental and may not be enabled on every tenant. This
@@ -32,17 +32,17 @@ Test Files  4 passed (4)
 Tests       22 passed (22)
 ```
 
-## Sign in
+## Sign in with dynamic client registration
 
-Sign in with OAuth so the API calls use your own permissions:
+The official auth package discovers your instance, registers the OAuth client
+dynamically, and stores credentials securely.
 
 ```bash
 npm run login -- --email you@example.com
 ```
 
-Your browser opens for approval, and the auth package stores your refreshable
-credentials outside this project. If your tenant uses the older Skills
-permission, the login command retries with that compatibility permission.
+Complete authorization in your browser and wait for the command to report
+success.
 
 For a token-first tenant, skip login:
 
@@ -78,11 +78,12 @@ disabled or unavailable. `HTTP 403` means this credential cannot import from
 GitHub. `HTTP 429` means the import is rate-limited. Verification fails instead
 of skipping.
 
-To watch repository scan progress, run:
+To request the streaming preview, run:
 
 ```bash
 npm start -- --email you@example.com --yes --stream
 ```
 
-This streaming command follows the same import, sync, and captured-ID cleanup
-path.
+This command prints any scan events returned by the API, then follows the same
+import, sync, and captured-ID cleanup path. A small source may return only the
+final result event.

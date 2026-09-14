@@ -17,7 +17,7 @@ const cli = meow(
       --email        Work email used to discover the Glean backend
       --server-url   Complete Glean backend origin; overrides --email
       --source-url   GitHub skill directory URL (default: skill-creator on main)
-      --stream       Request repository scan progress as server-sent events
+      --stream       Request streamed preview events as server-sent events
       --id           Exact run-owned skill ID to delete
       --yes          Confirm cleanup non-interactively
 
