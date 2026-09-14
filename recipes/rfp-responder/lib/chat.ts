@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Glean } from '@gleanwork/api-client';
 import { PlatformProblemDetailError } from '@gleanwork/api-client/models/errors';
+import { createGleanTokenProvider } from '@gleanwork/auth';
 import type { Citation } from './grounding.ts';
 
 interface CitationSource {
@@ -158,9 +159,13 @@ export async function askChat(
   }
 
   process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = 'true';
+  const serverURL = requireEnv('GLEAN_SERVER_URL').replace(/\/$/u, '');
+  const configuredToken = process.env.GLEAN_API_TOKEN?.trim();
   const glean = new Glean({
-    apiToken: requireEnv('GLEAN_API_TOKEN'),
-    serverURL: requireEnv('GLEAN_SERVER_URL').replace(/\/$/u, ''),
+    apiToken:
+      configuredToken ||
+      createGleanTokenProvider({ serverUrl: serverURL, scopes: ['CHAT'] }),
+    serverURL,
   });
   let response: Awaited<ReturnType<typeof glean.chat.create>>;
   try {

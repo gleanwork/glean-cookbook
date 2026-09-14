@@ -5,7 +5,7 @@
   "description": "RFP & questionnaire responder — grounded, cited draft answers with a human approval gate.",
   "type": "module",
   "scripts": {
-    "login": "node scripts/glean-auth.mjs login --scopes chat",
+    "login": "glean-auth login --scopes CHAT",
     "demo": "node --import tsx scripts/demo.mjs",
     "start": "GLEAN_USE_FIXTURE=true tsx server.ts",
     "start:live": "GLEAN_USE_FIXTURE=false tsx server.ts",
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@gleanwork/api-client": "0.19.0",
+    "@gleanwork/auth": "1.0.0",
     "dotenv": "17.4.2"
   },
   "devDependencies": {

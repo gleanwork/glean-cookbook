@@ -46,11 +46,15 @@ the sample questionnaire to test your company content. Its questions and
 recorded answers describe a company that does not exist.
 
 1. Copy `.env.example` to `.env`.
-2. Run the login flow:
+2. Sign in through the official auth package's dynamic client registration flow:
 
    ```bash
    npm run login -- --email "you@company.com"
    ```
+
+   The auth package stores credentials outside this project. Set `GLEAN_SERVER_URL`
+   in `.env` to the same backend. If OAuth is unavailable, set a user-scoped
+   `GLEAN_API_TOKEN` with the `CHAT` permission instead.
 
 3. Set `RFP_APPROVED_SOURCE_PREFIXES` in `.env` to a comma-separated list of
    Glean document URL prefixes that your team has cleared for customer-facing

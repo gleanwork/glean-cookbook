@@ -2931,10 +2931,10 @@
     "category": "workflow",
     "level": "Intermediate",
     "levels": { "minimal": true, "wow": true },
-    "timeEstimate": "~45 min",
+    "timeEstimate": "~20 min",
     "icon": "qna",
-    "requiredScopes": ["CHAT"],
-    "authMethod": ["client-api-oauth-or-token"],
+    "requiredScopes": [],
+    "authMethod": ["none"],
     "buildMethod": "scaffold",
     "execution": {
       "type": "local-web",
@@ -2946,7 +2946,7 @@
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd rfp-responder && npm start",
+        "command": "npm start",
         "url": "the Local URL printed by the server",
         "userBrowser": true
       }
@@ -2955,7 +2955,7 @@
     "prerequisites": [
       "Node 20 or newer",
       "Nothing else. The walkthrough replays recorded Chat responses, so it needs no credentials and makes no network calls",
-      "Only for a live run: a Glean instance with company content indexed, a work email for sign-in or a Glean API token with the CHAT scope, and a reviewed list of document URL prefixes that may support customer-facing answers"
+      "Only for an adapted live run: a Glean instance with company content indexed, the CHAT OAuth scope through dynamic client registration or a user-scoped token with the CHAT permission, and a reviewed list of document URL prefixes that may support customer-facing answers"
     ],
     "demoQueries": [
       {
@@ -2980,7 +2980,7 @@
       {
         "title": "Copy the project onto your machine",
         "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder",
-        "description": "Creates an rfp-responder folder containing the local server, review app, sample questionnaire, and recorded Chat responses. Stay in the same parent directory for the remaining commands.",
+        "description": "Create an rfp-responder folder containing the local server, review app, sample questionnaire, and recorded Chat responses. The install step enters that folder; run every later command from there.",
         "kind": "scaffold"
       },
       {
@@ -2991,13 +2991,13 @@
       },
       {
         "title": "See what it refuses before connecting anything",
-        "command": "cd rfp-responder && npm run verify:fixture",
+        "command": "npm run verify:fixture",
         "description": "Replays the recorded responses through the full questionnaire and checks that every draft has a citation, unsupported rows stay blank, weak evidence is flagged, and export stays behind approval. The command needs no credentials and makes no network calls.",
         "kind": "manual"
       },
       {
         "title": "Open the review app",
-        "command": "cd rfp-responder && npm start",
+        "command": "npm start",
         "description": "Starts the local server and prints a Local URL. Open that URL in a browser. The app uses the same recorded responses, so there is nothing to sign in to.",
         "kind": "run"
       },
