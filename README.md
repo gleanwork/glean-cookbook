@@ -50,7 +50,7 @@ the coding agent must not substitute its isolated browser for your Glean SSO ses
 | **Search Glean with discovered filters**                          | Beginner     | ~15 min | `/cookbook:search-with-discovered-filters` |
 | **Publish a versioned skill bundle**                              | Intermediate | ~20 min | `/cookbook:skill-publishing-pipeline`      |
 | **Stream a cited Chat response**                                  | Beginner     | ~20 min | `/cookbook:streaming-chat-with-citations`  |
-| **Validate and publish a skill**                                  | Beginner     | ~15 min | `/cookbook:validate-and-publish-skill`     |
+| **Validate skill publishing**                                     | Beginner     | ~15 min | `/cookbook:validate-and-publish-skill`     |
 
 <!-- pluginpack-generated:recipes:end -->
 

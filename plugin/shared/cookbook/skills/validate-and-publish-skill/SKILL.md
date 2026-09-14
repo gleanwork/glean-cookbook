@@ -1,6 +1,6 @@
 ---
 name: validate-and-publish-skill
-description: 'Validate a local SKILL.md, create a skill in Glean, confirm the downloaded file matches your upload, and delete the test skill using the official TypeScript API client.'
+description: 'Validate a local SKILL.md, test publishing and retrieval in Glean, confirm the downloaded file matches, and delete the test skill.'
 disable-model-invocation: true
 ---
 
@@ -9,18 +9,19 @@ disable-model-invocation: true
 - Node.js 22.12.0 or newer
 - A Glean instance with the experimental Skills Platform APIs enabled
 - Your work email, or the complete Glean backend HTTPS origin
-- Permission to create and delete test skills, using OAuth or a user-scoped token with the SKILLS scope.
+- Permission to create and delete test skills, using the SKILLS OAuth scope or the SKILLS permission on a user-scoped token.
 
-Build "Validate and publish a skill" following https://developers.glean.com/cookbook/validate-and-publish-skill
+Build "Validate skill publishing" following https://developers.glean.com/cookbook/validate-and-publish-skill
 
 {{> ask-setup-questions}}
 
 - What is your work email address?
+- What is the path to the local SKILL.md you want to test?
 
 {{> oauth-setup}}
 
 1. **Copy the project onto your machine**
-   Copy the runnable TypeScript Skills CLI, sample SKILL.md, and credential-free fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.
+   Copy the runnable TypeScript Skills CLI, sample SKILL.md, and credential-free fixture tests into a new directory. OAuth uses the official @gleanwork/auth package.
 
    ```bash
    npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/validate-and-publish-skill validate-and-publish-skill
@@ -40,26 +41,26 @@ Build "Validate and publish a skill" following https://developers.glean.com/cook
    npm test
    ```
 
-4. **Sign in with OAuth**
-   Sign in to your Glean instance with the SKILLS scope. The official authentication library handles login and secure credential storage. Wait for the terminal command to finish successfully; the browser callback message alone does not confirm login. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL using a user-scoped token with the SKILLS permission.
+4. **Choose an authentication path**
+   OAuth is the default. @gleanwork/auth discovers your instance, registers the OAuth client dynamically, and stores credentials securely. If OAuth is unavailable, copy .env.example to .env, set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN with the SKILLS permission, and skip the next step. Omit --email from the remaining commands. If email discovery finds the wrong instance, replace --email with --server-url and your complete backend HTTPS origin on the login and live commands.
+
+5. **Sign in with OAuth**
+   Run the login command with the SKILLS scope and complete authorization in your browser. Wait for the terminal command to report success before continuing. Skip this step if you configured a token in .env.
 
    ```bash
    npm run login -- --email "<work-email>"
    ```
 
-5. **Choose how to connect to your instance**
-   The commands below use OAuth and your work email. With token authentication, omit --email and use GLEAN_SERVER_URL from .env. If email discovery finds the wrong instance, replace --email with --server-url and your complete backend HTTPS origin. If your administrator supplies an OAuth client ID, export GLEAN_OAUTH_CLIENT_ID before login; login does not read .env.
-
 6. **Verify against your instance**
-   Create a uniquely named test skill, retrieve it, compare the downloaded SKILL.md byte for byte with the upload, and permanently delete it. A mismatch fails verification but still triggers cleanup. Success prints a Verified line ending with cleanup completed. With token authentication, run npm run verify instead of the OAuth command below. Files are not extracted to disk or executed.
+   Create a uniquely named sample skill, retrieve it, compare the downloaded SKILL.md byte for byte with the upload, and permanently delete it. This verifies authentication and Skills API access before you use your own file. A mismatch fails verification but still triggers cleanup. With token authentication, run npm run verify without --email.
 
    ```bash
    npm run verify -- --email "<work-email>"
    ```
 
 7. **Test your own SKILL.md**
-   The command uses the included sample file. Add --bundle with a path to test your own SKILL.md. Choose an unused name and do not publish that name concurrently. This command also deletes the test skill afterward; it does not leave a published skill for you to use. With token authentication, run npm start -- --yes instead.
+   Pass the path to your SKILL.md. Choose an unused name and do not publish that name concurrently. The command validates, creates, retrieves, compares, and then permanently deletes the test skill. With token authentication, omit --email.
    ```bash
-   npm start -- --email "<work-email>" --yes
+   npm start -- --bundle "<skill-path>" --email "<work-email>" --yes
    ```
    {{> run-cli}}
