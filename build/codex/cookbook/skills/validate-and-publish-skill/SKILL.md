@@ -48,7 +48,7 @@ path when the documented one fails.
    ```
 
 4. **Sign in with OAuth**
-   Sign in to your Glean instance with the SKILLS scope. The official authentication library handles login and secure credential storage. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.
+   Sign in to your Glean instance with the SKILLS scope. The official authentication library handles login and secure credential storage. Wait for the terminal command to finish successfully; the browser callback message alone does not confirm login. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL using a user-scoped token with the SKILLS permission.
 
    ```bash
    npm run login -- --email "<work-email>"
