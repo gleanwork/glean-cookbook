@@ -14,8 +14,8 @@ file. It never extracts files to disk or executes the skill.
 - Node.js 22.12.0 or newer
 - A Glean instance with the experimental Skills Platform APIs enabled
 - Your work email, or the complete Glean backend HTTPS origin
-- Permission to create and delete test skills: the `skills` scope
-  for OAuth, or the `SKILLS` permission for a user-scoped API token
+- Permission to create and delete test skills using OAuth or a user-scoped token
+  with the `SKILLS` scope
 
 ## Copy and test the project
 
@@ -40,9 +40,9 @@ npm run login -- --email "<work-email>"
 ```
 
 Approve sign-in in your browser. The command runs the official
-`@gleanwork/auth` CLI with the lowercase OAuth scope `skills`. The API-token permission label is `SKILLS`.
-The package handles login and stores your refreshable credentials outside this
-project. Wait for the terminal command to finish successfully; the browser callback
+`@gleanwork/auth` CLI with the `SKILLS` scope. The package handles login and
+stores your refreshable credentials outside this project. Wait for the terminal
+command to finish successfully; the browser callback
 message alone does not confirm login. The `skills:read` and `skills:write` OAuth
 scopes are not supported yet.
 
@@ -59,7 +59,7 @@ Skip OAuth login. Copy the environment template:
 cp .env.example .env
 ```
 
-Use a user-scoped API token with the `SKILLS` permission. Set `GLEAN_SERVER_URL`
+Use a user-scoped API token with the `SKILLS` scope. Set `GLEAN_SERVER_URL`
 and `GLEAN_API_TOKEN` in the ignored `.env` file.
 Never paste your token into a prompt, issue, or committed file. The CLI uses
 Node.js to load `.env`; existing shell variables take precedence.

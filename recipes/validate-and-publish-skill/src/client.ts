@@ -59,8 +59,8 @@ export async function createGleanClient(
     log('Using GLEAN_API_TOKEN from the environment.');
     apiToken = staticToken;
   } else {
-    const scopes = ['skills'];
-    log('Using the OAuth session (skills).');
+    const scopes = ['SKILLS'];
+    log('Using the OAuth session (SKILLS).');
     apiToken = createGleanTokenProvider({
       serverUrl: server.origin,
       scopes,
