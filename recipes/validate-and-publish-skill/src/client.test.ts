@@ -18,7 +18,6 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-// Request the canonical OAuth spelling; SKILLS remains the API-token label.
 test('OAuth requests lowercase skills without a fallback mode', async () => {
   vi.stubEnv('GLEAN_API_TOKEN', '');
   vi.stubEnv('GLEAN_SKILLS_SCOPE_MODE', 'native');

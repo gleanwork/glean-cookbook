@@ -174,7 +174,6 @@ export async function verifyFirstPersist(
       { file: bundle },
       { retries: { strategy: 'none' } },
     );
-    // A new Skills artifact starts at 1.1, not 1.0.
     if (
       created.skill.latest_version !== 1 ||
       created.skill.latest_minor_version !== 1

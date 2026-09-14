@@ -40,8 +40,7 @@ npm run login -- --email "<work-email>"
 ```
 
 Approve sign-in in your browser. The command runs the official
-`@gleanwork/auth` CLI with `skills`, the canonical lowercase scope advertised by
-Glean's OAuth server. The API-token permission label is `SKILLS`.
+`@gleanwork/auth` CLI with the lowercase OAuth scope `skills`. The API-token permission label is `SKILLS`.
 The package handles login and stores your refreshable credentials outside this
 project. Wait for the terminal command to finish successfully; the browser callback
 message alone does not confirm login. The `skills:read` and `skills:write` OAuth

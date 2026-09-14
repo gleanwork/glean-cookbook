@@ -87,7 +87,6 @@ function defaultHandlers(options?: {
         /^name:\s*(.+)$/mu.exec(uploaded.toString('utf8'))?.[1] ?? '',
       description: 'fixture',
       latest_version: options?.createdVersion ?? 1,
-      // Glean's artifact store initializes each major version at minor version 1.
       latest_minor_version: options?.createdMinorVersion ?? 1,
       status: 'DRAFT',
       origin: 'CUSTOM',
