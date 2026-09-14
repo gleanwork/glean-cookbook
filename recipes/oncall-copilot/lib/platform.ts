@@ -13,6 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Glean } from '@gleanwork/api-client';
 import { PlatformProblemDetailError } from '@gleanwork/api-client/models/errors';
+import { createGleanTokenProvider } from '@gleanwork/auth';
 
 export interface SearchHit {
   title: string;
@@ -58,9 +59,20 @@ function backend(): string {
   return requireEnv('GLEAN_SERVER_URL').replace(/\/$/u, '');
 }
 
-function headers(): Record<string, string> {
+const APP_SCOPES = ['SEARCH', 'CHAT'];
+const AGENT_SCOPES = ['SEARCH', 'CHAT', 'AGENTS'];
+
+function apiToken(scopes: string[]) {
+  const configured = process.env.GLEAN_API_TOKEN?.trim();
+  return (
+    configured || createGleanTokenProvider({ serverUrl: backend(), scopes })
+  );
+}
+
+async function headers(scopes: string[]): Promise<Record<string, string>> {
+  const token = apiToken(scopes);
   return {
-    Authorization: `Bearer ${requireEnv('GLEAN_API_TOKEN')}`,
+    Authorization: `Bearer ${typeof token === 'string' ? token : await token()}`,
     'Content-Type': 'application/json',
     'X-GLEAN-INCLUDE-EXPERIMENTAL': 'true',
   };
@@ -119,7 +131,7 @@ export async function search(query: string): Promise<SearchHit[]> {
   // 400 invalid_request. It returns 10 results, which is what this needs anyway.
   const response = await fetch(`${backend()}/api/search`, {
     method: 'POST',
-    headers: headers(),
+    headers: await headers(APP_SCOPES),
     body: JSON.stringify({ query }),
   });
   if (!response.ok) {
@@ -229,7 +241,7 @@ export async function chat(
 
   process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = 'true';
   const glean = new Glean({
-    apiToken: requireEnv('GLEAN_API_TOKEN'),
+    apiToken: apiToken(APP_SCOPES),
     serverURL: backend(),
   });
   let response: Awaited<ReturnType<typeof glean.chat.create>>;
@@ -286,7 +298,7 @@ export async function runAgent(
 
   const response = await fetch(`${backend()}/api/agents/${agentId}/runs`, {
     method: 'POST',
-    headers: headers(),
+    headers: await headers(AGENT_SCOPES),
     body: JSON.stringify({
       messages: [{ role: 'USER', content: [{ text, type: 'text' }] }],
       stream: false,

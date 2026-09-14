@@ -72,13 +72,18 @@ assumptions first:
    buttons remain sample alarms for `payments-service`. Send an alarm for your
    service to `POST /webhook/pagerduty`.
 
-Then authenticate and start live mode:
+Then authenticate with dynamic client registration and start live mode:
 
 ```bash
 npm run login -- --email "you@company.com"
 # Add GLEAN_AGENT_ID and use npm run login:agent for the agent path.
 npm run start:live
 ```
+
+The official auth package discovers your instance, registers the OAuth client
+dynamically, and stores credentials outside this project. Set `GLEAN_SERVER_URL`
+in `.env` so the live server targets the same backend. If OAuth is unavailable,
+set a user-scoped `GLEAN_API_TOKEN` with the required permissions instead.
 
 The three registered actions are inert in both modes. Replace them with real
 integrations only after preserving the registry, approval, expiry, and audit

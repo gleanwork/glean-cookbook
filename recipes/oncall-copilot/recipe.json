@@ -17,10 +17,10 @@
     "minimal": true,
     "wow": true
   },
-  "timeEstimate": "~1.5 hr",
+  "timeEstimate": "~20 min",
   "icon": "badge",
-  "requiredScopes": ["SEARCH", "CHAT", "AGENTS"],
-  "authMethod": ["client-api-oauth-or-token"],
+  "requiredScopes": [],
+  "authMethod": ["none"],
   "buildMethod": "scaffold",
   "execution": {
     "type": "local-web",
@@ -32,7 +32,7 @@
       "startsOwnServer": false
     },
     "run": {
-      "command": "cd oncall-copilot && npm start",
+      "command": "npm start",
       "url": "the Local URL printed by the server",
       "userBrowser": true
     }
@@ -41,7 +41,7 @@
   "prerequisites": [
     "Node 20 or newer",
     "Nothing else. The walkthrough replays recorded Glean responses, so it needs no credentials and makes no network calls",
-    "Only if you later point it at your own instance: an indexed service catalog, runbooks, and incident reviews, plus a work email for sign-in or a Glean API token with the SEARCH and CHAT scopes. The agent planner also needs the AGENTS scope and a conversational agent ID. Plan on editing the catalog query and parser first, since they read the sample corpus's layout"
+    "Only if you later point it at your own instance: an indexed service catalog, runbooks, and incident reviews. Live OAuth uses the SEARCH and CHAT scopes through dynamic client registration; the agent planner also needs AGENTS and a conversational agent ID. A user-scoped token with the same permissions is the fallback. Adapt the catalog query and parser first, since they read the sample corpus's layout"
   ],
   "demoQueries": [
     {
@@ -70,7 +70,7 @@
     {
       "title": "Copy the project onto your machine",
       "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/oncall-copilot oncall-copilot",
-      "description": "Creates an oncall-copilot folder in whatever directory you are in, holding the server, the dashboard, and the recorded incidents. Stay in that same directory for the rest of the steps, since each command changes into the folder itself.",
+      "description": "Create an oncall-copilot folder containing the server, dashboard, and recorded incidents. The install step enters that folder; run every later command from there.",
       "kind": "scaffold"
     },
     {
@@ -81,13 +81,13 @@
     },
     {
       "title": "See what it refuses before connecting anything",
-      "command": "cd oncall-copilot && npm run verify:fixture",
+      "command": "npm run verify:fixture",
       "description": "Runs the unit tests, then replays the recorded incidents through the whole flow and checks the refusals: the gate turns away an actor who is neither on call nor the service owner, an unapproved proposal escalates without executing, an action the planner invented is refused, and a code-changing action with no supported cause drops to filing a ticket. The audit log records each of those decisions. The command reads no credentials and makes no network calls.",
       "kind": "manual"
     },
     {
       "title": "Open the dashboard",
-      "command": "cd oncall-copilot && npm start",
+      "command": "npm start",
       "description": "Starts the local server and prints a Local URL. Open that URL in a browser. The dashboard replays the same recorded Glean responses, so there is nothing to sign in to.",
       "kind": "run"
     },
