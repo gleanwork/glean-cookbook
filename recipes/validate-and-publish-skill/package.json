@@ -5,7 +5,7 @@
   "description": "Validate a local SKILL.md and persist it once with the Glean Skills API.",
   "type": "module",
   "scripts": {
-    "login": "glean-auth login --scopes SKILLS",
+    "login": "glean-auth login --scopes skills",
     "start": "tsx src/cli.ts",
     "verify": "tsx src/cli.ts verify --yes",
     "test": "vitest run",

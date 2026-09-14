@@ -72,6 +72,7 @@ function defaultHandlers(options?: {
   invalidValidation?: () => Response;
   createResponse?: () => Response;
   createdVersion?: number;
+  createdMinorVersion?: number;
   content?: Uint8Array | ((uploaded: Buffer) => Uint8Array);
 }) {
   let uploaded = Buffer.alloc(0);
@@ -86,7 +87,8 @@ function defaultHandlers(options?: {
         /^name:\s*(.+)$/mu.exec(uploaded.toString('utf8'))?.[1] ?? '',
       description: 'fixture',
       latest_version: options?.createdVersion ?? 1,
-      latest_minor_version: 0,
+      // Glean's artifact store initializes each major version at minor version 1.
+      latest_minor_version: options?.createdMinorVersion ?? 1,
       status: 'DRAFT',
       origin: 'CUSTOM',
       owner: { name: 'Fixture User' },
@@ -243,17 +245,33 @@ test.each([503, 401, 'network'] as const)(
   },
 );
 
-test('does not delete a captured skill when create returned a later version', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-ownership-'));
-  roots.push(root);
-  const fixture = defaultHandlers({ createdVersion: 2 });
-  server.use(...fixture.handlers);
-  const client = await createGleanClient({ serverUrl: baseUrl });
-  await expect(
-    verifyFirstPersist(client.skills, { workDir: root, cleanup: true }),
-  ).rejects.toThrow(/later version.*skill-run-owned/);
-  expect(fixture.state().deleted).toBe(false);
-});
+test.each([
+  [2, 1],
+  [1, 2],
+  [1, 0],
+])(
+  'does not delete or continue when create returns non-initial version %s.%s',
+  async (version, minorVersion) => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-ownership-'));
+    roots.push(root);
+    const fixture = defaultHandlers({
+      createdVersion: version,
+      createdMinorVersion: minorVersion,
+    });
+    server.use(...fixture.handlers);
+    const client = await createGleanClient({ serverUrl: baseUrl });
+    await expect(
+      verifyFirstPersist(client.skills, { workDir: root, cleanup: true }),
+    ).rejects.toThrow(
+      `Create returned version ${version}.${minorVersion} for skill-run-owned; expected a new skill at version 1.1.`,
+    );
+    expect(fixture.state()).toEqual({
+      createCalls: 1,
+      deleted: false,
+      listCalls: 0,
+    });
+  },
+);
 
 test.each([503, 'network'] as const)(
   'does not retry an ambiguous create after %s',
@@ -293,7 +311,7 @@ test.each([503, 'network'] as const)(
   },
 );
 
-test('validates, creates once, retrieves latest content, and cleans up', async () => {
+test('validates, creates once at version 1.1, retrieves latest content, and cleans up', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-first-persist-'));
   roots.push(root);
   const fixture = defaultHandlers();
@@ -308,8 +326,9 @@ test('validates, creates once, retrieves latest content, and cleans up', async (
   expect(result).toMatchObject({
     id: 'skill-run-owned',
     version: 1,
-    minorVersion: 0,
+    minorVersion: 1,
   });
+  expect(verifiedSuccessLine(result)).toContain('at version 1.1;');
   expect(result.contentBytes).toBeGreaterThan(0);
   expect(verifiedSuccessLine(result)).toMatch(/cleanup completed\.$/);
   expect(fixture.state()).toEqual({

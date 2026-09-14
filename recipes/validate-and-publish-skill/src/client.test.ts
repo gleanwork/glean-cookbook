@@ -18,13 +18,14 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-test('OAuth uses the supported SKILLS scope without a fallback mode', async () => {
+// Request the canonical OAuth spelling; SKILLS remains the API-token label.
+test('OAuth requests lowercase skills without a fallback mode', async () => {
   vi.stubEnv('GLEAN_API_TOKEN', '');
   vi.stubEnv('GLEAN_SKILLS_SCOPE_MODE', 'native');
   await createGleanClient({ serverUrl: 'https://example.test' });
   expect(createGleanTokenProvider).toHaveBeenCalledExactlyOnceWith({
     serverUrl: 'https://example.test',
-    scopes: ['SKILLS'],
+    scopes: ['skills'],
   });
 });
 
@@ -34,7 +35,7 @@ test('token authentication does not request an OAuth provider', async () => {
   expect(createGleanTokenProvider).not.toHaveBeenCalled();
 });
 
-test('login and generated instructions use the same supported scope', async () => {
+test('login and OAuth metadata use skills, distinct from the API-token label', async () => {
   const recipeRoot = new URL('../', import.meta.url);
   const pkg: unknown = JSON.parse(
     await fs.readFile(new URL('package.json', recipeRoot), 'utf8'),
@@ -43,10 +44,10 @@ test('login and generated instructions use the same supported scope', async () =
     await fs.readFile(new URL('recipe.json', recipeRoot), 'utf8'),
   );
   expect(pkg).toMatchObject({
-    scripts: { login: 'glean-auth login --scopes SKILLS' },
+    scripts: { login: 'glean-auth login --scopes skills' },
   });
   expect(recipe).toMatchObject({
     requiredScopes: ['SKILLS'],
-    execution: { auth: [{ scopes: ['SKILLS'] }] },
+    execution: { auth: [{ scopes: ['skills'] }] },
   });
 });

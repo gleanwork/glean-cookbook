@@ -14,8 +14,8 @@ file. It never extracts files to disk or executes the skill.
 - Node.js 22.12.0 or newer
 - A Glean instance with the experimental Skills Platform APIs enabled
 - Your work email, or the complete Glean backend HTTPS origin
-- Permission to create and delete test skills using OAuth or a user-scoped token
-  with the `SKILLS` scope
+- Permission to create and delete test skills: the `skills` scope
+  for OAuth, or the `SKILLS` permission for a user-scoped API token
 
 ## Copy and test the project
 
@@ -40,9 +40,12 @@ npm run login -- --email "<work-email>"
 ```
 
 Approve sign-in in your browser. The command runs the official
-`@gleanwork/auth` CLI with the `SKILLS` scope. The package handles login and
-stores your refreshable credentials outside this project. The newer
-`skills:read` and `skills:write` scopes are not supported yet.
+`@gleanwork/auth` CLI with `skills`, the canonical lowercase scope advertised by
+Glean's OAuth server. The API-token permission label is `SKILLS`.
+The package handles login and stores your refreshable credentials outside this
+project. Wait for the terminal command to finish successfully; the browser callback
+message alone does not confirm login. The `skills:read` and `skills:write` OAuth
+scopes are not supported yet.
 
 If email discovery finds the wrong instance, replace `--email` with
 `--server-url "https://your-backend-origin"` on login and subsequent commands.
@@ -57,7 +60,8 @@ Skip OAuth login. Copy the environment template:
 cp .env.example .env
 ```
 
-Set `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN` in the ignored `.env` file.
+Use a user-scoped API token with the `SKILLS` permission. Set `GLEAN_SERVER_URL`
+and `GLEAN_API_TOKEN` in the ignored `.env` file.
 Never paste your token into a prompt, issue, or committed file. The CLI uses
 Node.js to load `.env`; existing shell variables take precedence.
 
@@ -82,7 +86,7 @@ npm run verify
 Success ends with a line like this:
 
 ```text
-Verified <name> (<id>) at version 1.0; downloaded <n> byte(s); SKILL.md matches the upload; cleanup completed.
+Verified <name> (<id>) at version 1.1; downloaded <n> byte(s); SKILL.md matches the upload; cleanup completed.
 ```
 
 Authentication, validation, retrieval, content-comparison, and cleanup failures
@@ -114,8 +118,9 @@ deletes the test skill afterward.** It does not modify your local file.
 
 - Creating an existing name can add a version. The example checks for an
   existing name before uploading a supplied file, but that check is not atomic.
-  If the create response reports a later version, it stops without deleting
-  the skill. Inspect the reported ID before continuing.
+  A new skill starts at version 1.1. If the create response reports any other
+  version, the command stops without deleting the skill. Inspect the reported ID
+  before continuing.
 - Creation has no automatic retries. If a request times out after the server
   saves the skill, its ID may not be available for automatic cleanup. Inspect
   your instance before trying again.
