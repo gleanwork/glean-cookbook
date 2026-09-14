@@ -176,10 +176,10 @@ export async function verifyFirstPersist(
     );
     if (
       created.skill.latest_version !== 1 ||
-      created.skill.latest_minor_version !== 0
+      created.skill.latest_minor_version !== 1
     ) {
       throw new Error(
-        `Create returned a later version for ${created.skill.id}. This may be an existing skill; it was not deleted. Inspect it before continuing.`,
+        `Create returned version ${created.skill.latest_version}.${created.skill.latest_minor_version} for ${created.skill.id}; expected a new skill at version 1.1. This may be an existing skill; it was not deleted. Inspect it before continuing.`,
       );
     }
     createdId = created.skill.id;

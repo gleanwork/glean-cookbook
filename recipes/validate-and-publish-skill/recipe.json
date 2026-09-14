@@ -50,7 +50,7 @@
   "demoQueries": [
     {
       "query": "Validate and publish a uniquely named sample skill, then delete the captured ID",
-      "expectedBehavior": "Stdout ends with Verified <name> (<id>) at version 1.0; downloaded <n> byte(s); SKILL.md matches the upload; cleanup completed. The downloaded ZIP must contain one regular root SKILL.md whose checksum and bytes match the upload. Invalid archives or mismatches fail verification and still trigger cleanup. If delete fails, the process exits non-zero, prints the remaining ID and a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run, and does not print that success line."
+      "expectedBehavior": "Stdout ends with Verified <name> (<id>) at version 1.1; downloaded <n> byte(s); SKILL.md matches the upload; cleanup completed. The downloaded ZIP must contain one regular root SKILL.md whose checksum and bytes match the upload. Invalid archives or mismatches fail verification and still trigger cleanup. If delete fails, the process exits non-zero, prints the remaining ID and a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run, and does not print that success line."
     }
   ],
   "codeAssets": [
@@ -81,7 +81,7 @@
     },
     {
       "title": "Sign in with OAuth",
-      "description": "Sign in to your Glean instance with the SKILLS scope. The official authentication library handles login and secure credential storage. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.",
+      "description": "Sign in to your Glean instance with the SKILLS scope. The official authentication library handles login and secure credential storage. Wait for the terminal command to finish successfully; the browser callback message alone does not confirm login. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL using a user-scoped token with the SKILLS permission.",
       "command": "npm run login -- --email \"<work-email>\"",
       "kind": "authenticate"
     },
@@ -153,8 +153,8 @@
       "icon": "Download"
     }
   ],
-  "aiPrompt": "Scaffold and run the Skills create-and-retrieve quickstart. Ask for the user's work email. Run credential-free fixture tests before authentication. Use the supported SKILLS scope for OAuth and token authentication. Run the official glean-auth CLI directly; do not add a scope-fallback wrapper. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique SKILL.md: validate it, reject invalid frontmatter without creating anything, create it once without automatic retries, confirm list and get return the captured ID, and verify the downloaded ZIP contains exactly one regular root SKILL.md matching the uploaded bytes. Use yauzl to read the archive in memory, bound decompression by the uploaded file size, and check CRC-32 with node:zlib. Reject malformed archives, unexpected entries, checksum errors, and changed content. A mismatch must still trigger cleanup. Delete the captured ID only when the response identifies a first version. If a later version is returned, stop without deleting it. npm start with no --bundle uses fixtures/sample-skill/SKILL.md; pass --bundle for a different local SKILL.md. Do not put --bundle in the npm start script. npm run verify is the verify subcommand and generates a unique name when --bundle is omitted. If cleanup cannot delete a captured ID, exit non-zero, print the work error, and print the remaining ID plus a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run. Do not publish a second version, do not extract archive files to disk, and do not import from GitHub. Never execute retrieved files or infer cleanup targets from names or catalog search.",
-  "llmContext": "Use @gleanwork/api-client 0.20.4 with includeExperimental. Validate, create without retries, list, retrieve, and compare the ZIP's single regular root SKILL.md byte-for-byte with the upload. Use yauzl with bounded decompression and node:zlib CRC-32. Reject malformed archives, unexpected entries, bad checksums, and mismatches. Never extract files to disk or execute them. Delete only the captured first-version ID; cleanup failures fail verification. npm run verify generates a unique name. npm start defaults to fixtures/sample-skill/SKILL.md; --bundle overrides it. Name checks are not atomic. Use SKILLS, not skills:read or skills:write. Use official @gleanwork/auth; Node loads .env. Version management and GitHub import are out of scope.",
+  "aiPrompt": "Scaffold and run the Skills create-and-retrieve quickstart. Ask for the user's work email. Run credential-free fixture tests before authentication. Use the supported SKILLS scope for OAuth and token authentication. Run the official glean-auth CLI directly; do not add a scope-fallback wrapper. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique SKILL.md: validate it, reject invalid frontmatter without creating anything, create it once without automatic retries, confirm list and get return the captured ID, and verify the downloaded ZIP contains exactly one regular root SKILL.md matching the uploaded bytes. Use yauzl to read the archive in memory, bound decompression by the uploaded file size, and check CRC-32 with node:zlib. Reject malformed archives, unexpected entries, checksum errors, and changed content. A mismatch must still trigger cleanup. Delete the captured ID only when the response identifies the initial version 1.1. If any other version is returned, stop without deleting it. npm start with no --bundle uses fixtures/sample-skill/SKILL.md; pass --bundle for a different local SKILL.md. Do not put --bundle in the npm start script. npm run verify is the verify subcommand and generates a unique name when --bundle is omitted. If cleanup cannot delete a captured ID, exit non-zero, print the work error, and print the remaining ID plus a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run. Do not publish a second version, do not extract archive files to disk, and do not import from GitHub. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+  "llmContext": "Use @gleanwork/api-client 0.20.4 with includeExperimental. Validate, create without retries, list, retrieve, and compare the ZIP's single regular root SKILL.md byte-for-byte with the upload. Use yauzl with bounded decompression and node:zlib CRC-32. Reject malformed archives, unexpected entries, bad checksums, and mismatches. Never extract files to disk or execute them. Delete only the captured initial-version (1.1) ID; cleanup failures fail verification. npm run verify generates a unique name. npm start defaults to fixtures/sample-skill/SKILL.md; --bundle overrides it. Name checks are not atomic. Use SKILLS, not skills:read or skills:write. Use official @gleanwork/auth; Node loads .env. Version management and GitHub import are out of scope.",
   "goDependency": false,
   "featured": false,
   "hidden": false,
@@ -181,7 +181,7 @@
       },
       {
         "title": "Delete by captured ID only",
-        "rule": "Deletion is permanent. Clean up only the new skill identified by the create response, never a name-search result. If the API returns a later version, stop without deleting it. If deletion fails, the command reports the remaining ID and exits with an error."
+        "rule": "Deletion is permanent. Clean up only the new skill identified by the create response, never a name-search result. New skills start at version 1.1. If the API returns any other version, stop without deleting it. If deletion fails, the command reports the remaining ID and exits with an error."
       }
     ],
     "limitations": [
@@ -195,7 +195,7 @@
       },
       {
         "title": "Sign-in permissions vary by instance",
-        "description": "Your instance must allow the SKILLS scope. If OAuth is unavailable, use a user-scoped token with that scope. The newer skills:read and skills:write scopes are not supported yet."
+        "description": "Your instance must allow the SKILLS scope. If OAuth is unavailable, use a user-scoped token with that scope. The skills:read and skills:write OAuth scopes are not supported yet."
       }
     ]
   }
