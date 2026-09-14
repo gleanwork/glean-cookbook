@@ -3496,7 +3496,7 @@
           "description": "Resolve the backend from work email or an explicit server URL, then construct `Glean` with a refreshable OAuth token provider or `GLEAN_API_TOKEN`, plus `includeExperimental`.",
           "source": "src/client.ts",
           "language": "typescript",
-          "code": "import { Glean, type SDKOptions } from '@gleanwork/api-client';\nimport type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';\nimport { createGleanTokenProvider, discoverGleanTenant } from '@gleanwork/auth';\n\nconst LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);\n\nexport interface GleanClientTarget {\n  email?: string;\n  serverUrl?: string;\n}\n\nasync function resolveServerUrl({ email, serverUrl }: GleanClientTarget) {\n  const explicit = serverUrl?.trim();\n  if (explicit) return explicit;\n\n  const workEmail = email?.trim();\n  if (workEmail) return (await discoverGleanTenant(workEmail)).serverUrl;\n\n  const configured = process.env.GLEAN_SERVER_URL?.trim();\n  if (configured) return configured;\n\n  throw new Error(\n    'Pass --email or --server-url, or set GLEAN_SERVER_URL in your environment.',\n  );\n}\n\nexport async function createGleanClient(target: GleanClientTarget) {\n  const serverURL = await resolveServerUrl(target);\n  const server = new URL(serverURL);\n  const loopback = LOOPBACK_HOSTS.has(server.hostname);\n  if (\n    (server.protocol !== 'https:' && !loopback) ||\n    server.username ||\n    server.password ||\n    server.search ||\n    server.hash ||\n    (server.pathname && server.pathname !== '/') ||\n    (!loopback && server.port)\n  ) {\n    throw new Error('Use a complete Glean backend HTTPS origin.');\n  }\n\n  const staticToken = process.env.GLEAN_API_TOKEN?.trim();\n  const options = {\n    serverURL: server.origin,\n    apiToken:\n      staticToken ||\n      createGleanTokenProvider({\n        serverUrl: server.origin,\n        scopes: ['chat'],\n      }),\n    includeExperimental: true,\n  } satisfies SDKOptions & XGleanOptions;\n\n  return new Glean(options);\n}\n"
+          "code": "import { Glean, type SDKOptions } from '@gleanwork/api-client';\nimport type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';\nimport { createGleanTokenProvider, discoverGleanTenant } from '@gleanwork/auth';\n\nconst LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);\n\nexport interface GleanClientTarget {\n  email?: string;\n  serverUrl?: string;\n}\n\nasync function resolveServerUrl({ email, serverUrl }: GleanClientTarget) {\n  const explicit = serverUrl?.trim();\n  if (explicit) return explicit;\n\n  const workEmail = email?.trim();\n  if (workEmail) return (await discoverGleanTenant(workEmail)).serverUrl;\n\n  const configured = process.env.GLEAN_SERVER_URL?.trim();\n  if (configured) return configured;\n\n  throw new Error(\n    'Pass --email or --server-url, or set GLEAN_SERVER_URL in your environment.',\n  );\n}\n\nexport async function createGleanClient(target: GleanClientTarget) {\n  const serverURL = await resolveServerUrl(target);\n  const server = new URL(serverURL);\n  const loopback = LOOPBACK_HOSTS.has(server.hostname);\n  if (\n    (server.protocol !== 'https:' && !loopback) ||\n    server.username ||\n    server.password ||\n    server.search ||\n    server.hash ||\n    (server.pathname && server.pathname !== '/') ||\n    (!loopback && server.port)\n  ) {\n    throw new Error('Use a complete Glean backend HTTPS origin.');\n  }\n\n  const staticToken = process.env.GLEAN_API_TOKEN?.trim();\n  const options = {\n    serverURL: server.origin,\n    apiToken:\n      staticToken ||\n      createGleanTokenProvider({\n        serverUrl: server.origin,\n        scopes: ['CHAT'],\n      }),\n    includeExperimental: true,\n  } satisfies SDKOptions & XGleanOptions;\n\n  return new Glean(options);\n}\n"
         },
         {
           "title": "Iterate `createStream` events",
@@ -3510,7 +3510,7 @@
           "description": "Store the first turn, pass its `conversation_id` to a follow-up, and render citation sources and snippets from the completed response.",
           "source": "src/chat.ts",
           "language": "typescript",
-          "code": "import type { PlatformChatCompletedResponse } from '@gleanwork/api-client/models/components';\nimport { createGleanClient, type GleanClientTarget } from './client.js';\nimport { streamTurn } from './stream.js';\n\nexport interface ChatOptions extends GleanClientTarget {\n  followUp?: string;\n  prompt: string;\n}\n\nfunction printCitations(response: PlatformChatCompletedResponse) {\n  const citations = response.output.flatMap((message) =>\n    message.content.flatMap((content) => content.annotations ?? []),\n  );\n  if (citations.length === 0) return;\n\n  console.log('\\nSources:');\n  for (const [index, citation] of citations.entries()) {\n    for (const source of citation.sources) {\n      const title =\n        'title' in source && typeof source.title === 'string'\n          ? source.title\n          : undefined;\n      const url =\n        'url' in source && typeof source.url === 'string'\n          ? source.url\n          : undefined;\n      console.log(`  ${index + 1}. ${title ?? url ?? source.type}`);\n      if (url) console.log(`     ${url}`);\n    }\n    for (const snippet of citation.snippets ?? []) {\n      console.log(`     ${snippet.text}`);\n    }\n  }\n}\n\nexport async function runChat({\n  email,\n  followUp,\n  prompt,\n  serverUrl,\n}: ChatOptions) {\n  const client = await createGleanClient({ email, serverUrl });\n  const firstTurn = await streamTurn(client, prompt);\n  if (firstTurn.completed) printCitations(firstTurn.completed);\n\n  if (!followUp) return;\n  if (!firstTurn.conversationId) {\n    throw new Error(\n      'The first turn did not return a conversation_id; cannot continue the conversation.',\n    );\n  }\n\n  console.log('\\nFollow-up:');\n  const followUpTurn = await streamTurn(\n    client,\n    followUp,\n    firstTurn.conversationId,\n  );\n  if (followUpTurn.completed) printCitations(followUpTurn.completed);\n}\n"
+          "code": "import type { PlatformChatCompletedResponse } from '@gleanwork/api-client/models/components';\nimport { createGleanClient, type GleanClientTarget } from './client.js';\nimport { streamTurn } from './stream.js';\n\nexport interface ChatOptions extends GleanClientTarget {\n  followUp?: string;\n  prompt: string;\n}\n\nfunction printCitations(response: PlatformChatCompletedResponse) {\n  const citations = response.output.flatMap((message) =>\n    message.content.flatMap((content) => content.annotations ?? []),\n  );\n  if (citations.length === 0) return;\n\n  console.log('\\nSources:');\n  for (const [index, citation] of citations.entries()) {\n    for (const source of citation.sources) {\n      const title =\n        'title' in source && typeof source.title === 'string'\n          ? source.title\n          : undefined;\n      const url =\n        'url' in source && typeof source.url === 'string'\n          ? source.url\n          : undefined;\n      console.log(`  ${index + 1}. ${title ?? url ?? source.type}`);\n      if (url) console.log(`     ${url}`);\n    }\n    for (const snippet of citation.snippets ?? []) {\n      console.log(`     ${snippet.text}`);\n    }\n  }\n}\n\nexport async function runChat({\n  email,\n  followUp,\n  prompt,\n  serverUrl,\n}: ChatOptions) {\n  const client = await createGleanClient({ email, serverUrl });\n  const firstTurn = await streamTurn(client, prompt);\n  if (!firstTurn.conversationId) {\n    throw new Error('The first turn did not return a conversation_id.');\n  }\n  console.log(`Conversation ID: ${firstTurn.conversationId}`);\n  if (firstTurn.completed) printCitations(firstTurn.completed);\n\n  if (!followUp) return;\n\n  console.log('\\nFollow-up:');\n  const followUpTurn = await streamTurn(\n    client,\n    followUp,\n    firstTurn.conversationId,\n  );\n  if (followUpTurn.completed) printCitations(followUpTurn.completed);\n}\n"
         }
       ]
     },
@@ -3530,7 +3530,7 @@
       "Node.js 22.12.0 or newer. The steps use `npx` and `npm`. Install Node from https://nodejs.org if needed.",
       "A Glean instance with content indexed",
       "Your work email, or the complete Glean backend HTTPS origin",
-      "A tenant that permits the public OAuth client and `chat` scope through DCR"
+      "Permission to use Chat through the CHAT OAuth scope or the CHAT permission on a user-scoped token"
     ],
     "demoQueries": [
       {
@@ -3548,7 +3548,7 @@
     "steps": [
       {
         "title": "Scaffold the project",
-        "description": "Copies the runnable TypeScript Chat CLI and fixture tests into a new directory. OAuth login and secure token storage come from the pinned `@gleanwork/auth` package.",
+        "description": "Copy the runnable TypeScript Chat CLI and fixture tests into a new directory. OAuth uses the official @gleanwork/auth package.",
         "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/streaming-chat-with-citations streaming-chat-with-citations",
         "kind": "scaffold"
       },
@@ -3564,8 +3564,13 @@
         "kind": "manual"
       },
       {
+        "title": "Choose an authentication path",
+        "description": "OAuth is the default. @gleanwork/auth discovers your instance, registers the OAuth client dynamically, and stores credentials securely. If OAuth is unavailable, set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN with the CHAT permission, skip the next step, and omit --email from the live commands. Use --server-url instead of --email when you need to select an explicit backend.",
+        "kind": "configure"
+      },
+      {
         "title": "Sign in with OAuth",
-        "description": "Discovers your Glean backend from work email and completes Authorization Code with PKCE for Chat and `offline_access`. Use `--server-url` for an explicit backend. If DCR is restricted, set `GLEAN_OAUTH_CLIENT_ID` for an administrator-provisioned public client. If OAuth is not available, set `GLEAN_API_TOKEN` later as a user-scoped fallback.",
+        "description": "Run the login command with the CHAT scope and complete authorization in your browser. Wait for the command to report success before continuing. Skip this step if you configured a token.",
         "command": "cd streaming-chat-with-citations && npm run login -- --email \"<work-email>\"",
         "kind": "authenticate"
       },
@@ -3598,7 +3603,7 @@
       "auth": [
         {
           "kind": "oauth-with-token-fallback",
-          "scopes": ["chat"],
+          "scopes": ["CHAT"],
           "setupCommand": "cd streaming-chat-with-citations && npm run login -- --email \"<work-email>\"",
           "credentialVariable": "GLEAN_API_TOKEN"
         }
@@ -3637,7 +3642,7 @@
         "icon": "Code"
       }
     ],
-    "aiPrompt": "Scaffold and run the verified Streaming Chat with citations quickstart. Ask for the user's work email and a question about content in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the chat scope, then stream one Platform Chat turn. Use @gleanwork/api-client 0.20.12 with includeExperimental enabled. Call glean.chat.createStream() for every turn and for-await RESPONSE_OUTPUT_TEXT_DELTA and RESPONSE_COMPLETED events. Do not call create(), do not set stream on create(), do not use CreateAcceptEnum or Accept-header workarounds, and do not parse SSE by hand. Pass conversation_id from the stored first turn to the follow-up. Do not use legacy glean.client.chat, hand-roll Glean request construction, or expose credentials.",
+    "aiPrompt": "Scaffold and run the verified Streaming Chat with citations quickstart. Ask for the user's work email and a question about content in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the CHAT scope, then stream one Platform Chat turn. Use @gleanwork/api-client 0.20.12 with includeExperimental enabled. Call glean.chat.createStream() for every turn and for-await RESPONSE_OUTPUT_TEXT_DELTA and RESPONSE_COMPLETED events. Do not call create(), do not set stream on create(), do not use CreateAcceptEnum or Accept-header workarounds, and do not parse SSE by hand. Pass conversation_id from the stored first turn to the follow-up. Do not use legacy glean.client.chat, hand-roll Glean request construction, or expose credentials.",
     "llmContext": "Use Platform Chat API at /api/chat through @gleanwork/api-client 0.20.12. Every turn calls glean.chat.createStream(), which returns a typed EventStream. Do not call create() and do not set stream on create(). HTTP clients still send stream:true in the JSON body; SDK users call createStream() instead. Streaming events use event names RESPONSE_OUTPUT_TEXT_DELTA (data.delta) and RESPONSE_COMPLETED (data.response). Citations are content annotations with sources and optional snippets. OAuth or user-scoped CHAT token remains the permission boundary. Enable experimental features through includeExperimental; do not claim the API is stable.",
     "goDependency": false,
     "featured": false,
@@ -3660,8 +3665,8 @@
           "description": "HTTP clients request SSE by setting `stream` to `true` in the JSON body. SDK callers use `createStream()` instead of setting `stream` on `create()`."
         },
         {
-          "title": "OAuth policy varies by tenant",
-          "description": "DCR may be disabled or restricted, or may not grant Chat. Use an administrator-provisioned public client when available; a user-scoped `CHAT` token is the tutorial fallback."
+          "title": "Chat permission is required",
+          "description": "Your instance must allow the CHAT OAuth scope or the CHAT permission on a user-scoped token."
         }
       ]
     }

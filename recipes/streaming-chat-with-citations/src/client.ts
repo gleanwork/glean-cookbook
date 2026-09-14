@@ -47,7 +47,7 @@ export async function createGleanClient(target: GleanClientTarget) {
       staticToken ||
       createGleanTokenProvider({
         serverUrl: server.origin,
-        scopes: ['chat'],
+        scopes: ['CHAT'],
       }),
     includeExperimental: true,
   } satisfies SDKOptions & XGleanOptions;

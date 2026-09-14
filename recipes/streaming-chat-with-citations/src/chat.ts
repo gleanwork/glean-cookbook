@@ -41,14 +41,13 @@ export async function runChat({
 }: ChatOptions) {
   const client = await createGleanClient({ email, serverUrl });
   const firstTurn = await streamTurn(client, prompt);
+  if (!firstTurn.conversationId) {
+    throw new Error('The first turn did not return a conversation_id.');
+  }
+  console.log(`Conversation ID: ${firstTurn.conversationId}`);
   if (firstTurn.completed) printCitations(firstTurn.completed);
 
   if (!followUp) return;
-  if (!firstTurn.conversationId) {
-    throw new Error(
-      'The first turn did not return a conversation_id; cannot continue the conversation.',
-    );
-  }
 
   console.log('\nFollow-up:');
   const followUpTurn = await streamTurn(

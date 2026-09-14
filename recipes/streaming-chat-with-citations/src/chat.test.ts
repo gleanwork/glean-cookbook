@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { afterAll, afterEach, beforeAll, test } from 'vitest';
+import { afterAll, afterEach, beforeAll, test, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { runChat } from './chat.js';
@@ -16,6 +16,7 @@ beforeAll(() => {
 });
 
 afterEach(() => {
+  vi.restoreAllMocks();
   server.resetHandlers();
   if (originalToken === undefined) delete process.env.GLEAN_API_TOKEN;
   else process.env.GLEAN_API_TOKEN = originalToken;
@@ -100,8 +101,9 @@ function typedSseResponse(conversationId = 'conv_fixture') {
   });
 }
 
-test('streams typed createStream events', async () => {
+test('streams typed createStream events and prints the conversation ID', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
+  const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
   const bodies: JsonValue[] = [];
   server.use(
     http.post(`${baseUrl}/api/chat`, async ({ request }) => {
@@ -122,6 +124,12 @@ test('streams typed createStream events', async () => {
       stream: true,
     },
   ]);
+  assert.equal(
+    log.mock.calls.some(
+      ([message]) => message === 'Conversation ID: conv_fixture',
+    ),
+    true,
+  );
 });
 
 test('reuses conversation_id for a streamed follow-up turn', async () => {

@@ -5,7 +5,7 @@
   "description": "Use the modern Glean Platform Chat API with OAuth, conversation state, citations, and createStream EventStream iteration.",
   "type": "module",
   "scripts": {
-    "login": "glean-auth login --scopes chat",
+    "login": "glean-auth login --scopes CHAT",
     "start": "tsx src/main.ts",
     "verify": "tsx src/main.ts",
     "test": "vitest run",
@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@gleanwork/api-client": "0.20.12",
-    "@gleanwork/auth": "0.5.1",
+    "@gleanwork/auth": "1.0.0",
     "meow": "14.1.0"
   },
   "devDependencies": {
@@ -25,7 +25,7 @@
     "tsx": "4.23.1",
     "typescript": "6.0.3",
     "typescript-eslint": "8.65.0",
-    "vitest": "4.1.10"
+    "vitest": "5.0.0"
   },
   "allowScripts": {
     "esbuild@0.28.2": true,

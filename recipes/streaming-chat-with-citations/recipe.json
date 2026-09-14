@@ -45,7 +45,7 @@
     "Node.js 22.12.0 or newer. The steps use `npx` and `npm`. Install Node from https://nodejs.org if needed.",
     "A Glean instance with content indexed",
     "Your work email, or the complete Glean backend HTTPS origin",
-    "A tenant that permits the public OAuth client and `chat` scope through DCR"
+    "Permission to use Chat through the CHAT OAuth scope or the CHAT permission on a user-scoped token"
   ],
   "demoQueries": [
     {
@@ -63,7 +63,7 @@
   "steps": [
     {
       "title": "Scaffold the project",
-      "description": "Copies the runnable TypeScript Chat CLI and fixture tests into a new directory. OAuth login and secure token storage come from the pinned `@gleanwork/auth` package.",
+      "description": "Copy the runnable TypeScript Chat CLI and fixture tests into a new directory. OAuth uses the official @gleanwork/auth package.",
       "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/streaming-chat-with-citations streaming-chat-with-citations",
       "kind": "scaffold"
     },
@@ -79,8 +79,13 @@
       "kind": "manual"
     },
     {
+      "title": "Choose an authentication path",
+      "description": "OAuth is the default. @gleanwork/auth discovers your instance, registers the OAuth client dynamically, and stores credentials securely. If OAuth is unavailable, set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN with the CHAT permission, skip the next step, and omit --email from the live commands. Use --server-url instead of --email when you need to select an explicit backend.",
+      "kind": "configure"
+    },
+    {
       "title": "Sign in with OAuth",
-      "description": "Discovers your Glean backend from work email and completes Authorization Code with PKCE for Chat and `offline_access`. Use `--server-url` for an explicit backend. If DCR is restricted, set `GLEAN_OAUTH_CLIENT_ID` for an administrator-provisioned public client. If OAuth is not available, set `GLEAN_API_TOKEN` later as a user-scoped fallback.",
+      "description": "Run the login command with the CHAT scope and complete authorization in your browser. Wait for the command to report success before continuing. Skip this step if you configured a token.",
       "command": "cd streaming-chat-with-citations && npm run login -- --email \"<work-email>\"",
       "kind": "authenticate"
     },
@@ -116,7 +121,7 @@
     "auth": [
       {
         "kind": "oauth-with-token-fallback",
-        "scopes": ["chat"],
+        "scopes": ["CHAT"],
         "setupCommand": "cd streaming-chat-with-citations && npm run login -- --email \"<work-email>\"",
         "credentialVariable": "GLEAN_API_TOKEN"
       }
@@ -155,7 +160,7 @@
       "icon": "Code"
     }
   ],
-  "aiPrompt": "Scaffold and run the verified Streaming Chat with citations quickstart. Ask for the user's work email and a question about content in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the chat scope, then stream one Platform Chat turn. Use @gleanwork/api-client 0.20.12 with includeExperimental enabled. Call glean.chat.createStream() for every turn and for-await RESPONSE_OUTPUT_TEXT_DELTA and RESPONSE_COMPLETED events. Do not call create(), do not set stream on create(), do not use CreateAcceptEnum or Accept-header workarounds, and do not parse SSE by hand. Pass conversation_id from the stored first turn to the follow-up. Do not use legacy glean.client.chat, hand-roll Glean request construction, or expose credentials.",
+  "aiPrompt": "Scaffold and run the verified Streaming Chat with citations quickstart. Ask for the user's work email and a question about content in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the CHAT scope, then stream one Platform Chat turn. Use @gleanwork/api-client 0.20.12 with includeExperimental enabled. Call glean.chat.createStream() for every turn and for-await RESPONSE_OUTPUT_TEXT_DELTA and RESPONSE_COMPLETED events. Do not call create(), do not set stream on create(), do not use CreateAcceptEnum or Accept-header workarounds, and do not parse SSE by hand. Pass conversation_id from the stored first turn to the follow-up. Do not use legacy glean.client.chat, hand-roll Glean request construction, or expose credentials.",
   "llmContext": "Use Platform Chat API at /api/chat through @gleanwork/api-client 0.20.12. Every turn calls glean.chat.createStream(), which returns a typed EventStream. Do not call create() and do not set stream on create(). HTTP clients still send stream:true in the JSON body; SDK users call createStream() instead. Streaming events use event names RESPONSE_OUTPUT_TEXT_DELTA (data.delta) and RESPONSE_COMPLETED (data.response). Citations are content annotations with sources and optional snippets. OAuth or user-scoped CHAT token remains the permission boundary. Enable experimental features through includeExperimental; do not claim the API is stable.",
   "goDependency": false,
   "featured": false,
@@ -178,8 +183,8 @@
         "description": "HTTP clients request SSE by setting `stream` to `true` in the JSON body. SDK callers use `createStream()` instead of setting `stream` on `create()`."
       },
       {
-        "title": "OAuth policy varies by tenant",
-        "description": "DCR may be disabled or restricted, or may not grant Chat. Use an administrator-provisioned public client when available; a user-scoped `CHAT` token is the tutorial fallback."
+        "title": "Chat permission is required",
+        "description": "Your instance must allow the CHAT OAuth scope or the CHAT permission on a user-scoped token."
       }
     ]
   }
