@@ -1,9 +1,9 @@
-# Validate and publish a skill
+# Validate skill publishing
 
-Validate a local `SKILL.md`, create a skill in your Glean instance, retrieve it,
-and confirm that its downloaded `SKILL.md` matches the upload byte for byte.
-**Both commands delete the test skill afterward.**
-They do not leave a published skill for you to use.
+Confirm that a local `SKILL.md` can be published and retrieved through the Skills
+API. This quickstart first checks access with a generated sample, then tests your
+file. Both commands compare the downloaded `SKILL.md` with the upload byte for byte
+and delete the test skill. They do not leave a published skill for you to use.
 
 The API returns a ZIP archive. The example uses `yauzl` to read its single root
 `SKILL.md` in memory, checks its checksum, and compares its bytes with the uploaded
@@ -14,8 +14,8 @@ file. It never extracts files to disk or executes the skill.
 - Node.js 22.12.0 or newer
 - A Glean instance with the experimental Skills Platform APIs enabled
 - Your work email, or the complete Glean backend HTTPS origin
-- Permission to create and delete test skills using OAuth or a user-scoped token
-  with the `SKILLS` scope
+- Permission to create and delete test skills using the `SKILLS` OAuth scope or
+  the `SKILLS` permission on a user-scoped token
 
 ## Copy and test the project
 
@@ -33,23 +33,19 @@ local argument handling. Passing tests does not verify access to your Glean inst
 
 ## Choose one authentication path
 
-### OAuth
+### OAuth with dynamic client registration
+
+`@gleanwork/auth` discovers your instance, dynamically registers the OAuth client,
+and stores credentials securely.
 
 ```bash
 npm run login -- --email "<work-email>"
 ```
 
-Approve sign-in in your browser. The command runs the official
-`@gleanwork/auth` CLI with the `SKILLS` scope. The package handles login and
-stores your refreshable credentials outside this project. Wait for the terminal
-command to finish successfully; the browser callback
-message alone does not confirm login. The `skills:read` and `skills:write` OAuth
-scopes are not supported yet.
-
-If email discovery finds the wrong instance, replace `--email` with
-`--server-url "https://your-backend-origin"` on login and subsequent commands.
-If your administrator supplies an OAuth client ID, export
-`GLEAN_OAUTH_CLIENT_ID` before login. Login does not load `.env`.
+Complete authorization in your browser. Wait for the terminal command to report
+success before continuing. If email discovery finds the wrong instance, replace
+`--email` with `--server-url "https://your-backend-origin"` on login and subsequent
+commands.
 
 ### User-scoped token
 
@@ -59,16 +55,17 @@ Skip OAuth login. Copy the environment template:
 cp .env.example .env
 ```
 
-Use a user-scoped API token with the `SKILLS` scope. Set `GLEAN_SERVER_URL`
+Use a user-scoped API token with the `SKILLS` permission. Set `GLEAN_SERVER_URL`
 and `GLEAN_API_TOKEN` in the ignored `.env` file.
 Never paste your token into a prompt, issue, or committed file. The CLI uses
 Node.js to load `.env`; existing shell variables take precedence.
 
-## Verify against your instance
+## Verify access with a generated sample
 
-This command creates a uniquely named test skill, retrieves it by its returned
+This command creates a uniquely named sample skill, retrieves it by its returned
 ID, verifies its downloaded content against the upload, and permanently deletes
-the test skill. A mismatch fails verification; cleanup still runs.
+the test skill. Run it before testing your own file. A mismatch fails verification;
+cleanup still runs.
 
 With OAuth:
 
@@ -95,23 +92,23 @@ that ID before using the command; never delete a skill found only by its name.
 
 ## Test your own SKILL.md
 
-The default is the included `fixtures/sample-skill/SKILL.md`. Choose an unused
-name and do not publish that name concurrently from another process.
+Choose an unused skill name and do not publish that name concurrently from another
+process.
 
 With OAuth:
 
 ```bash
-npm start -- --email "<work-email>" --yes
+npm start -- --bundle path/to/SKILL.md --email "<work-email>" --yes
 ```
 
 With a token in `.env`:
 
 ```bash
-npm start -- --yes
+npm start -- --bundle path/to/SKILL.md --yes
 ```
 
-Add `--bundle path/to/SKILL.md` to test a different file. **This command also
-deletes the test skill afterward.** It does not modify your local file.
+This command validates, creates, retrieves, compares, and then permanently deletes
+the test skill. It does not modify your local file.
 
 ## Mutation and download limits
 

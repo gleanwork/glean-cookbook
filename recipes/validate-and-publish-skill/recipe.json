@@ -1,8 +1,8 @@
 {
   "id": "validate-and-publish-skill",
-  "title": "Validate and publish a skill",
-  "description": "Validate a local SKILL.md, create a skill in Glean, confirm the downloaded file matches your upload, and delete the test skill using the official TypeScript API client.",
-  "sidebarLabel": "Validate and publish",
+  "title": "Validate skill publishing",
+  "description": "Validate a local SKILL.md, test publishing and retrieval in Glean, confirm the downloaded file matches, and delete the test skill.",
+  "sidebarLabel": "Validate publishing",
   "codeWalkthrough": {
     "intro": "The example uses the official SDK to validate your file before creating a skill. It retrieves the saved skill, compares the downloaded SKILL.md with the upload, and cleans up afterward. It never extracts files to disk or executes them.",
     "examples": [
@@ -45,11 +45,11 @@
     "Node.js 22.12.0 or newer",
     "A Glean instance with the experimental Skills Platform APIs enabled",
     "Your work email, or the complete Glean backend HTTPS origin",
-    "Permission to create and delete test skills, using OAuth or a user-scoped token with the SKILLS scope."
+    "Permission to create and delete test skills, using the SKILLS OAuth scope or the SKILLS permission on a user-scoped token."
   ],
   "demoQueries": [
     {
-      "query": "Validate and publish a uniquely named sample skill, then delete the captured ID",
+      "query": "Validate and test publishing a uniquely named sample skill, then delete the captured ID",
       "expectedBehavior": "Stdout ends with Verified <name> (<id>) at version 1.1; downloaded <n> byte(s); SKILL.md matches the upload; cleanup completed. The downloaded ZIP must contain one regular root SKILL.md whose checksum and bytes match the upload. Invalid archives or mismatches fail verification and still trigger cleanup. If delete fails, the process exits non-zero, prints the remaining ID and a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run, and does not print that success line."
     }
   ],
@@ -63,7 +63,7 @@
   "steps": [
     {
       "title": "Copy the project onto your machine",
-      "description": "Copy the runnable TypeScript Skills CLI, sample SKILL.md, and credential-free fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
+      "description": "Copy the runnable TypeScript Skills CLI, sample SKILL.md, and credential-free fixture tests into a new directory. OAuth uses the official @gleanwork/auth package.",
       "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/validate-and-publish-skill validate-and-publish-skill",
       "kind": "scaffold"
     },
@@ -80,26 +80,26 @@
       "kind": "manual"
     },
     {
+      "title": "Choose an authentication path",
+      "description": "OAuth is the default. @gleanwork/auth discovers your instance, registers the OAuth client dynamically, and stores credentials securely. If OAuth is unavailable, copy .env.example to .env, set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN with the SKILLS permission, and skip the next step. Omit --email from the remaining commands. If email discovery finds the wrong instance, replace --email with --server-url and your complete backend HTTPS origin on the login and live commands.",
+      "kind": "configure"
+    },
+    {
       "title": "Sign in with OAuth",
-      "description": "Sign in to your Glean instance with the SKILLS scope. The official authentication library handles login and secure credential storage. Wait for the terminal command to finish successfully; the browser callback message alone does not confirm login. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL using a user-scoped token with the SKILLS permission.",
+      "description": "Run the login command with the SKILLS scope and complete authorization in your browser. Wait for the terminal command to report success before continuing. Skip this step if you configured a token in .env.",
       "command": "npm run login -- --email \"<work-email>\"",
       "kind": "authenticate"
     },
     {
-      "title": "Choose how to connect to your instance",
-      "description": "The commands below use OAuth and your work email. With token authentication, omit --email and use GLEAN_SERVER_URL from .env. If email discovery finds the wrong instance, replace --email with --server-url and your complete backend HTTPS origin. If your administrator supplies an OAuth client ID, export GLEAN_OAUTH_CLIENT_ID before login; login does not read .env.",
-      "kind": "configure"
-    },
-    {
       "title": "Verify against your instance",
-      "description": "Create a uniquely named test skill, retrieve it, compare the downloaded SKILL.md byte for byte with the upload, and permanently delete it. A mismatch fails verification but still triggers cleanup. Success prints a Verified line ending with cleanup completed. With token authentication, run npm run verify instead of the OAuth command below. Files are not extracted to disk or executed.",
+      "description": "Create a uniquely named sample skill, retrieve it, compare the downloaded SKILL.md byte for byte with the upload, and permanently delete it. This verifies authentication and Skills API access before you use your own file. A mismatch fails verification but still triggers cleanup. With token authentication, run npm run verify without --email.",
       "command": "npm run verify -- --email \"<work-email>\"",
       "kind": "verify-live"
     },
     {
       "title": "Test your own SKILL.md",
-      "description": "The command uses the included sample file. Add --bundle with a path to test your own SKILL.md. Choose an unused name and do not publish that name concurrently. This command also deletes the test skill afterward; it does not leave a published skill for you to use. With token authentication, run npm start -- --yes instead.",
-      "command": "npm start -- --email \"<work-email>\" --yes",
+      "description": "Pass the path to your SKILL.md. Choose an unused name and do not publish that name concurrently. The command validates, creates, retrieves, compares, and then permanently deletes the test skill. With token authentication, omit --email.",
+      "command": "npm start -- --bundle \"<skill-path>\" --email \"<work-email>\" --yes",
       "kind": "run"
     }
   ],
@@ -109,6 +109,10 @@
       {
         "id": "work-email",
         "prompt": "What is your work email address?"
+      },
+      {
+        "id": "skill-path",
+        "prompt": "What is the path to the local SKILL.md you want to test?"
       }
     ],
     "auth": [
@@ -126,7 +130,7 @@
       "startsOwnServer": false
     },
     "run": {
-      "command": "npm start -- --email \"<work-email>\" --yes",
+      "command": "npm start -- --bundle \"<skill-path>\" --email \"<work-email>\" --yes",
       "userBrowser": false
     }
   },
@@ -153,14 +157,14 @@
       "icon": "Download"
     }
   ],
-  "aiPrompt": "Scaffold and run the Skills create-and-retrieve quickstart. Ask for the user's work email. Run credential-free fixture tests before authentication. Use the supported SKILLS scope for OAuth and token authentication. Run the official glean-auth CLI directly; do not add a scope-fallback wrapper. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique SKILL.md: validate it, reject invalid frontmatter without creating anything, create it once without automatic retries, confirm list and get return the captured ID, and verify the downloaded ZIP contains exactly one regular root SKILL.md matching the uploaded bytes. Use yauzl to read the archive in memory, bound decompression by the uploaded file size, and check CRC-32 with node:zlib. Reject malformed archives, unexpected entries, checksum errors, and changed content. A mismatch must still trigger cleanup. Delete the captured ID only when the response identifies the initial version 1.1. If any other version is returned, stop without deleting it. npm start with no --bundle uses fixtures/sample-skill/SKILL.md; pass --bundle for a different local SKILL.md. Do not put --bundle in the npm start script. npm run verify is the verify subcommand and generates a unique name when --bundle is omitted. If cleanup cannot delete a captured ID, exit non-zero, print the work error, and print the remaining ID plus a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run. Do not publish a second version, do not extract archive files to disk, and do not import from GitHub. Never execute retrieved files or infer cleanup targets from names or catalog search.",
-  "llmContext": "Use @gleanwork/api-client 0.20.4 with includeExperimental. Validate, create without retries, list, retrieve, and compare the ZIP's single regular root SKILL.md byte-for-byte with the upload. Use yauzl with bounded decompression and node:zlib CRC-32. Reject malformed archives, unexpected entries, bad checksums, and mismatches. Never extract files to disk or execute them. Delete only the captured initial-version (1.1) ID; cleanup failures fail verification. npm run verify generates a unique name. npm start defaults to fixtures/sample-skill/SKILL.md; --bundle overrides it. Name checks are not atomic. Use SKILLS, not skills:read or skills:write. Use official @gleanwork/auth; Node loads .env. Version management and GitHub import are out of scope.",
+  "aiPrompt": "Scaffold and run the Skills create-and-retrieve quickstart. Ask for the user's work email and the path to the local SKILL.md to test. Run credential-free fixture tests before authentication. Use the SKILLS OAuth scope or the SKILLS permission on a user-scoped token. Run the official glean-auth CLI directly; do not add a scope-fallback wrapper. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique SKILL.md: validate it, reject invalid frontmatter without creating anything, create it once without automatic retries, confirm list and get return the captured ID, and verify the downloaded ZIP contains exactly one regular root SKILL.md matching the uploaded bytes. Use yauzl to read the archive in memory, bound decompression by the uploaded file size, and check CRC-32 with node:zlib. Reject malformed archives, unexpected entries, checksum errors, and changed content. A mismatch must still trigger cleanup. Delete the captured ID only when the response identifies the initial version 1.1. If any other version is returned, stop without deleting it. npm start with no --bundle uses fixtures/sample-skill/SKILL.md; pass --bundle for a different local SKILL.md. Do not put --bundle in the npm start script. npm run verify is the verify subcommand and generates a unique name when --bundle is omitted. If cleanup cannot delete a captured ID, exit non-zero, print the work error, and print the remaining ID plus a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run. Do not publish a second version, do not extract archive files to disk, and do not import from GitHub. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+  "llmContext": "Use @gleanwork/api-client 0.20.4 with includeExperimental. Validate, create without retries, list, retrieve, and compare the ZIP's single regular root SKILL.md byte-for-byte with the upload. Use yauzl with bounded decompression and node:zlib CRC-32. Reject malformed archives, unexpected entries, bad checksums, and mismatches. Never extract files to disk or execute them. Delete only the captured initial-version (1.1) ID; cleanup failures fail verification. npm run verify generates a unique name. npm start defaults to fixtures/sample-skill/SKILL.md; --bundle overrides it. Name checks are not atomic. Use the SKILLS OAuth scope or the SKILLS permission on a user-scoped token. Use official @gleanwork/auth with dynamic client registration; Node loads .env. Version management and GitHub import are out of scope.",
   "goDependency": false,
   "featured": false,
   "hidden": false,
   "tags": ["skills", "quickstart", "platform-api", "experimental"],
   "content": {
-    "problem": "You have a local SKILL.md file and want to publish it to your Glean instance. Before adding version management or GitHub imports, start by validating the file, creating a skill, and checking that you can retrieve it. This quickstart uses the official TypeScript API client to complete that workflow, then deletes the test skill. It verifies that the downloaded SKILL.md matches the uploaded file byte for byte, without extracting files to disk or executing the skill.",
+    "problem": "You want to confirm that a local SKILL.md can be published and retrieved through the Skills API. This quickstart first checks access with a generated sample, then tests your file. Each command compares the downloaded SKILL.md with the upload byte for byte and deletes the test skill. It does not extract or execute retrieved files.",
     "takeItFurther": [
       "Use the skill-publishing-pipeline recipe to publish another version, inspect a specific version, and examine a downloaded archive safely.",
       "Use the GitHub import recipe when the source of truth is a public repository rather than a local SKILL.md.",
@@ -195,7 +199,7 @@
       },
       {
         "title": "Sign-in permissions vary by instance",
-        "description": "Your instance must allow the SKILLS scope. If OAuth is unavailable, use a user-scoped token with that scope. The skills:read and skills:write OAuth scopes are not supported yet."
+        "description": "Your instance must allow the SKILLS OAuth scope or the SKILLS permission on a user-scoped token."
       }
     ]
   }

@@ -50,3 +50,23 @@ test('login and generated instructions use the same supported scope', async () =
     execution: { auth: [{ scopes: ['SKILLS'] }] },
   });
 });
+
+test('public instructions use DCR and pass the supplied SKILL.md', async () => {
+  const recipeRoot = new URL('../', import.meta.url);
+  const recipe: unknown = JSON.parse(
+    await fs.readFile(new URL('recipe.json', recipeRoot), 'utf8'),
+  );
+  const readme = await fs.readFile(new URL('README.md', recipeRoot), 'utf8');
+  const recipeInstructions = JSON.stringify(recipe);
+  const publicInstructions = `${recipeInstructions}\n${readme}`;
+
+  expect(recipeInstructions).toContain(
+    'registers the OAuth client dynamically',
+  );
+  expect(readme).toContain('dynamic client registration');
+  expect(recipeInstructions).not.toContain('GLEAN_OAUTH_CLIENT_ID');
+  expect(readme).not.toContain('GLEAN_OAUTH_CLIENT_ID');
+  expect(publicInstructions).toContain(
+    'npm start -- --bundle \\"<skill-path>\\" --email \\"<work-email>\\" --yes',
+  );
+});
