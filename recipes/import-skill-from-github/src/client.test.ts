@@ -45,4 +45,5 @@ test('public instructions use DCR and no static-client or scope fallback', async
   expect(instructions).not.toMatch(
     /GLEAN_OAUTH_CLIENT_ID|skills:read|skills:write|scope-mode|legacy compatibility/,
   );
+  expect(recipe.match(/cd import-skill-from-github &&/gu)).toHaveLength(1);
 });

@@ -1561,12 +1561,13 @@
       {
         "title": "Install dependencies",
         "command": "cd import-skill-from-github && npm install",
+        "description": "Enter the project directory and install its dependencies. Run every later command from this directory.",
         "kind": "install"
       },
       {
         "title": "Run the fixture tests",
         "description": "Run Vitest with recorded preview payloads and MSW, without GitHub or Glean credentials, covering JSON preview, optional SSE preview, import, sync, and captured-ID cleanup.",
-        "command": "cd import-skill-from-github && npm test",
+        "command": "npm test",
         "kind": "manual"
       },
       {
@@ -1577,19 +1578,19 @@
       {
         "title": "Sign in with OAuth",
         "description": "Run the login command with the SKILLS scope and complete authorization in your browser. Wait for the command to report success before continuing. Skip this step if you configured a token in .env.",
-        "command": "cd import-skill-from-github && npm run login -- --email \"<work-email>\"",
+        "command": "npm run login -- --email \"<work-email>\"",
         "kind": "authenticate"
       },
       {
         "title": "Verify against your instance",
         "description": "Preview the public GitHub skill-creator directory on main, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. HTTP 400 means an unsupported GitHub URL or ref, including commit permalinks. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means this credential cannot import. HTTP 429 means rate-limiting. Success prints an Imported line that ends with cleanup completed.",
-        "command": "cd import-skill-from-github && npm run verify -- --email \"<work-email>\"",
+        "command": "npm run verify -- --email \"<work-email>\"",
         "kind": "verify-live"
       },
       {
         "title": "Use the streaming preview",
         "description": "Run the same preview, import, and sync path with --stream. The command prints any scan events returned by the API and still succeeds when a small source produces only the final result event. It deletes the captured skill when it finishes; there is no keep path. Pass --yes when the terminal is not interactive.",
-        "command": "cd import-skill-from-github && npm start -- --email \"<work-email>\" --yes --stream",
+        "command": "npm start -- --email \"<work-email>\" --yes --stream",
         "kind": "run"
       }
     ],
@@ -1602,18 +1603,18 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["SKILLS"],
-          "setupCommand": "cd import-skill-from-github && npm run login -- --email \"<work-email>\"",
+          "setupCommand": "npm run login -- --email \"<work-email>\"",
           "credentialVariable": "GLEAN_API_TOKEN"
         }
       ],
       "verification": {
         "kind": "automated",
-        "command": "cd import-skill-from-github && npm run verify -- --email \"<work-email>\"",
+        "command": "npm run verify -- --email \"<work-email>\"",
         "expectedDuration": "about 2 minutes after sign-in",
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd import-skill-from-github && npm start -- --email \"<work-email>\" --yes --stream",
+        "command": "npm start -- --email \"<work-email>\" --yes --stream",
         "userBrowser": false
       }
     },
@@ -3340,12 +3341,13 @@
       {
         "title": "Install dependencies",
         "command": "cd skill-publishing-pipeline && npm install",
+        "description": "Enter the project directory and install its dependencies. Run every later command from this directory.",
         "kind": "install"
       },
       {
         "title": "Run the fixture tests",
         "description": "Run name-based supersession, version retrieval, OAuth configuration, and adversarial archive tests without credentials or network access.",
-        "command": "cd skill-publishing-pipeline && npm test",
+        "command": "npm test",
         "kind": "manual"
       },
       {
@@ -3356,19 +3358,19 @@
       {
         "title": "Sign in with OAuth",
         "description": "Run the login command with the SKILLS scope and complete authorization in your browser. Wait for the command to report success before continuing. Skip this step if you configured a token in .env.",
-        "command": "cd skill-publishing-pipeline && npm run login -- --email \"<work-email>\"",
+        "command": "npm run login -- --email \"<work-email>\"",
         "kind": "authenticate"
       },
       {
         "title": "Verify versioning on your instance",
         "description": "Create a cryptographically unique sample, publish a second version under the same name, retrieve and stage that version's content in a bounded sandbox, then permanently delete only the ID returned by this run. Success prints a Verified line that ends with cleanup completed.",
-        "command": "cd skill-publishing-pipeline && npm run verify -- --email \"<work-email>\"",
+        "command": "npm run verify -- --email \"<work-email>\"",
         "kind": "verify-live"
       },
       {
         "title": "Publish a new version of your bundle",
         "description": "Validate fixtures/sample-skill/SKILL.md by default, confirm before name-based supersession if that display name already exists, and stage the returned zip under staged/ID/vVERSION.MINOR so a second publish does not overwrite the first. Pass --bundle with your own SKILL.md, .zip, or .skill, and --stage-dir to choose a different parent folder. The command prints the exact ID before staging, which you need for optional cleanup.",
-        "command": "cd skill-publishing-pipeline && npm start -- publish --email \"<work-email>\"",
+        "command": "npm start -- publish --email \"<work-email>\"",
         "kind": "run"
       },
       {
@@ -3379,7 +3381,7 @@
       {
         "title": "Delete the published skill only when you intend to",
         "description": "Deletion permanently removes every version. Pass only the exact ID printed by your publish run and read the confirmation prompt.",
-        "command": "cd skill-publishing-pipeline && npm start -- cleanup --id \"PASTE_THE_ID_PRINTED_BY_PUBLISH\" --email \"<work-email>\"",
+        "command": "npm start -- cleanup --id \"PASTE_THE_ID_PRINTED_BY_PUBLISH\" --email \"<work-email>\"",
         "kind": "manual"
       }
     ],
@@ -3392,18 +3394,18 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["SKILLS"],
-          "setupCommand": "cd skill-publishing-pipeline && npm run login -- --email \"<work-email>\"",
+          "setupCommand": "npm run login -- --email \"<work-email>\"",
           "credentialVariable": "GLEAN_API_TOKEN"
         }
       ],
       "verification": {
         "kind": "automated",
-        "command": "cd skill-publishing-pipeline && npm run verify -- --email \"<work-email>\"",
+        "command": "npm run verify -- --email \"<work-email>\"",
         "expectedDuration": "about 2 minutes after sign-in",
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd skill-publishing-pipeline && npm start -- publish --email \"<work-email>\"",
+        "command": "npm start -- publish --email \"<work-email>\"",
         "userBrowser": false
       }
     },

@@ -71,12 +71,13 @@
     {
       "title": "Install dependencies",
       "command": "cd skill-publishing-pipeline && npm install",
+      "description": "Enter the project directory and install its dependencies. Run every later command from this directory.",
       "kind": "install"
     },
     {
       "title": "Run the fixture tests",
       "description": "Run name-based supersession, version retrieval, OAuth configuration, and adversarial archive tests without credentials or network access.",
-      "command": "cd skill-publishing-pipeline && npm test",
+      "command": "npm test",
       "kind": "manual"
     },
     {
@@ -87,19 +88,19 @@
     {
       "title": "Sign in with OAuth",
       "description": "Run the login command with the SKILLS scope and complete authorization in your browser. Wait for the command to report success before continuing. Skip this step if you configured a token in .env.",
-      "command": "cd skill-publishing-pipeline && npm run login -- --email \"<work-email>\"",
+      "command": "npm run login -- --email \"<work-email>\"",
       "kind": "authenticate"
     },
     {
       "title": "Verify versioning on your instance",
       "description": "Create a cryptographically unique sample, publish a second version under the same name, retrieve and stage that version's content in a bounded sandbox, then permanently delete only the ID returned by this run. Success prints a Verified line that ends with cleanup completed.",
-      "command": "cd skill-publishing-pipeline && npm run verify -- --email \"<work-email>\"",
+      "command": "npm run verify -- --email \"<work-email>\"",
       "kind": "verify-live"
     },
     {
       "title": "Publish a new version of your bundle",
       "description": "Validate fixtures/sample-skill/SKILL.md by default, confirm before name-based supersession if that display name already exists, and stage the returned zip under staged/ID/vVERSION.MINOR so a second publish does not overwrite the first. Pass --bundle with your own SKILL.md, .zip, or .skill, and --stage-dir to choose a different parent folder. The command prints the exact ID before staging, which you need for optional cleanup.",
-      "command": "cd skill-publishing-pipeline && npm start -- publish --email \"<work-email>\"",
+      "command": "npm start -- publish --email \"<work-email>\"",
       "kind": "run"
     },
     {
@@ -110,7 +111,7 @@
     {
       "title": "Delete the published skill only when you intend to",
       "description": "Deletion permanently removes every version. Pass only the exact ID printed by your publish run and read the confirmation prompt.",
-      "command": "cd skill-publishing-pipeline && npm start -- cleanup --id \"PASTE_THE_ID_PRINTED_BY_PUBLISH\" --email \"<work-email>\"",
+      "command": "npm start -- cleanup --id \"PASTE_THE_ID_PRINTED_BY_PUBLISH\" --email \"<work-email>\"",
       "kind": "manual"
     }
   ],
@@ -126,18 +127,18 @@
       {
         "kind": "oauth-with-token-fallback",
         "scopes": ["SKILLS"],
-        "setupCommand": "cd skill-publishing-pipeline && npm run login -- --email \"<work-email>\"",
+        "setupCommand": "npm run login -- --email \"<work-email>\"",
         "credentialVariable": "GLEAN_API_TOKEN"
       }
     ],
     "verification": {
       "kind": "automated",
-      "command": "cd skill-publishing-pipeline && npm run verify -- --email \"<work-email>\"",
+      "command": "npm run verify -- --email \"<work-email>\"",
       "expectedDuration": "about 2 minutes after sign-in",
       "startsOwnServer": false
     },
     "run": {
-      "command": "cd skill-publishing-pipeline && npm start -- publish --email \"<work-email>\"",
+      "command": "npm start -- publish --email \"<work-email>\"",
       "userBrowser": false
     }
   },
