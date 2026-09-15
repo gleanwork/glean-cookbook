@@ -247,8 +247,8 @@ commands, executes the real clone, install, and fixture commands with `execa`, a
 process against a strict local service fixture. Tests assert process output, request order,
 resulting files, and cleanup directly.
 
-CI appends the checked-out commit SHA to the Tiged repository spec so the real clone fetches the
-candidate revision rather than the previous `main`. A local run with no test ref executes
+CI replaces the Tiged repository and ref with the pull request's head repository and SHA so the
+real clone fetches the candidate revision rather than the previous `main`, including for forks. A local run with no test ref executes
 the literal published clone command. The plugin build separately compares every generated public
 skill command with its authored step. These deterministic checks do not prove OAuth policy, deployed
 page behavior, tenant feature availability, permission differences, or third-party host behavior;

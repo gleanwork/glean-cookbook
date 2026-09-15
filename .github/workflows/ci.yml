@@ -44,7 +44,8 @@ jobs:
       # the live-discovery test skips itself without GLEAN_INSTANCE.
       - run: pnpm test
         env:
-          GLEAN_COOKBOOK_TEST_REF: ${{ github.sha }}
+          GLEAN_COOKBOOK_TEST_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          GLEAN_COOKBOOK_TEST_REF: ${{ github.event.pull_request.head.sha || github.sha }}
 
   recipe-fixtures:
     name: Recipe fixture verification

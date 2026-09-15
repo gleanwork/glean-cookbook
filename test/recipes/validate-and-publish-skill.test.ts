@@ -11,7 +11,9 @@ const sourceDirectory = path.join(
   'recipes',
   'validate-and-publish-skill',
 );
-const source = 'gleanwork/glean-cookbook/recipes/validate-and-publish-skill';
+const sourceRepository = 'gleanwork/glean-cookbook';
+const sourcePath = 'recipes/validate-and-publish-skill';
+const source = `${sourceRepository}/${sourcePath}`;
 const target = 'validate-and-publish-skill';
 
 type Recipe = {
@@ -115,7 +117,10 @@ describe('validate-and-publish-skill recipe', () => {
 
 function cloneAtRef(command: string): string {
   const ref = process.env.GLEAN_COOKBOOK_TEST_REF;
-  return ref ? command.replace(source, `${source}#${ref}`) : command;
+  if (!ref) return command;
+  const repository =
+    process.env.GLEAN_COOKBOOK_TEST_REPOSITORY ?? sourceRepository;
+  return command.replace(source, `${repository}/${sourcePath}#${ref}`);
 }
 
 function isolatedEnvironment(root: string): NodeJS.ProcessEnv {
