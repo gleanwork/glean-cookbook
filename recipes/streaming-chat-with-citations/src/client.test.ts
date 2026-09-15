@@ -38,4 +38,5 @@ test('public instructions use DCR without static-client guidance', async () => {
   expect(pkg).toContain('glean-auth login --scopes CHAT');
   expect(instructions).toContain('dynamic client registration');
   expect(instructions).not.toContain('GLEAN_OAUTH_CLIENT_ID');
+  expect(recipe.match(/cd streaming-chat-with-citations &&/gu)).toHaveLength(1);
 });

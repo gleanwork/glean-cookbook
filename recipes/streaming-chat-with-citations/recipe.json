@@ -70,12 +70,13 @@
     {
       "title": "Install dependencies",
       "command": "cd streaming-chat-with-citations && npm install",
+      "description": "Enter the project directory and install its dependencies. Run every later command from this directory.",
       "kind": "install"
     },
     {
       "title": "Run the fixture tests",
       "description": "Runs Vitest with MSW-backed fixtures, without credentials or live network access, covering typed `createStream` events, `conversation_id` propagation, and citations.",
-      "command": "cd streaming-chat-with-citations && npm test",
+      "command": "npm test",
       "kind": "manual"
     },
     {
@@ -86,19 +87,19 @@
     {
       "title": "Sign in with OAuth",
       "description": "Run the login command with the CHAT scope and complete authorization in your browser. Wait for the command to report success before continuing. Skip this step if you configured a token.",
-      "command": "cd streaming-chat-with-citations && npm run login -- --email \"<work-email>\"",
+      "command": "npm run login -- --email \"<work-email>\"",
       "kind": "authenticate"
     },
     {
       "title": "Stream one Chat turn",
       "description": "Sends a question through `createStream`, then prints delta text, `conversation_id`, and grounded citation data against your own instance.",
-      "command": "cd streaming-chat-with-citations && npm run verify -- --email \"<work-email>\" --prompt \"<chat-question>\"",
+      "command": "npm run verify -- --email \"<work-email>\" --prompt \"<chat-question>\"",
       "kind": "verify-live"
     },
     {
       "title": "Stream a follow-up",
       "description": "Starts a stored conversation, iterates `createStream` events, and sends a follow-up using the returned `conversation_id`.",
-      "command": "cd streaming-chat-with-citations && npm start -- --email \"<work-email>\" --prompt \"<chat-question>\" --follow-up \"<follow-up-question>\"",
+      "command": "npm start -- --email \"<work-email>\" --prompt \"<chat-question>\" --follow-up \"<follow-up-question>\"",
       "kind": "run"
     }
   ],
@@ -122,18 +123,18 @@
       {
         "kind": "oauth-with-token-fallback",
         "scopes": ["CHAT"],
-        "setupCommand": "cd streaming-chat-with-citations && npm run login -- --email \"<work-email>\"",
+        "setupCommand": "npm run login -- --email \"<work-email>\"",
         "credentialVariable": "GLEAN_API_TOKEN"
       }
     ],
     "verification": {
       "kind": "automated",
-      "command": "cd streaming-chat-with-citations && npm run verify -- --email \"<work-email>\" --prompt \"<chat-question>\"",
+      "command": "npm run verify -- --email \"<work-email>\" --prompt \"<chat-question>\"",
       "expectedDuration": "about 1 minute after sign-in",
       "startsOwnServer": false
     },
     "run": {
-      "command": "cd streaming-chat-with-citations && npm start -- --email \"<work-email>\" --prompt \"<chat-question>\" --follow-up \"<follow-up-question>\"",
+      "command": "npm start -- --email \"<work-email>\" --prompt \"<chat-question>\" --follow-up \"<follow-up-question>\"",
       "userBrowser": false
     }
   },
