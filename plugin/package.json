@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "generate:commands": "node scripts/generate-commands.mjs",
-    "build": "npm run generate:commands && pluginpack build",
+    "build": "npm run generate:commands && node scripts/check-command-parity.mjs && pluginpack build",
     "validate": "pluginpack validate --target claude --dir .. && pluginpack validate --target cursor --dir .. && pluginpack validate --target codex --dir ..",
     "test": "npm run build && npm run validate"
   },

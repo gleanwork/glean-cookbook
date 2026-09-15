@@ -239,7 +239,20 @@ where the _skill_ is what's wrong, not the reference code. A blind rebuild catch
 direction. Then run the recipe's demo queries against a real, live Glean instance and confirm each
 one's `expectedBehavior` actually holds — not that the prose still reads correctly.
 
-### The verify gate
+### Deterministic recipe regression
+
+`mise exec -- pnpm verify:regression -- <recipe-id>` materializes a scaffold recipe in a fresh
+temporary directory, runs its credential-free authored commands verbatim in one sequential shell,
+and then runs a registered behavior adapter against a strict local fixture. The report includes a
+digest of the copied recipe source, the commands, fixture request sequence, and PASS, PARTIAL, or
+FAIL status. Missing behavior adapters report PARTIAL rather than passing.
+
+The plugin build separately compares every generated public skill command with its authored step.
+These deterministic checks should run on every change. They do not prove OAuth policy, deployed
+page behavior, tenant feature availability, permission differences, or third-party host behavior;
+those remain live or deployed gates below.
+
+### The live verify gate
 
 `mise exec -- pnpm verify:recipe <recipe-id>` is the executable form of a recipe's `## Verify`
 section. It reads
