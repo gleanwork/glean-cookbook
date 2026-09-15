@@ -12,7 +12,6 @@
     "sync:tokens": "node scripts/sync-brand-tokens.mjs",
     "validate:registry": "node scripts/validate-registry.mjs",
     "verify:recipe": "node scripts/verify-recipe.mjs",
-    "verify:regression": "node scripts/run-recipe-regression.mjs",
     "check:freshness": "node scripts/check-recipe-freshness.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -23,7 +22,8 @@
     "recipe-commands:check": "node scripts/check-recipe-commands.mjs",
     "recipe-packages:check": "node scripts/check-recipe-packages.mjs",
     "snippets:sync": "md-code sync",
-    "test": "node --test \"scripts/**/*.test.mjs\" && npm run recipe-packages:check && npm run artifacts:check && npm run execution:check",
+    "test": "node --test \"scripts/**/*.test.mjs\" && npm run test:recipes && npm run recipe-packages:check && npm run artifacts:check && npm run execution:check",
+    "test:recipes": "vitest run test/recipes",
     "verify:login": "node scripts/verify-login.mjs",
     "artifacts:check": "node scripts/build-artifacts.mjs --check",
     "execution:check": "node scripts/check-recipe-execution.mjs",
@@ -37,11 +37,13 @@
     "ajv-formats": "^3.0.1",
     "execa": "^10.0.1",
     "fast-glob": "^3.3.3",
+    "fixturify-project": "^7.1.3",
     "fs-extra": "^11.4.0",
     "markdown-code": "^1.2.0",
     "postcss": "^8.5.26",
     "prettier": "^3.4.2",
-    "release-it": "^21.0.1"
+    "release-it": "^21.0.1",
+    "vitest": "^5.0.0"
   },
   "engines": {
     "node": ">=20"

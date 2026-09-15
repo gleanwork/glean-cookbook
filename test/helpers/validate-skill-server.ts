@@ -1,19 +1,19 @@
-import http from 'node:http';
+import http, { type IncomingMessage, type ServerResponse } from 'node:http';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const SKILL_ID = 'fixture-skill-id';
 
-function readBody(request) {
+function readBody(request: IncomingMessage): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const chunks = [];
-    request.on('data', (chunk) => chunks.push(chunk));
+    const chunks: Buffer[] = [];
+    request.on('data', (chunk: Buffer) => chunks.push(chunk));
     request.on('end', () => resolve(Buffer.concat(chunks)));
     request.on('error', reject);
   });
 }
 
-function uploadedFile(body, contentType = '') {
+function uploadedFile(body: Buffer, contentType = ''): Buffer {
   const boundary = /boundary=(?:"([^"]+)"|([^;]+))/u
     .exec(contentType)
     ?.slice(1)
@@ -25,12 +25,12 @@ function uploadedFile(body, contentType = '') {
   return body.subarray(headerEnd + 4, partEnd);
 }
 
-function sendJson(response, status, value) {
+function sendJson(response: ServerResponse, status: number, value: unknown) {
   response.writeHead(status, { 'Content-Type': 'application/json' });
   response.end(JSON.stringify(value));
 }
 
-function skill(uploaded) {
+function skill(uploaded: Buffer) {
   return {
     id: SKILL_ID,
     display_name: /^name:\s*(.+)$/mu.exec(uploaded.toString('utf8'))?.[1] ?? '',
@@ -45,15 +45,17 @@ function skill(uploaded) {
   };
 }
 
-export async function startValidateSkillFixture(destination) {
-  const require = createRequire(path.join(destination, 'package.json'));
-  const { zipSync } = require('fflate');
-  const requests = [];
+export async function startValidateSkillServer(recipeDirectory: string) {
+  const require = createRequire(path.join(recipeDirectory, 'package.json'));
+  const { zipSync } = require('fflate') as {
+    zipSync(files: Record<string, Uint8Array>): Uint8Array;
+  };
+  const requests: string[] = [];
   let uploaded = Buffer.alloc(0);
   let created = false;
   let deleted = false;
 
-  const server = http.createServer(async (request, response) => {
+  async function handle(request: IncomingMessage, response: ServerResponse) {
     const url = new URL(request.url ?? '/', 'http://fixture');
     requests.push(`${request.method} ${url.pathname}${url.search}`);
     if (request.headers.authorization !== 'Bearer fixture-token') {
@@ -72,7 +74,9 @@ export async function startValidateSkillFixture(destination) {
       const name = /^name:\s*(.+)$/mu.exec(text)?.[1];
       const description = /^description:\s*(.+)$/mu.exec(text)?.[1];
       if (!name || !description) {
-        response.writeHead(400, { 'Content-Type': 'application/problem+json' });
+        response.writeHead(400, {
+          'Content-Type': 'application/problem+json',
+        });
         return response.end(
           JSON.stringify({
             type: 'about:blank',
@@ -87,7 +91,11 @@ export async function startValidateSkillFixture(destination) {
       return sendJson(response, 200, {
         metadata: { display_name: name, description },
         files: [
-          { path: 'SKILL.md', size_bytes: bytes.byteLength, is_manifest: true },
+          {
+            path: 'SKILL.md',
+            size_bytes: bytes.byteLength,
+            is_manifest: true,
+          },
         ],
         warnings: [],
         request_id: 'fixture-validate',
@@ -129,7 +137,9 @@ export async function startValidateSkillFixture(destination) {
       request.method === 'GET' &&
       url.pathname === `/api/skills/${SKILL_ID}/content`
     ) {
-      response.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+      response.writeHead(200, {
+        'Content-Type': 'application/octet-stream',
+      });
       return response.end(Buffer.from(zipSync({ 'SKILL.md': uploaded })));
     }
 
@@ -142,27 +152,32 @@ export async function startValidateSkillFixture(destination) {
       return response.end();
     }
 
-    return sendJson(response, 500, {
+    sendJson(response, 500, {
       error: `Unexpected fixture request: ${request.method} ${url.pathname}`,
+    });
+  }
+
+  const server = http.createServer((request, response) => {
+    void handle(request, response).catch((error: unknown) => {
+      sendJson(response, 500, {
+        error: error instanceof Error ? error.message : String(error),
+      });
     });
   });
 
-  await new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
     server.listen(0, '127.0.0.1', resolve);
   });
   const address = server.address();
-  if (!address || typeof address === 'string')
+  if (!address || typeof address === 'string') {
     throw new Error('Fixture server did not bind');
+  }
 
   return {
-    command: 'npm run verify',
-    env: {
-      GLEAN_API_TOKEN: 'fixture-token',
-      GLEAN_SERVER_URL: `http://127.0.0.1:${address.port}`,
-    },
+    url: `http://127.0.0.1:${address.port}`,
     requests,
     state: () => ({ created, deleted }),
-    close: () => new Promise((resolve) => server.close(resolve)),
+    close: () => new Promise<void>((resolve) => server.close(() => resolve())),
   };
 }

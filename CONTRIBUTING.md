@@ -241,16 +241,17 @@ one's `expectedBehavior` actually holds — not that the prose still reads corre
 
 ### Deterministic recipe regression
 
-`mise exec -- pnpm verify:regression -- <recipe-id>` materializes a scaffold recipe in a fresh
-temporary directory, runs its credential-free authored commands verbatim in one sequential shell,
-and then runs a registered behavior adapter against a strict local fixture. The report includes a
-digest of the copied recipe source, the commands, fixture request sequence, and PASS, PARTIAL, or
-FAIL status. Missing behavior adapters report PARTIAL rather than passing.
+`mise exec -- pnpm test:recipes` runs Vitest integration tests for scaffold recipes. Each test uses
+`fixturify-project` to materialize the current recipe source in a fresh project, reads and asserts
+the authored commands, executes the install and fixture commands with `execa`, and drives the real
+recipe process against a strict local service fixture. Tests assert process output, request order,
+resulting files, and cleanup directly.
 
-The plugin build separately compares every generated public skill command with its authored step.
-These deterministic checks should run on every change. They do not prove OAuth policy, deployed
-page behavior, tenant feature availability, permission differences, or third-party host behavior;
-those remain live or deployed gates below.
+The GitHub clone command is asserted rather than executed during a pull request because it would
+fetch the repository's previous `main` revision instead of the candidate under test. The plugin
+build separately compares every generated public skill command with its authored step. These
+deterministic checks do not prove OAuth policy, deployed page behavior, tenant feature availability,
+permission differences, or third-party host behavior; those remain live or deployed gates below.
 
 ### The live verify gate
 
