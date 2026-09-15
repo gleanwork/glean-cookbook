@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execa } from 'execa';
+import fixturify from 'fixturify';
 import { Project } from 'fixturify-project';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { startValidateSkillServer } from '../helpers/validate-skill-server.js';
@@ -26,12 +27,12 @@ describe('validate-and-publish-skill recipe', () => {
     workspace = new Project('cookbook-recipe-test');
     await workspace.write();
 
-    const sourceProject = Project.fromDir(sourceDirectory);
-    const recipeProject = new Project({
-      name: sourceProject.name,
-      version: sourceProject.version,
-      files: sourceProject.files,
+    const files = fixturify.readSync(sourceDirectory, {
+      ignore: ['node_modules/**', '.cookbook-runs/**'],
     });
+    delete files['package.json'];
+    delete files.node_modules;
+    const recipeProject = new Project({ files });
     recipeDirectory = path.join(workspace.baseDir, target);
     recipeProject.baseDir = recipeDirectory;
     await recipeProject.write();
