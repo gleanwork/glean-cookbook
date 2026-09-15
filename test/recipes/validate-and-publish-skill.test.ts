@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execa } from 'execa';
-import fixturify from 'fixturify';
 import { Project } from 'fixturify-project';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { startValidateSkillServer } from '../helpers/validate-skill-server.js';
@@ -12,6 +11,7 @@ const sourceDirectory = path.join(
   'recipes',
   'validate-and-publish-skill',
 );
+const source = 'gleanwork/glean-cookbook/recipes/validate-and-publish-skill';
 const target = 'validate-and-publish-skill';
 
 type Recipe = {
@@ -26,20 +26,7 @@ describe('validate-and-publish-skill recipe', () => {
   beforeEach(async () => {
     workspace = new Project('cookbook-recipe-test');
     await workspace.write();
-
-    const files = fixturify.readSync(sourceDirectory, {
-      ignore: ['node_modules/**', '.cookbook-runs/**'],
-    });
-    delete files['package.json'];
-    delete files.node_modules;
-    const recipeProject = new Project({ files });
     recipeDirectory = path.join(workspace.baseDir, target);
-    recipeProject.baseDir = recipeDirectory;
-    await recipeProject.write();
-    fs.copyFileSync(
-      path.join(sourceDirectory, 'package.json'),
-      path.join(recipeDirectory, 'package.json'),
-    );
   });
 
   afterEach(async () => {
@@ -47,7 +34,7 @@ describe('validate-and-publish-skill recipe', () => {
     workspace.dispose();
   });
 
-  it('runs the documented fixture and API verification flow', async () => {
+  it('runs the documented clone, fixture, and API verification flow', async () => {
     const recipe = JSON.parse(
       fs.readFileSync(path.join(sourceDirectory, 'recipe.json'), 'utf8'),
     ) as Recipe;
@@ -64,6 +51,16 @@ describe('validate-and-publish-skill recipe', () => {
       'npm start -- --bundle "<skill-path>" --email "<work-email>" --yes',
     ]);
 
+    const environment = isolatedEnvironment(workspace.baseDir);
+    expect(environment.GITHUB_TOKEN).toBeUndefined();
+
+    const clone = await execa('bash', ['-c', cloneAtRef(commands[0])], {
+      cwd: workspace.baseDir,
+      env: environment,
+      extendEnv: false,
+      reject: false,
+    });
+    expect(clone.exitCode, clone.stderr).toBe(0);
     expect(fs.existsSync(path.join(recipeDirectory, 'package-lock.json'))).toBe(
       true,
     );
@@ -71,8 +68,6 @@ describe('validate-and-publish-skill recipe', () => {
       false,
     );
 
-    const environment = isolatedEnvironment(workspace.baseDir);
-    expect(environment.GITHUB_TOKEN).toBeUndefined();
     const install = await execa('bash', ['-c', commands[1]], {
       cwd: workspace.baseDir,
       env: environment,
@@ -117,6 +112,11 @@ describe('validate-and-publish-skill recipe', () => {
     expect(server.state()).toEqual({ created: true, deleted: true });
   }, 120_000);
 });
+
+function cloneAtRef(command: string): string {
+  const ref = process.env.GLEAN_COOKBOOK_TEST_REF;
+  return ref ? command.replace(source, `${source}#${ref}`) : command;
+}
 
 function isolatedEnvironment(root: string): NodeJS.ProcessEnv {
   const home = path.join(root, '.home');

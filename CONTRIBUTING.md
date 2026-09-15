@@ -242,16 +242,17 @@ one's `expectedBehavior` actually holds — not that the prose still reads corre
 ### Deterministic recipe regression
 
 `mise exec -- pnpm test:recipes` runs Vitest integration tests for scaffold recipes. Each test uses
-`fixturify-project` to materialize the current recipe source in a fresh project, reads and asserts
-the authored commands, executes the install and fixture commands with `execa`, and drives the real
-recipe process against a strict local service fixture. Tests assert process output, request order,
+`fixturify-project` to create a fresh temporary parent directory, reads and asserts the authored
+commands, executes the real clone, install, and fixture commands with `execa`, and drives the recipe
+process against a strict local service fixture. Tests assert process output, request order,
 resulting files, and cleanup directly.
 
-The GitHub clone command is asserted rather than executed during a pull request because it would
-fetch the repository's previous `main` revision instead of the candidate under test. The plugin
-build separately compares every generated public skill command with its authored step. These
-deterministic checks do not prove OAuth policy, deployed page behavior, tenant feature availability,
-permission differences, or third-party host behavior; those remain live or deployed gates below.
+CI appends the checked-out commit SHA to the Tiged repository spec so the real clone fetches the
+candidate revision rather than the previous `main`. A local run with no test ref executes
+the literal published clone command. The plugin build separately compares every generated public
+skill command with its authored step. These deterministic checks do not prove OAuth policy, deployed
+page behavior, tenant feature availability, permission differences, or third-party host behavior;
+those remain live or deployed gates below.
 
 ### The live verify gate
 

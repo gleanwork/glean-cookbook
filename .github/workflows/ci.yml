@@ -43,6 +43,8 @@ jobs:
       # derivation are not things to leave untested. No credentials needed --
       # the live-discovery test skips itself without GLEAN_INSTANCE.
       - run: pnpm test
+        env:
+          GLEAN_COOKBOOK_TEST_REF: ${{ github.sha }}
 
   recipe-fixtures:
     name: Recipe fixture verification
