@@ -487,6 +487,29 @@ void test('formats SDK timeout and connection errors', () => {
   );
 });
 
+void test('parses explicit interactive discovery and rejects conflicting selection modes', () => {
+  assert.equal(
+    parseCliOptions(['--query', 'planning', '--discover']).discover,
+    true,
+  );
+  assert.throws(
+    () =>
+      parseCliOptions(['--query', 'planning', '--discover', '--auto-select']),
+    /--discover cannot be combined/u,
+  );
+  assert.throws(
+    () =>
+      parseCliOptions([
+        '--query',
+        'planning',
+        '--discover',
+        '--datasources',
+        'gdrive',
+      ]),
+    /--discover cannot be combined/u,
+  );
+});
+
 void test('rejects invalid page counts', () => {
   for (const pages of ['0', '1.5', '11']) {
     assert.throws(

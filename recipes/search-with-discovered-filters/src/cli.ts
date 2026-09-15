@@ -20,6 +20,7 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
         --datasources, -d Comma-separated datasources to search
         --field, -f       Filter field; requires --value
         --value, -v       Filter value; requires --field
+        --discover        Interactively choose a discovered datasource and filter
         --auto-select     Select the first discovered datasource and suggestion
         --pages           Number of Search result pages to fetch (default: 1)
 
@@ -36,6 +37,7 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
         datasources: { type: 'string', shortFlag: 'd' },
         field: { type: 'string', shortFlag: 'f' },
         value: { type: 'string', shortFlag: 'v' },
+        discover: { type: 'boolean', default: false },
         autoSelect: { type: 'boolean', default: false },
         pages: { type: 'number', default: 1 },
       },
@@ -81,6 +83,14 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
   if (cli.flags.value !== undefined && !value) {
     throw new Error('--value must not be blank.');
   }
+  if (
+    cli.flags.discover &&
+    (cli.flags.autoSelect || cli.flags.datasources !== undefined)
+  ) {
+    throw new Error(
+      '--discover cannot be combined with --auto-select or --datasources.',
+    );
+  }
   if (Boolean(field) !== Boolean(value)) {
     throw new Error('--field and --value must be provided together.');
   }
@@ -105,6 +115,7 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
     query,
     datasources,
     filter,
+    discover: cli.flags.discover,
     autoSelect: cli.flags.autoSelect,
     pages,
   };

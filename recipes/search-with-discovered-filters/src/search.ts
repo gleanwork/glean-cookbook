@@ -31,7 +31,12 @@ async function main() {
     let datasources: string[] | undefined;
     let filter: PlatformFilter | undefined = cliOptions.filter;
 
-    if (cliOptions.datasources || cliOptions.autoSelect || filter) {
+    if (
+      cliOptions.datasources ||
+      cliOptions.discover ||
+      cliOptions.autoSelect ||
+      filter
+    ) {
       const { result: catalog } = await glean.search.listFilters();
       datasources = await chooseDatasources(
         catalog.datasources,

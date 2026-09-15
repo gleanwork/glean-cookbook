@@ -47,7 +47,7 @@ export async function createGleanClient(target: GleanClientTarget) {
       staticToken ||
       createGleanTokenProvider({
         serverUrl: server.origin,
-        scopes: ['search'],
+        scopes: ['SEARCH'],
       }),
     includeExperimental: true,
     timeoutMs: 30_000,

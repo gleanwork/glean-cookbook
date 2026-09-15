@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 import { afterAll, afterEach, beforeAll, test } from 'vitest';
 import { Glean } from '@gleanwork/api-client';
 import { http, HttpResponse } from 'msw';
@@ -23,6 +24,33 @@ afterEach(() => {
 
 afterAll(() => {
   server.close();
+});
+
+test('public instructions use SEARCH through DCR', async () => {
+  const recipeRoot = new URL('../', import.meta.url);
+  const client = await fs.readFile(
+    new URL('src/client.ts', recipeRoot),
+    'utf8',
+  );
+  const pkg = await fs.readFile(new URL('package.json', recipeRoot), 'utf8');
+  const recipe = await fs.readFile(new URL('recipe.json', recipeRoot), 'utf8');
+  const readme = await fs.readFile(new URL('README.md', recipeRoot), 'utf8');
+  const instructions = `${client}\n${pkg}\n${recipe}\n${readme}`;
+
+  assert.match(pkg, /glean-auth login --scopes SEARCH/);
+  assert.match(client, /scopes: \['SEARCH'\]/);
+  assert.match(
+    instructions,
+    /dynamic client registration|registers the OAuth client dynamically/,
+  );
+  assert.doesNotMatch(
+    instructions,
+    /GLEAN_OAUTH_CLIENT_ID|administrator-provisioned|public OAuth client/,
+  );
+  assert.equal(
+    recipe.match(/cd search-with-discovered-filters &&/gu)?.length,
+    1,
+  );
 });
 
 test('prefers work-email discovery over the environment fallback', async () => {

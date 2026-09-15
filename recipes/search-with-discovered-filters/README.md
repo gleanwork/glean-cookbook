@@ -14,9 +14,9 @@ npm run login -- --email "you@example.com"
 npm start -- --email "you@example.com" --query "quarterly planning"
 ```
 
-The login command discovers your Glean backend from your work email and requests `openid offline_access search`. Use `--server-url "https://<instance>-be.glean.com"` instead of `--email` when you need an explicit backend origin. The auth package stores the public client registration and OAuth access and refresh tokens outside the project under your user state directory.
+The auth package discovers your Glean backend, registers the OAuth client dynamically, requests the `SEARCH` scope, and stores credentials securely. Use `--server-url "https://<instance>-be.glean.com"` instead of `--email` when you need an explicit backend origin.
 
-Dynamic Client Registration is controlled by tenant policy. If DCR rejects the client, redirect URI, or scope, set `GLEAN_OAUTH_CLIENT_ID` to an administrator-provisioned public client. To use a Glean-issued token instead, set `GLEAN_SERVER_URL` and a user-scoped `GLEAN_API_TOKEN`, then omit `--email`. Glean-issued OAuth tokens do not need `X-Glean-Auth-Type`.
+To use a Glean-issued token instead, set `GLEAN_SERVER_URL` and a user-scoped `GLEAN_API_TOKEN` with the `SEARCH` permission, then omit `--email`. Glean-issued OAuth tokens do not need `X-Glean-Auth-Type`.
 
 The core calls are the generated, typed SDK methods:
 
@@ -68,7 +68,13 @@ For a deterministic non-interactive run, provide the datasource and optional fil
 npm start -- --email "you@example.com" --query "quarterly planning" --datasources jira,gdrive --field status --value "In Progress"
 ```
 
-Use `--auto-select` only when choosing the first discovered datasource and suggested value is intentional. Without `--datasources`, it changes the default all-datasource search into a first-datasource search.
+Use `--discover` to choose a datasource and suggested filter interactively:
+
+```bash
+npm start -- --email "you@example.com" --query "quarterly planning" --discover
+```
+
+Use `--auto-select` only when choosing the first discovered datasource and suggested value is intentional. Without `--discover`, `--datasources`, or `--auto-select`, the default remains an all-datasource search.
 
 Run the Vitest fixture tests without credentials or network access:
 

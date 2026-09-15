@@ -38,8 +38,8 @@
   "prerequisites": [
     "Node 22.12.0 or newer",
     "A Glean instance with content indexed",
-    "Your work email, or the complete Glean backend origin shown under Server instance (QE)",
-    "A tenant that permits this public OAuth client and search scope through DCR; an administrator-provisioned OAuth client or user-scoped SEARCH token is the fallback",
+    "Your work email, or the complete Glean backend HTTPS origin",
+    "Permission to search using the SEARCH OAuth scope or the SEARCH permission on a user-scoped token",
     "Experimental Platform APIs enabled through the SDK's includeExperimental constructor option, which the scaffold sets automatically"
   ],
   "demoQueries": [
@@ -58,37 +58,43 @@
   "steps": [
     {
       "title": "Scaffold the project",
-      "description": "Copies the runnable TypeScript Search CLI and fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
+      "description": "Copy the runnable TypeScript Search CLI and fixture tests into a new directory. OAuth uses the official @gleanwork/auth package.",
       "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/search-with-discovered-filters search-with-discovered-filters",
       "kind": "scaffold"
     },
     {
       "title": "Install dependencies",
       "command": "cd search-with-discovered-filters && npm install",
+      "description": "Enter the project directory and install its dependencies. Run every later command from this directory.",
       "kind": "install"
     },
     {
       "title": "Run the fixture tests",
       "description": "Runs the Vitest fixture suite without credentials or network access, covering catalog discovery, query-backed suggestions, retries, typed errors, field-filter propagation, and experimental headers.",
-      "command": "cd search-with-discovered-filters && npm test",
+      "command": "npm test",
       "kind": "manual"
     },
     {
+      "title": "Choose an authentication path",
+      "description": "OAuth is the default. @gleanwork/auth discovers your instance, registers the OAuth client dynamically, and stores credentials securely. If OAuth is unavailable, set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN with the SEARCH permission, skip the next step, and omit --email from the live commands. Use --server-url instead of --email when you need to select an explicit backend.",
+      "kind": "configure"
+    },
+    {
       "title": "Sign in with OAuth",
-      "description": "Discovers your Glean backend from work email, completes Authorization Code with PKCE for search and offline_access, and stores refreshable credentials outside the project. Use --server-url for an explicit backend, GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN as a user-scoped fallback.",
-      "command": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\"",
+      "description": "Run the login command with the SEARCH scope and complete authorization in your browser. Wait for the command to report success before continuing. Skip this step if you configured a token.",
+      "command": "npm run login -- --email \"<work-email>\"",
       "kind": "authenticate"
     },
     {
       "title": "Verify against your instance",
       "description": "Searches your topic across all datasources and validates the Search response shape and pagination state. Add --pages 2 to fetch a second page, --datasources to narrow the query, or --auto-select to exercise the discovered datasource and suggested-filter path.",
-      "command": "cd search-with-discovered-filters && npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
+      "command": "npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
       "kind": "verify-live"
     },
     {
       "title": "Discover filters and search",
-      "description": "Runs the non-interactive CLI path, selecting the first returned datasource and suggested field value, then prints results, warnings, pagination state, and request IDs. Add --pages 2 to fetch the next result page. Omit --auto-select when running interactively to choose them yourself.",
-      "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
+      "description": "Runs the non-interactive CLI path, selecting the first returned datasource and suggested field value, then prints results, warnings, pagination state, and request IDs. Add --pages 2 to fetch the next result page. Use --discover instead of --auto-select when you want to choose a datasource and suggested filter interactively.",
+      "command": "npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
       "kind": "run"
     }
   ],
@@ -107,19 +113,19 @@
     "auth": [
       {
         "kind": "oauth-with-token-fallback",
-        "scopes": ["search"],
-        "setupCommand": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\"",
+        "scopes": ["SEARCH"],
+        "setupCommand": "npm run login -- --email \"<work-email>\"",
         "credentialVariable": "GLEAN_API_TOKEN"
       }
     ],
     "verification": {
       "kind": "automated",
-      "command": "cd search-with-discovered-filters && npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
+      "command": "npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
       "expectedDuration": "about 1 minute after sign-in",
       "startsOwnServer": false
     },
     "run": {
-      "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
+      "command": "npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
       "userBrowser": false
     }
   },
@@ -146,8 +152,8 @@
       "category": "search"
     }
   ],
-  "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the search scope, run live verification across all datasources by default, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() only when the user explicitly narrows the search with --datasources or --auto-select, then pass returned datasources and either a suggested filter value or an explicit custom field/value to glean.search.query(). Enable experimental features through the SDK's documented includeExperimental constructor option. Do not recreate auth or SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
-  "llmContext": "Use @gleanwork/auth for tenant discovery and OAuth login, then pass its async token provider to @gleanwork/api-client's apiToken option. Glean-issued OAuth tokens need no X-Glean-Auth-Type. If DCR cannot grant search, use an administrator-provisioned public client or explicit user-scoped SEARCH token. Use typed glean.search.listFilters() and glean.search.query(), with includeExperimental enabled. Catalog discovery returns datasource IDs and common fields. Query-backed discovery accepts one datasource and returns bounded, non-exhaustive suggestions. Apply returned values unchanged with EQUALS, but treat discovery as advisory and allow explicit nonblank custom fields. The caller's credentials remain the permission boundary. Let the SDK validate responses and surface typed errors; display warnings and request IDs, and pass next_cursor back as cursor without logging credentials or exposing the opaque token.",
+  "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the SEARCH scope, run live verification across all datasources by default, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() only when the user explicitly narrows the search with --discover, --datasources, or --auto-select, then pass returned datasources and either a suggested filter value or an explicit custom field/value to glean.search.query(). Enable experimental features through the SDK's documented includeExperimental constructor option. Do not recreate auth or SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
+  "llmContext": "Use @gleanwork/auth for tenant discovery and OAuth login, then pass its async token provider to @gleanwork/api-client's apiToken option. Glean-issued OAuth tokens need no X-Glean-Auth-Type. Use the SEARCH OAuth scope or an explicit user-scoped token with the SEARCH permission. Use typed glean.search.listFilters() and glean.search.query(), with includeExperimental enabled. Catalog discovery returns datasource IDs and common fields. Query-backed discovery accepts one datasource and returns bounded, non-exhaustive suggestions. Apply returned values unchanged with EQUALS, but treat discovery as advisory and allow explicit nonblank custom fields. The caller's credentials remain the permission boundary. Let the SDK validate responses and surface typed errors; display warnings and request IDs, and pass next_cursor back as cursor without logging credentials or exposing the opaque token.",
   "goDependency": false,
   "featured": true,
   "hidden": false,
@@ -166,8 +172,8 @@
         "description": "A field omitted from Search Filters may still be valid, and suggested values are bounded and non-exhaustive. Reusing a returned value does not guarantee matching results."
       },
       {
-        "title": "OAuth policy varies by tenant",
-        "description": "DCR may be disabled, restricted to approved applications or redirect URI patterns, or unable to grant search. Use an administrator-provisioned public OAuth client when available; a user-scoped SEARCH token is the tutorial fallback."
+        "title": "Search permission is required",
+        "description": "Your instance must allow the SEARCH OAuth scope or the SEARCH permission on a user-scoped token."
       },
       {
         "title": "Experimental API",
