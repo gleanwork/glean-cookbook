@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "types": [],
+    "rootDir": "public",
+    "outDir": "public/build"
+  },
+  "include": ["public/*.ts"]
+}

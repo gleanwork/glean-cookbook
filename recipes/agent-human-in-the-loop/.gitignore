@@ -1,0 +1,9 @@
+node_modules/
+.env
+public/build/
+test-results/
+playwright-report/
+run.json
+run-id.txt
+responses.json
+start.json

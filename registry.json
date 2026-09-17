@@ -115,6 +115,268 @@
     }
   },
   {
+    "id": "agent-human-in-the-loop",
+    "title": "Run an agent with human approval",
+    "sidebarLabel": "Agent human approval",
+    "description": "Create an approval-gated agent, start it with curl, and explore the full durable run lifecycle: inspect, approve or reject, reconnect, and cancel.",
+    "surfaces": ["platform-api", "agents", "tools"],
+    "capabilities": ["agents", "tools"],
+    "status": "quickstart",
+    "category": "agent",
+    "level": "Intermediate",
+    "levels": { "minimal": true, "wow": true },
+    "timeEstimate": "~45 min after tool access is configured",
+    "icon": "account-check",
+    "requiredScopes": ["agents.run"],
+    "authMethod": ["client-api-oauth-or-token"],
+    "buildMethod": "scaffold",
+    "languages": ["typescript"],
+    "visibility": "preview",
+    "prerequisites": [
+      "Node.js 22.12 or newer, npm, curl 7.76 or newer, and jq 1.6 or newer",
+      "Durable Agents API endpoints enabled for your tenant",
+      "Permission to create and publish an autonomous, chat-triggered agent",
+      "A supported Slack channel-posting tool, its connected user account, and a dedicated authorized test channel",
+      "The complete backend HTTPS origin from Glean → About → Server instance (QE)",
+      "OAuth or a user-scoped API token with agents.run; use the same authenticated user for every lifecycle call"
+    ],
+    "execution": {
+      "type": "local-web",
+      "questions": [
+        {
+          "id": "backend-origin",
+          "prompt": "What complete backend HTTPS origin is shown in Glean → About → Server instance (QE)? Do not include a credential."
+        },
+        {
+          "id": "test-channel",
+          "prompt": "Which dedicated Slack test channel should the agent post to, and are you authorized to test there?"
+        },
+        {
+          "id": "agent-id",
+          "prompt": "What is the published approval-gated agent ID? If you have not created it, complete the agent setup step before starting a run."
+        }
+      ],
+      "auth": [
+        {
+          "kind": "oauth-with-token-fallback",
+          "scopes": ["agents.run"],
+          "setupCommand": "npm run login -- --server-url \"$GLEAN_SERVER_URL\"",
+          "configFile": ".env",
+          "backendVariable": "GLEAN_SERVER_URL",
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "user-browser",
+        "expectedDuration": "about 10 minutes after authorized agent setup",
+        "startsOwnServer": false
+      },
+      "run": {
+        "command": "unset GLEAN_API_TOKEN\nnpm start",
+        "url": "Use the loopback URL printed by npm start.",
+        "userBrowser": true
+      }
+    },
+    "demoQueries": [
+      {
+        "query": "Inspect a paused posting run",
+        "expectedBehavior": "The API returns the same agent/run IDs, REQUIRES_INPUT, and the exact proposed destination and message. The pending invocation has not posted anything."
+      },
+      {
+        "query": "Approve and retry the accepted batch",
+        "expectedBehavior": "After explicit review, complete-batch decisions continue the same run. The unique marker appears once at the intended destination; an identical accepted retry does not add another post."
+      },
+      {
+        "query": "Reject a proposed post",
+        "expectedBehavior": "The rejected invocation does not post or route around rejection. Inspect the actual final state and output; rejection does not require CANCELLED or FAILED."
+      },
+      {
+        "query": "Reconnect and cancel a paused run",
+        "expectedBehavior": "Reopening and GET retrieve the same paused run without a new creation POST. An explicit cancellation records CANCELLED without executing the pending invocation."
+      },
+      {
+        "query": "Review a second approval pause",
+        "expectedBehavior": "A later pause has the same run ID and a fresh current batch. Old decisions return 409; only newly reviewed current decisions resume it."
+      },
+      {
+        "query": "Handle failure and access boundaries",
+        "expectedBehavior": "HTTP errors remain distinct from run failure. Wrong-owner or mismatched agent/run retrieval returns 404. The client does not claim that cancellation or failure undoes external work."
+      }
+    ],
+    "codeAssets": [
+      {
+        "repoPath": "recipes/agent-human-in-the-loop",
+        "language": "typescript",
+        "description": "Self-contained curl walkthrough, four endpoint-specific HTTP calls, and a loopback lifecycle explorer."
+      }
+    ],
+    "steps": [
+      {
+        "kind": "scaffold",
+        "title": "Copy the scaffold",
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/agent-human-in-the-loop agent-human-in-the-loop"
+      },
+      {
+        "kind": "install",
+        "title": "Install and check locally",
+        "command": "cd agent-human-in-the-loop &&\n  npm ci &&\n  npm run check &&\n  cp .env.example .env &&\n  cp requests/start-run.json start.json",
+        "description": "All numbered commands share one sequential shell session; this is the only step that changes directories. The checks use synthetic API responses and make no Glean calls. Open .env in your editor and set the complete backend HTTPS origin from Glean → About → Server instance (QE). Keep the file in shell-compatible NAME=value form. Leave GLEAN_API_TOKEN empty for OAuth."
+      },
+      {
+        "kind": "manual",
+        "title": "Create an approval-gated posting agent",
+        "description": "Create an autonomous agent with a chat-message trigger in Glean Agent Builder. Paste the instructions from [agent-instructions.md](https://github.com/gleanwork/glean-cookbook/blob/main/recipes/agent-human-in-the-loop/agent-instructions.md). Attach only your tenant's supported Slack channel-posting tool, connect its account as the API user, and leave **Run without user confirmation** unchecked. Prompt wording alone does not enforce approval. Review the configuration before authorizing publication; copy the agent ID into .env. Use a dedicated test channel. In start.json, replace the channel and unique-marker placeholders; preserve the request shape. The [setup storyboard](https://github.com/gleanwork/glean-cookbook/blob/main/recipes/agent-human-in-the-loop/assets/agent-setup.svg) is a schematic, not a product screenshot. Agent creation, account connection, publication, execution, and posting each require explicit authorization."
+      },
+      {
+        "kind": "authenticate",
+        "title": "Authenticate as the run owner",
+        "command": "set -a\n. ./.env\nset +a\nnpm run login -- --server-url \"$GLEAN_SERVER_URL\"\nGLEAN_API_TOKEN=\"$(npx --no-install glean-auth token --server-url \"$GLEAN_SERVER_URL\" --scopes agents.run)\" && export GLEAN_API_TOKEN",
+        "description": "Complete browser OAuth yourself with agents.run. Do not share passwords or MFA codes. The token command captures a token for curl without printing it. For the user-scoped API-token fallback, set GLEAN_API_TOKEN securely in .env, load it with the first three lines, and omit login and token retrieval. Use the same user for all lifecycle calls. Never enable shell tracing or curl verbose output. Refresh the OAuth token with the same token command when needed."
+      },
+      {
+        "kind": "manual",
+        "title": "Start a durable run",
+        "command": "curl --fail-with-body --silent --show-error --max-time 60 \\\n  \"$GLEAN_SERVER_URL/api/agents/$GLEAN_AGENT_ID/runs\" \\\n  -H \"Authorization: Bearer $GLEAN_API_TOKEN\" \\\n  -H 'Content-Type: application/json' \\\n  --data @start.json --output run.json &&\n  jq . run.json &&\n  RUN_ID=\"$(jq -er '.run.run_id' run.json)\" && export RUN_ID &&\n  printf '%s\\n' \"$RUN_ID\" > run-id.txt",
+        "description": "Authorize this real execution only after reviewing the test destination and request. DURABLE with stream:false returns HTTP 201 and a persisted run snapshot. The command saves .run.run_id separately in run-id.txt so an error response cannot overwrite your resume reference. Agent ID identifies the definition; run ID identifies the execution; request_id is request-level support correlation. Each creation POST can start another run. Do not automatically retry an ambiguous creation failure."
+      },
+      {
+        "kind": "manual",
+        "title": "Inspect until the run pauses",
+        "command": "curl --fail-with-body --silent --show-error --max-time 60 \\\n  \"$GLEAN_SERVER_URL/api/agents/$GLEAN_AGENT_ID/runs/$RUN_ID\" \\\n  -H \"Authorization: Bearer $GLEAN_API_TOKEN\" \\\n  -H 'Content-Type: application/json' --output run.json &&\n  jq '{request_id, run: {run_id: .run.run_id, state: .run.state, pending_interactions: .run.pending_interactions, output: .run.output, error: .run.error}}' run.json",
+        "description": "GET observes execution; it does not advance it. While RUNNING or QUEUED, wait at least two seconds before repeating this command. Stop at REQUIRES_INPUT or a terminal state. Honor Retry-After on 429. Review every pending interaction: display_name, description, exact arguments, and interaction_id. tool_id is optional. Confirm the intended channel and text, and independently check that no post occurred. If the agent posts without pausing, stop and fix its tool confirmation policy. If it finishes without invoking the tool, correct its input or configuration rather than claiming HITL worked."
+      },
+      {
+        "kind": "manual",
+        "title": "Prepare decisions without submitting them",
+        "command": "jq -e '.run.state == \"REQUIRES_INPUT\" and (.run.pending_interactions | length > 0)' run.json &&\n  jq '{responses: [.run.pending_interactions[] | {interaction_id, decision: \"REJECT\"}]}' run.json > responses.json",
+        "description": "This creates a reject-by-default responses.json. Open it in your editor and choose APPROVE or REJECT for each invocation after reviewing its stored arguments. Include every interaction in the current batch. Do not edit tool arguments, replace interaction IDs automatically, or grant session-wide approval."
+      },
+      {
+        "kind": "manual",
+        "title": "Submit the complete decision batch",
+        "command": "curl --fail-with-body --silent --show-error --max-time 60 \\\n  \"$GLEAN_SERVER_URL/api/agents/$GLEAN_AGENT_ID/runs/$RUN_ID/responses\" \\\n  -H \"Authorization: Bearer $GLEAN_API_TOKEN\" \\\n  -H 'Content-Type: application/json' \\\n  --data @responses.json --output run.json &&\n  jq . run.json",
+        "description": "APPROVE authorizes the actual external invocation. HTTP 200 acknowledges decisions, not completion. The run ID stays the same. Rejection follows the agent workflow; it does not cancel the run. Keep the exact accepted response body for an explicit identical retry. A later pause requires fresh decisions. On 409, GET the current snapshot and review it again."
+      },
+      {
+        "kind": "manual",
+        "title": "Follow the same run to its outcome",
+        "command": "curl --fail-with-body --silent --show-error --max-time 60 \\\n  \"$GLEAN_SERVER_URL/api/agents/$GLEAN_AGENT_ID/runs/$RUN_ID\" \\\n  -H \"Authorization: Bearer $GLEAN_API_TOKEN\" \\\n  -H 'Content-Type: application/json' --output run.json &&\n  jq . run.json",
+        "description": "Repeat GET with the same waiting rules. Another REQUIRES_INPUT is a new batch on the same run, not a reason to start over. Terminal states are SUCCEEDED, FAILED, CANCELLED, and EXPIRED. HTTP 200 can retrieve a FAILED run. Inspect output and error, then independently verify the unique marker at the destination. A rejected invocation may result in SUCCEEDED with an explanation, but no post."
+      },
+      {
+        "kind": "run",
+        "title": "Open the lifecycle explorer",
+        "command": "unset GLEAN_API_TOKEN\nnpm start",
+        "description": "The unset removes the short-lived token exported for curl; the server uses cached OAuth or the API-token fallback loaded from .env. Open the actual loopback URL printed by the server. Attach the run ID from your saved response: this makes a GET, not a creation POST. The server occupies this shell. For further curl calls, start a new shell, enter the copied directory, repeat configuration/token setup, and restore RUN_ID with `RUN_ID=\"$(cat run-id.txt)\"`. The explorer stores only the last agent/run ID locally, keeps credentials on the server, and shows observed states, exact arguments, raw responses, and credential-free curl equivalents."
+      },
+      {
+        "kind": "verify-live",
+        "title": "Verify the branches with authorized test runs",
+        "description": "Use separate authorized runs for rejection, paused cancellation, reconnecting, accepted-decision retry, and the two-post repeated-pause scenario in [agent-instructions.md](https://github.com/gleanwork/glean-cookbook/blob/main/recipes/agent-human-in-the-loop/agent-instructions.md). On rejection, verify no post, regardless of final run state. On reconnect, retrieve the same run without creating another. An accepted identical retry must not create an additional post; stale decisions after a later pause return 409. Use the explorer's explicit cancellation control and poll the final state. Completion may win cancellation races. Follow the [verification checklist](https://github.com/gleanwork/glean-cookbook/blob/main/recipes/agent-human-in-the-loop/VERIFICATION.md); fixture results and API success alone do not prove external side effects."
+      },
+      {
+        "kind": "handoff",
+        "title": "Clean up deliberately",
+        "description": "Stop the local server with Ctrl-C; this does not cancel execution. Retrieve saved test run IDs and explicitly cancel paused runs you no longer need. Identify posts by their unique markers and remove them only with authorization. Forget the stored run ID in the UI and remove local response files when finished. Do not publish the recipe or mark lastVerified from local tests."
+      }
+    ],
+    "codeWalkthrough": {
+      "intro": "The server calls the same four endpoints as curl. Approval decisions carry only invocation IDs and APPROVE or REJECT; the browser does not own workflow execution.",
+      "examples": [
+        {
+          "title": "Call the durable run endpoints",
+          "description": "Supported OAuth token provider, explicit wire payloads, bounded request timeout, and no automatic POST retries.",
+          "source": "src/agent-runs.ts",
+          "language": "typescript",
+          "code": "import { createGleanTokenProvider } from '@gleanwork/auth';\nimport {\n  identifier,\n  parseResponses,\n  type Exchange,\n  type Responses,\n} from '../public/model.js';\n\nexport function backendOrigin(value: string): string {\n  const url = new URL(value);\n  if (\n    url.protocol !== 'https:' ||\n    url.username ||\n    url.password ||\n    url.search ||\n    url.hash ||\n    url.pathname !== '/'\n  ) {\n    throw new Error(\n      'GLEAN_SERVER_URL must be a complete HTTPS backend origin, without credentials or a path.',\n    );\n  }\n  return url.origin;\n}\n\n// Four endpoint-specific calls, not a workflow runner. No POST is automatically retried.\nexport function createAgentRuns(options: {\n  serverUrl: string;\n  agentId: string;\n  token?: () => Promise<string>;\n  fetch?: typeof fetch;\n}) {\n  const origin = backendOrigin(options.serverUrl);\n  if (!identifier(options.agentId))\n    throw new Error('Set a valid GLEAN_AGENT_ID.');\n  const getToken =\n    options.token ??\n    createGleanTokenProvider({ serverUrl: origin, scopes: ['agents.run'] });\n  const requestFetch = options.fetch ?? fetch;\n  const collection = `/api/agents/${encodeURIComponent(options.agentId)}/runs`;\n  const runPath = (runId: string) => {\n    if (!identifier(runId)) throw new Error('Supply a valid run ID.');\n    return `${collection}/${encodeURIComponent(runId)}`;\n  };\n  async function request(\n    method: 'GET' | 'POST',\n    path: string,\n    body?: unknown,\n  ): Promise<Exchange> {\n    const token = await getToken();\n    const response = await requestFetch(`${origin}${path}`, {\n      method,\n      headers: {\n        Authorization: `Bearer ${token}`,\n        'Content-Type': 'application/json',\n        Accept: 'application/json',\n      },\n      ...(body === undefined ? {} : { body: JSON.stringify(body) }),\n      redirect: 'error', // Do not forward credentials through an unexpected redirect.\n      signal: AbortSignal.timeout(60_000),\n    });\n    const text = await response.text();\n    let data: unknown;\n    try {\n      data = JSON.parse(token ? text.replaceAll(token, '[REDACTED]') : text);\n    } catch {\n      data = {\n        error:\n          'The API returned a non-JSON response. Check the backend origin and HTTP status.',\n      };\n    }\n    const retryAfter = response.headers.get('retry-after');\n    const seconds =\n      retryAfter === null\n        ? NaN\n        : /^\\d+$/.test(retryAfter)\n          ? Number(retryAfter)\n          : Math.max(0, (Date.parse(retryAfter) - Date.now()) / 1000);\n    return {\n      method,\n      path,\n      request: body,\n      status: response.status,\n      body: data,\n      ...(Number.isFinite(seconds) ? { retryAfterSeconds: seconds } : {}),\n    };\n  }\n  return {\n    create(message: string) {\n      if (!message.trim() || message.length > 16_000)\n        throw new Error('Supply a message of 1–16000 characters.');\n      return request('POST', collection, {\n        execution_mode: 'DURABLE',\n        stream: false,\n        messages: [\n          { role: 'USER', content: [{ type: 'text', text: message }] },\n        ],\n      });\n    },\n    get: (runId: string) => request('GET', runPath(runId)),\n    respond: (runId: string, responses: Responses) =>\n      request('POST', `${runPath(runId)}/responses`, parseResponses(responses)),\n    cancel: (runId: string) =>\n      request('POST', `${runPath(runId)}/cancellations`),\n  };\n}\nexport type AgentRuns = ReturnType<typeof createAgentRuns>;\n"
+        }
+      ]
+    },
+    "preview": {
+      "path": "recipes/agent-human-in-the-loop/assets/lifecycle-explorer.webp",
+      "alt": "Illustrative fixture view of the lifecycle explorer showing REQUIRES_INPUT, stored tool arguments, and a GET response; not a live verification capture.",
+      "caption": "Synthetic response shown for illustration. The configured application calls the real Agents API."
+    },
+    "architecture": [
+      {
+        "label": "Create the agent",
+        "caption": "One supported posting tool with platform-enforced confirmation.",
+        "category": "agent"
+      },
+      {
+        "label": "Start and inspect",
+        "caption": "POST persists a run; GET observes its snapshot.",
+        "category": "agent"
+      },
+      {
+        "label": "Human review",
+        "caption": "Inspect exact arguments and decide every invocation.",
+        "emphasized": true
+      },
+      {
+        "label": "Continue the same run",
+        "caption": "POST responses, then GET completion or another pause."
+      }
+    ],
+    "content": {
+      "problem": "An agent that can post a message needs a real approval boundary. Build that boundary into the agent tool configuration, then use the Agents API to start a durable run, leave it waiting for human input, and continue the same execution. The curl-first walkthrough exposes every request; a local three-panel explorer connects observed lifecycle states, persisted invocation arguments, and raw API responses.",
+      "guardrails": [
+        {
+          "title": "Approval belongs to Glean",
+          "rule": "Configure tool confirmation before execution. The local UI never auto-approves, edits stored arguments, or substitutes a prompt for the platform gate."
+        },
+        {
+          "title": "One owner and explicit decisions",
+          "rule": "Use the same authenticated user with agents.run throughout. Review the complete current pending batch, then submit only those invocation decisions. On 409, retrieve the current snapshot and review again."
+        },
+        {
+          "title": "No blind creation retries",
+          "rule": "Each creation POST can start a new run. A lost response is ambiguous. Recover a known run ID before deciding what to do next. Matching approval retries are not a general exactly-once tool guarantee."
+        },
+        {
+          "title": "Keep secrets on the local server",
+          "rule": "Use the supported auth package. Bind to loopback, reject cross-origin requests, keep credentials out of browser storage and the inspector, and render tool content as inert text. Review arguments and output before sharing screenshots."
+        },
+        {
+          "title": "Authorize real effects",
+          "rule": "Use a dedicated test channel. Agent publication, account connection, starting execution, approval, cancellation, and deleting test posts require explicit authorization."
+        }
+      ],
+      "limitations": [
+        {
+          "title": "Disconnect tolerance is not crash replay",
+          "description": "A durable run continues after the client disconnects; it is not automatically replayed after a backend crash. Active-turn deadline cleanup can mark failure without proving external work has stopped. Approval waits do not expire the run."
+        },
+        {
+          "title": "Cancellation is not rollback",
+          "description": "Active cancellation is cooperative. Completion can win a race, completed posts cannot be undone, and separate background-subagent executions are not covered."
+        },
+        {
+          "title": "Snapshots are not an event trace",
+          "description": "updated_at records persisted activity, not a heartbeat or exact state transition. Polling can miss states. The explorer labels observed times and never synthesizes transitions."
+        },
+        {
+          "title": "Local, single-user reference",
+          "description": "No shared approval inbox, manager delegation, public hosting, scheduling, argument editing, or session-wide grants. The selected posting tool and exact UI configuration must be verified in the reader’s tenant."
+        },
+        {
+          "title": "Live verification remains separate",
+          "description": "Fixture tests and illustrative visuals do not verify a real tool invocation or the deployed instructions. This recipe stays in preview until the required cold reader pass and explicit publication decision."
+        }
+      ],
+      "takeItFurther": [
+        "Compare the [API sequence](https://github.com/gleanwork/glean-cookbook/blob/main/recipes/agent-human-in-the-loop/assets/api-sequence.svg) and [lifecycle map](https://github.com/gleanwork/glean-cookbook/blob/main/recipes/agent-human-in-the-loop/assets/lifecycle.svg) while following the calls.",
+        "Configure a two-action agent and verify another approval pause on the same run. Review each batch independently.",
+        "For a production application, add authenticated user sessions and tenant isolation without replacing Glean’s ownership or approval checks."
+      ]
+    },
+    "aiPrompt": "Scaffold the authored recipe and follow its numbered commands as one sequential shell session. Use the supplied HTTP client and supported auth package; do not regenerate them. Guide the user through creating a real approval-gated posting agent, then run only explicitly authorized API actions. Start with curl and attach the same run ID in the explorer. Keep decisions complete and invocation-scoped. Do not create agents, publish, post, approve, cancel, or delete test messages without specific authorization. Never infer live verification from fixtures.",
+    "llmContext": "Endpoints: POST /api/agents/{agent_id}/runs with execution_mode DURABLE and stream false returns 201; GET the run; POST /responses with the full current array of interaction_id plus APPROVE or REJECT; POST /cancellations with no body. Use agents.run and the same authenticated user. Responses wrap run and request_id; run.state is authoritative. 409 requires a fresh review, not automatic ID replacement. Never auto-retry creation. There is no runtime demo mode. The screenshots are explicitly synthetic. Maintain preview visibility and omit lastVerified until authorized deployed-page verification.",
+    "tags": ["human-in-the-loop", "approval", "durable-execution", "curl"],
+    "featured": false,
+    "goDependency": false
+  },
+  {
     "id": "build-engineering-portal",
     "title": "Build an engineering portal",
     "description": "The end-to-end showcase — index a developer catalog into Glean, then embed permission-aware search and chat back into the portal your team already uses.",

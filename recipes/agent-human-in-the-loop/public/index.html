@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agent lifecycle · Glean Cookbook</title>
+    <link rel="stylesheet" href="/glean-cookbook.css" />
+    <link rel="stylesheet" href="/app.css" />
+    <script type="module" src="/build/app.js"></script>
+  </head>
+  <body>
+    <main class="explorer">
+      <header class="hero">
+        <div class="eyebrow">
+          <img src="/glean-logomark.svg" alt="Glean" width="28" height="28" />
+          GLEAN COOKBOOK / AGENTS API
+        </div>
+        <h1>One run. A human decision. Then continue.</h1>
+        <p>
+          Start a durable agent, inspect its proposed action, and resume the
+          same run through the API.
+        </p>
+        <div class="identity">
+          <span class="pill">LIVE API</span> Agent
+          <code id="agent-id">Loading configuration…</code>
+        </div>
+      </header>
+      <details class="card setup">
+        <summary>Create the approval-gated agent first</summary>
+        <ol>
+          <li>
+            Create an autonomous agent with a chat-message trigger in Glean
+            Agent Builder.
+          </li>
+          <li>
+            Attach only the supported Slack channel-posting tool you will test.
+            Connect its account.
+          </li>
+          <li>
+            Leave <strong>Run without user confirmation</strong> unchecked. A
+            prompt alone is not an approval gate.
+          </li>
+          <li>
+            Use the instructions in <code>agent-instructions.md</code>. Publish
+            only after reviewing the destination and tool configuration.
+          </li>
+          <li>
+            Set its agent ID in <code>.env</code>. Use a dedicated test channel
+            and the same authenticated user for every API call.
+          </li>
+        </ol>
+      </details>
+      <section class="card launch" aria-label="Start or reconnect">
+        <form id="start-form">
+          <label for="message">1 · Start a new run</label>
+          <textarea
+            id="message"
+            rows="3"
+            maxlength="16000"
+            required
+            placeholder="Post exactly ‘HITL test [unique marker]’ to the dedicated test channel [channel ID]."
+          ></textarea>
+          <label class="consent"
+            ><input type="checkbox" id="authorize-start" required /> I authorize
+            starting this agent against my test destination. Tool execution
+            still needs a separate decision.</label
+          >
+          <button id="start" type="submit" class="btn-primary">
+            POST · Start durable run
+          </button>
+        </form>
+        <form id="attach-form">
+          <label for="attach-id">Or attach a run created with curl</label>
+          <input
+            id="attach-id"
+            placeholder="Run ID"
+            maxlength="256"
+            required
+            pattern="[A-Za-z0-9_-]+"
+          />
+          <button id="attach" type="submit" class="btn-secondary">
+            GET · Attach to run
+          </button>
+          <p>
+            Only the last agent/run ID is remembered in this browser. Arguments,
+            decisions, output, and credentials are not stored.
+          </p>
+          <button id="forget" type="button" class="secondary">
+            Forget saved run ID
+          </button>
+        </form>
+      </section>
+      <p id="notice" class="note" role="status" aria-live="polite">
+        No run selected. Creating a run can cause real external effects after
+        approval.
+      </p>
+      <div class="panels">
+        <section class="card lifecycle" aria-labelledby="lifecycle-title">
+          <h2 id="lifecycle-title">2 · Observed lifecycle</h2>
+          <span id="state" class="pill">NOT STARTED</span>
+          <p id="state-help">
+            The API owns execution. This client observes snapshots.
+          </p>
+          <label for="run-id">Same run ID across approvals</label>
+          <input id="run-id" readonly placeholder="Returned by POST /runs" />
+          <p class="muted" id="updated"></p>
+          <div class="controls">
+            <button id="refresh" class="secondary" disabled>
+              GET · Refresh
+            </button>
+            <button id="poll" class="secondary" disabled>Start polling</button>
+          </div>
+          <p id="poll-status" class="muted">
+            Polling is off. Closing this page does not cancel execution.
+          </p>
+          <ol
+            id="timeline"
+            class="timeline"
+            aria-label="Observed state changes"
+          ></ol>
+          <details>
+            <summary>All declared states</summary>
+            <p>
+              The contract also includes QUEUED, CANCELLING, and EXPIRED. Do not
+              expect every run to pass through every state.
+            </p>
+            <p>
+              REQUIRES_INPUT is nonterminal. Rejecting a tool is not cancelling
+              the run. Waiting for approval does not expire the run.
+            </p>
+          </details>
+          <details class="cancel-area">
+            <summary>Cancel this run</summary>
+            <p>
+              Cancellation is cooperative, not rollback. External work may
+              continue; completion can win the race.
+            </p>
+            <label class="consent"
+              ><input id="authorize-cancel" type="checkbox" /> Request
+              cancellation of this run</label
+            >
+            <button id="cancel" class="btn-danger" disabled>
+              POST · Request cancellation
+            </button>
+          </details>
+        </section>
+        <section class="card review" aria-labelledby="review-title">
+          <h2 id="review-title">3 · Human decision</h2>
+          <p id="review-help">
+            Pending invocations will appear here. Review exact arguments, not
+            just the agent’s summary.
+          </p>
+          <form id="decisions-form">
+            <div id="interactions"></div>
+            <button id="submit-decisions" class="btn-primary" disabled>
+              POST · Submit complete decision batch
+            </button>
+          </form>
+          <button id="retry" class="secondary" hidden>
+            Retry the identical last decision batch
+          </button>
+          <details id="output-section">
+            <summary>Available agent output and run error</summary>
+            <pre id="output">No output observed.</pre>
+          </details>
+          <p class="muted">
+            Approval applies only to these stored invocations. Editing arguments
+            or granting session-wide approval is not supported.
+          </p>
+        </section>
+        <section class="card inspector" aria-labelledby="inspector-title">
+          <h2 id="inspector-title">4 · API inspector</h2>
+          <p>
+            Last 12 exchanges. Credentials stay on the local server. Tool
+            arguments and output may still be sensitive.
+          </p>
+          <div id="exchanges" class="exchanges">
+            <p class="empty">Your first request will appear here.</p>
+          </div>
+        </section>
+      </div>
+      <footer>
+        Durable means independent of the HTTP connection—not automatic crash
+        replay. Observed times are not exact server transition times.
+      </footer>
+    </main>
+  </body>
+</html>
