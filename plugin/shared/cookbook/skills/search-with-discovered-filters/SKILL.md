@@ -10,7 +10,6 @@ disable-model-invocation: true
 - A Glean instance with content indexed
 - Your work email, or the complete Glean backend origin shown under Server instance (QE)
 - A tenant that permits this public OAuth client and search scope through DCR; an administrator-provisioned OAuth client or user-scoped SEARCH token is the fallback
-- Experimental Platform APIs enabled through the SDK's includeExperimental constructor option, which the scaffold sets automatically
 
 Build "Search Glean with discovered filters" following https://developers.glean.com/cookbook/search-with-discovered-filters
 
@@ -35,7 +34,7 @@ Build "Search Glean with discovered filters" following https://developers.glean.
    ```
 
 3. **Run the fixture tests**
-   Runs the Vitest fixture suite without credentials or network access, covering catalog discovery, query-backed suggestions, retries, typed errors, field-filter propagation, and experimental headers.
+   Runs the Vitest fixture suite without credentials or network access, covering catalog discovery, query-backed suggestions, retries, typed errors, and field-filter propagation.
 
    ```bash
    cd search-with-discovered-filters && npm test
