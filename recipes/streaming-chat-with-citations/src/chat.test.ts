@@ -105,6 +105,7 @@ test('streams typed createStream events', async () => {
   const bodies: JsonValue[] = [];
   server.use(
     http.post(`${baseUrl}/api/chat`, async ({ request }) => {
+      assert.equal(request.headers.get('x-glean-include-experimental'), null);
       bodies.push((await request.json()) as JsonValue);
       return typedSseResponse();
     }),
@@ -129,6 +130,7 @@ test('reuses conversation_id for a streamed follow-up turn', async () => {
   const bodies: JsonValue[] = [];
   server.use(
     http.post(`${baseUrl}/api/chat`, async ({ request }) => {
+      assert.equal(request.headers.get('x-glean-include-experimental'), null);
       const body = (await request.json()) as JsonValue;
       bodies.push(body);
       const conversationId =

@@ -14,7 +14,8 @@ Build an account page from the reader's own indexed content. The reader supplies
 
 - Environment: `GLEAN_SERVER_URL`, `GLEAN_API_TOKEN`, `GLEAN_ACCOUNT_NAME`; Agents also requires
   `GLEAN_AGENT_ID`.
-- Platform calls use `X_GLEAN_INCLUDE_EXPERIMENTAL=true`.
+- Platform Search and Chat need no experimental opt-in. The Agents path still sets
+  `X_GLEAN_INCLUDE_EXPERIMENTAL=true`.
 - Platform Chat verification sets `stream: false` and `store: false`, reads answer text from
   `ASSISTANT` `OUTPUT_TEXT` content, and reads citations from `annotations[].sources[]`.
 - Tokens remain server-side. There is no act-as or impersonation.

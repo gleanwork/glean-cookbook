@@ -75,11 +75,6 @@ const fakeGlean = http.createServer((req, res) => {
     res.end();
     return;
   }
-  if (req.headers['x-glean-include-experimental'] !== 'true') {
-    res.writeHead(400);
-    res.end('missing experimental header');
-    return;
-  }
   let raw = '';
   req.on('data', (chunk) => (raw += chunk));
   req.on('end', () => {

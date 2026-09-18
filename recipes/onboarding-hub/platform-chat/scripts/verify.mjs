@@ -156,7 +156,6 @@ function startServer() {
     env: {
       ...process.env,
       PORT: String(PORT),
-      X_GLEAN_INCLUDE_EXPERIMENTAL: 'true',
     },
   });
   child.stdout.on('data', (chunk) => process.stdout.write(chunk));

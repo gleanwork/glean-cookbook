@@ -58,10 +58,16 @@ function backend(): string {
   return requireEnv('GLEAN_SERVER_URL').replace(/\/$/u, '');
 }
 
-function headers(): Record<string, string> {
+function jsonHeaders(): Record<string, string> {
   return {
     Authorization: `Bearer ${requireEnv('GLEAN_API_TOKEN')}`,
     'Content-Type': 'application/json',
+  };
+}
+
+function agentHeaders(): Record<string, string> {
+  return {
+    ...jsonHeaders(),
     'X-GLEAN-INCLUDE-EXPERIMENTAL': 'true',
   };
 }
@@ -119,7 +125,7 @@ export async function search(query: string): Promise<SearchHit[]> {
   // 400 invalid_request. It returns 10 results, which is what this needs anyway.
   const response = await fetch(`${backend()}/api/search`, {
     method: 'POST',
-    headers: headers(),
+    headers: jsonHeaders(),
     body: JSON.stringify({ query }),
   });
   if (!response.ok) {
@@ -227,7 +233,6 @@ export async function chat(
     return parseChat(all[fixtureKey] ?? {});
   }
 
-  process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = 'true';
   const glean = new Glean({
     apiToken: requireEnv('GLEAN_API_TOKEN'),
     serverURL: backend(),
@@ -286,7 +291,7 @@ export async function runAgent(
 
   const response = await fetch(`${backend()}/api/agents/${agentId}/runs`, {
     method: 'POST',
-    headers: headers(),
+    headers: agentHeaders(),
     body: JSON.stringify({
       messages: [{ role: 'USER', content: [{ text, type: 'text' }] }],
       stream: false,

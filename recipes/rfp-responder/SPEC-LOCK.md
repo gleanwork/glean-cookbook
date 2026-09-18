@@ -14,7 +14,7 @@ approval before export.
 
 ## Contracts
 
-- Platform Chat uses `POST /api/chat` with the caller's credential and experimental opt-in.
+- Platform Chat uses `POST /api/chat` with the caller's credential.
 - Verification sets `stream: false` and `store: false`.
 - Answer text comes from `ASSISTANT` `OUTPUT_TEXT` content; citations come from
   `annotations[].sources[]`, with snippets from `annotations[].snippets[]`.

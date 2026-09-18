@@ -155,7 +155,6 @@ export async function askPlatformChat(
     return requireAnswer(parsePlatformChatResponse(recorded));
   }
 
-  process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = 'true';
   const glean = new Glean({
     apiToken: requireEnv('GLEAN_API_TOKEN'),
     serverURL: requireEnv('GLEAN_SERVER_URL').replace(/\/$/, ''),
@@ -170,7 +169,7 @@ export async function askPlatformChat(
       );
     }
     throw new Error(
-      'Chat request failed. Check that your token carries the CHAT scope and that experimental APIs are enabled.',
+      'Chat request failed. Check that your token carries the CHAT scope.',
       { cause: error },
     );
   }
