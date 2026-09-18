@@ -103,8 +103,12 @@ function typedSseResponse(conversationId = 'conv_fixture') {
 test('streams typed createStream events', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   const bodies: JsonValue[] = [];
+  const experimentalHeaders: (string | null)[] = [];
   server.use(
     http.post(`${baseUrl}/api/chat`, async ({ request }) => {
+      experimentalHeaders.push(
+        request.headers.get('x-glean-include-experimental'),
+      );
       bodies.push((await request.json()) as JsonValue);
       return typedSseResponse();
     }),
@@ -122,6 +126,7 @@ test('streams typed createStream events', async () => {
       stream: true,
     },
   ]);
+  assert.deepEqual(experimentalHeaders, [null]);
 });
 
 test('reuses conversation_id for a streamed follow-up turn', async () => {
