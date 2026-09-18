@@ -1,0 +1,32 @@
+{
+  "name": "agent-human-in-the-loop",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Create, inspect, approve, and cancel a durable Glean agent run with curl and a local lifecycle explorer.",
+  "scripts": {
+    "login": "glean-auth login --scopes agents.run",
+    "build": "tsc -p tsconfig.browser.json",
+    "start": "npm run build && node --env-file-if-exists=.env --import tsx server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:browser": "npm run build && playwright test",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@gleanwork/auth": "1.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.20.1",
+    "tsx": "4.23.1",
+    "typescript": "6.0.3"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "fsevents": false
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

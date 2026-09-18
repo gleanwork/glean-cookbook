@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="570" viewBox="0 0 1280 570" role="img" aria-labelledby="title desc">
+  <title id="title">Configure an agent with platform-enforced tool confirmation</title>
+  <desc id="desc">This is a setup schematic, not an Agent Builder screenshot. Create an autonomous chat-triggered agent, attach one supported posting tool, disable run without user confirmation, then review and publish.</desc>
+  <rect width="1280" height="570" rx="20" fill="#f7f8fa"/>
+  <g font-family="Arial, sans-serif" fill="#1f2024">
+    <text x="48" y="55" font-size="13" fill="#565a64" letter-spacing="2">GLEAN COOKBOOK / AGENT SETUP SCHEMATIC</text>
+    <text x="48" y="102" font-size="34" font-weight="700">Configure the gate where the action runs.</text>
+    <text x="48" y="140" font-size="16" fill="#565a64">Illustration only — inspect the actual configuration in your tenant.</text>
+    <g fill="white" stroke="#e7e8ed"><rect x="48" y="190" width="276" height="230" rx="14"/><rect x="350" y="190" width="276" height="230" rx="14"/><rect x="652" y="190" width="276" height="230" rx="14"/><rect x="954" y="190" width="278" height="230" rx="14"/></g>
+    <g font-size="13" fill="#343ced" font-weight="700"><text x="70" y="226">01 / CREATE</text><text x="372" y="226">02 / CONNECT</text><text x="674" y="226">03 / REQUIRE APPROVAL</text><text x="976" y="226">04 / REVIEW</text></g>
+    <g font-size="21" font-weight="700"><text x="70" y="268">Autonomous agent</text><text x="372" y="268">One posting tool</text><text x="674" y="268">Confirmation on</text><text x="976" y="268">Publish deliberately</text></g>
+    <g font-size="15" fill="#565a64"><text x="70" y="305">Chat-message trigger</text><text x="70" y="334">Copy supplied instructions</text><text x="70" y="363">No schedule or background</text><text x="70" y="386">subscription</text><text x="372" y="305">Supported tenant tool</text><text x="372" y="334">Connect the same user</text><text x="372" y="363">Dedicated test channel</text><text x="976" y="305">Check tool configuration</text><text x="976" y="334">Copy the agent ID</text><text x="976" y="363">First API run must pause</text><text x="976" y="386">before any post</text></g>
+    <rect x="674" y="293" width="18" height="18" rx="3" fill="white" stroke="#92670a" stroke-width="2"/>
+    <text x="705" y="307" font-size="13">Run without user</text><text x="705" y="327" font-size="13">confirmation</text>
+    <text x="674" y="363" font-size="15" fill="#92670a" font-weight="700">Leave unchecked</text>
+    <text x="48" y="474" font-size="18" font-weight="700">A prompt that says “ask first” is not an approval policy.</text>
+    <text x="48" y="511" font-size="15" fill="#565a64">If a test posts before REQUIRES_INPUT, stop and fix the agent configuration—not the local UI.</text>
+  </g>
+</svg>

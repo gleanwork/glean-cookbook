@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820" role="img" aria-labelledby="title desc">
+  <title id="title">The durable agent API request sequence</title>
+  <desc id="desc">POST starts a run, GET reads pending interactions, a human reviews stored arguments, POST responses resumes the same run, and repeated GET requests observe its outcome.</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#343ced" stroke-width="1.5"/></marker></defs>
+  <rect width="1280" height="820" rx="20" fill="#f7f8fa"/>
+  <g font-family="Arial, sans-serif" fill="#1f2024">
+    <text x="48" y="55" font-size="13" fill="#565a64" letter-spacing="2">GLEAN COOKBOOK / API SEQUENCE</text>
+    <text x="48" y="101" font-size="34" font-weight="700">Four calls, one continuous execution</text>
+    <text x="48" y="139" font-size="16" fill="#565a64">Paths below are relative to /api/agents/{agent_id}.</text>
+    <g fill="white" stroke="#e7e8ed"><rect x="55" y="172" width="260" height="58" rx="10"/><rect x="560" y="172" width="260" height="58" rx="10"/><rect x="976" y="172" width="250" height="58" rx="10"/></g>
+    <text x="94" y="209" font-size="19" font-weight="700">Developer / client</text><text x="615" y="209" font-size="19" font-weight="700">Glean Agents API</text><text x="1020" y="209" font-size="19" font-weight="700">External tool</text>
+    <g stroke="#c9cbd2" stroke-dasharray="5 6"><path d="M184 231V744"/><path d="M690 231V744"/><path d="M1100 231V744"/></g>
+    <g fill="none" stroke="#343ced" stroke-width="2" marker-end="url(#arrow)"><path d="M184 285H680"/><path d="M690 332H194"/><path d="M184 398H680"/><path d="M690 446H194"/><path d="M184 561H680"/><path d="M690 596H194"/><path d="M690 634H1090"/><path d="M184 704H680"/></g>
+    <text x="208" y="270" font-size="17" font-weight="700">1  POST /runs · DURABLE, stream: false</text>
+    <text x="251" y="320" font-size="15" fill="#343ced">201 · saved run_id + snapshot</text>
+    <text x="208" y="384" font-size="17" font-weight="700">2  GET /runs/{run_id}</text>
+    <text x="226" y="434" font-size="15" fill="#343ced">200 · REQUIRES_INPUT + pending_interactions</text>
+    <rect x="66" y="471" width="576" height="53" rx="10" fill="#fff8e5" stroke="#ffe0b3"/>
+    <text x="84" y="493" font-size="14" font-weight="700">Human reviews every stored invocation and its exact arguments.</text>
+    <text x="84" y="514" font-size="13" fill="#92670a">No pending tool invocation has executed yet.</text>
+    <text x="208" y="548" font-size="17" font-weight="700">3  POST /runs/{run_id}/responses</text>
+    <text x="283" y="584" font-size="14" fill="#343ced">200 · same run_id, not a new run</text>
+    <text x="721" y="620" font-size="15" font-weight="700">Execute approved invocation</text>
+    <text x="208" y="690" font-size="17" font-weight="700">4  GET /runs/{run_id} · repeat as needed</text>
+    <text x="48" y="774" font-size="15" fill="#565a64">Observe completion or another approval pause. Approval acceptance is not completion.</text>
+  </g>
+</svg>

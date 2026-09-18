@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="680" viewBox="0 0 1280 680" role="img" aria-labelledby="title desc">
+  <title id="title">One durable run across human approval pauses</title>
+  <desc id="desc">Create a durable run, observe running, review required input, then submit decisions and resume the same run. Rejection does not mean cancellation. GET observes snapshots, not every transition.</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0 0 8 4 0 8" fill="none" stroke="#343ced" stroke-width="1.5"/></marker></defs>
+  <rect width="1280" height="680" rx="20" fill="#f7f8fa"/>
+  <g font-family="Arial, sans-serif" fill="#1f2024">
+    <text x="48" y="56" font-size="13" fill="#565a64" letter-spacing="2">GLEAN COOKBOOK / DURABLE AGENT LIFECYCLE</text>
+    <text x="48" y="104" font-size="34" font-weight="700">Same run ID. Fresh decisions at each pause.</text>
+    <text x="48" y="142" font-size="17" fill="#565a64">Conceptual path — the client shows only states actually returned by the API.</text>
+    <rect x="48" y="214" width="234" height="108" rx="14" fill="white" stroke="#e7e8ed"/>
+    <text x="70" y="245" font-size="12" fill="#343ced">POST /runs · DURABLE</text>
+    <text x="70" y="279" font-size="22" font-weight="700">Create execution</text>
+    <text x="70" y="303" font-size="14" fill="#565a64">201 + persisted run_id</text>
+    <rect x="376" y="214" width="234" height="108" rx="14" fill="#eef0ff" stroke="#343ced"/>
+    <text x="399" y="252" font-size="22" font-weight="700">RUNNING</text>
+    <text x="399" y="282" font-size="14">GET observes progress</text>
+    <rect x="721" y="214" width="320" height="108" rx="14" fill="#fff8e5" stroke="#ffe0b3"/>
+    <text x="745" y="252" font-size="22" font-weight="700">REQUIRES_INPUT</text>
+    <text x="745" y="282" font-size="14">Review exact stored arguments</text>
+    <text x="745" y="304" font-size="13" fill="#92670a">Pending invocation has not executed</text>
+    <g fill="none" stroke="#343ced" stroke-width="2.5" marker-end="url(#arrow)">
+      <path d="M282 266H365"/>
+      <path d="M610 266H710"/>
+      <path d="M881 322V390H493V332"/>
+      <path d="M493 214V183H1137V439"/>
+    </g>
+    <rect x="533" y="373" width="310" height="36" rx="8" fill="#f7f8fa"/>
+    <text x="547" y="389" font-size="14" fill="#343ced">POST /responses · complete batch</text>
+    <text x="547" y="410" font-size="13" fill="#565a64">Approve or reject, then continue</text>
+    <rect x="1006" y="450" width="230" height="91" rx="14" fill="#e6f5ec" stroke="#16794a"/>
+    <text x="1028" y="487" font-size="22" font-weight="700">SUCCEEDED</text>
+    <text x="1028" y="515" font-size="14">Verify output + actual effect</text>
+    <rect x="48" y="450" width="852" height="91" rx="14" fill="white" stroke="#e7e8ed"/>
+    <text x="70" y="482" font-size="17" font-weight="700">Other outcomes: FAILED · CANCELLED · EXPIRED</text>
+    <text x="70" y="509" font-size="14" fill="#565a64">Cancellation is cooperative, not rollback. Rejecting a tool does not cancel the run.</text>
+    <text x="48" y="591" font-size="15" fill="#565a64">QUEUED and CANCELLING are also declared states; a run need not expose every state.</text>
+    <text x="48" y="620" font-size="15" fill="#565a64">Client disconnect ≠ cancellation. Durable execution ≠ automatic crash replay.</text>
+  </g>
+</svg>

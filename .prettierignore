@@ -1,5 +1,8 @@
 recipes/**/node_modules
 recipes/**/dist
+recipes/**/public/build
+recipes/**/test-results
+recipes/**/playwright-report
 recipes/**/.venv
 recipes/**/*.lock
 pnpm-lock.yaml

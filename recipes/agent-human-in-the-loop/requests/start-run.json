@@ -1,0 +1,15 @@
+{
+  "execution_mode": "DURABLE",
+  "stream": false,
+  "messages": [
+    {
+      "role": "USER",
+      "content": [
+        {
+          "type": "text",
+          "text": "Post exactly 'HITL cookbook test <UNIQUE_MARKER>' to the dedicated test channel <CHANNEL_ID>. Request tool approval before posting."
+        }
+      ]
+    }
+  ]
+}

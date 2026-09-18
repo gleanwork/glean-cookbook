@@ -1,0 +1,8 @@
+{
+  "responses": [
+    {
+      "interaction_id": "<INTERACTION_ID_FROM_CURRENT_BATCH>",
+      "decision": "APPROVE"
+    }
+  ]
+}
