@@ -21,7 +21,6 @@ after(() => {
 });
 
 const originalEnv = {
-  X_GLEAN_INCLUDE_EXPERIMENTAL: process.env.X_GLEAN_INCLUDE_EXPERIMENTAL,
   GLEAN_API_TOKEN: process.env.GLEAN_API_TOKEN,
   GLEAN_SERVER_URL: process.env.GLEAN_SERVER_URL,
   GLEAN_USE_FIXTURE: process.env.GLEAN_USE_FIXTURE,
@@ -120,7 +119,7 @@ test('askPlatformChat posts the framed prompt to /api/chat', async () => {
   server.use(
     http.post(`${baseUrl}/api/chat`, async ({ request }) => {
       assert.equal(new URL(request.url).pathname, '/api/chat');
-      assert.equal(request.headers.get('x-glean-include-experimental'), 'true');
+      assert.equal(request.headers.get('x-glean-include-experimental'), null);
       bodies.push(await request.json());
       return HttpResponse.json({
         id: 'resp_customer_360',

@@ -21,8 +21,6 @@ Signing in does not choose an account. Open `.env` and set `GLEAN_ACCOUNT_NAME`
 to one of your own customers, spelled the way your Glean documents spell it —
 that name is what the page searches for. It is not your Glean instance name.
 
-Platform Search and Chat calls opt in to experimental APIs for you.
-
 ## Verify, then run
 
 ```bash
@@ -34,7 +32,7 @@ Open the Local URL printed by the server.
 
 ## Contracts
 
-- Tiles: `glean.search.query` → `POST /api/search` (SDK `@gleanwork/api-client@0.19.0`)
+- Tiles: `glean.search.query` → `POST /api/search` (SDK `@gleanwork/api-client@0.20.14`)
 - Chat: `glean.chat.create({ input, stream: false, store: false })`; parse `ASSISTANT`
   `OUTPUT_TEXT` content and citations from `annotations[].sources[]`.
 - Token stays server-side — browser only calls `/api/account` and `/api/ask`.

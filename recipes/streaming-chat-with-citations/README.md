@@ -2,7 +2,7 @@
 
 Use the modern Platform Chat API to send a permission-aware question, continue the conversation, and read a streamed response through `glean.chat.createStream()`.
 
-This recipe uses `@gleanwork/api-client` 0.20.12. Every turn calls `createStream()` and `for await`s the typed `EventStream`. It does not use the legacy `glean.client.chat` API, `stream` on `create()`, or a hand-written SSE parser.
+This recipe uses `@gleanwork/api-client` 0.20.14. Every turn calls `createStream()` and `for await`s the typed `EventStream`. It does not use the legacy `glean.client.chat` API, `stream` on `create()`, or a hand-written SSE parser.
 
 ## Prerequisites
 
@@ -10,8 +10,6 @@ This recipe uses `@gleanwork/api-client` 0.20.12. Every turn calls `createStream
 - A Glean instance with content indexed
 - Your work email, or the complete Glean backend HTTPS origin
 - A tenant that permits the public OAuth client and `chat` scope through DCR
-
-Platform Chat is experimental. The SDK opts in through `includeExperimental: true`.
 
 ## Install and test
 
@@ -62,3 +60,5 @@ The follow-up sends `conversation_id` from the first stored turn. Omit `--follow
 - `output[].content[].annotations[]` contains citation sources and snippets.
 
 Keep prompts grounded in content you know exists in your own Glean instance. The answer and citations depend on your permissions and indexed content.
+
+See the [Platform Chat API](https://developers.glean.com/api/platform-api/chat-overview) and [Create a chat response](https://developers.glean.com/api/platform-api/platform-chat-create).

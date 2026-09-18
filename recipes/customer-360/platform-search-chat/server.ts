@@ -40,7 +40,7 @@ const server = http.createServer(async (req, res) => {
           error: 'Could not load the account.',
           hint: message.startsWith('No fixture recorded')
             ? 'That account query is not in the recorded demo fixtures.'
-            : 'Check credentials and that experimental Platform search is enabled.',
+            : 'Check credentials and that the token carries the SEARCH scope.',
         }),
       );
     }

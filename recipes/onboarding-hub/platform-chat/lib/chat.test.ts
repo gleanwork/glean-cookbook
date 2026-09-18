@@ -24,7 +24,6 @@ const originalEnv = {
   GLEAN_API_TOKEN: process.env.GLEAN_API_TOKEN,
   GLEAN_SERVER_URL: process.env.GLEAN_SERVER_URL,
   GLEAN_USE_FIXTURE: process.env.GLEAN_USE_FIXTURE,
-  X_GLEAN_INCLUDE_EXPERIMENTAL: process.env.X_GLEAN_INCLUDE_EXPERIMENTAL,
 };
 
 afterEach(() => {
@@ -204,6 +203,7 @@ test('askPlatformChat posts an ephemeral request and retries empty output once',
   server.use(
     http.post(`${baseUrl}/api/chat`, async ({ request }) => {
       requests += 1;
+      assert.equal(request.headers.get('x-glean-include-experimental'), null);
       bodies.push(await request.json());
       return HttpResponse.json({
         id: `resp-${requests}`,

@@ -137,7 +137,6 @@ export async function loadAccount(): Promise<AccountPayload> {
     };
   }
 
-  process.env.X_GLEAN_INCLUDE_EXPERIMENTAL ??= 'true';
   const glean = new Glean({
     apiToken: requireEnv('GLEAN_API_TOKEN'),
     serverURL: requireEnv('GLEAN_SERVER_URL'),

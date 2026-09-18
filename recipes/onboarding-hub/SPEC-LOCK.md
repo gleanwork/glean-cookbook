@@ -17,8 +17,7 @@ onboarding content. Never invent a person, company process, checklist item, or r
 ## Platform Chat
 
 - Read checklist steps from `GLEAN_ONBOARDING_STEPS_JSON` or `GLEAN_ONBOARDING_STEPS_FILE`.
-- Call `glean.chat.create` from the server with `GLEAN_SERVER_URL`, `GLEAN_API_TOKEN`, and
-  `X_GLEAN_INCLUDE_EXPERIMENTAL=true`.
+- Call `glean.chat.create` from the server with `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`.
 - Set `stream: false` and `store: false`, read `ASSISTANT` `OUTPUT_TEXT` content, and read citations
   from `annotations[].sources[]`.
 - Retry empty output once, then return a transport error.
