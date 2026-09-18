@@ -39,8 +39,7 @@
     "Node 22.12.0 or newer",
     "A Glean instance with content indexed",
     "Your work email, or the complete Glean backend origin shown under Server instance (QE)",
-    "A tenant that permits this public OAuth client and search scope through DCR; an administrator-provisioned OAuth client or user-scoped SEARCH token is the fallback",
-    "Experimental Platform APIs enabled through the SDK's includeExperimental constructor option, which the scaffold sets automatically"
+    "A tenant that permits this public OAuth client and search scope through DCR; an administrator-provisioned OAuth client or user-scoped SEARCH token is the fallback"
   ],
   "demoQueries": [
     {
@@ -69,7 +68,7 @@
     },
     {
       "title": "Run the fixture tests",
-      "description": "Runs the Vitest fixture suite without credentials or network access, covering catalog discovery, query-backed suggestions, retries, typed errors, field-filter propagation, and experimental headers.",
+      "description": "Runs the Vitest fixture suite without credentials or network access, covering catalog discovery, query-backed suggestions, retries, typed errors, and field-filter propagation.",
       "command": "cd search-with-discovered-filters && npm test",
       "kind": "manual"
     },
@@ -146,8 +145,8 @@
       "category": "search"
     }
   ],
-  "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the search scope, run live verification across all datasources by default, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() only when the user explicitly narrows the search with --datasources or --auto-select, then pass returned datasources and either a suggested filter value or an explicit custom field/value to glean.search.query(). Enable experimental features through the SDK's documented includeExperimental constructor option. Do not recreate auth or SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
-  "llmContext": "Use @gleanwork/auth for tenant discovery and OAuth login, then pass its async token provider to @gleanwork/api-client's apiToken option. Glean-issued OAuth tokens need no X-Glean-Auth-Type. If DCR cannot grant search, use an administrator-provisioned public client or explicit user-scoped SEARCH token. Use typed glean.search.listFilters() and glean.search.query(), with includeExperimental enabled. Catalog discovery returns datasource IDs and common fields. Query-backed discovery accepts one datasource and returns bounded, non-exhaustive suggestions. Apply returned values unchanged with EQUALS, but treat discovery as advisory and allow explicit nonblank custom fields. The caller's credentials remain the permission boundary. Let the SDK validate responses and surface typed errors; display warnings and request IDs, and pass next_cursor back as cursor without logging credentials or exposing the opaque token.",
+  "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the search scope, run live verification across all datasources by default, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() only when the user explicitly narrows the search with --datasources or --auto-select, then pass returned datasources and either a suggested filter value or an explicit custom field/value to glean.search.query(). Do not set includeExperimental. Do not recreate auth or SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
+  "llmContext": "Use @gleanwork/auth for tenant discovery and OAuth login, then pass its async token provider to @gleanwork/api-client's apiToken option. Glean-issued OAuth tokens need no X-Glean-Auth-Type. If DCR cannot grant search, use an administrator-provisioned public client or explicit user-scoped SEARCH token. Use typed glean.search.listFilters() and glean.search.query(). Platform Search is generally available, so do not set includeExperimental. Catalog discovery returns datasource IDs and common fields. Query-backed discovery accepts one datasource and returns bounded, non-exhaustive suggestions. Apply returned values unchanged with EQUALS, but treat discovery as advisory and allow explicit nonblank custom fields. The caller's credentials remain the permission boundary. Let the SDK validate responses and surface typed errors; display warnings and request IDs, and pass next_cursor back as cursor without logging credentials or exposing the opaque token.",
   "goDependency": false,
   "featured": true,
   "hidden": false,
@@ -168,10 +167,6 @@
       {
         "title": "OAuth policy varies by tenant",
         "description": "DCR may be disabled, restricted to approved applications or redirect URI patterns, or unable to grant search. Use an administrator-provisioned public OAuth client when available; a user-scoped SEARCH token is the tutorial fallback."
-      },
-      {
-        "title": "Experimental API",
-        "description": "Both endpoints may change. The scaffold opts in explicitly and should be evaluated before production adoption."
       }
     ]
   }
