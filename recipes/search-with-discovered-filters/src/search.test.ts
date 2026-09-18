@@ -180,7 +180,7 @@ void test('runs the documented SDK sequence with a suggested filter', async () =
   });
   for (const request of requests) {
     assert.equal(request.headers.authorization, 'Bearer test-token');
-    assert.equal(request.headers['x-glean-include-experimental'], 'true');
+    assert.equal(request.headers['x-glean-include-experimental'], undefined);
   }
   assert.match(stdout, /Search migration/u);
 });
