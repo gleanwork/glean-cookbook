@@ -11,7 +11,7 @@ This recipe uses `@gleanwork/api-client` 0.20.12. Every turn calls `createStream
 - Your work email, or the complete Glean backend HTTPS origin
 - A tenant that permits the public OAuth client and `chat` scope through DCR
 
-Platform Chat is experimental. The SDK opts in through `includeExperimental: true`.
+Platform Chat is generally available. The SDK does not set `includeExperimental`.
 
 ## Install and test
 

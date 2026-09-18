@@ -2,7 +2,7 @@
 
 This TypeScript CLI uses the official `@gleanwork/api-client` to search across all of your Glean content by default. You can optionally discover visible datasources and common filter fields, request query-specific suggested values for one datasource, and apply the selection to Platform Search.
 
-The recipe uses `@gleanwork/auth` for tenant discovery, OAuth login, secure credential storage, and automatic token refresh. The Platform Search APIs are experimental, so the API client sets `includeExperimental: true`. Each request attempt has a 30-second timeout, with bounded exponential backoff for transient API and connection failures.
+The recipe uses `@gleanwork/auth` for tenant discovery, OAuth login, secure credential storage, and automatic token refresh. Platform Search is generally available, so the API client does not set `includeExperimental`. Each request attempt has a 30-second timeout, with bounded exponential backoff for transient API and connection failures.
 
 ## Run
 
@@ -88,4 +88,4 @@ Verify against your Glean instance after signing in:
 npm run verify -- --email "you@example.com" --query "a topic you know exists"
 ```
 
-See the [OAuth authentication guide](https://developers.glean.com/api-info/client/authentication/oauth), [Platform Search API](https://developers.glean.com/api/platform-api/search-overview), [Search Filters reference](https://developers.glean.com/api/platform-api/platform-search-filters), and [experimental API policy](https://developers.glean.com/experimental/overview).
+See the [OAuth authentication guide](https://developers.glean.com/api-info/client/authentication/oauth), [Platform Search API](https://developers.glean.com/api/platform-api/search-overview), and [Search Filters reference](https://developers.glean.com/api/platform-api/platform-search-filters).

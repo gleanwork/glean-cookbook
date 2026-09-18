@@ -1,5 +1,4 @@
 import { Glean, type SDKOptions } from '@gleanwork/api-client';
-import type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';
 import { createGleanTokenProvider, discoverGleanTenant } from '@gleanwork/auth';
 
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);
@@ -49,8 +48,7 @@ export async function createGleanClient(target: GleanClientTarget) {
         serverUrl: server.origin,
         scopes: ['chat'],
       }),
-    includeExperimental: true,
-  } satisfies SDKOptions & XGleanOptions;
+  } satisfies SDKOptions;
 
   return new Glean(options);
 }
