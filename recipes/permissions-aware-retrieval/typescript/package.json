@@ -7,18 +7,23 @@
   "scripts": {
     "login": "node scripts/glean-auth.mjs login --scopes search",
     "start": "tsx src/main.ts",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.115.0",
     "@gleanwork/api-client": "0.18.0",
-    "dotenv": "17.4.2"
+    "dotenv": "17.4.2",
+    "marked": "15.0.12",
+    "marked-terminal": "7.3.0",
+    "strip-ansi": "7.2.0"
   },
   "devDependencies": {
-    "typescript": "6.0.3",
-    "tsx": "4.23.1",
     "@types/node": "26.1.1",
     "eslint": "10.8.0",
+    "tsx": "4.23.1",
+    "typescript": "6.0.3",
     "typescript-eslint": "8.65.0"
   },
   "allowScripts": {

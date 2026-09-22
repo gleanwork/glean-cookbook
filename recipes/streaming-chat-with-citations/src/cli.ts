@@ -1,4 +1,5 @@
 import meow from 'meow';
+import { parseOutputFormat } from './output.js';
 
 export function parseCliOptions(argv = process.argv.slice(2)) {
   const cli = meow(
@@ -11,6 +12,7 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
         --server-url      Complete Glean backend origin; overrides --email
         --prompt, -p      Message to send to Glean Chat
         --follow-up, -f   Optional follow-up sent in the same conversation
+        --format          Output: auto, terminal, or markdown (default: auto)
 
       Example
         $ npm start -- --email you@example.com --prompt "What is our PTO policy?"
@@ -23,6 +25,7 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
         serverUrl: { type: 'string' },
         prompt: { type: 'string', shortFlag: 'p', isRequired: true },
         followUp: { type: 'string', shortFlag: 'f' },
+        format: { type: 'string', default: 'auto' },
       },
     },
   );
@@ -35,6 +38,7 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
   const serverUrl = cli.flags.serverUrl?.trim();
   const prompt = cli.flags.prompt.trim();
   const followUp = cli.flags.followUp?.trim();
+  const format = parseOutputFormat(cli.flags.format.trim());
 
   if (cli.flags.email !== undefined && !email) {
     throw new Error('--email must not be blank.');
@@ -47,5 +51,5 @@ export function parseCliOptions(argv = process.argv.slice(2)) {
     throw new Error('--follow-up must not be blank.');
   }
 
-  return { email, followUp, prompt, serverUrl };
+  return { email, followUp, format, prompt, serverUrl };
 }

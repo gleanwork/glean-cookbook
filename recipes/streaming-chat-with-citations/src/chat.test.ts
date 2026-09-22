@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { afterAll, afterEach, beforeAll, test } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { runChat } from './chat.js';
+
+process.env.NO_COLOR = '1';
+const { runChat } = await import('./chat.js');
 
 const originalToken = process.env.GLEAN_API_TOKEN;
 const baseUrl = 'https://fixture.glean.example.com';
@@ -25,7 +27,22 @@ afterAll(() => {
   server.close();
 });
 
-function completedResponse(conversationId = 'conv_fixture') {
+interface CitationFixture {
+  snippet: string;
+  title: string;
+  url: string;
+}
+
+const defaultCitation: CitationFixture = {
+  snippet: 'A useful policy excerpt.',
+  title: 'Policy guide',
+  url: 'https://glean.example.com/doc/fixture',
+};
+
+function completedResponse(
+  conversationId = 'conv_fixture',
+  citation: CitationFixture = defaultCitation,
+) {
   return {
     id: 'resp_fixture',
     object: 'RESPONSE',
@@ -46,11 +63,11 @@ function completedResponse(conversationId = 'conv_fixture') {
                   {
                     type: 'DOCUMENT',
                     document_id: 'doc_fixture',
-                    title: 'Policy guide',
-                    url: 'https://glean.example.com/doc/fixture',
+                    title: citation.title,
+                    url: citation.url,
                   },
                 ],
-                snippets: [{ text: 'A useful policy excerpt.' }],
+                snippets: [{ text: citation.snippet }],
               },
             ],
           },
@@ -63,20 +80,25 @@ function completedResponse(conversationId = 'conv_fixture') {
   };
 }
 
-function typedSseResponse(conversationId = 'conv_fixture') {
+function typedSseResponse(
+  conversationId = 'conv_fixture',
+  citation: CitationFixture = defaultCitation,
+) {
   const encoder = new TextEncoder();
-  const completed = completedResponse(conversationId);
+  const completed = completedResponse(conversationId, citation);
   const frames =
     [
-      [
-        'event: RESPONSE_OUTPUT_TEXT_DELTA',
-        `data: ${JSON.stringify({
-          type: 'RESPONSE_OUTPUT_TEXT_DELTA',
-          response_id: completed.id,
-          delta: 'The answer is grounded in your content.',
-        })}`,
-        '',
-      ].join('\n'),
+      ...['The answer is ', 'grounded in your content.'].map((delta) =>
+        [
+          'event: RESPONSE_OUTPUT_TEXT_DELTA',
+          `data: ${JSON.stringify({
+            type: 'RESPONSE_OUTPUT_TEXT_DELTA',
+            response_id: completed.id,
+            delta,
+          })}`,
+          '',
+        ].join('\n'),
+      ),
       [
         'event: RESPONSE_COMPLETED',
         `data: ${JSON.stringify({
@@ -100,9 +122,24 @@ function typedSseResponse(conversationId = 'conv_fixture') {
   });
 }
 
-test('streams typed createStream events', async () => {
+function captureOutput(isTTY = false) {
+  const chunks: string[] = [];
+  return {
+    chunks,
+    output: {
+      columns: 80,
+      isTTY,
+      write(chunk: string) {
+        chunks.push(chunk);
+      },
+    },
+  };
+}
+
+test('streams typed createStream events and writes raw deltas once', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   const bodies: JsonValue[] = [];
+  const { chunks, output } = captureOutput();
   server.use(
     http.post(`${baseUrl}/api/chat`, async ({ request }) => {
       assert.equal(request.headers.get('x-glean-include-experimental'), null);
@@ -111,11 +148,28 @@ test('streams typed createStream events', async () => {
     }),
   );
 
-  await runChat({
-    serverUrl: baseUrl,
-    prompt: 'What is our policy?',
-  });
+  await runChat(
+    {
+      format: 'markdown',
+      serverUrl: baseUrl,
+      prompt: 'What is our policy?',
+    },
+    output,
+  );
 
+  assert.deepEqual(chunks, [
+    'The answer is ',
+    'grounded in your content.',
+    '\n',
+    '\nSources:\n' +
+      '  1. Policy guide\n' +
+      '     https://glean.example.com/doc/fixture\n' +
+      '     A useful policy excerpt.\n',
+  ]);
+  assert.equal(
+    chunks.join('').split('The answer is grounded in your content.').length - 1,
+    1,
+  );
   assert.deepEqual(bodies, [
     {
       input: 'What is our policy?',
@@ -128,6 +182,7 @@ test('streams typed createStream events', async () => {
 test('reuses conversation_id for a streamed follow-up turn', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   const bodies: JsonValue[] = [];
+  const { chunks, output } = captureOutput();
   server.use(
     http.post(`${baseUrl}/api/chat`, async ({ request }) => {
       assert.equal(request.headers.get('x-glean-include-experimental'), null);
@@ -144,12 +199,22 @@ test('reuses conversation_id for a streamed follow-up turn', async () => {
     }),
   );
 
-  await runChat({
-    serverUrl: baseUrl,
-    prompt: 'What is our policy?',
-    followUp: 'Who owns it?',
-  });
+  await runChat(
+    {
+      format: 'markdown',
+      serverUrl: baseUrl,
+      prompt: 'What is our policy?',
+      followUp: 'Who owns it?',
+    },
+    output,
+  );
 
+  assert.equal(
+    chunks.join('').split('The answer is grounded in your content.').length - 1,
+    2,
+  );
+  assert.match(chunks.join(''), /Follow-up:/);
+  assert.equal(chunks.join('').split('Sources:').length - 1, 2);
   assert.deepEqual(bodies, [
     {
       input: 'What is our policy?',

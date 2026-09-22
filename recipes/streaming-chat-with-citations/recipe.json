@@ -14,7 +14,7 @@
       },
       {
         "title": "Iterate `createStream` events",
-        "description": "Call `glean.chat.createStream` and for-await the typed `EventStream`. Write `RESPONSE_OUTPUT_TEXT_DELTA.data.delta` and keep `RESPONSE_COMPLETED.data.response` for citations.",
+        "description": "Call `glean.chat.createStream` and for-await the typed `EventStream`. Write each `RESPONSE_OUTPUT_TEXT_DELTA.data.delta` immediately in raw mode, or accumulate the complete document for terminal rendering. Keep `RESPONSE_COMPLETED.data.response` for citations.",
         "source": "src/stream.ts",
         "language": "typescript"
       },
@@ -57,7 +57,8 @@
     {
       "repoPath": "recipes/streaming-chat-with-citations",
       "language": "typescript",
-      "description": "TypeScript CLI using the modern Platform Chat API, OAuth, citations, and `createStream` `EventStream` iteration"
+      "description": "TypeScript CLI using the modern Platform Chat API, OAuth, citations, and `createStream` `EventStream` iteration",
+      "frameworkFeatures": ["terminal-markdown"]
     }
   ],
   "steps": [
@@ -74,7 +75,7 @@
     },
     {
       "title": "Run the fixture tests",
-      "description": "Runs Vitest with MSW-backed fixtures, without credentials or live network access, covering typed `createStream` events, `conversation_id` propagation, and citations.",
+      "description": "Runs Vitest with MSW-backed fixtures, without credentials or live network access, covering typed `createStream` events, exact-once delta composition, `conversation_id` propagation, and citation separation.",
       "command": "cd streaming-chat-with-citations && npm test",
       "kind": "manual"
     },
@@ -85,14 +86,14 @@
       "kind": "authenticate"
     },
     {
-      "title": "Stream one Chat turn",
-      "description": "Sends a question through `createStream`, then prints delta text, `conversation_id`, and grounded citation data against your own instance.",
+      "title": "Run one streamed Chat turn",
+      "description": "Sends a question through `createStream` and prints grounded citation data against your own instance. Pipes receive each raw Markdown delta as it arrives. Interactive terminals buffer one complete answer and render it once.",
       "command": "cd streaming-chat-with-citations && npm run verify -- --email \"<work-email>\" --prompt \"<chat-question>\"",
       "kind": "verify-live"
     },
     {
       "title": "Stream a follow-up",
-      "description": "Starts a stored conversation, iterates `createStream` events, and sends a follow-up using the returned `conversation_id`.",
+      "description": "Starts a stored conversation, consumes `createStream` events for each answer, and sends a follow-up using the returned `conversation_id`. Raw output streams incrementally; terminal-rendered output is buffered per turn.",
       "command": "cd streaming-chat-with-citations && npm start -- --email \"<work-email>\" --prompt \"<chat-question>\" --follow-up \"<follow-up-question>\"",
       "kind": "run"
     }
@@ -155,7 +156,7 @@
       "icon": "Code"
     }
   ],
-  "aiPrompt": "Scaffold and run the verified Streaming Chat with citations quickstart. Ask for the user's work email and a question about content in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the chat scope, then stream one Platform Chat turn. Use @gleanwork/api-client 0.20.14. Call glean.chat.createStream() for every turn and for-await RESPONSE_OUTPUT_TEXT_DELTA and RESPONSE_COMPLETED events. Do not call create(), do not set stream on create(), do not use CreateAcceptEnum or Accept-header workarounds, and do not parse SSE by hand. Pass conversation_id from the stored first turn to the follow-up. Do not use legacy glean.client.chat, hand-roll Glean request construction, or expose credentials.",
+  "aiPrompt": "Scaffold and run the verified Streaming Chat with citations quickstart. Ask for the user's work email and a question about content in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the chat scope, then stream one Platform Chat turn. Use @gleanwork/api-client 0.20.14. Call glean.chat.createStream() for every turn and for-await RESPONSE_OUTPUT_TEXT_DELTA and RESPONSE_COMPLETED events. When output resolves to raw Markdown, write each delta immediately and exactly once, then ensure the completed document has a final newline. For terminal output, buffer one complete answer, remove model-supplied terminal control sequences, and render it once with marked-terminal after completion. Keep citations separate. Do not call create(), do not set stream on create(), do not use CreateAcceptEnum or Accept-header workarounds, and do not parse SSE by hand. Pass conversation_id from the stored first turn to the follow-up. Do not use legacy glean.client.chat, hand-roll Glean request construction, or expose credentials.",
   "llmContext": "Use Platform Chat API at /api/chat through @gleanwork/api-client 0.20.14. Every turn calls glean.chat.createStream(), which returns a typed EventStream. Do not call create() and do not set stream on create(). HTTP clients still send stream:true in the JSON body; SDK users call createStream() instead. Streaming events use event names RESPONSE_OUTPUT_TEXT_DELTA (data.delta) and RESPONSE_COMPLETED (data.response). Citations are content annotations with sources and optional snippets. OAuth or user-scoped CHAT token remains the permission boundary.",
   "goDependency": false,
   "featured": false,
@@ -176,6 +177,10 @@
       {
         "title": "OAuth policy varies by tenant",
         "description": "DCR may be disabled or restricted, or may not grant Chat. Use an administrator-provisioned public client when available; a user-scoped `CHAT` token is the tutorial fallback."
+      },
+      {
+        "title": "Terminal Markdown renders after each turn",
+        "description": "Interactive terminal mode consumes the API EventStream as it arrives but buffers one complete answer before rendering it once. Pipes and redirects receive each raw Markdown delta immediately and get a final newline on completion, so only terminal-rendered output is not token-by-token."
       }
     ]
   }

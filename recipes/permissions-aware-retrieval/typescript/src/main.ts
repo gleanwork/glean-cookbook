@@ -23,8 +23,14 @@
  */
 
 import 'dotenv/config';
+import { parseArgs } from 'node:util';
 import Anthropic from '@anthropic-ai/sdk';
 import { Glean } from '@gleanwork/api-client';
+import {
+  createMarkdownOutput,
+  parseOutputFormat,
+  type OutputFormat,
+} from './output.js';
 
 const MODEL = 'claude-sonnet-5';
 
@@ -83,22 +89,43 @@ async function answer(question: string, sources: Source[]): Promise<string> {
   return block.type === 'text' ? block.text : '';
 }
 
-async function main() {
-  const [question] = process.argv.slice(2);
-  if (!question) {
-    console.error('Usage: npm start -- "<question>"');
-    process.exit(1);
-  }
-
-  const sources = await retrieve(question);
-  console.log(await answer(question, sources));
-  console.log('\nSources:');
-  sources.forEach((source, i) => {
-    console.log(`  [${i + 1}] ${source.title} — ${source.url}`);
+function parseCliOptions(argv = process.argv.slice(2)): {
+  format: OutputFormat;
+  question: string;
+} {
+  const { positionals, values } = parseArgs({
+    args: argv,
+    allowPositionals: true,
+    options: {
+      format: { type: 'string', default: 'auto' },
+    },
+    strict: true,
   });
+  const [question, ...unexpected] = positionals;
+  if (!question?.trim() || unexpected.length > 0) {
+    throw new Error(
+      'Usage: npm start -- [--format auto|terminal|markdown] "<question>"',
+    );
+  }
+  return {
+    format: parseOutputFormat(values.format),
+    question: question.trim(),
+  };
+}
+
+async function main() {
+  const { format, question } = parseCliOptions();
+  const sources = await retrieve(question);
+  const output = createMarkdownOutput(format);
+
+  output.document(await answer(question, sources));
+  output.plain('\nSources:\n');
+  for (const [index, source] of sources.entries()) {
+    output.plain(`  [${index + 1}] ${source.title} — ${source.url}\n`);
+  }
 }
 
 main().catch((error) => {
   console.error(error);
-  process.exit(1);
+  process.exitCode = 1;
 });

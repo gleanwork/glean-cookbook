@@ -111,6 +111,7 @@
       "repoPath": "recipes/permissions-aware-retrieval/typescript",
       "language": "typescript",
       "description": "Same flow in TypeScript",
+      "frameworkFeatures": ["terminal-markdown"],
       "execution": {
         "type": "cli",
         "questions": [
@@ -173,6 +174,7 @@
         {
           "title": "Run it",
           "command": "cd permissions-aware-retrieval && npm start -- \"<allowed-topic>\"",
+          "description": "Interactive terminals render the model's Markdown with marked-terminal after removing model-supplied terminal controls. Pipes and redirects receive raw Markdown unchanged, and numbered source URLs print separately.",
           "kind": "run"
         },
         {
