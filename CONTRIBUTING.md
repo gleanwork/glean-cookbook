@@ -75,6 +75,27 @@ scope owner; do not weaken expectations just to pass verification. Keep `demoQue
 `expectedBehavior` accurate and meaningful. Examples must work with appropriate content from
 a reader's own instance, and `aiPrompt` must produce what it promises.
 
+### Start a CLI recipe
+
+For a new single-asset Python or TypeScript CLI, first author a complete `recipe.json` draft outside
+`recipes/`. Set `hidden` to `true`, use one recipe-level CLI execution contract, and declare any
+`frameworkFeatures` on its code asset. Keep every outcome, command, authentication choice, and
+expected behavior specific to the recipe; the scaffolder does not invent them.
+
+Preview the file plan, then create the hidden scaffold:
+
+```bash
+mise exec -- pnpm create:recipe -- --from /path/to/recipe.json --dry-run
+mise exec -- pnpm create:recipe -- --from /path/to/recipe.json
+```
+
+The command creates the package shell, derives exact feature dependencies, writes the normal npm or
+uv lock, generates framework-owned files, and rebuilds `registry.json`. It leaves one explicit
+`GLEAN_RECIPE_SCAFFOLD_TODO` in the entry point. Replace that stub with the recipe-specific workflow,
+add authentication support and tests, and verify the documented commands before changing `hidden`.
+CI rejects a visible recipe that still contains the scaffold marker. Multi-asset and non-CLI recipes
+continue to use the manual workflow below.
+
 ## Recipe directory conventions
 
 Each `recipes/{id}/` directory is a **self-contained, runnable example** — it should work if someone
