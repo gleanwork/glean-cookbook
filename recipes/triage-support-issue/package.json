@@ -1,0 +1,22 @@
+{
+  "name": "glean-triage-support-issue",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Run a published Platform Agent to triage one support issue.",
+  "scripts": {
+    "login": "glean-auth login --scopes agents",
+    "demo": "node scripts/demo.mjs",
+    "triage": "node scripts/triage.mjs",
+    "verify": "node scripts/verify.mjs",
+    "verify:fixture": "node scripts/verify-fixture.mjs",
+    "test": "node scripts/verify-fixture.mjs"
+  },
+  "dependencies": {
+    "@gleanwork/auth": "0.5.1",
+    "dotenv": "17.4.2"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

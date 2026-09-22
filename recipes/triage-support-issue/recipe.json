@@ -1,0 +1,162 @@
+{
+  "id": "triage-support-issue",
+  "title": "Triage one support issue with a Glean Agent",
+  "description": "Give a published support-triage Agent one issue URL or description and get an evidence-backed summary, next diagnostic step, and customer-safe response.",
+  "sidebarLabel": "Triage One Support Issue",
+  "surfaces": ["platform-api"],
+  "capabilities": ["agents"],
+  "status": "quickstart",
+  "visibility": "preview",
+  "category": "agent",
+  "level": "Beginner",
+  "levels": {
+    "minimal": true,
+    "wow": false
+  },
+  "timeEstimate": "~15 min",
+  "icon": "agent",
+  "requiredScopes": ["AGENTS"],
+  "authMethod": ["client-api-oauth-or-token"],
+  "buildMethod": "scaffold",
+  "languages": ["javascript"],
+  "execution": {
+    "type": "cli",
+    "questions": [
+      {
+        "id": "email",
+        "prompt": "What is your work email? It is used once to discover your Glean tenant."
+      },
+      {
+        "id": "agent-id",
+        "prompt": "What is the ID of the published conversational support-triage Agent to run?"
+      },
+      {
+        "id": "support-issue",
+        "prompt": "What support issue should the Agent triage? Paste a ticket URL or a concise issue description."
+      }
+    ],
+    "auth": [
+      {
+        "kind": "oauth-with-token-fallback",
+        "scopes": ["AGENTS"],
+        "setupCommand": "cd triage-support-issue && npm run login -- --email \"<work-email>\"",
+        "configFile": ".env",
+        "backendVariable": "GLEAN_SERVER_URL",
+        "credentialVariable": "GLEAN_API_TOKEN"
+      }
+    ],
+    "verification": {
+      "kind": "automated",
+      "command": "cd triage-support-issue && npm run verify:fixture",
+      "expectedDuration": "under 1 minute without credentials",
+      "startsOwnServer": false
+    },
+    "run": {
+      "command": "cd triage-support-issue && npm run triage -- \"<support-issue>\"",
+      "userBrowser": false
+    }
+  },
+  "prerequisites": [
+    "Node 22.12 or newer",
+    "A published conversational Agent configured to triage support issues using the user's permitted Glean content",
+    "The Agent ID from Agent Builder or the Agents Platform API",
+    "A work email for tenant discovery and OAuth sign-in, or a token able to run the selected Agent"
+  ],
+  "demoQueries": [
+    {
+      "query": "Triage this support issue: the customer reports that search results are stale after a document update.",
+      "expectedBehavior": "The Agent returns non-empty Summary, Evidence, Next diagnostic step, and Customer-safe response sections, and clearly distinguishes evidence from hypotheses."
+    }
+  ],
+  "codeAssets": [
+    {
+      "repoPath": "recipes/triage-support-issue",
+      "language": "javascript",
+      "description": "One support issue sent to a conversational Agent through the Platform Agents API"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Scaffold the recipe",
+      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/triage-support-issue triage-support-issue",
+      "kind": "scaffold"
+    },
+    {
+      "title": "Install dependencies",
+      "command": "cd triage-support-issue && npm install",
+      "description": "Installs dotenv. The recipe uses Node's built-in fetch against the Platform Agents API, not A2A or the legacy REST API.",
+      "kind": "install"
+    },
+    {
+      "title": "Sign in to Glean",
+      "command": "cd triage-support-issue && npm run login -- --email \"<work-email>\"",
+      "description": "Use @gleanwork/auth for tenant discovery and refreshable OAuth credentials stored outside the project. If OAuth is unavailable, provide a user-scoped token that can run the selected Agent.",
+      "kind": "authenticate"
+    },
+    {
+      "title": "Set the Agent and issue",
+      "description": "Set GLEAN_AGENT_ID to a published conversational support-triage Agent. Then pass one ticket URL or issue description to the triage command. A form-triggered Agent is outside this quickstart because it requires a different input contract.",
+      "kind": "configure"
+    },
+    {
+      "title": "Run the triage",
+      "command": "cd triage-support-issue && npm run triage -- \"<support-issue>\"",
+      "description": "The command makes one Platform Agent run and prints the structured triage. It does not make any external write or customer-facing update.",
+      "kind": "run"
+    },
+    {
+      "title": "Verify the response",
+      "command": "cd triage-support-issue && npm run verify:fixture",
+      "description": "Run the no-credential fixture check first. For a live check, set GLEAN_SUPPORT_ISSUE and run npm run verify; confirm the Agent separates evidence from hypotheses.",
+      "kind": "verify-live"
+    }
+  ],
+  "scaffoldActions": [],
+  "architecture": [
+    {
+      "label": "Support issue",
+      "caption": "One ticket URL or issue description",
+      "category": "workflow"
+    },
+    {
+      "label": "Glean Platform Agent",
+      "caption": "Runs with the caller's permissions",
+      "category": "agent",
+      "emphasized": true
+    },
+    {
+      "label": "Triage output",
+      "caption": "Evidence, next diagnostic, and safe response",
+      "category": "workflow"
+    }
+  ],
+  "aiPrompt": "Scaffold the triage-support-issue recipe. Ask for a work email, the published conversational support-triage Agent ID, and one support issue URL or concise description. Use @gleanwork/auth for tenant discovery, Authorization Code with PKCE, refreshable credentials stored outside the project, and a user-scoped token only as a CI fallback. Call POST /api/agents/{agent_id}/runs directly through the Platform Agents API with stream: false, an Authorization Bearer token, and an explicit triage prompt in the USER message. Ask the Agent for Summary, Evidence, Next diagnostic step, and Customer-safe response; require it to distinguish evidence from hypotheses, disclose insufficient context, and use an indexed ticket record when a live Intercom URL only returns an authenticated shell. Do not use A2A, /rest/api/v1, client SDKs, tools, or external writes.",
+  "llmContext": "The recipe uses @gleanwork/auth to obtain a refreshable agents-scoped OAuth token without storing it in the project; the package uses GLEAN_API_TOKEN as its standard user-scoped fallback when present. It calls POST /api/agents/{agent_id}/runs directly with Node's built-in fetch. The request uses Authorization: Bearer <resolved token>, Content-Type: application/json, messages containing the explicit USER prompt, and stream: false. It retries transient failures and falls back to the system curl TLS stack when Node cannot validate the tenant certificate; it never disables certificate verification. No experimental header or separate prompt environment variable is needed. The selected Agent must be conversational and published; form-triggered Agents require their input schema and are not part of this beginner recipe. Treat the Agent response as untrusted text: print it, do not submit it to a customer or mutate a ticket.",
+  "goDependency": false,
+  "featured": false,
+  "tags": ["support", "agent", "platform-api", "triage"],
+  "content": {
+    "problem": "A support issue arrives with a URL or a short description, but the first response still requires someone to reconstruct the evidence, identify the next diagnostic, and write a safe customer update.",
+    "takeItFurther": [
+      "Add a streaming response so a support engineer can see the Agent's progress.",
+      "Pass structured issue fields after you have a form-triggered Agent and its input schema is verified.",
+      "Pair this recipe with a Trigger that creates a triage request when a support-relevant event arrives."
+    ],
+    "guardrails": [
+      {
+        "title": "Evidence before hypothesis",
+        "rule": "The prompt asks the Agent to separate observed Glean evidence from hypotheses and to disclose when evidence is insufficient."
+      },
+      {
+        "title": "No external write",
+        "rule": "The beginner recipe only prints the Agent response; it does not update a ticket, send a message, or close an issue."
+      }
+    ],
+    "limitations": [
+      {
+        "title": "The Agent is configured separately",
+        "description": "The recipe invokes a published conversational Agent. It does not teach Agent Builder, tool governance, or form-triggered input schemas."
+      }
+    ]
+  }
+}
