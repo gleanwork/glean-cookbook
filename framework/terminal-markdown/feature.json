@@ -1,0 +1,22 @@
+{
+  "implementations": {
+    "python": {
+      "source": "markdown_output.py",
+      "target": "markdown_output.py",
+      "dependencies": {
+        "rich": "15.0.0"
+      },
+      "consumerManifest": "main.py"
+    },
+    "typescript": {
+      "source": "markdown_output.ts",
+      "target": "src/output.ts",
+      "dependencies": {
+        "marked": "15.0.12",
+        "marked-terminal": "7.3.0",
+        "strip-ansi": "7.2.0"
+      },
+      "consumerManifest": "package.json"
+    }
+  }
+}

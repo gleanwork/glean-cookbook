@@ -5,6 +5,7 @@ import fs from 'fs-extra';
 import prettier from 'prettier';
 
 import { defineArtifacts } from './lib/artifacts.mjs';
+import { compileFrameworkFeatures } from './lib/framework-features.mjs';
 import { readJsonc } from './lib/jsonc.mjs';
 import { hasRecipeOwnedOAuth } from './lib/oauth-entrypoint.mjs';
 
@@ -135,6 +136,11 @@ async function cookbookStyles({ repoRoot }) {
   });
 }
 
+const { artifactDefinitions: frameworkFeatureArtifacts } =
+  await compileFrameworkFeatures({
+    repoRoot: path.resolve(import.meta.dirname, '..'),
+  });
+
 export default defineArtifacts([
   {
     id: 'recipe-auth',
@@ -191,4 +197,5 @@ export default defineArtifacts([
         (root) => `${root}/lib/cookbook-server.ts`,
       ),
   },
+  ...frameworkFeatureArtifacts,
 ]);

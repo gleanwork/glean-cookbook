@@ -25,6 +25,7 @@ import { materializeArtifacts } from './lib/artifacts.mjs';
 import { readJsonc } from './lib/jsonc.mjs';
 import { extractPastePrompt } from './lib/paste-prompt.mjs';
 import { materializeCodeWalkthrough } from './lib/code-walkthrough.mjs';
+import { stripFrameworkCompilerMetadata } from './lib/registry-metadata.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const recipesDir = path.join(repoRoot, 'recipes');
@@ -87,7 +88,7 @@ const entries = recipeFiles
     const recipeDir = path.dirname(file);
     try {
       return materializeCodeWalkthrough(
-        inlinePastePrompt(entry, recipeDir),
+        inlinePastePrompt(stripFrameworkCompilerMetadata(entry), recipeDir),
         recipeDir,
       );
     } catch (error) {

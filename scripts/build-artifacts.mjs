@@ -17,7 +17,9 @@ if (check && changes.length > 0) {
       `  ${path.relative(repoRoot, output.file)} (${output.group})`,
     );
   }
-  console.error('Run `npm run build:artifacts` and commit the result.');
+  console.error(
+    'Run `mise exec -- pnpm build:artifacts` and commit the result.',
+  );
   process.exit(1);
 }
 
