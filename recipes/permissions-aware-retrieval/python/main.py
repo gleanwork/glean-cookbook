@@ -4,6 +4,7 @@
 #     "anthropic==0.120.0",
 #     "glean-api-client==0.15.4",
 #     "python-dotenv==1.1.1",
+#     "rich==15.0.0",
 # ]
 # ///
 """Permissions-aware retrieval — Glean's data-first Platform API as the retrieval
@@ -33,6 +34,7 @@ import os
 from anthropic import Anthropic
 from dotenv import load_dotenv
 from glean.api_client import Glean
+from markdown_output import OUTPUT_FORMATS, MarkdownOutput
 
 # Load the local configuration created from .env.example.
 load_dotenv()
@@ -98,13 +100,20 @@ def answer(question: str, sources: list[dict]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("question")
+    parser.add_argument(
+        "--format",
+        choices=OUTPUT_FORMATS,
+        default="auto",
+        help="output format (default: Rich on a TTY, raw Markdown otherwise)",
+    )
     args = parser.parse_args()
+    output = MarkdownOutput(args.format)
 
     sources = retrieve(args.question)
-    print(answer(args.question, sources))
-    print("\nSources:")
+    output.document(answer(args.question, sources))
+    output.plain("\nSources:\n")
     for i, source in enumerate(sources):
-        print(f"  [{i + 1}] {source['title']} — {source['url']}")
+        output.plain(f"  [{i + 1}] {source['title']} — {source['url']}\n")
 
 
 if __name__ == "__main__":

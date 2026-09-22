@@ -68,7 +68,8 @@
     {
       "repoPath": "recipes/multi-step-agent/invoke-agent",
       "language": "python",
-      "description": "Invoke the agent via agents.run, demo both the permitted and denied branches"
+      "description": "Invoke the agent via agents.run, demo both the permitted and denied branches",
+      "frameworkFeatures": ["terminal-markdown"]
     }
   ],
   "steps": [

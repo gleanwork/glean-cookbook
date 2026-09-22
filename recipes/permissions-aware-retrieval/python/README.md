@@ -17,9 +17,16 @@ transitive tree with hashes, so this runs the same today as it did when it was v
 `--locked` to fail rather than re-resolve if it ever drifts. After editing the inline
 dependencies, re-run `uv lock --script main.py`.
 
+The `markdown_output.py` helper centralizes terminal and pipeline output. By default, it renders
+model-authored Markdown with Rich on an interactive terminal and emits the Markdown source unchanged
+when stdout is piped or redirected. Use `--format terminal` to force the Rich view or `--format
+markdown` to force raw Markdown. It keeps source headings and source metadata as plain caller
+output, sanitizes terminal controls, keeps link destinations visible, honors `NO_COLOR`, and adds a
+final newline when the answer document completes.
+
 Prefer pip? The direct pins are in that same block: `pip install glean-api-client==0.15.4
-anthropic==0.120.0` inside a virtualenv you manage yourself — though you lose the transitive
-pinning the lock gives you.
+anthropic==0.120.0 rich==15.0.0` inside a virtualenv you manage yourself — though you lose the
+transitive pinning the lock gives you.
 
 ## The permissions demo
 

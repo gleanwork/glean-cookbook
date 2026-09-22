@@ -4,6 +4,7 @@
 #     "a2a-sdk==0.3.26",
 #     "httpx==0.28.1",
 #     "python-dotenv==1.1.1",
+#     "rich==15.0.0",
 # ]
 # ///
 """Call a Glean agent from an A2A client: card discovery, message/send,
@@ -26,6 +27,7 @@ Current a2a-sdk==0.3.26 contract (A2A spec 0.3):
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import os
 
@@ -34,6 +36,7 @@ from a2a.client import A2ACardResolver, ClientConfig, ClientFactory
 from a2a.client.helpers import create_text_message_object
 from a2a.types import Message, Role, Task
 from dotenv import load_dotenv
+from markdown_output import OUTPUT_FORMATS, MarkdownOutput, OutputFormat
 
 # Load the local configuration created from .env.example.
 load_dotenv()
@@ -79,12 +82,13 @@ def unpack_event(event: Message | tuple[Task, object]) -> tuple[str, str | None]
     return text, task.context_id
 
 
-async def main() -> None:
+async def main(output_format: OutputFormat) -> None:
     # Card discovery and message/send use a Glean credential with AGENTS scope.
     instance = require_env("GLEAN_INSTANCE")
     token = require_env("GLEAN_API_TOKEN")
     agent_id = require_env("GLEAN_AGENT_ID")
     demo_question = require_env("GLEAN_DEMO_QUERY")
+    output = MarkdownOutput(output_format)
 
     base_url = f"https://{instance}-be.glean.com"
     card_path = f"/rest/api/v1/a2a/agents/{agent_id}/agent-card.json"
@@ -107,14 +111,13 @@ async def main() -> None:
         sync_client = ClientFactory(
             ClientConfig(httpx_client=httpx_client, streaming=False)
         ).create(card)
-        question = create_text_message_object(
-            role=Role.user, content=demo_question
-        )
+        question = create_text_message_object(role=Role.user, content=demo_question)
 
         context_id = None
         async for event in sync_client.send_message(question):
             text, context_id = unpack_event(event)
-            print(f"[turn 1] {text}")
+            output.plain("[turn 1]\n")
+            output.document(text)
 
         # 2. A follow-up reusing context_id proves multi-turn.
         follow_up = create_text_message_object(
@@ -124,7 +127,8 @@ async def main() -> None:
 
         async for event in sync_client.send_message(follow_up):
             text, _ = unpack_event(event)
-            print(f"[turn 2, same context] {text}")
+            output.plain("[turn 2, same context]\n")
+            output.document(text)
 
         # 3. Streaming: a separate client built with streaming=True.
         stream_client = ClientFactory(
@@ -134,22 +138,29 @@ async def main() -> None:
             role=Role.user,
             content="Summarize our incident response process in detail.",
         )
-        print("[turn 3, streaming]", end=" ", flush=True)
-        # Each event carries the answer accumulated so far, not just the new
-        # piece, so print the delta. Printing every event whole repeats the
-        # entire answer once per event -- which looks like a duplication bug in
-        # your own app rather than a misread of the protocol.
-        shown = ""
+        output.plain("[turn 3, streaming]\n")
+
+        # Each event is a cumulative snapshot of the answer. The output stream
+        # validates that contract, deduplicates raw output, and buffers terminal
+        # output until Rich can render the complete Markdown document.
+        answer_stream = output.stream()
         async for event in stream_client.send_message(long_question):
             text, _ = unpack_event(event)
-            if text.startswith(shown):
-                print(text[len(shown) :], end="", flush=True)
-            else:
-                # A server that genuinely sends deltas rather than snapshots.
-                print(text, end="", flush=True)
-            shown = text if text.startswith(shown) else shown + text
-        print()
+            answer_stream.snapshot(text)
+
+        answer_stream.complete()
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--format",
+        choices=OUTPUT_FORMATS,
+        default="auto",
+        help="output format (default: Rich on a TTY, raw Markdown otherwise)",
+    )
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main(parse_args().format))
