@@ -1,7 +1,8 @@
 # Approve an agent action from a CLI
 
-Create an Auto mode agent with one Slack write tool. Start a durable run from
-TypeScript, review the pending tool arguments, then approve, reject, or cancel it.
+Create an Auto mode agent with a read-only Slack channel lookup and one Slack
+write tool. Start a durable run from TypeScript, review the pending tool arguments,
+then approve, reject, or cancel it.
 Glean keeps the same run ID when approval resumes execution.
 
 The example uses `@gleanwork/api-client@0.20.15`, which supports durable creation,
@@ -13,14 +14,15 @@ into `scripts/glean-auth.mjs` so this directory works on its own.
 
 - Node.js 22.12+ and npm. Python and uv are not required.
 - A tenant with durable Platform Agents endpoints deployed and enabled.
-- Permission to create and publish an agent, plus the Glean plugin in Claude
-  Code, Codex, or Cursor for the Headless Agent Builder.
-- An enabled native Slack channel-message tool and a dedicated test channel
-  where you may post. Creation records an agent; each start records a run;
+- Access to Agent Builder in the Glean web app, with Auto mode enabled and
+  permission to create and save an agent.
+- The native Slack Actions channel-lookup and send-message tools enabled, plus
+  a dedicated test channel where you may post. Creation records an agent; each start records a run;
   approval can send a real Slack message. Do not use a production channel.
-- A per-user Platform API credential with **`agents.run`**. Agent authoring uses
-  the headless builder's separate login. This CLI does not need `agents.read`,
-  search scopes, global tokens, or `X-Glean-ActAs`.
+- A per-user Platform API credential with **`agents.run`**. Create the agent in
+  your signed-in Glean browser session, then sign in separately for the CLI.
+  This CLI does not need `agents.read`, search scopes, global tokens, or
+  `X-Glean-ActAs`.
 
 ## 1. Copy and test
 
@@ -37,9 +39,24 @@ shell commands run in this same directory.
 
 ## 2. Create the agent
 
-Follow [agent-setup.md](./agent-setup.md) to build, inspect, and publish the
-single-tool agent. Keep `skipConfirmation: false`. Do not test through a
-scheduled/background run or enable automatic tool confirmation.
+Follow [agent-setup.md](./agent-setup.md) in the Glean web app: open the Agent
+library, click **Create agent**, and use **Auto mode**. In **Tools → Slack Actions**,
+select both **Search Slack Channel Doc Ids** and **Send Slack message to a channel**.
+Keep **Run without confirmation** unchecked for the write. Use a manual **Chat
+message** trigger and paste the supplied instructions with your test channel name.
+
+The lookup returns the `channelDocId` required by the send-message tool. Do not
+use a raw Slack channel ID or general Glean Search as a substitute. Mentioning
+the lookup in Instructions does not enable it; check the selected tools list.
+
+Click **Save** to publish the agent with access limited to you before running the
+CLI. Draft autosave alone does not publish changes. Save again after changing
+the tools, instructions, or trigger.
+
+The guide includes the Builder Assistant prompt and the exact agent instructions.
+No coding-assistant plugin or local agent specification is required. Do not run
+the builder's Preview or enable scheduled/background runs. The CLI walkthrough
+below is the first test run.
 
 ## 3. Sign in and configure
 

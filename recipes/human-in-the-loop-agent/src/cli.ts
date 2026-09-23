@@ -13,6 +13,7 @@ import {
   settings,
   show,
   watch,
+  type Snapshot,
 } from './runs.js';
 
 const HELP = `Usage: npm start -- <command> [options]
@@ -133,20 +134,32 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
         throw error;
     }
     const runs = new AgentRuns(settings());
-    if (command.command === 'watch')
-      return await watch(runs, command.runId!, command.waitSeconds);
-    const snapshot =
-      command.command === 'start'
-        ? await runs.start(command.message ?? process.env.GLEAN_MESSAGE ?? '')
-        : command.command === 'status'
-          ? await runs.get(command.runId!)
-          : command.command === 'cancel'
-            ? await runs.cancel(command.runId!)
-            : await runs.respond(
-                command.runId!,
-                command.interactionId!,
-                command.command === 'approve' ? 'APPROVE' : 'REJECT',
-              );
+    let snapshot: Snapshot;
+    switch (command.command) {
+      case 'watch':
+        return await watch(runs, command.runId!, command.waitSeconds);
+      case 'start':
+        snapshot = await runs.start(
+          command.message ?? process.env.GLEAN_MESSAGE ?? '',
+        );
+        break;
+      case 'status':
+        snapshot = await runs.get(command.runId!);
+        break;
+      case 'cancel':
+        snapshot = await runs.cancel(command.runId!);
+        break;
+      case 'approve':
+      case 'reject':
+        snapshot = await runs.respond(
+          command.runId!,
+          command.interactionId!,
+          command.command === 'approve' ? 'APPROVE' : 'REJECT',
+        );
+        break;
+      default:
+        throw new RecipeError('Unsupported command. Run npm start -- --help.');
+    }
     show(snapshot);
     return outcome(snapshot.run);
   } catch (error) {

@@ -4,6 +4,12 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
+const scenarios = [
+  { variable: 'GLEAN_APPROVED_RUN_ID', state: 'SUCCEEDED' },
+  { variable: 'GLEAN_REJECTED_RUN_ID', state: 'SUCCEEDED' },
+  { variable: 'GLEAN_CANCELLED_RUN_ID', state: 'CANCELLED' },
+];
+
 // Only inspect the runs the reviewer created. This gate never starts a run,
 // submits a decision, posts to Slack, or deletes test artifacts.
 export const sideEffects = 'read-only';
@@ -11,15 +17,7 @@ export const requiredEnv = [
   'GLEAN_SERVER_URL',
   'GLEAN_API_TOKEN',
   'GLEAN_AGENT_ID',
-  'GLEAN_APPROVED_RUN_ID',
-  'GLEAN_REJECTED_RUN_ID',
-  'GLEAN_CANCELLED_RUN_ID',
-];
-
-const scenarios = [
-  { variable: 'GLEAN_APPROVED_RUN_ID', state: 'SUCCEEDED' },
-  { variable: 'GLEAN_REJECTED_RUN_ID', state: 'SUCCEEDED' },
-  { variable: 'GLEAN_CANCELLED_RUN_ID', state: 'CANCELLED' },
+  ...scenarios.map(({ variable }) => variable),
 ];
 
 export function checkSnapshot(snapshot, { agentId, runId, state }) {

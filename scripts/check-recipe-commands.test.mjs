@@ -112,7 +112,7 @@ test('pilot execution metadata uses the authored step commands verbatim', () => 
 });
 
 test('tracks a directory change within a scaffold block', (t) => {
-  for (const separator of ['\n', ' && ']) {
+  for (const separator of ['\n', '\r\n', ' && ']) {
     const result = checkCommands(t, [
       `${scaffold}${separator}cd demo`,
       'uv run --locked main.py test',
