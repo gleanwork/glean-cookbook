@@ -19,13 +19,14 @@ function commandLists(recipe) {
   ];
 }
 
-function scaffoldTarget(command) {
+function parseScaffold(command) {
   if (!/\btiged(?:@\S+)?\b/.test(command)) return undefined;
-  return command
-    .split(/\r?\n|&&/u)[0]
-    .trim()
-    .split(/\s+/)
-    .at(-1);
+  const firstCommand = command.split(/\r?\n|&&/u, 1)[0];
+  return {
+    target: firstCommand.trim().split(/\s+/).at(-1),
+    // Keep the remaining shell text intact, including any persistent cd.
+    remaining: command.slice(firstCommand.length).replace(/^(?:\s|&&)+/u, ''),
+  };
 }
 
 function runsFromTarget(command, target) {
@@ -51,9 +52,9 @@ for (const entry of fs.readdirSync(recipesRoot, { withFileTypes: true })) {
     for (const [index, step] of steps.entries()) {
       if (!step.command) continue;
       let command = step.command;
-      const nextTarget = scaffoldTarget(command);
-      if (nextTarget) {
-        target = nextTarget;
+      const scaffold = parseScaffold(command);
+      if (scaffold?.target) {
+        target = scaffold.target;
         enteredTarget = false;
         if (!/\btiged@2\.12\.8\b/.test(step.command)) {
           errors.push(
@@ -65,12 +66,7 @@ for (const entry of fs.readdirSync(recipesRoot, { withFileTypes: true })) {
             `${recipe.id} ${location}[${index}] must use non-interactive npx -y: ${step.command}`,
           );
         }
-        // A scaffold block may enter the project on its next line or after &&.
-        // Inspect that tail instead of discarding its persistent directory change.
-        const firstCommand = command.split(/\r?\n|&&/u)[0];
-        command = command
-          .slice(firstCommand.length)
-          .replace(/^(?:\s|&&)+/u, '');
+        command = scaffold.remaining;
       }
       if (!command || !target || isExplicitlyCwdIndependent(command)) continue;
       if (runsFromTarget(command, target)) {

@@ -15,7 +15,7 @@ import {
   validateSnapshot,
   watch,
 } from './runs.js';
-import { errorMessage, parseCommand } from './cli.js';
+import { errorMessage, main, parseCommand } from './cli.js';
 
 const config = {
   serverURL: 'https://tenant.example',
@@ -364,6 +364,92 @@ await test('CLI rejects blank/missing IDs, invalid durations, and irrelevant fla
     message: undefined,
     waitSeconds: 120,
   });
+});
+
+await test('CLI dispatches each command with the reviewed IDs and message', async (t) => {
+  const { runs } = fixture(() => response(body('SUCCEEDED')));
+  const snapshot = await runs.get('run-1');
+  const cases = [
+    {
+      name: 'start with an explicit message',
+      args: ['start', '--message', 'CLI message'],
+      method: 'start',
+      expected: ['CLI message'],
+    },
+    {
+      name: 'start with the configured message',
+      args: ['start'],
+      method: 'start',
+      expected: ['Configured message'],
+    },
+    {
+      name: 'status',
+      args: ['status', '--run-id', 'run-1'],
+      method: 'get',
+      expected: ['run-1'],
+    },
+    {
+      name: 'watch',
+      args: ['watch', '--run-id', 'run-1'],
+      method: 'get',
+      expected: ['run-1'],
+    },
+    {
+      name: 'cancel',
+      args: ['cancel', '--run-id', 'run-1'],
+      method: 'cancel',
+      expected: ['run-1'],
+    },
+    ...(['approve', 'reject'] as const).map((decision) => ({
+      name: decision,
+      args: [decision, '--run-id', 'run-1', '--interaction-id', 'reviewed-id'],
+      method: 'respond',
+      expected: ['run-1', 'reviewed-id', decision.toUpperCase()],
+    })),
+  ];
+
+  for (const scenario of cases) {
+    await t.test(scenario.name, async (t) => {
+      const original = { ...process.env };
+      t.after(() => {
+        process.env = original;
+      });
+      Object.assign(process.env, {
+        GLEAN_SERVER_URL: config.serverURL,
+        GLEAN_API_TOKEN: config.apiToken,
+        GLEAN_AGENT_ID: config.agentId,
+        GLEAN_MESSAGE: 'Configured message',
+      });
+      t.mock.method(console, 'log', () => undefined);
+      const methods = {
+        start: t.mock.method(
+          AgentRuns.prototype,
+          'start',
+          async () => snapshot,
+        ),
+        get: t.mock.method(AgentRuns.prototype, 'get', async () => snapshot),
+        respond: t.mock.method(
+          AgentRuns.prototype,
+          'respond',
+          async () => snapshot,
+        ),
+        cancel: t.mock.method(
+          AgentRuns.prototype,
+          'cancel',
+          async () => snapshot,
+        ),
+      };
+
+      assert.equal(await main(scenario.args), 0);
+      for (const [name, method] of Object.entries(methods)) {
+        assert.deepEqual(
+          method.mock.calls.map((call) => call.arguments),
+          name === scenario.method ? [scenario.expected] : [],
+          `${name} must only be called by its matching command`,
+        );
+      }
+    });
+  }
 });
 
 await test('errors never print raw response payloads or retry writes', async () => {
