@@ -13,7 +13,7 @@
     "wow": true
   },
   "timeEstimate": "~1 hr",
-  "icon": "badge",
+  "icon": "shield-check",
   "requiredScopes": ["SEARCH"],
   "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",

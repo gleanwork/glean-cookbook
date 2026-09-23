@@ -576,7 +576,8 @@
     },
     "icon": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "Recipe card icon. Use a brand mark for a recipe built with a third-party tool, or a Glean icon name from the developer site's Glean icon manifest."
     },
     "requiredScopes": {
       "type": "array",
@@ -872,6 +873,7 @@
     "level",
     "levels",
     "timeEstimate",
+    "icon",
     "requiredScopes",
     "authMethod",
     "buildMethod",

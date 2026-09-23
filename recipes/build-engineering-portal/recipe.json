@@ -13,6 +13,7 @@
     "wow": true
   },
   "timeEstimate": "~30 min",
+  "icon": "glean-app",
   "requiredScopes": [],
   "authMethod": ["indexing-token", "web-sdk-cookie"],
   "buildMethod": "integrate",
