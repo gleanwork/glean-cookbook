@@ -29,6 +29,7 @@ function draft(id, language = 'typescript') {
     level: 'Beginner',
     levels: { minimal: true, wow: false },
     timeEstimate: '~20 min',
+    icon: 'message-with-sparkles',
     requiredScopes: ['CHAT'],
     authMethod: ['client-api-oauth-or-token'],
     buildMethod: 'scaffold',

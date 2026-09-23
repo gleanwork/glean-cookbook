@@ -75,6 +75,24 @@ scope owner; do not weaken expectations just to pass verification. Keep `demoQue
 `expectedBehavior` accurate and meaningful. Examples must work with appropriate content from
 a reader's own instance, and `aiPrompt` must produce what it promises.
 
+### Choosing an icon
+
+Every recipe sets `icon`, which the site renders on the recipe card and banner. Architecture
+nodes can set their own `icon` the same way.
+
+- For a recipe built with a third-party tool, use that tool's brand mark, such as `lovable`,
+  `replit`, `n8n`, or `cursor`. Brand marks live in the site's
+  `src/components/Cookbook/brandIcons.ts`.
+- Otherwise, use the Glean icon that matches the Glean capability the recipe shows: `search`
+  for Search, `skill` for Skills, `message-with-sparkles` for Chat, `agent` for agents, and
+  `mcp` for MCP. For anything else, pick the icon that best fits the recipe's intent.
+
+Icon names come from the site's Glean icon manifest
+(`packages/docusaurus-theme-glean/src/theme/Icons/glean-icon-manifest.ts`), which is synced
+from the Glean product. Use a Glean icon name, not a Feather name such as `Code` or
+`Download`. The site's tests fail on an icon name that doesn't resolve, so a mistake blocks
+the scheduled sync pull request instead of rendering an empty tile.
+
 ### Start a CLI recipe
 
 For a new single-asset Python or TypeScript CLI, first author a complete `recipe.json` draft outside

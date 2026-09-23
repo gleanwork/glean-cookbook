@@ -31,6 +31,7 @@
     "wow": false
   },
   "timeEstimate": "~15 min",
+  "icon": "search",
   "requiredScopes": ["SEARCH"],
   "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",
@@ -131,7 +132,7 @@
     {
       "label": "TypeScript API client",
       "caption": "typed requests and responses",
-      "icon": "Code"
+      "icon": "code"
     },
     {
       "label": "Search Filters",

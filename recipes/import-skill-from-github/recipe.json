@@ -31,6 +31,7 @@
     "wow": false
   },
   "timeEstimate": "~20 min",
+  "icon": "skill",
   "requiredScopes": ["skills:read", "skills:write"],
   "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",
@@ -128,7 +129,7 @@
     {
       "label": "Public GitHub URL",
       "caption": "skill-creator on main",
-      "icon": "Github"
+      "icon": "github"
     },
     {
       "label": "Source preview",
@@ -144,7 +145,7 @@
     {
       "label": "Sync",
       "caption": "refresh one captured ID",
-      "icon": "RefreshCw"
+      "icon": "sync"
     }
   ],
   "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/main/skills/skill-creator with stream false by default. Do not pass a commit permalink or SHA-pinned GitHub URL; the API rejects those with HTTP 400. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list, paginating list. Delete only IDs this run created. If cleanup cannot delete a captured ID, exit non-zero. If GitHub import fails, fail loudly instead of skipping. HTTP 400 means an unsupported URL or ref. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means the credential cannot import. HTTP 429 means rate-limiting. Do not treat HTTP 400 as a missing Third-party skills enablement flag. A 404 from Skills APIs is not a GitHub-import failure. With --stream, print scan progress events. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",

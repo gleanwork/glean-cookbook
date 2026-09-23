@@ -37,6 +37,7 @@
     "wow": false
   },
   "timeEstimate": "~20 min",
+  "icon": "skill",
   "requiredScopes": ["skills:read", "skills:write"],
   "authMethod": ["client-api-oauth-or-token"],
   "buildMethod": "scaffold",
@@ -145,7 +146,7 @@
     {
       "label": "Your skill bundle",
       "caption": "SKILL.md, .zip, or .skill",
-      "icon": "FileCode"
+      "icon": "file-text"
     },
     {
       "label": "Validation",
@@ -161,7 +162,7 @@
     {
       "label": "Fresh sandbox",
       "caption": "bounded zip extraction",
-      "icon": "Folder"
+      "icon": "folder"
     }
   ],
   "aiPrompt": "Scaffold and run the verified Skills versioning recipe. This is not the first persist; the Beginner validate-and-publish-skill quickstart owns that. Ask for the user's work email. Run credential-free fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique sample: validate it, create it twice under one name, confirm the returned skill ID is stable and the version advances, retrieve listVersions/getVersion/getVersionContent, stage the zip in a bounded sandbox, then delete only the captured run-owned ID. npm start -- publish with no --bundle uses fixtures/sample-skill/SKILL.md; pass --bundle for a different local file. Print the returned skill ID immediately after create, before staging. Do not delete automatically after publish. Do not teach a hello-world list/create/delete path, do not import from GitHub, and do not use createVersion() or PATCH as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
