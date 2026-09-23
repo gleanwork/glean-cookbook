@@ -35,7 +35,7 @@ Build "Stream a cited Chat response" following https://developers.glean.com/cook
    ```
 
 3. **Run the fixture tests**
-   Runs Vitest with MSW-backed fixtures, without credentials or live network access, covering typed `createStream` events, `conversation_id` propagation, and citations.
+   Runs Vitest with MSW-backed fixtures, without credentials or live network access, covering typed `createStream` events, exact-once delta composition, `conversation_id` propagation, and citation separation.
 
    ```bash
    cd streaming-chat-with-citations && npm test
@@ -48,15 +48,15 @@ Build "Stream a cited Chat response" following https://developers.glean.com/cook
    cd streaming-chat-with-citations && npm run login -- --email "<work-email>"
    ```
 
-5. **Stream one Chat turn**
-   Sends a question through `createStream`, then prints delta text, `conversation_id`, and grounded citation data against your own instance.
+5. **Run one streamed Chat turn**
+   Sends a question through `createStream` and prints grounded citation data against your own instance. Pipes receive each raw Markdown delta as it arrives. Interactive terminals buffer one complete answer and render it once.
 
    ```bash
    cd streaming-chat-with-citations && npm run verify -- --email "<work-email>" --prompt "<chat-question>"
    ```
 
 6. **Stream a follow-up**
-   Starts a stored conversation, iterates `createStream` events, and sends a follow-up using the returned `conversation_id`.
+   Starts a stored conversation, consumes `createStream` events for each answer, and sends a follow-up using the returned `conversation_id`. Raw output streams incrementally; terminal-rendered output is buffered per turn.
    ```bash
    cd streaming-chat-with-citations && npm start -- --email "<work-email>" --prompt "<chat-question>" --follow-up "<follow-up-question>"
    ```
