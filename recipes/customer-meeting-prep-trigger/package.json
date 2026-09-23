@@ -1,0 +1,25 @@
+{
+  "name": "glean-customer-meeting-prep-trigger",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Register a Platform Trigger that delivers one customer-meeting prep event.",
+  "scripts": {
+    "login": "glean-auth login --scopes triggers",
+    "demo": "node scripts/demo.mjs",
+    "start": "node scripts/server.mjs",
+    "setup": "node scripts/setup-trigger.mjs",
+    "delete": "node scripts/delete-trigger.mjs",
+    "test:webhook": "node scripts/test-webhook.mjs",
+    "verify": "node scripts/verify.mjs",
+    "verify:fixture": "node scripts/verify.mjs",
+    "test": "node scripts/verify.mjs"
+  },
+  "dependencies": {
+    "@gleanwork/auth": "0.5.1",
+    "dotenv": "17.4.2"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

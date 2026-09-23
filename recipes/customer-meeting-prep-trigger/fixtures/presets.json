@@ -1,0 +1,23 @@
+{
+  "results": [
+    {
+      "datasource": "googlecalendar",
+      "description": "Fires a chosen number of minutes before an event starts",
+      "display_name": "Before an event starts (choose window)",
+      "preset_id": "GCAL_1"
+    },
+    {
+      "datasource": "slack",
+      "description": "Fires on a new message in a channel",
+      "display_name": "New message in a channel",
+      "preset_id": "SLACK_1"
+    },
+    {
+      "datasource": "jira",
+      "description": "Fires when a bug moves to Done",
+      "display_name": "Bug resolved / moved to Done",
+      "preset_id": "JIRA_3"
+    }
+  ],
+  "has_more": false
+}
