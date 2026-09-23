@@ -1,0 +1,29 @@
+{
+  "name": "human-in-the-loop-agent",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Review and approve a durable Glean agent run from a TypeScript CLI.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "login": "node scripts/glean-auth.mjs login --scopes agents.run",
+    "test": "npm run build && node --test dist/*.test.js",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm test"
+  },
+  "dependencies": {
+    "@gleanwork/api-client": "0.20.15"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "eslint": "10.10.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.69.0"
+  },
+  "allowScripts": {}
+}

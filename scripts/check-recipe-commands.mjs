@@ -21,13 +21,17 @@ function commandLists(recipe) {
 
 function scaffoldTarget(command) {
   if (!/\btiged(?:@\S+)?\b/.test(command)) return undefined;
-  return command.trim().split(/\s+/).at(-1);
+  return command
+    .split(/\r?\n|&&/u)[0]
+    .trim()
+    .split(/\s+/)
+    .at(-1);
 }
 
 function runsFromTarget(command, target) {
   const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return new RegExp(
-    `^\\(?\\s*cd\\s+(?:["']?${escaped}["']?)(?:/[^&;]+)?\\s*&&`,
+    `^\\(?\\s*cd\\s+(?:["']?${escaped}["']?)(?:/[^&;]+)?\\s*(?:&&|\\r?\\n|$)`,
   ).test(command.trim());
 }
 
@@ -46,7 +50,8 @@ for (const entry of fs.readdirSync(recipesRoot, { withFileTypes: true })) {
     let enteredTarget = false;
     for (const [index, step] of steps.entries()) {
       if (!step.command) continue;
-      const nextTarget = scaffoldTarget(step.command);
+      let command = step.command;
+      const nextTarget = scaffoldTarget(command);
       if (nextTarget) {
         target = nextTarget;
         enteredTarget = false;
@@ -60,12 +65,17 @@ for (const entry of fs.readdirSync(recipesRoot, { withFileTypes: true })) {
             `${recipe.id} ${location}[${index}] must use non-interactive npx -y: ${step.command}`,
           );
         }
-        continue;
+        // A scaffold block may enter the project on its next line or after &&.
+        // Inspect that tail instead of discarding its persistent directory change.
+        const firstCommand = command.split(/\r?\n|&&/u)[0];
+        command = command
+          .slice(firstCommand.length)
+          .replace(/^(?:\s|&&)+/u, '');
       }
-      if (!target || isExplicitlyCwdIndependent(step.command)) continue;
-      if (runsFromTarget(step.command, target)) {
+      if (!command || !target || isExplicitlyCwdIndependent(command)) continue;
+      if (runsFromTarget(command, target)) {
         // A normal cd persists across the documented steps; a subshell does not.
-        if (!step.command.trim().startsWith('(')) enteredTarget = true;
+        if (!command.trim().startsWith('(')) enteredTarget = true;
       } else if (!enteredTarget) {
         errors.push(
           `${recipe.id} ${location}[${index}] must enter ${target} before running project commands: ${step.command}`,

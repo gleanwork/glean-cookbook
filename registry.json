@@ -1710,6 +1710,211 @@
     }
   },
   {
+    "id": "human-in-the-loop-agent",
+    "title": "Approve an agent action from a CLI",
+    "description": "Create a Slack-posting agent, start a durable run, and approve, reject, or cancel its pending tool invocation from TypeScript.",
+    "sidebarLabel": "Human-in-the-loop agent",
+    "surfaces": ["platform-api", "agents", "tools", "sdk-client"],
+    "capabilities": ["agents", "tools"],
+    "status": "quickstart",
+    "category": "agent",
+    "level": "Intermediate",
+    "levels": { "minimal": true, "wow": false },
+    "timeEstimate": "~30 min after Slack tool setup",
+    "icon": "check-circle",
+    "requiredScopes": ["agents.run"],
+    "authMethod": ["client-api-oauth-or-token"],
+    "buildMethod": "scaffold",
+    "languages": ["typescript"],
+    "visibility": "preview",
+    "featured": false,
+    "tags": ["human-in-the-loop", "approvals", "durable-runs", "slack"],
+    "prerequisites": [
+      "Node.js 22.12+ and npm",
+      "A Glean tenant with durable Platform Agents endpoints deployed and enabled",
+      "Permission to create and publish an agent, and the Glean plugin in Claude Code, Codex, or Cursor for the Headless Agent Builder",
+      "An enabled native Slack channel-message tool and a dedicated test channel where you may post; add the Glean app to a private channel",
+      "A per-user Platform API credential with agents.run; agent creation uses the headless builder's separate login"
+    ],
+    "execution": {
+      "type": "cli",
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email for tenant discovery and browser sign-in?"
+        },
+        {
+          "id": "test-channel",
+          "prompt": "Which existing Slack test channel ID may receive the approved test messages?"
+        }
+      ],
+      "auth": [
+        {
+          "kind": "oauth-with-token-fallback",
+          "scopes": ["agents.run"],
+          "setupCommand": "node scripts/glean-auth.mjs login --scopes agents.run --email \"<work-email>\"",
+          "configFile": ".env",
+          "backendVariable": "GLEAN_SERVER_URL",
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "manual",
+        "expectedDuration": "10 minutes after agent setup; requires observing the test channel",
+        "startsOwnServer": false
+      },
+      "run": { "command": "npm start -- start", "userBrowser": false }
+    },
+    "codeAssets": [
+      {
+        "repoPath": "recipes/human-in-the-loop-agent",
+        "language": "typescript",
+        "description": "A standalone SDK CLI, headless agent setup guide, and offline HTTP contract tests"
+      }
+    ],
+    "steps": [
+      {
+        "kind": "scaffold",
+        "title": "Copy the project",
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/human-in-the-loop-agent human-in-the-loop-agent\ncd human-in-the-loop-agent",
+        "description": "Run all later shell commands in this directory. Creating the agent and starting runs records activity in Glean. Approving the write can send a real Slack message; use only your dedicated test channel."
+      },
+      {
+        "kind": "install",
+        "title": "Install and run the offline tests",
+        "command": "npm ci\nnpm test",
+        "description": "npm ci installs the locked dependencies. npm test compiles TypeScript into dist/ and exercises the released SDK with an offline HTTP transport. They do not sign in, create agents, or contact Slack."
+      },
+      {
+        "kind": "manual",
+        "title": "Create and publish the agent",
+        "description": "Follow agent-setup.md in the copied directory. Use the Headless Agent Builder chat command to create an Auto mode agent with a CHAT_MESSAGE trigger, exactly one native Slack channel-message tool, and your test channel in its instructions. Inspect the generated spec: the selected provider must have customisationData.skipConfirmation: false. Do not enable Run without user confirmation, schedules, or background triggers. Publish with access limited to you, without running it or enabling Slack publishing. Copy its agent ID for the next step. Stop if the tool or confirmation setting is unavailable; a prompt-only approval is not a substitute."
+      },
+      {
+        "kind": "authenticate",
+        "title": "Sign in for the CLI",
+        "command": "node scripts/glean-auth.mjs login --scopes agents.run --email \"<work-email>\"",
+        "description": "Complete browser sign-in yourself. Login writes the backend origin and credential to the ignored .env. If dynamic registration cannot grant agents.run, use an admin-registered public client via GLEAN_OAUTH_CLIENT_ID. If no OAuth path is available, copy .env.example to .env and enter a user-scoped Glean-issued token with access to agents.run. Never paste secrets in chat or commands. Global tokens and act-as are not supported."
+      },
+      {
+        "kind": "configure",
+        "title": "Set the agent and test message",
+        "description": "Open .env and set GLEAN_AGENT_ID to the published ID and GLEAN_MESSAGE to harmless text with a unique marker. The initial example is Cookbook approval test 001: ready for review. Use a new marker for each new run. Resolve any required Slack tool authentication in Glean before starting."
+      },
+      {
+        "kind": "run",
+        "title": "Start one durable run",
+        "command": "npm start -- start",
+        "description": "Copy the printed run.run_id into a shell variable with export RUN_ID='the printed run.run_id'. This request uses execution_mode: DURABLE and stream: false. Never repeat start to check progress: each start creates a new execution."
+      },
+      {
+        "kind": "manual",
+        "title": "Wait for approval and review the arguments",
+        "command": "npm start -- watch --run-id \"$RUN_ID\"",
+        "description": "Expect REQUIRES_INPUT and one TOOL_APPROVAL. Review the displayed tool and complete arguments, including the channel and message. Check that no matching Slack post exists. Copy the reviewed interaction_id into export INTERACTION_ID='the reviewed interaction_id'. If the run completes or posts before approval, stop and fix the agent configuration. A polling deadline or closing the CLI does not cancel the run. Reconnect with status or watch and the same run ID."
+      },
+      {
+        "kind": "manual",
+        "title": "Submit your decision",
+        "description": "Choose one action. To approve the reviewed invocation, run `npm start -- approve --run-id \"$RUN_ID\" --interaction-id \"$INTERACTION_ID\"`. To reject it, replace approve with reject. To cancel the run, use `npm start -- cancel --run-id \"$RUN_ID\"`. Approval can immediately send a message. Use only the exact reviewed ID; the server binds the decision to the stored invocation, not a session-wide grant."
+      },
+      {
+        "kind": "manual",
+        "title": "Read the final result",
+        "command": "npm start -- watch --run-id \"$RUN_ID\"",
+        "description": "After approval, expect the same run ID to reach SUCCEEDED and exactly one matching Slack post. Rejection should stop without posting or requesting another tool attempt. Cancellation while paused should return CANCELLED with no pending interaction and no post. Active cancellation is cooperative and cannot undo completed writes. An accepted decision is not proof of a successful tool result."
+      },
+      {
+        "kind": "verify-live",
+        "title": "Verify replay, rejection, cancellation, and reconnect",
+        "description": "Follow the README's Verify table. On the completed approved run, repeat the exact accepted approval command once and check the Slack count remains one; a contradictory rejection must return 409. Start separate uniquely marked runs for rejection and paused cancellation, updating the shell IDs each time. Check reconnect in a fresh CLI process and authorized wrong-owner/agent access. Record actual Slack observations; API snapshots and offline tests cannot prove that messages were or were not posted."
+      },
+      {
+        "kind": "manual",
+        "title": "Clean up the test",
+        "description": "Explicitly cancel unfinished runs and inspect the results. With permission, remove only your marked Slack posts and archive or delete the disposable agent in Agent Builder. No cleanup or deletion runs automatically."
+      }
+    ],
+    "demoQueries": [
+      {
+        "query": "Post a harmless uniquely marked update to the test channel, then approve the reviewed invocation.",
+        "expectedBehavior": "The run pauses with one TOOL_APPROVAL and no post. A fresh CLI reads the same stored arguments. Approval resumes the same run to SUCCEEDED and produces exactly one matching post. Replaying the accepted decision does not duplicate it; a contradictory decision returns 409."
+      },
+      {
+        "query": "Post a second uniquely marked update, then reject the reviewed invocation.",
+        "expectedBehavior": "A separate run pauses before posting. Rejection resumes that run; the agent acknowledges the rejection and stops without a Slack post or another tool attempt."
+      },
+      {
+        "query": "Post a third uniquely marked update, then cancel while the run is waiting for approval.",
+        "expectedBehavior": "The paused run becomes CANCELLED, pending_interactions is empty, and no matching Slack message exists."
+      }
+    ],
+    "architecture": [
+      {
+        "label": "TypeScript CLI",
+        "caption": "Start a durable run and inspect its stored approval"
+      },
+      {
+        "label": "Human review",
+        "caption": "Approve or reject the exact invocation ID and arguments",
+        "emphasized": true
+      },
+      {
+        "label": "Glean agent",
+        "caption": "Resume the same run; execute only the approved write"
+      },
+      {
+        "label": "Slack test channel",
+        "caption": "Observe the post or confirm that no post occurred"
+      }
+    ],
+    "aiPrompt": "Copy the supplied scaffold and follow its numbered steps in one shell session. Use the headless builder guide to create and publish a single-tool Auto mode agent only with user authorization. Preserve skipConfirmation: false. Use the pinned SDK and shipped login command; do not recreate authentication. Ask the human to review the exact persisted tool arguments and explicitly authorize each approve, reject, or cancel command. Starting the recipe is not permission to approve a write. Run offline tests without credentials. Treat live runs, Slack observations, deployment, and publication as separate gates.",
+    "llmContext": "@gleanwork/api-client 0.20.15 exposes agents.createRun({ execution_mode: DURABLE, stream: false, ... }, agentId), getRun, respondToRun, and cancelRun. The write endpoints are /api/agents/{agent_id}/responses and /api/agents/{agent_id}/cancellations; run_id is in the JSON body. Use agents.run scope, no experimental header, no act-as, and no automatic write retries. Only the human-reviewed interaction_id may be submitted. Approval decisions cannot edit arguments. Headless creation is Auto mode only and uses the separate Glean plugin chat command. Local tests and API snapshots are not live Slack verification. Show the original response JSON for approval review; parsed JavaScript numbers can round large numeric arguments. The shipped SDK response hook preserves each raw snapshot without changing the API response.",
+    "content": {
+      "problem": "A tool can change something outside Glean before your application has a chance to review it. Durable agent runs let your application wait for a stored tool approval, show the proposed arguments, and submit a decision without losing the run when its HTTP connection closes. This recipe creates one Slack-posting agent and uses a small TypeScript CLI to walk that flow.",
+      "guardrails": [
+        {
+          "title": "Require a real approval boundary",
+          "rule": "Keep skipConfirmation: false on the selected write-tool provider and verify REQUIRES_INPUT with no Slack post before approval. A chat prompt asking for consent is not a platform approval gate."
+        },
+        {
+          "title": "Review the destination and payload",
+          "rule": "Use a dedicated test channel and harmless content. Channel instructions are not access controls. Inspect the full stored arguments and messaging identity before explicitly approving. Reject or cancel an incorrect invocation; do not edit its arguments."
+        },
+        {
+          "title": "Keep decisions invocation-scoped",
+          "rule": "Submit only the exact reviewed interaction ID. Never replace it with a newly polled ID, approve a later pause automatically, or treat a replay as permission for another action. The server requires the complete pending batch; this recipe uses one invocation."
+        },
+        {
+          "title": "Keep credentials and retries bounded",
+          "rule": "Use a per-user agents.run credential in the ignored .env. Do not log credentials or send printed arguments to shared logs. Automatic retries are disabled: a repeated start creates a separate execution. Reconcile unknown outcomes before another write."
+        }
+      ],
+      "limitations": [
+        {
+          "title": "One tool, not a general approval inbox",
+          "description": "The CLI submits one decision per request and does not edit arguments or grant session-wide approval. Go workflow resumes currently support one tool invocation and one decision; multi-tool approval batches are outside this recipe."
+        },
+        {
+          "title": "Disconnect survival is not crash recovery",
+          "description": "Durable runs survive HTTP disconnects, but are not automatically replayed after a worker crash. An active turn has a 30-minute execution timeout; a later read marks it failed after 40 minutes. There is no periodic sweep. Approval-paused runs do not expire through that cleanup."
+        },
+        {
+          "title": "Cancellation is not rollback",
+          "description": "An active run may complete before cancellation takes effect. Completed writes cannot be undone, external work may continue, and a FAILED snapshot does not prove that tool work stopped. Closing the CLI does not cancel the run."
+        },
+        {
+          "title": "Live verification needs Slack observations",
+          "description": "The offline tests exercise the SDK contract, not the deployed platform. The repository verifier reads existing run snapshots and always reports partial verification. A reviewer must separately record the actual Slack, replay, reconnect, and access-boundary results. This recipe remains in preview until a deployed cold walkthrough succeeds."
+        }
+      ],
+      "takeItFurther": [
+        "Replace the CLI review step with an approval screen in your application. Keep the exact stored invocation ID and arguments attached to the decision.",
+        "Use a different supported write tool after verifying its approval configuration and permission boundaries. Do not carry over Slack assumptions or silently substitute a messaging identity."
+      ]
+    }
+  },
+  {
     "id": "import-skill-from-github",
     "title": "Import a skill from GitHub",
     "description": "Preview a public GitHub skill on a branch URL with the official TypeScript API client, import the selected URL, sync that captured skill, confirm it with get and list, then delete only IDs this run created.",
