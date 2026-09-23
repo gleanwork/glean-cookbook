@@ -16,6 +16,7 @@ before running its command. Full write-ups live at
 <!-- pluginpack-generated:recipes:start -->
 
 - **Customer 360: an account page built from your own content** (`/cookbook:customer-360`) — One page per account — status, risks, and a drill-in chat — assembled from whatever your instance already knows about that customer. No CRM export, no separate index.
+- **Trigger a customer meeting prep request** (`/cookbook:customer-meeting-prep-trigger`) — Register a calendar Trigger through the Platform Triggers API and deliver one signed event to a small receiver that prints a customer-meeting prep request.
 - **Import a skill from GitHub** (`/cookbook:import-skill-from-github`) — Preview a public GitHub skill on a branch URL with the official TypeScript API client, import the selected URL, sync that captured skill, confirm it with get and list, then delete only IDs this run created.
 - **Build an IT helpdesk page in Lovable** (`/cookbook:no-code-it-helpdesk-lovable`) — Paste a prompt into Lovable to get a private page that answers common IT questions from your Glean docs.
 - **Build a PTO lookup page in Replit** (`/cookbook:no-code-pto-lookup-replit`) — Paste a prompt into Replit Agent to get a private page that answers PTO and benefits questions from your Glean docs.
@@ -25,6 +26,7 @@ before running its command. Full write-ups live at
 - **Search Glean with discovered filters** (`/cookbook:search-with-discovered-filters`) — Use the official TypeScript API client to search across all of your Glean content by default, or discover datasources and common filter fields before applying an explicit selection to permission-aware Platform Search.
 - **Publish a versioned skill bundle** (`/cookbook:skill-publishing-pipeline`) — After a first persist, prove name-based version supersession, retrieve a specific version, stage downloaded bytes in a bounded zip sandbox, and delete only the run-owned skill.
 - **Stream a cited Chat response** (`/cookbook:streaming-chat-with-citations`) — Use the modern Platform Chat API to send a permission-aware question, continue the conversation, and read server-sent events with the official TypeScript API client's `createStream` `EventStream`.
+- **Triage one support issue with a Glean Agent** (`/cookbook:triage-support-issue`) — Give a published support-triage Agent one issue URL or description and get an evidence-backed summary, next diagnostic step, and customer-safe response.
 - **Validate skill publishing** (`/cookbook:validate-and-publish-skill`) — Validate a local SKILL.md, test publishing and retrieval in Glean, confirm the downloaded file matches, and delete the test skill.
 
 <!-- pluginpack-generated:recipes:end -->

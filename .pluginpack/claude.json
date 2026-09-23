@@ -11,6 +11,7 @@
     "build/claude/cookbook/skills/browse-cookbook/SKILL.md",
     "build/claude/cookbook/skills/cookbook-conventions/SKILL.md",
     "build/claude/cookbook/skills/customer-360/SKILL.md",
+    "build/claude/cookbook/skills/customer-meeting-prep-trigger/SKILL.md",
     "build/claude/cookbook/skills/import-skill-from-github/SKILL.md",
     "build/claude/cookbook/skills/no-code-it-helpdesk-lovable/SKILL.md",
     "build/claude/cookbook/skills/no-code-it-helpdesk-lovable/lovable-prompt.md",
@@ -22,6 +23,7 @@
     "build/claude/cookbook/skills/search-with-discovered-filters/SKILL.md",
     "build/claude/cookbook/skills/skill-publishing-pipeline/SKILL.md",
     "build/claude/cookbook/skills/streaming-chat-with-citations/SKILL.md",
+    "build/claude/cookbook/skills/triage-support-issue/SKILL.md",
     "build/claude/cookbook/skills/validate-and-publish-skill/SKILL.md"
   ]
 }
