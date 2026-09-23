@@ -6,6 +6,7 @@ import fg from 'fast-glob';
 
 import { readJsonc } from './lib/jsonc.mjs';
 import { extractPastePrompt } from './lib/paste-prompt.mjs';
+import { compileFrameworkFeatures } from './lib/framework-features.mjs';
 import { materializeCodeWalkthrough } from './lib/code-walkthrough.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -82,7 +83,7 @@ const registry = fg
     file: path.relative(repoRoot, file),
     entry: readJsonc(file),
   }))
-  .sort((a, b) => a.entry.id.localeCompare(b.entry.id));
+  .sort((a, b) => a.file.localeCompare(b.file));
 
 if (registry.length === 0) {
   console.error('No recipes/<id>/recipe.json files found.');
@@ -209,6 +210,17 @@ for (const { file, entry } of registry) {
   }
 
   console.log(`✓ ${label}`);
+}
+
+if (!failed) {
+  try {
+    await compileFrameworkFeatures({ repoRoot });
+  } catch (error) {
+    failed = true;
+    console.error(
+      `✗ framework feature declarations: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 if (failed) {

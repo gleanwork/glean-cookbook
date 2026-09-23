@@ -14,6 +14,16 @@ not merely a runnable demo.
 **Variant**:
 One implementation path within a recipe. Variants may use different surfaces, authentication methods, or execution types while producing the same recipe outcome.
 
+**Framework feature**:
+A reusable, cookbook-owned capability under `framework/{id}/`. The directory name is its id.
+Its manifest maps languages to readable source, an asset-relative target, exact direct dependencies,
+and a relative consumer manifest path. The implementation language derives the manifest convention.
+Provenance markers and contract commands are also derived, not authored as data.
+
+**Feature use**:
+A feature id in `codeAssets[].frameworkFeatures`. The asset's language selects the implementation,
+and its `repoPath` owns the generated target and normal standalone dependency manifest.
+
 **Category**:
 The problem domain a recipe addresses, such as search, workflow, agent, or portal.
 _Avoid_: Recipe type
@@ -40,8 +50,9 @@ for the distinct review, merge, deployment, verification, and publication states
 ## Build architecture
 
 **Artifact definition**:
-A declarative source, target selector, and optional transformation in `scripts/artifacts.config.mjs`.
-Definitions are the only place shared standalone-scaffold files are distributed.
+A declarative source, target selector, and optional transformation consumed by
+`scripts/artifacts.config.mjs`. Shared standalone-scaffold files are distributed only through artifact
+definitions; the framework feature compiler derives its definitions from each `feature.json`.
 
 **Artifact plan**:
 The complete in-memory set of generated files compiled from the artifact definitions. Writing and

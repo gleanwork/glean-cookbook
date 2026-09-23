@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/gleanwork/glean-cookbook/schemas/framework-feature.schema.json",
+  "title": "Cookbook framework feature",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["implementations"],
+  "properties": {
+    "implementations": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/implementation"
+      }
+    }
+  },
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dependencies": {
+      "type": "object",
+      "propertyNames": {
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "implementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "target", "dependencies", "consumerManifest"],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "target": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "dependencies": {
+          "$ref": "#/$defs/dependencies"
+        },
+        "consumerManifest": {
+          "$ref": "#/$defs/relativePath"
+        }
+      }
+    }
+  }
+}

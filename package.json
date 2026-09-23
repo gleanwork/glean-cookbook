@@ -18,11 +18,12 @@
     "release": "release-it",
     "snippets:check": "md-code check && node scripts/check-prompt-snippets.mjs",
     "skill-context:check": "node scripts/check-skill-context.mjs",
+    "framework-features:check": "node scripts/check-framework-features.mjs --contracts",
     "install-scripts:check": "node scripts/check-install-scripts.mjs",
     "recipe-commands:check": "node scripts/check-recipe-commands.mjs",
     "recipe-packages:check": "node scripts/check-recipe-packages.mjs",
     "snippets:sync": "md-code sync",
-    "test": "node --test \"scripts/**/*.test.mjs\" && npm run recipe-packages:check && npm run artifacts:check && npm run execution:check",
+    "test": "node --test \"scripts/**/*.test.mjs\" && npm run framework-features:check && npm run recipe-packages:check && npm run artifacts:check && npm run execution:check",
     "verify:login": "node scripts/verify-login.mjs",
     "artifacts:check": "node scripts/build-artifacts.mjs --check",
     "execution:check": "node scripts/check-recipe-execution.mjs",
@@ -37,9 +38,15 @@
     "fast-glob": "^3.3.3",
     "fs-extra": "^11.4.0",
     "markdown-code": "^1.2.0",
+    "marked": "15.0.12",
+    "marked-terminal": "7.3.0",
     "postcss": "^8.5.26",
     "prettier": "^3.4.2",
-    "release-it": "^21.0.1"
+    "release-it": "^21.0.1",
+    "semver": "7.8.5",
+    "smol-toml": "1.9.0",
+    "strip-ansi": "7.2.0",
+    "tsx": "4.23.1"
   },
   "engines": {
     "node": ">=20"

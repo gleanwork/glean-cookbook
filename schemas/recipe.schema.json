@@ -659,6 +659,15 @@
             "type": "string",
             "minLength": 1
           },
+          "frameworkFeatures": {
+            "default": [],
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+            }
+          },
           "execution": {
             "$ref": "#/$defs/execution"
           },

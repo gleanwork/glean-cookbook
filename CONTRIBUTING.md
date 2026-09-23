@@ -108,6 +108,30 @@ and templates in the copied directory; do not require unstated repo-root files.
   lock pins the full tree with hashes, so a recipe verified months ago still installs what it was
   verified with. Re-run `mise exec -- uv lock --script <script>` after editing inline dependencies.
 
+### Using framework features
+
+A recipe author adds one feature id to a code asset's `frameworkFeatures` array. The asset's
+`language` selects the implementation, and its `repoPath` owns the generated target. Declare the
+feature's exact direct dependencies in the asset's normal `package.json` or PEP 723 script, and commit
+the normal npm or uv lock. Run `mise exec -- pnpm build:artifacts`, then the normal repository checks.
+There is no separate target inventory.
+
+A feature author adds `framework/{id}/feature.json` and readable source files beside it. The directory
+name is the feature id, and `implementations` is keyed by language. Each implementation states only
+its source, asset-relative target, exact dependencies, and relative consumer manifest path; its
+language derives whether that path is a `package.json` or PEP 723 uv script. Put exactly one derived
+`GLEAN_FRAMEWORK_FEATURE: <id>/<language>` comment near the start of each source.
+
+Add TypeScript contracts as `framework/**/*.test.ts`. Add their feature dependencies to the root
+`devDependencies` and update the root `pnpm-lock.yaml`, because those contracts run from the repository
+root. Recipe consumers still use their own normal `package.json` and npm lock. Add Python contracts as
+`framework/**/test_*.py` with PEP 723 dependencies and their uv locks; Python recipe consumers likewise
+keep dependencies and locks in their own scripts. Commands and markers do not belong in the manifest.
+
+Generated copies stay committed so each scaffold remains readable and runnable on its own. Edit the
+framework source, never a generated recipe copy. Keep repository-internal feature maintenance details
+out of recipe READMEs.
+
 ## The registry
 
 Recipe metadata is authored **one file per recipe**, at `recipes/{id}/recipe.json` — title,
