@@ -85,11 +85,11 @@ async function requestWithCurl(endpoint, apiToken, payload) {
       throw new Error(`curl failed: ${stderr.trim() || `exit ${status}`}`);
     const marker = '\n__HTTP_STATUS__:';
     const markerIndex = stdout.lastIndexOf(marker);
-    if (markerIndex < 0)
-      throw new Error('curl returned no HTTP status');
+    if (markerIndex < 0) throw new Error('curl returned no HTTP status');
     return {
       status: Number(stdout.slice(markerIndex + marker.length).trim()),
-      ok: Number(stdout.slice(markerIndex + marker.length).trim()) >= 200 &&
+      ok:
+        Number(stdout.slice(markerIndex + marker.length).trim()) >= 200 &&
         Number(stdout.slice(markerIndex + marker.length).trim()) < 300,
       text: stdout.slice(0, markerIndex),
     };
@@ -130,7 +130,9 @@ export async function triageSupportIssue(issue, env = process.env) {
     } catch (error) {
       lastFetchError = error;
       if (attempt < transientRequestAttempts)
-        await new Promise((resolve) => setTimeout(resolve, transientRetryDelayMs));
+        await new Promise((resolve) =>
+          setTimeout(resolve, transientRetryDelayMs),
+        );
     }
   }
   if (!response) {
@@ -149,9 +151,8 @@ export async function triageSupportIssue(issue, env = process.env) {
     );
   }
 
-  const responseText = typeof response.text === 'function'
-    ? await response.text()
-    : response.text;
+  const responseText =
+    typeof response.text === 'function' ? await response.text() : response.text;
   let responseBody;
   try {
     responseBody = JSON.parse(responseText);

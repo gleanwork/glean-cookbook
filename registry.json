@@ -1027,6 +1027,194 @@
     }
   },
   {
+    "id": "customer-meeting-prep-trigger",
+    "title": "Trigger a customer meeting prep request",
+    "description": "Register a calendar Trigger through the Platform Triggers API and deliver one signed event to a small receiver that prints a customer-meeting prep request.",
+    "sidebarLabel": "Customer Meeting Prep Trigger",
+    "surfaces": ["platform-api"],
+    "capabilities": ["workflows"],
+    "status": "quickstart",
+    "visibility": "preview",
+    "category": "workflow",
+    "level": "Beginner",
+    "levels": { "minimal": true, "wow": false },
+    "timeEstimate": "~20 min",
+    "icon": "glean-trigger",
+    "requiredScopes": ["TRIGGERS"],
+    "authMethod": ["client-api-oauth-or-token"],
+    "buildMethod": "scaffold",
+    "languages": ["javascript"],
+    "execution": {
+      "type": "hybrid-service",
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email? It is used once to discover your Glean tenant."
+        },
+        {
+          "id": "meeting-pattern",
+          "prompt": "What distinctive meeting-title substring should trigger prep, such as Customer QBR?"
+        },
+        {
+          "id": "webhook-url",
+          "prompt": "What public HTTPS URL ending in /webhook should receive the signed event?"
+        }
+      ],
+      "auth": [
+        {
+          "kind": "oauth-with-token-fallback",
+          "scopes": ["TRIGGERS"],
+          "setupCommand": "cd customer-meeting-prep-trigger && npm run login -- --email \"<work-email>\"",
+          "configFile": ".env",
+          "backendVariable": "GLEAN_SERVER_URL",
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "automated",
+        "command": "cd customer-meeting-prep-trigger && npm run verify:fixture",
+        "expectedDuration": "under 1 minute without credentials",
+        "startsOwnServer": false
+      },
+      "run": {
+        "command": "cd customer-meeting-prep-trigger && npm start",
+        "userBrowser": false,
+        "url": "http://127.0.0.1:8787/health"
+      }
+    },
+    "prerequisites": [
+      "Node 22.12 or newer",
+      "The Platform Triggers API enabled for the tenant",
+      "A calendar trigger preset that advertises a time_offset, normally GCAL_1",
+      "A public HTTPS URL for the receiver, such as a temporary cloudflared tunnel",
+      "A bearer token that Glean may send to the receiver"
+    ],
+    "demoQueries": [
+      {
+        "query": "Deliver one signed event for a customer meeting whose title matches the configured pattern.",
+        "expectedBehavior": "The receiver verifies the bearer token and Standard Webhooks signature, prints a Customer meeting prep request with the title, start time, and event URL, and does not call any downstream system."
+      },
+      {
+        "query": "Delete the trigger after the test.",
+        "expectedBehavior": "The recipe deletes only the trigger ID saved by its own setup command and clears the local signing secret."
+      }
+    ],
+    "codeAssets": [
+      {
+        "repoPath": "recipes/customer-meeting-prep-trigger",
+        "language": "javascript",
+        "description": "Signed webhook receiver plus Platform Triggers preset discovery and trigger lifecycle"
+      }
+    ],
+    "steps": [
+      {
+        "title": "Scaffold the recipe",
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-meeting-prep-trigger customer-meeting-prep-trigger",
+        "kind": "scaffold"
+      },
+      {
+        "title": "Install dependencies",
+        "command": "cd customer-meeting-prep-trigger && npm install",
+        "description": "This recipe uses Node's built-in HTTP server and fetch; there is no external automation platform or downstream write dependency.",
+        "kind": "install"
+      },
+      {
+        "title": "Run the fixture verification",
+        "command": "cd customer-meeting-prep-trigger && npm run verify:fixture",
+        "description": "Verify preset selection, experimental Platform API headers, input resolution, and Standard Webhooks signing before connecting a tenant.",
+        "kind": "verify-fixture"
+      },
+      {
+        "title": "Sign in to Glean",
+        "command": "cd customer-meeting-prep-trigger && npm run login -- --email \"<work-email>\"",
+        "description": "Use @gleanwork/auth for tenant discovery and refreshable OAuth credentials stored outside the project. If OAuth is unavailable, provide a user-scoped token with the Triggers permission as a CI fallback.",
+        "kind": "authenticate"
+      },
+      {
+        "title": "Configure the meeting pattern and receiver",
+        "description": "Set GLEAN_TRIGGER_INPUT_TITLE to a distinctive title substring such as Customer QBR, choose the preset ID returned by the catalog, and set GLEAN_WEBHOOK_URL to a public HTTPS URL ending in /webhook. Set a bearer token that the receiver will accept.",
+        "kind": "configure"
+      },
+      {
+        "title": "Start and expose the receiver",
+        "command": "cd customer-meeting-prep-trigger && npm start",
+        "description": "The receiver listens on loopback, verifies bearer delivery auth and the Standard Webhooks signature, and prints a prep request for matching meeting titles. Expose /webhook through a public HTTPS tunnel before registering the trigger.",
+        "kind": "run"
+      },
+      {
+        "title": "Register the Platform Trigger",
+        "command": "cd customer-meeting-prep-trigger && npm run setup",
+        "description": "Setup reads GET /api/trigger-presets and the selected preset detail, then creates one trigger through POST /api/triggers. It saves the returned trigger ID and signing secret locally.",
+        "kind": "configure"
+      },
+      {
+        "title": "Test one signed delivery",
+        "command": "cd customer-meeting-prep-trigger && npm run test:webhook",
+        "description": "Send one fixture delivery through the same signed webhook contract without waiting for a calendar event. Then schedule one real matching meeting to verify forward delivery from the Platform Trigger.",
+        "kind": "verify-live"
+      },
+      {
+        "title": "Delete the trigger",
+        "command": "cd customer-meeting-prep-trigger && npm run delete",
+        "description": "Delete only the trigger ID created by this recipe and clear the local signing secret.",
+        "kind": "manual"
+      }
+    ],
+    "scaffoldActions": [],
+    "architecture": [
+      {
+        "label": "Customer calendar",
+        "caption": "A matching customer-meeting event",
+        "category": "workflow"
+      },
+      {
+        "label": "Glean Platform Trigger",
+        "caption": "Preset discovery, registration, and signed delivery",
+        "category": "workflow",
+        "emphasized": true,
+        "icon": "glean-trigger"
+      },
+      {
+        "label": "Prep receiver",
+        "caption": "Prints a focused request without writing downstream",
+        "category": "workflow"
+      }
+    ],
+    "aiPrompt": "Scaffold the customer-meeting-prep-trigger recipe. Ask for a work email, a distinctive calendar meeting-title substring, and a public HTTPS webhook URL ending in /webhook. Use @gleanwork/auth for tenant discovery, Authorization Code with PKCE, and refreshable OAuth credentials stored outside the project; accept a user-provided token only as a CI fallback. Discover the live preset catalog with GET /api/trigger-presets, read the selected preset detail, and create the trigger with POST /api/triggers. Send x-glean-include-experimental: true on every Platform Triggers request. Configure a 1,800-second time_offset only when the selected preset advertises it. Run the included signed receiver and verify one fixture delivery before asking the reader to schedule a real matching meeting. Never use legacy /rest/api/v1 routes, Cursor, n8n, or a downstream write. Save and later delete only the trigger ID created by this recipe.",
+    "llmContext": "The Platform Triggers API is experimental and requires x-glean-include-experimental: true. @gleanwork/auth supplies a refreshable triggers-scoped OAuth token and uses GLEAN_API_TOKEN as its standard user-scoped fallback when present. The list response identifies presets; GET /api/trigger-presets/{preset_id} carries the authoritative inputs. Create with POST /api/triggers using preset_id, inputs, and delivery.webhook_url plus bearer auth. The response returns trigger_id and signing_secret once. Delivery uses Standard Webhooks headers webhook-id, webhook-timestamp, and webhook-signature over the raw body; reject stale timestamps and invalid signatures. The receiver must re-check the meeting title because delivery is untrusted. Use TRIGGERS_READ/TRIGGERS_WRITE Platform permissions; the cookbook's TRIGGERS auth label is the current compatibility convention.",
+    "goDependency": false,
+    "featured": false,
+    "tags": ["calendar", "customer-meeting", "trigger", "platform-api"],
+    "content": {
+      "problem": "A customer meeting is about to start, but the team still has to reconstruct the account context manually. The first useful step is simply knowing that a matching meeting event arrived and turning it into a focused prep request.",
+      "takeItFurther": [
+        "Pass the meeting and account context to the Triage or Account Brief Agent after the delivery contract is reliable.",
+        "Add a read-only preview that gathers recent account changes before writing anything downstream.",
+        "Use the same receiver pattern with a different tenant-supported content-event preset."
+      ],
+      "guardrails": [
+        {
+          "title": "One trigger, one receiver",
+          "rule": "The quickstart creates one trigger and prints one prep request; it does not connect a tracker, Slack, Cursor, or n8n."
+        },
+        {
+          "title": "Verify before acting",
+          "rule": "The receiver verifies bearer auth, timestamp freshness, and the Standard Webhooks signature before inspecting the event."
+        }
+      ],
+      "limitations": [
+        {
+          "title": "A public HTTPS endpoint is required",
+          "description": "Glean cannot deliver to localhost directly. Use a temporary HTTPS tunnel for the beginner walkthrough and keep the URL private."
+        },
+        {
+          "title": "Preset availability is tenant-specific",
+          "description": "The recipe refuses to guess a preset ID and only registers a preset returned by the connected tenant's catalog."
+        }
+      ]
+    }
+  },
+  {
     "id": "embed-search-chat",
     "title": "Embed search & chat in an internal app",
     "description": "Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.",
@@ -3656,6 +3844,165 @@
     }
   },
   {
+    "id": "triage-support-issue",
+    "title": "Triage one support issue with a Glean Agent",
+    "description": "Give a published support-triage Agent one issue URL or description and get an evidence-backed summary, next diagnostic step, and customer-safe response.",
+    "sidebarLabel": "Triage One Support Issue",
+    "surfaces": ["platform-api"],
+    "capabilities": ["agents"],
+    "status": "quickstart",
+    "visibility": "preview",
+    "category": "agent",
+    "level": "Beginner",
+    "levels": { "minimal": true, "wow": false },
+    "timeEstimate": "~15 min",
+    "icon": "agent",
+    "requiredScopes": ["AGENTS"],
+    "authMethod": ["client-api-oauth-or-token"],
+    "buildMethod": "scaffold",
+    "languages": ["javascript"],
+    "execution": {
+      "type": "cli",
+      "questions": [
+        {
+          "id": "email",
+          "prompt": "What is your work email? It is used once to discover your Glean tenant."
+        },
+        {
+          "id": "agent-id",
+          "prompt": "What is the ID of the published conversational support-triage Agent to run?"
+        },
+        {
+          "id": "support-issue",
+          "prompt": "What support issue should the Agent triage? Paste a ticket URL or a concise issue description."
+        }
+      ],
+      "auth": [
+        {
+          "kind": "oauth-with-token-fallback",
+          "scopes": ["AGENTS"],
+          "setupCommand": "cd triage-support-issue && npm run login -- --email \"<work-email>\"",
+          "configFile": ".env",
+          "backendVariable": "GLEAN_SERVER_URL",
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "automated",
+        "command": "cd triage-support-issue && npm run verify:fixture",
+        "expectedDuration": "under 1 minute without credentials",
+        "startsOwnServer": false
+      },
+      "run": {
+        "command": "cd triage-support-issue && npm run triage -- \"<support-issue>\"",
+        "userBrowser": false
+      }
+    },
+    "prerequisites": [
+      "Node 22.12 or newer",
+      "A published conversational Agent configured to triage support issues using the user's permitted Glean content",
+      "The Agent ID from Agent Builder or the Agents Platform API",
+      "A work email for tenant discovery and OAuth sign-in, or a token able to run the selected Agent"
+    ],
+    "demoQueries": [
+      {
+        "query": "Triage this support issue: the customer reports that search results are stale after a document update.",
+        "expectedBehavior": "The Agent returns non-empty Summary, Evidence, Next diagnostic step, and Customer-safe response sections, and clearly distinguishes evidence from hypotheses."
+      }
+    ],
+    "codeAssets": [
+      {
+        "repoPath": "recipes/triage-support-issue",
+        "language": "javascript",
+        "description": "One support issue sent to a conversational Agent through the Platform Agents API"
+      }
+    ],
+    "steps": [
+      {
+        "title": "Scaffold the recipe",
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/triage-support-issue triage-support-issue",
+        "kind": "scaffold"
+      },
+      {
+        "title": "Install dependencies",
+        "command": "cd triage-support-issue && npm install",
+        "description": "Installs dotenv. The recipe uses Node's built-in fetch against the Platform Agents API, not A2A or the legacy REST API.",
+        "kind": "install"
+      },
+      {
+        "title": "Sign in to Glean",
+        "command": "cd triage-support-issue && npm run login -- --email \"<work-email>\"",
+        "description": "Use @gleanwork/auth for tenant discovery and refreshable OAuth credentials stored outside the project. If OAuth is unavailable, provide a user-scoped token that can run the selected Agent.",
+        "kind": "authenticate"
+      },
+      {
+        "title": "Set the Agent and issue",
+        "description": "Set GLEAN_AGENT_ID to a published conversational support-triage Agent. Then pass one ticket URL or issue description to the triage command. A form-triggered Agent is outside this quickstart because it requires a different input contract.",
+        "kind": "configure"
+      },
+      {
+        "title": "Run the triage",
+        "command": "cd triage-support-issue && npm run triage -- \"<support-issue>\"",
+        "description": "The command makes one Platform Agent run and prints the structured triage. It does not make any external write or customer-facing update.",
+        "kind": "run"
+      },
+      {
+        "title": "Verify the response",
+        "command": "cd triage-support-issue && npm run verify:fixture",
+        "description": "Run the no-credential fixture check first. For a live check, set GLEAN_SUPPORT_ISSUE and run npm run verify; confirm the Agent separates evidence from hypotheses.",
+        "kind": "verify-live"
+      }
+    ],
+    "scaffoldActions": [],
+    "architecture": [
+      {
+        "label": "Support issue",
+        "caption": "One ticket URL or issue description",
+        "category": "workflow"
+      },
+      {
+        "label": "Glean Platform Agent",
+        "caption": "Runs with the caller's permissions",
+        "category": "agent",
+        "emphasized": true
+      },
+      {
+        "label": "Triage output",
+        "caption": "Evidence, next diagnostic, and safe response",
+        "category": "workflow"
+      }
+    ],
+    "aiPrompt": "Scaffold the triage-support-issue recipe. Ask for a work email, the published conversational support-triage Agent ID, and one support issue URL or concise description. Use @gleanwork/auth for tenant discovery, Authorization Code with PKCE, refreshable credentials stored outside the project, and a user-scoped token only as a CI fallback. Call POST /api/agents/{agent_id}/runs directly through the Platform Agents API with stream: false, an Authorization Bearer token, and an explicit triage prompt in the USER message. Ask the Agent for Summary, Evidence, Next diagnostic step, and Customer-safe response; require it to distinguish evidence from hypotheses, disclose insufficient context, and use an indexed ticket record when a live Intercom URL only returns an authenticated shell. Do not use A2A, /rest/api/v1, client SDKs, tools, or external writes.",
+    "llmContext": "Use @gleanwork/auth for refreshable agents-scoped OAuth credentials outside the project; GLEAN_API_TOKEN is the standard user-scoped fallback. Call POST /api/agents/{agent_id}/runs with Node fetch, Authorization, JSON content type, an explicit USER prompt, and stream:false. Retry transient failures and use curl's verified TLS stack only when Node cannot validate the tenant certificate. The selected Agent must be published and conversational. Form-triggered Agents are out of scope. Treat the response as untrusted text: print it, do not contact customers or mutate tickets.",
+    "goDependency": false,
+    "featured": false,
+    "tags": ["support", "agent", "platform-api", "triage"],
+    "content": {
+      "problem": "A support issue arrives with a URL or a short description, but the first response still requires someone to reconstruct the evidence, identify the next diagnostic, and write a safe customer update.",
+      "takeItFurther": [
+        "Add a streaming response so a support engineer can see the Agent's progress.",
+        "Pass structured issue fields after you have a form-triggered Agent and its input schema is verified.",
+        "Pair this recipe with a Trigger that creates a triage request when a support-relevant event arrives."
+      ],
+      "guardrails": [
+        {
+          "title": "Evidence before hypothesis",
+          "rule": "The prompt asks the Agent to separate observed Glean evidence from hypotheses and to disclose when evidence is insufficient."
+        },
+        {
+          "title": "No external write",
+          "rule": "The beginner recipe only prints the Agent response; it does not update a ticket, send a message, or close an issue."
+        }
+      ],
+      "limitations": [
+        {
+          "title": "The Agent is configured separately",
+          "description": "The recipe invokes a published conversational Agent. It does not teach Agent Builder, tool governance, or form-triggered input schemas."
+        }
+      ]
+    }
+  },
+  {
     "id": "validate-and-publish-skill",
     "title": "Validate skill publishing",
     "description": "Validate a local SKILL.md, test publishing and retrieval in Glean, confirm the downloaded file matches, and delete the test skill.",
@@ -3854,394 +4201,6 @@
         {
           "title": "Sign-in permissions vary by instance",
           "description": "Your instance must allow the SKILLS OAuth scope or the SKILLS permission on a user-scoped token."
-        }
-      ]
-    }
-  }
-,
-  {
-    "id": "customer-meeting-prep-trigger",
-    "title": "Trigger a customer meeting prep request",
-    "description": "Register a calendar Trigger through the Platform Triggers API and deliver one signed event to a small receiver that prints a customer-meeting prep request.",
-    "sidebarLabel": "Customer Meeting Prep Trigger",
-    "surfaces": [
-      "platform-api"
-    ],
-    "capabilities": [
-      "workflows"
-    ],
-    "status": "quickstart",
-    "visibility": "preview",
-    "category": "workflow",
-    "level": "Beginner",
-    "levels": {
-      "minimal": true,
-      "wow": false
-    },
-    "timeEstimate": "~20 min",
-    "icon": "glean-trigger",
-    "requiredScopes": [
-      "TRIGGERS"
-    ],
-    "authMethod": [
-      "client-api-oauth-or-token"
-    ],
-    "buildMethod": "scaffold",
-    "languages": [
-      "javascript"
-    ],
-    "execution": {
-      "type": "hybrid-service",
-      "questions": [
-        {
-          "id": "email",
-          "prompt": "What is your work email? It is used once to discover your Glean tenant."
-        },
-        {
-          "id": "meeting-pattern",
-          "prompt": "What distinctive meeting-title substring should trigger prep, such as Customer QBR?"
-        },
-        {
-          "id": "webhook-url",
-          "prompt": "What public HTTPS URL ending in /webhook should receive the signed event?"
-        }
-      ],
-      "auth": [
-        {
-          "kind": "oauth-with-token-fallback",
-          "scopes": [
-            "TRIGGERS"
-          ],
-          "setupCommand": "cd customer-meeting-prep-trigger && npm run login -- --email \"<work-email>\"",
-          "configFile": ".env",
-          "backendVariable": "GLEAN_SERVER_URL",
-          "credentialVariable": "GLEAN_API_TOKEN"
-        }
-      ],
-      "verification": {
-        "kind": "automated",
-        "command": "cd customer-meeting-prep-trigger && npm run verify:fixture",
-        "expectedDuration": "under 1 minute without credentials",
-        "startsOwnServer": false
-      },
-      "run": {
-        "command": "cd customer-meeting-prep-trigger && npm start",
-        "userBrowser": false,
-        "url": "http://127.0.0.1:8787/health"
-      }
-    },
-    "prerequisites": [
-      "Node 20 or newer",
-      "The Platform Triggers API enabled for the tenant",
-      "A calendar trigger preset that advertises a time_offset, normally GCAL_1",
-      "A public HTTPS URL for the receiver, such as a temporary cloudflared tunnel",
-      "A bearer token that Glean may send to the receiver"
-    ],
-    "demoQueries": [
-      {
-        "query": "Deliver one signed event for a customer meeting whose title matches the configured pattern.",
-        "expectedBehavior": "The receiver verifies the bearer token and Standard Webhooks signature, prints a Customer meeting prep request with the title, start time, and event URL, and does not call any downstream system."
-      },
-      {
-        "query": "Delete the trigger after the test.",
-        "expectedBehavior": "The recipe deletes only the trigger ID saved by its own setup command and clears the local signing secret."
-      }
-    ],
-    "codeAssets": [
-      {
-        "repoPath": "recipes/customer-meeting-prep-trigger",
-        "language": "javascript",
-        "description": "Signed webhook receiver plus Platform Triggers preset discovery and trigger lifecycle"
-      }
-    ],
-    "steps": [
-      {
-        "title": "Scaffold the recipe",
-        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-meeting-prep-trigger customer-meeting-prep-trigger",
-        "kind": "scaffold"
-      },
-      {
-        "title": "Install dependencies",
-        "command": "cd customer-meeting-prep-trigger && npm install",
-        "description": "This recipe uses Node's built-in HTTP server and fetch; there is no external automation platform or downstream write dependency.",
-        "kind": "install"
-      },
-      {
-        "title": "Run the fixture verification",
-        "command": "cd customer-meeting-prep-trigger && npm run verify:fixture",
-        "description": "Verify preset selection, experimental Platform API headers, input resolution, and Standard Webhooks signing before connecting a tenant.",
-        "kind": "verify-fixture"
-      },
-      {
-        "title": "Sign in to Glean",
-        "command": "cd customer-meeting-prep-trigger && npm run login -- --email \"<work-email>\"",
-        "description": "Use the shipped tenant-discovery and OAuth flow. If OAuth is unavailable, provide a token with the Triggers permission in .env.",
-        "kind": "authenticate"
-      },
-      {
-        "title": "Configure the meeting pattern and receiver",
-        "description": "Set GLEAN_TRIGGER_INPUT_TITLE to a distinctive title substring such as Customer QBR, choose the preset ID returned by the catalog, and set GLEAN_WEBHOOK_URL to a public HTTPS URL ending in /webhook. Set a bearer token that the receiver will accept.",
-        "kind": "configure"
-      },
-      {
-        "title": "Start and expose the receiver",
-        "command": "cd customer-meeting-prep-trigger && npm start",
-        "description": "The receiver listens on loopback, verifies bearer delivery auth and the Standard Webhooks signature, and prints a prep request for matching meeting titles. Expose /webhook through a public HTTPS tunnel before registering the trigger.",
-        "kind": "run"
-      },
-      {
-        "title": "Register the Platform Trigger",
-        "command": "cd customer-meeting-prep-trigger && npm run setup",
-        "description": "Setup reads GET /api/trigger-presets and the selected preset detail, then creates one trigger through POST /api/triggers. It saves the returned trigger ID and signing secret locally.",
-        "kind": "configure"
-      },
-      {
-        "title": "Test one signed delivery",
-        "command": "cd customer-meeting-prep-trigger && npm run test:webhook",
-        "description": "Send one fixture delivery through the same signed webhook contract without waiting for a calendar event. Then schedule one real matching meeting to verify forward delivery from the Platform Trigger.",
-        "kind": "verify-live"
-      },
-      {
-        "title": "Delete the trigger",
-        "command": "cd customer-meeting-prep-trigger && npm run delete",
-        "description": "Delete only the trigger ID created by this recipe and clear the local signing secret.",
-        "kind": "manual"
-      }
-    ],
-    "scaffoldActions": [],
-    "architecture": [
-      {
-        "label": "Customer calendar",
-        "caption": "A matching customer-meeting event",
-        "category": "workflow"
-      },
-      {
-        "label": "Glean Platform Trigger",
-        "caption": "Preset discovery, registration, and signed delivery",
-        "category": "workflow",
-        "emphasized": true,
-        "icon": "glean-trigger"
-      },
-      {
-        "label": "Prep receiver",
-        "caption": "Prints a focused request without writing downstream",
-        "category": "workflow"
-      }
-    ],
-    "aiPrompt": "Scaffold the customer-meeting-prep-trigger recipe. Ask for a work email, a distinctive calendar meeting-title substring, and a public HTTPS webhook URL ending in /webhook. Use the shipped login flow or a user-provided token. Discover the live preset catalog with GET /api/trigger-presets, read the selected preset detail, and create the trigger with POST /api/triggers. Send x-glean-include-experimental: true on every Platform Triggers request. Configure a 1,800-second time_offset only when the selected preset advertises it. Run the included signed receiver and verify one fixture delivery before asking the reader to schedule a real matching meeting. Never use legacy /rest/api/v1 routes, Cursor, n8n, or a downstream write. Save and later delete only the trigger ID created by this recipe.",
-    "llmContext": "The Platform Triggers API is experimental and requires x-glean-include-experimental: true. The list response identifies presets; GET /api/trigger-presets/{preset_id} carries the authoritative inputs. Create with POST /api/triggers using preset_id, inputs, and delivery.webhook_url plus bearer auth. The response returns trigger_id and signing_secret once. Delivery uses Standard Webhooks headers webhook-id, webhook-timestamp, and webhook-signature over the raw body; reject stale timestamps and invalid signatures. The receiver must re-check the meeting title because delivery is untrusted. Use TRIGGERS_READ/TRIGGERS_WRITE Platform permissions; the cookbook's TRIGGERS auth label is the current compatibility convention.",
-    "goDependency": false,
-    "featured": false,
-    "tags": [
-      "calendar",
-      "customer-meeting",
-      "trigger",
-      "platform-api"
-    ],
-    "content": {
-      "problem": "A customer meeting is about to start, but the team still has to reconstruct the account context manually. The first useful step is simply knowing that a matching meeting event arrived and turning it into a focused prep request.",
-      "takeItFurther": [
-        "Pass the meeting and account context to the Triage or Account Brief Agent after the delivery contract is reliable.",
-        "Add a read-only preview that gathers recent account changes before writing anything downstream.",
-        "Use the same receiver pattern with a different tenant-supported content-event preset."
-      ],
-      "guardrails": [
-        {
-          "title": "One trigger, one receiver",
-          "rule": "The quickstart creates one trigger and prints one prep request; it does not connect a tracker, Slack, Cursor, or n8n."
-        },
-        {
-          "title": "Verify before acting",
-          "rule": "The receiver verifies bearer auth, timestamp freshness, and the Standard Webhooks signature before inspecting the event."
-        }
-      ],
-      "limitations": [
-        {
-          "title": "A public HTTPS endpoint is required",
-          "description": "Glean cannot deliver to localhost directly. Use a temporary HTTPS tunnel for the beginner walkthrough and keep the URL private."
-        },
-        {
-          "title": "Preset availability is tenant-specific",
-          "description": "The recipe refuses to guess a preset ID and only registers a preset returned by the connected tenant's catalog."
-        }
-      ]
-    }
-  },
-  {
-    "id": "triage-support-issue",
-    "title": "Triage one support issue with a Glean Agent",
-    "description": "Give a published support-triage Agent one issue URL or description and get an evidence-backed summary, next diagnostic step, and customer-safe response.",
-    "sidebarLabel": "Triage One Support Issue",
-    "surfaces": [
-      "platform-api"
-    ],
-    "capabilities": [
-      "agents"
-    ],
-    "status": "quickstart",
-    "visibility": "preview",
-    "category": "agent",
-    "level": "Beginner",
-    "levels": {
-      "minimal": true,
-      "wow": false
-    },
-    "timeEstimate": "~15 min",
-    "icon": "agent",
-    "requiredScopes": [
-      "AGENTS"
-    ],
-    "authMethod": [
-      "client-api-oauth-or-token"
-    ],
-    "buildMethod": "scaffold",
-    "languages": [
-      "javascript"
-    ],
-    "execution": {
-      "type": "cli",
-      "questions": [
-        {
-          "id": "email",
-          "prompt": "What is your work email? It is used once to discover your Glean tenant."
-        },
-        {
-          "id": "agent-id",
-          "prompt": "What is the ID of the published conversational support-triage Agent to run?"
-        },
-        {
-          "id": "support-issue",
-          "prompt": "What support issue should the Agent triage? Paste a ticket URL or a concise issue description."
-        }
-      ],
-      "auth": [
-        {
-          "kind": "oauth-with-token-fallback",
-          "scopes": [
-            "AGENTS"
-          ],
-          "setupCommand": "cd triage-support-issue && npm run login -- --email \"<work-email>\"",
-          "configFile": ".env",
-          "backendVariable": "GLEAN_SERVER_URL",
-          "credentialVariable": "GLEAN_API_TOKEN"
-        }
-      ],
-      "verification": {
-        "kind": "automated",
-        "command": "cd triage-support-issue && npm run verify:fixture",
-        "expectedDuration": "under 1 minute without credentials",
-        "startsOwnServer": false
-      },
-      "run": {
-        "command": "cd triage-support-issue && npm run triage -- \"<support-issue>\"",
-        "userBrowser": false
-      }
-    },
-    "prerequisites": [
-      "Node 20 or newer",
-      "A published conversational Agent configured to triage support issues using the user's permitted Glean content",
-      "The Agent ID from Agent Builder or the Agents Platform API",
-      "A work email for tenant discovery and OAuth sign-in, or a token able to run the selected Agent"
-    ],
-    "demoQueries": [
-      {
-        "query": "Triage this support issue: the customer reports that search results are stale after a document update.",
-        "expectedBehavior": "The Agent returns non-empty Summary, Evidence, Next diagnostic step, and Customer-safe response sections, and clearly distinguishes evidence from hypotheses."
-      }
-    ],
-    "codeAssets": [
-      {
-        "repoPath": "recipes/triage-support-issue",
-        "language": "javascript",
-        "description": "One support issue sent to a conversational Agent through the Platform Agents API"
-      }
-    ],
-    "steps": [
-      {
-        "title": "Scaffold the recipe",
-        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/triage-support-issue triage-support-issue",
-        "kind": "scaffold"
-      },
-      {
-        "title": "Install dependencies",
-        "command": "cd triage-support-issue && npm install",
-        "description": "Installs the pinned Glean API client and dotenv. The recipe uses the Platform Agents client method, not A2A or the legacy REST API.",
-        "kind": "install"
-      },
-      {
-        "title": "Sign in to Glean",
-        "command": "cd triage-support-issue && npm run login -- --email \"<work-email>\"",
-        "description": "Use the shipped tenant-discovery and OAuth flow. If OAuth is unavailable, copy .env.example to .env and provide a token that can run the selected Agent.",
-        "kind": "authenticate"
-      },
-      {
-        "title": "Set the Agent and issue",
-        "description": "Set GLEAN_AGENT_ID to a published conversational support-triage Agent. Then pass one ticket URL or issue description to the triage command. A form-triggered Agent is outside this quickstart because it requires a different input contract.",
-        "kind": "configure"
-      },
-      {
-        "title": "Run the triage",
-        "command": "cd triage-support-issue && npm run triage -- \"<support-issue>\"",
-        "description": "The command makes one Platform Agent run and prints the structured triage. It does not make any external write or customer-facing update.",
-        "kind": "run"
-      },
-      {
-        "title": "Verify the response",
-        "command": "cd triage-support-issue && npm run verify:fixture",
-        "description": "Run the no-credential fixture check first. For a live check, set GLEAN_SUPPORT_ISSUE and run npm run verify; confirm the Agent separates evidence from hypotheses.",
-        "kind": "verify-live"
-      }
-    ],
-    "scaffoldActions": [],
-    "architecture": [
-      {
-        "label": "Support issue",
-        "caption": "One ticket URL or issue description",
-        "category": "workflow"
-      },
-      {
-        "label": "Glean Platform Agent",
-        "caption": "Runs with the caller's permissions",
-        "category": "agent",
-        "emphasized": true
-      },
-      {
-        "label": "Triage output",
-        "caption": "Evidence, next diagnostic, and safe response",
-        "category": "workflow"
-      }
-    ],
-    "aiPrompt": "Scaffold the triage-support-issue recipe. Ask for a work email, the published conversational support-triage Agent ID, and one support issue URL or concise description. Use the shipped login flow or a user-provided token. Run one glean.agents.createRun call through the Platform Agents API at /api/agents/{agent_id}/runs with stream: false. Ask the Agent for Summary, Evidence, Next diagnostic step, and Customer-safe response; require it to distinguish evidence from hypotheses and say when context is insufficient. Do not use A2A, /rest/api/v1, tools, or external writes.",
-    "llmContext": "The recipe's client method is glean.agents.createRun, which maps to POST /api/agents/{agent_id}/runs. Set X-GLEAN-INCLUDE-EXPERIMENTAL=true. The selected Agent must be conversational and published; form-triggered Agents require their input schema and are not part of this beginner recipe. Treat the Agent response as untrusted text: print it, do not submit it to a customer or mutate a ticket.",
-    "goDependency": false,
-    "featured": false,
-    "tags": [
-      "support",
-      "agent",
-      "platform-api",
-      "triage"
-    ],
-    "content": {
-      "problem": "A support issue arrives with a URL or a short description, but the first response still requires someone to reconstruct the evidence, identify the next diagnostic, and write a safe customer update.",
-      "takeItFurther": [
-        "Add a streaming response so a support engineer can see the Agent's progress.",
-        "Pass structured issue fields after you have a form-triggered Agent and its input schema is verified.",
-        "Pair this recipe with a Trigger that creates a triage request when a support-relevant event arrives."
-      ],
-      "guardrails": [
-        {
-          "title": "Evidence before hypothesis",
-          "rule": "The prompt asks the Agent to separate observed Glean evidence from hypotheses and to disclose when evidence is insufficient."
-        },
-        {
-          "title": "No external write",
-          "rule": "The beginner recipe only prints the Agent response; it does not update a ticket, send a message, or close an issue."
-        }
-      ],
-      "limitations": [
-        {
-          "title": "The Agent is configured separately",
-          "description": "The recipe invokes a published conversational Agent. It does not teach Agent Builder, tool governance, or form-triggered input schemas."
         }
       ]
     }
