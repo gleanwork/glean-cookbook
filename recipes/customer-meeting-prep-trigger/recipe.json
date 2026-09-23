@@ -3,6 +3,29 @@
   "title": "Trigger a customer meeting prep request",
   "description": "Register a calendar Trigger through the Platform Triggers API and deliver one signed event to a small receiver that prints a customer-meeting prep request.",
   "sidebarLabel": "Customer Meeting Prep Trigger",
+  "codeWalkthrough": {
+    "intro": "The runnable service centralizes experimental Triggers API authentication and headers, discovers a tenant-supported preset, registers one signed webhook delivery, and verifies the event before printing a prep request.",
+    "examples": [
+      {
+        "title": "Call the experimental Triggers API safely",
+        "description": "Resolve the tenant-scoped token and attach the required experimental header to every request while rejecting invalid backend origins and failed responses.",
+        "source": "lib/glean-api.mjs",
+        "language": "javascript"
+      },
+      {
+        "title": "Discover and register one trigger",
+        "description": "Select a supported preset, read its authoritative inputs, resolve the meeting configuration, and create a webhook delivery while saving only the returned trigger identifiers locally.",
+        "source": "scripts/setup-trigger.mjs",
+        "language": "javascript"
+      },
+      {
+        "title": "Verify signed webhook delivery",
+        "description": "Validate bearer delivery auth, timestamp freshness, and the Standard Webhooks signature before accepting a matching meeting event.",
+        "source": "lib/signature.mjs",
+        "language": "javascript"
+      }
+    ]
+  },
   "surfaces": ["platform-api"],
   "capabilities": ["workflows"],
   "status": "quickstart",
