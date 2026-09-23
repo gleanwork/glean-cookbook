@@ -6,7 +6,7 @@
   "surfaces": ["platform-api"],
   "capabilities": ["workflows"],
   "status": "quickstart",
-  "visibility": "preview",
+  "visibility": "public",
   "category": "workflow",
   "level": "Beginner",
   "levels": {
