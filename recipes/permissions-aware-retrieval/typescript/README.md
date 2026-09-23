@@ -11,6 +11,8 @@ npm run login
 npm start -- "<a topic you know you can access>"
 ```
 
+Output defaults to `--format auto`: an interactive TTY renders the model's Markdown with `marked-terminal`, while a pipe or redirect receives the raw Markdown syntax unchanged. Use `--format terminal` or `--format markdown` to override detection. Terminal mode removes ANSI, OSC, and other unsafe C0/C1 controls from the model answer and source metadata while preserving newlines and tabs. The numbered source titles and URLs stay as plain text in a separate `Sources` section and are not parsed as Markdown. Complete documents end with a conventional final newline. `NO_COLOR` disables renderer colors.
+
 ## The permissions demo
 
 There is nothing to configure. Your credential _is_ the permission boundary, so

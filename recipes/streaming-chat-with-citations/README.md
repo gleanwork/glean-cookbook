@@ -31,7 +31,7 @@ The auth package stores refreshable credentials outside this project. You can al
 
 If OAuth is not available, set `GLEAN_API_TOKEN` as a user-scoped fallback.
 
-## Stream one turn
+## Run one streamed turn
 
 ```bash
 npm run verify -- \
@@ -39,9 +39,11 @@ npm run verify -- \
   --prompt "What is our PTO policy?"
 ```
 
-`createStream` yields `RESPONSE_OUTPUT_TEXT_DELTA` text, then a `RESPONSE_COMPLETED` payload with `conversation_id` and citation annotations.
+`createStream` yields `RESPONSE_OUTPUT_TEXT_DELTA` text, then a `RESPONSE_COMPLETED` payload with `conversation_id` and citation annotations. When the resolved format is raw Markdown, the CLI writes each delta to stdout unchanged and exactly once as it arrives, then adds a final newline only when the accumulated document needs one. In terminal-rendered mode, it buffers the complete answer, renders it once with `marked-terminal`, and then prints citations in a separate `Sources` section.
 
-## Stream a follow-up
+Output defaults to `--format auto`: an interactive TTY gets buffered terminal rendering, while a pipe or redirect gets the original Markdown deltas incrementally. Use `--format terminal` or `--format markdown` to override detection. Terminal mode removes ANSI, OSC, and other unsafe C0/C1 controls from the model answer and citation metadata while preserving newlines and tabs. Citation titles, URLs, and snippets remain plain text and are not parsed as Markdown. The output module leaves raw Markdown syntax unchanged and gives complete documents a conventional final newline. `NO_COLOR` disables renderer colors.
+
+## Run a streamed follow-up
 
 ```bash
 npm start -- \
@@ -55,8 +57,8 @@ The follow-up sends `conversation_id` from the first stored turn. Omit `--follow
 ## API sequence
 
 - `glean.chat.createStream({ input, store: true })` returns a typed `EventStream`.
-- `RESPONSE_OUTPUT_TEXT_DELTA` carries incremental text in `data.delta`.
-- `RESPONSE_COMPLETED` carries the finished `PlatformChatCompletedResponse` in `data.response`.
+- `RESPONSE_OUTPUT_TEXT_DELTA` carries incremental text in `data.delta`; raw mode writes each delta immediately, while terminal mode accumulates the complete Markdown document.
+- `RESPONSE_COMPLETED` carries the finished `PlatformChatCompletedResponse` in `data.response`; terminal rendering happens only after this event.
 - `output[].content[].annotations[]` contains citation sources and snippets.
 
 Keep prompts grounded in content you know exists in your own Glean instance. The answer and citations depend on your permissions and indexed content.
