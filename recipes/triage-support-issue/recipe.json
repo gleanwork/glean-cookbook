@@ -3,6 +3,23 @@
   "title": "Triage one support issue with a Glean Agent",
   "description": "Give a published support-triage Agent one issue URL or description and get an evidence-backed summary, next diagnostic step, and customer-safe response.",
   "sidebarLabel": "Triage One Support Issue",
+  "codeWalkthrough": {
+    "intro": "The runnable CLI resolves a refreshable Glean credential, builds an explicit USER prompt, calls the Platform Agents run endpoint, and prints only the Agent's structured response.",
+    "examples": [
+      {
+        "title": "Build an evidence-first triage prompt",
+        "description": "Keep the issue input explicit and require the Agent to separate observed evidence from hypotheses before producing a customer-safe response.",
+        "source": "scripts/triage.mjs",
+        "language": "javascript"
+      },
+      {
+        "title": "Keep the fixture check credential-free",
+        "description": "Exercise response parsing against a recorded Agent response so the recipe can verify its output contract before making a live request.",
+        "source": "scripts/verify-fixture.mjs",
+        "language": "javascript"
+      }
+    ]
+  },
   "surfaces": ["platform-api"],
   "capabilities": ["agents"],
   "status": "quickstart",
