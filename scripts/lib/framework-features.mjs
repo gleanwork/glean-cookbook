@@ -297,6 +297,43 @@ export async function discoverFrameworkContracts(repoRoot) {
   };
 }
 
+export async function resolveFrameworkFeatureImplementations({
+  repoRoot,
+  featureIds,
+  language,
+}) {
+  const context = await createContext(repoRoot);
+  await rejectFrameworkSymlinks(context);
+  if (!LANGUAGES[language]) fail(`unsupported language ${language}`);
+  if (new Set(featureIds).size !== featureIds.length) {
+    fail('feature selection contains duplicate ids');
+  }
+
+  const implementations = [];
+  for (const featureId of [...featureIds].sort()) {
+    if (!ID_PATTERN.test(featureId)) fail(`invalid feature id ${featureId}`);
+    const featureFile = await requirePath(
+      context,
+      `framework/${featureId}/feature.json`,
+      `framework feature ${featureId}`,
+    );
+    const feature = await readFeature(context, featureFile);
+    const implementation = feature.implementations.get(language);
+    if (!implementation) {
+      fail(`${featureId} does not support language ${language}`);
+    }
+    implementations.push({
+      featureId,
+      source: implementation.source,
+      target: implementation.target,
+      dependencies: { ...implementation.dependencies },
+      consumerManifest: implementation.consumerManifest,
+      manifestKind: implementation.manifestKind,
+    });
+  }
+  return implementations;
+}
+
 async function validateContracts(context, features) {
   const rootPackage = await requirePath(
     context,
