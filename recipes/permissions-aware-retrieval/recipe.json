@@ -40,6 +40,7 @@
       "repoPath": "recipes/permissions-aware-retrieval/python",
       "language": "python",
       "description": "Platform API search.query → snippets → LLM with citations",
+      "frameworkFeatures": ["terminal-markdown"],
       "execution": {
         "type": "cli",
         "questions": [

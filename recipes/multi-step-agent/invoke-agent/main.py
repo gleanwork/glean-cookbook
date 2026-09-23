@@ -3,6 +3,7 @@
 # dependencies = [
 #     "glean-api-client==0.15.4",
 #     "python-dotenv==1.1.1",
+#     "rich==15.0.0",
 # ]
 # ///
 """Invoke the incident-triage agent and demo the governed-tool branch.
@@ -28,11 +29,13 @@ glean.client.agents.list(), and pass it as GLEAN_AGENT_ID.
 
 from __future__ import annotations
 
+import argparse
 import os
 
 from dotenv import load_dotenv
 from glean.api_client import Glean
 from glean.api_client.models import ContentType, Message, MessageTextBlock
+from markdown_output import OUTPUT_FORMATS, MarkdownOutput, OutputFormat
 
 # Load the local configuration created from .env.example.
 load_dotenv()
@@ -45,7 +48,12 @@ def requireEnv(name: str) -> str:
     return value
 
 
-def ask(glean: Glean, agent_id: str, question: str) -> None:
+def ask(
+    glean: Glean,
+    agent_id: str,
+    question: str,
+    output_format: OutputFormat,
+) -> None:
     response = glean.client.agents.run(
         agent_id=agent_id,
         messages=[
@@ -53,15 +61,26 @@ def ask(glean: Glean, agent_id: str, question: str) -> None:
         ],
     )
 
+    output = MarkdownOutput(output_format)
     status = response.run.status if response.run else None
-    print(f"status: {status}")
+    output.plain(f"status: {status}\n")
 
     for message in response.messages or []:
         text = "".join(block.text for block in message.content or [])
-        print(f"[{message.role}] {text}")
+        output.plain(f"[{message.role}]\n")
+        output.document(text)
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--format",
+        choices=OUTPUT_FORMATS,
+        default="auto",
+        help="output format (default: Rich on a TTY, raw Markdown otherwise)",
+    )
+    args = parser.parse_args()
+
     glean = Glean(api_token=requireEnv("GLEAN_API_TOKEN"), instance=requireEnv("GLEAN_INSTANCE"))
     agent_id = requireEnv("GLEAN_AGENT_ID")
     question = (
@@ -74,7 +93,7 @@ def main() -> None:
     # then once without it: the tool returns 403 and the agent falls back to a
     # read-only summary instead of failing the whole run. That fallback is the
     # behaviour worth seeing, and it comes from the agent's own instructions.
-    ask(glean, agent_id, question)
+    ask(glean, agent_id, question, args.format)
 
 
 if __name__ == "__main__":

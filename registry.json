@@ -62,7 +62,7 @@
     "demoQueries": [
       {
         "query": "Who owns our most critical service?",
-        "expectedBehavior": "The agent returns a non-empty answer via the A2A message/send response (a Message or Task, not an error), the scripted follow-up carries the same context_id proving multi-turn works, and the streamed turn prints its answer once rather than repeating it per event."
+        "expectedBehavior": "The agent returns a non-empty answer via the A2A message/send response (a Message or Task, not an error), the scripted follow-up carries the same context_id proving multi-turn works, and the streamed turn prints its answer once rather than repeating it per event. Protocol events are consumed as they arrive; raw Markdown mode displays deltas immediately, while the default interactive terminal view buffers that turn for complete Rich rendering."
       }
     ],
     "codeAssets": [
@@ -92,23 +92,22 @@
       },
       {
         "title": "Verify",
-        "description": "Use the question supplied up front. Confirm a real answer, a follow-up reusing the same context_id to prove multi-turn, and a streaming response — all three paths this recipe exercises.",
+        "description": "Use the question supplied up front. Confirm a real answer, a follow-up reusing the same context_id to prove multi-turn, and a streaming response — all three paths this recipe exercises. The default terminal view renders complete Markdown after each turn; use --format markdown to observe streamed text deltas immediately.",
         "kind": "verify-live"
       }
     ],
     "scaffoldActions": [],
     "architecture": [],
     "aiPrompt": "Build the A2A client from the scaffold. Ask for GLEAN_INSTANCE, GLEAN_AGENT_ID, and an OAuth access token or Glean API token with the AGENTS scope. Use the published agent card at /rest/api/v1/a2a/agents/{agentId}/agent-card.json. Run the initial message, the same-context follow-up, and the streaming example, then report their actual results.",
-    "llmContext": "Use /rest/api/v1/a2a/agents/{agentId}/agent-card.json for discovery and the sibling JSON-RPC endpoint for message/send, message/stream, and tasks/get. The agent must be published, use a chat-message trigger, and be text-only. Use an AGENTS-scoped credential. Pin a2a-sdk to 0.3.26 and use ClientFactory with Client.send_message(); the server implements the 0.3 method names. Read task answers from task.artifacts[].parts[].root.text. Streaming events contain the accumulated answer, not deltas. Set an httpx timeout of at least 60 seconds.",
+    "llmContext": "Use /rest/api/v1/a2a/agents/{agentId}/agent-card.json for discovery and the sibling JSON-RPC endpoint for message/send, message/stream, and tasks/get. The agent must be published, use a chat-message trigger, and be text-only. Use an AGENTS-scoped credential. Pin a2a-sdk to 0.3.26 and use ClientFactory with Client.send_message(); the server implements the 0.3 method names. Read task answers from task.artifacts[].parts[].root.text. Streaming events contain the accumulated answer, not deltas. Consume them as they arrive; write deltas immediately for raw Markdown output, but buffer terminal output until Rich can render the complete Markdown. Set an httpx timeout of at least 60 seconds.",
     "goDependency": false,
     "featured": false,
     "hidden": true,
     "tags": ["a2a", "interop"],
-    "lastVerified": "2026-08-02",
     "content": {
       "problem": "You've already built a Glean agent. A2A (Agent2Agent) lets any\nA2A-compliant client — not just Glean's own UI — discover and run it,\nmulti-turn and streamed, with Glean's permissions still enforced.",
       "takeItFurther": [
-        "Handle the `Task`-based response shape explicitly if your agent uses tool calls that return structured artifacts, not just text.",
+        "Extend `Task` artifact handling for `FilePart` or `DataPart` outputs if your agent returns files or structured data in addition to text.",
         "Watch for the `a2a-sdk` 1.x upgrade path once Glean's server moves past spec 0.3 — the pinning caveat in this recipe is temporary.",
         "Combine with [connect-mcp-hosts](/cookbook/connect-mcp-hosts) to compare calling the same agent via MCP vs. A2A."
       ]

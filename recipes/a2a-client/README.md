@@ -19,6 +19,13 @@ so [uv](https://docs.astral.sh/uv/) installs them into an isolated environment o
 no `requirements.txt`, virtualenv, or activate step. Re-run `uv lock --script <script>` after
 editing the inline dependencies.
 
+The `markdown_output.py` helper centralizes terminal and pipeline output. By default, it renders
+agent-authored Markdown with Rich on an interactive terminal and emits the Markdown source unchanged
+when stdout is piped or redirected. Use `--format terminal` to force the Rich view or `--format
+markdown` to force raw Markdown. It sanitizes terminal controls, keeps link destinations visible,
+honors `NO_COLOR`, and adds a final newline when a document completes. Streaming accepts cumulative
+snapshots, emits each unseen raw suffix once, and renders the complete terminal document only once.
+
 ## Client contract
 
 Use `ClientFactory` and `Client.send_message()`; `A2AClient` is deprecated. `Client.send_message()` is an async iterator that selects streaming behavior from `ClientConfig(streaming=...)` and the server's capabilities.
@@ -28,6 +35,6 @@ Use `ClientFactory` and `Client.send_message()`; `A2AClient` is deprecated. `Cli
 1. **Card discovery**: `A2ACardResolver` fetches `/rest/api/v1/a2a/agents/{agentId}/agent-card.json` from your Glean instance, with a bearer token attached via the `httpx.AsyncClient`'s headers.
 2. **`message/send`**: a plain call via a `ClientConfig(streaming=False)` client.
 3. **Multi-turn**: a follow-up message reusing the first response's `context_id`.
-4. **Streaming**: a separate `ClientConfig(streaming=True)` client for a longer question.
+4. **Streaming**: a separate `ClientConfig(streaming=True)` client for a longer question. Each event is a cumulative snapshot of the answer. Raw Markdown mode writes only the unseen suffix of each snapshot; repeated snapshots write nothing. A later event that does not start with the prior snapshot fails clearly instead of being guessed to be a delta. Terminal mode buffers the final snapshot so Rich can render complete Markdown without corrupting partial blocks.
 
-Response text lives at `message.parts[i].root.text` (a discriminated union of `TextPart`/`FilePart`/`DataPart`) for direct `Message` replies, or in `task.history[-1]` for task-based agents — `main.py`'s `unpack_event()` handles both, though a simple chat-message-trigger agent (what this recipe targets) replies with a plain `Message`.
+Response text lives at `message.parts[i].root.text` for direct `Message` replies. Task-based replies use `task.artifacts[].parts[].root.text`; `task.history` is only a fallback when no artifact text is present. `main.py`'s `unpack_event()` handles both shapes, though the targeted chat-message-trigger agent usually replies with a plain `Message`.

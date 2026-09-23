@@ -24,6 +24,13 @@ so [uv](https://docs.astral.sh/uv/) installs them into an isolated environment o
 no `requirements.txt`, virtualenv, or activate step. Re-run `uv lock --script <script>` after
 editing the inline dependencies.
 
+The `markdown_output.py` helper centralizes terminal and pipeline output. By default, it renders
+agent-authored Markdown with Rich on an interactive terminal and emits the Markdown source unchanged
+when stdout is piped or redirected. Use `--format terminal` to force the Rich view or `--format
+markdown` to force raw Markdown. It keeps status and role labels as plain text, sanitizes terminal
+controls, keeps link destinations visible, honors `NO_COLOR`, and adds a final newline when each
+document completes.
+
 ## What this does
 
 `glean.client.agents.run(agent_id=..., messages=[...])` — the agent runs as
