@@ -1,0 +1,6 @@
+.env
+.env.*
+!.env.example
+.glean/
+node_modules/
+dist/
