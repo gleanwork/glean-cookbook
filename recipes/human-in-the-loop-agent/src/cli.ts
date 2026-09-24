@@ -1,4 +1,3 @@
-import { loadEnvFile } from 'node:process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -6,17 +5,10 @@ import {
   GleanBaseError,
   HTTPClientError,
 } from '@gleanwork/api-client/models/errors';
-import {
-  AgentRuns,
-  outcome,
-  RecipeError,
-  settings,
-  show,
-  watch,
-  type Snapshot,
-} from './runs.js';
+import { loadDotEnv, RecipeError, resolveSettings } from './client.js';
+import { AgentRuns, outcome, show, watch, type Snapshot } from './runs.js';
 
-const HELP = `Usage: npm start -- <command> [options]
+const HELP = `Usage: npm start -- <command> --email <work-email> [options]
 
   start    [--message TEXT]                 Create one durable run (never retried).
   status   --run-id ID                      Inspect an existing run.
@@ -25,7 +17,11 @@ const HELP = `Usage: npm start -- <command> [options]
   reject   --run-id ID --interaction-id ID   Reject only the invocation you reviewed.
   cancel   --run-id ID                      Request cancellation (not rollback).
 
-Use GLEAN_MESSAGE in .env if --message is omitted. Run npm test for offline tests.
+Every command finds your Glean backend from --email. Use --server-url or
+GLEAN_SERVER_URL instead if discovery is unavailable. Sign in first with
+npm run login -- --email <work-email>. GLEAN_AGENT_ID and GLEAN_MESSAGE come
+from .env; --message overrides GLEAN_MESSAGE.
+
 An explicit approval replay must use the exact original run and interaction IDs.
 `;
 
@@ -41,6 +37,8 @@ export function parseCommand(args: string[]) {
         'interaction-id': { type: 'string' },
         message: { type: 'string' },
         'wait-seconds': { type: 'string' },
+        email: { type: 'string' },
+        'server-url': { type: 'string' },
         help: { type: 'boolean', short: 'h' },
       },
     });
@@ -48,7 +46,7 @@ export function parseCommand(args: string[]) {
     throw new RecipeError('Invalid options. Run npm start -- --help.');
   }
   const { values, positionals } = parsed;
-  if (values.help) return { command: 'help' as const };
+  if (values.help) return { command: 'help' as const, target: {} };
   const command = positionals[0];
   if (
     positionals.length !== 1 ||
@@ -91,15 +89,16 @@ export function parseCommand(args: string[]) {
     throw new RecipeError(
       '--wait-seconds must be finite and greater than zero.',
     );
-  return { command, runId, interactionId, message, waitSeconds };
+  const target = { email: value('email'), serverUrl: value('server-url') };
+  return { command, runId, interactionId, message, waitSeconds, target };
 }
 
 export function errorMessage(error: unknown): string {
   if (error instanceof RecipeError) return error.message;
   if (error instanceof GleanBaseError) {
     const guidance: Record<number, string> = {
-      401: 'Sign in again; use the same user who owns the run.',
-      403: "Check agents.run scope and the user's access to the agent.",
+      401: 'Sign in again with npm run login -- --email <work-email>, as the same user who owns the run.',
+      403: "Sign in with agents.run (npm run login) and check the user's access to the agent.",
       404: 'Check deployment, IDs, run ownership, and current agent access.',
       409: 'State conflict. Read status; do not replace an old ID and silently reapprove.',
       422: "Complete the agent's tool authentication in Glean before starting a new run.",
@@ -122,18 +121,8 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
       console.log(HELP);
       return 0;
     }
-    try {
-      // dist/cli.js stays one level below .env, even outside the cookbook repo.
-      loadEnvFile(new URL('../.env', import.meta.url));
-    } catch (error) {
-      if (
-        !(error instanceof Error) ||
-        !('code' in error) ||
-        error.code !== 'ENOENT'
-      )
-        throw error;
-    }
-    const runs = new AgentRuns(settings());
+    loadDotEnv();
+    const runs = new AgentRuns(await resolveSettings(command.target));
     let snapshot: Snapshot;
     switch (command.command) {
       case 'watch':

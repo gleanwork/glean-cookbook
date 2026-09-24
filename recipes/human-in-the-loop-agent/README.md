@@ -7,8 +7,9 @@ Glean keeps the same run ID when approval resumes execution.
 
 The example uses `@gleanwork/api-client@0.20.15`, which supports durable creation,
 polling, approval responses, and cancellation. The SDK handles API serialization,
-response validation, and errors. The shared cookbook login runtime is copied
-into `scripts/glean-auth.mjs` so this directory works on its own.
+response validation, and errors. Sign-in uses the official `glean-auth` CLI and
+`createGleanTokenProvider` from `@gleanwork/auth`, so the OAuth session refreshes
+while a run waits for your review.
 
 ## Prerequisites
 
@@ -19,7 +20,7 @@ into `scripts/glean-auth.mjs` so this directory works on its own.
 - The native Slack Actions channel-lookup and send-message tools enabled, plus
   a dedicated test channel where you may post. Creation records an agent; each start records a run;
   approval can send a real Slack message. Do not use a production channel.
-- A per-user Platform API credential with **`agents.run`**. Create the agent in
+- Permission to sign in with the **`agents.run`** scope. Create the agent in
   your signed-in Glean browser session, then sign in separately for the CLI.
   This CLI does not need `agents.read`, search scopes, global tokens, or
   `X-Glean-ActAs`.
@@ -27,15 +28,14 @@ into `scripts/glean-auth.mjs` so this directory works on its own.
 ## 1. Copy and test
 
 ```bash
-npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/human-in-the-loop-agent human-in-the-loop-agent
-cd human-in-the-loop-agent
-npm ci
+npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/human-in-the-loop-agent human-in-the-loop-agent
+cd human-in-the-loop-agent && npm ci
 npm test
 ```
 
-The tests compile the TypeScript into `dist/` and use an offline HTTP transport
-with the real SDK. They neither create an agent nor post to Slack. All later
-shell commands run in this same directory.
+The tests run the real SDK against local HTTP handlers. They neither sign in,
+create an agent, nor post to Slack. All later shell commands run in this same
+directory.
 
 ## 2. Create the agent
 
@@ -61,27 +61,34 @@ below is the first test run.
 ## 3. Sign in and configure
 
 ```bash
-node scripts/glean-auth.mjs login --scopes agents.run --email "<work-email>"
+npm run login -- --email "<work-email>"
+cp .env.example .env
 ```
 
-Complete browser sign-in yourself. Login writes `GLEAN_SERVER_URL` and
-`GLEAN_API_TOKEN` to the ignored `.env` and keeps OAuth state in its secure local
-store. If dynamic registration cannot grant `agents.run`, use an
-admin-registered public OAuth client via `GLEAN_OAUTH_CLIENT_ID`. If no OAuth
-path is available, copy `.env.example` to `.env` and enter your backend origin
-and a **user-scoped** Glean-issued token with access to `agents.run`. See
-[Platform API authentication](https://developers.glean.com/api/platform-api/authentication).
-Never paste credentials into a chat or a command. Global/act-as tokens are not
-supported by this recipe. Sign in as the same user for every command on a run.
+Complete browser sign-in yourself. `glean-auth` finds your Glean backend from
+your work email and stores a refreshable OAuth session in its own secure local
+store, outside this project. It does not write `.env`. Sign in as the same user
+for every command on a run.
 
 In `.env`, set `GLEAN_AGENT_ID` and `GLEAN_MESSAGE`. Use harmless text with a
 unique marker, such as `Cookbook approval test 001: ready for review.` Change
 the marker for each new run. Environment variables take precedence over `.env`.
 
+Every command below takes `--email "<work-email>"` to find your backend. To
+skip discovery, set `GLEAN_SERVER_URL` to your backend origin in `.env`, or pass
+`--server-url`.
+
+If your instance cannot grant `agents.run` through sign-in, set `GLEAN_API_TOKEN`
+in `.env` to a **user-scoped** Glean-issued token with access to `agents.run`.
+That token is not refreshed, so a run waiting for review can outlive it. See
+[Platform API authentication](https://developers.glean.com/api/platform-api/authentication).
+Never paste credentials into a chat or a command. Global/act-as tokens are not
+supported by this recipe.
+
 ## 4. Start and inspect a durable run
 
 ```bash
-npm start -- start
+npm start -- start --email "<work-email>"
 ```
 
 The JSON response contains the snapshot under `run`, including `run.run_id`.
@@ -89,7 +96,7 @@ Copy that exact value into a shell variable: `export RUN_ID='the printed run_id'
 check progress; every start creates another execution.
 
 ```bash
-npm start -- watch --run-id "$RUN_ID"
+npm start -- watch --run-id "$RUN_ID" --email "<work-email>"
 ```
 
 Expect `REQUIRES_INPUT` and exactly one `pending_interactions` entry of type
@@ -109,8 +116,8 @@ The watcher stops after 120 seconds by default (plus an in-flight request's
 reconnect, reopen this directory, set `RUN_ID` to the saved ID, and run:
 
 ```bash
-npm start -- status --run-id "$RUN_ID"
-npm start -- watch --run-id "$RUN_ID" --wait-seconds 120
+npm start -- status --run-id "$RUN_ID" --email "<work-email>"
+npm start -- watch --run-id "$RUN_ID" --wait-seconds 120 --email "<work-email>"
 ```
 
 These commands only inspect the existing run. They never approve anything.
@@ -126,8 +133,8 @@ reviewed. An approval command can immediately post to Slack.
 Approve the stored invocation:
 
 ```bash
-npm start -- approve --run-id "$RUN_ID" --interaction-id "$INTERACTION_ID"
-npm start -- watch --run-id "$RUN_ID"
+npm start -- approve --run-id "$RUN_ID" --interaction-id "$INTERACTION_ID" --email "<work-email>"
+npm start -- watch --run-id "$RUN_ID" --email "<work-email>"
 ```
 
 Expect the same run ID, eventual `SUCCEEDED`, and exactly one matching Slack
@@ -138,8 +145,8 @@ To test rejection, start a **new** run with a new message marker, wait for its
 pause, and replace both shell variables with that run's reviewed IDs:
 
 ```bash
-npm start -- reject --run-id "$RUN_ID" --interaction-id "$INTERACTION_ID"
-npm start -- watch --run-id "$RUN_ID"
+npm start -- reject --run-id "$RUN_ID" --interaction-id "$INTERACTION_ID" --email "<work-email>"
+npm start -- watch --run-id "$RUN_ID" --email "<work-email>"
 ```
 
 Expect the agent to acknowledge rejection and stop without a post or another
@@ -148,8 +155,8 @@ tool attempt. Rejection follows the agent's workflow; it is not cancellation.
 For cancellation, start another marked run and wait for its approval pause:
 
 ```bash
-npm start -- cancel --run-id "$RUN_ID"
-npm start -- watch --run-id "$RUN_ID"
+npm start -- cancel --run-id "$RUN_ID" --email "<work-email>"
+npm start -- watch --run-id "$RUN_ID" --email "<work-email>"
 ```
 
 Expect `CANCELLED`, no pending interactions, and no post. For an active run,
@@ -177,8 +184,8 @@ a second tool just to generate another pause. Unit tests cover the client's
 409 handling; a live later-pause test needs a separately configured test agent.
 
 Maintainers can run `mise exec -- pnpm verify:recipe human-in-the-loop-agent`
-from the cookbook root after running `npm ci` and `npm run build` in
-`recipes/human-in-the-loop-agent`, then exporting the credential/configuration and
+from the cookbook root after running `npm ci` in `recipes/human-in-the-loop-agent`,
+then exporting the credential/configuration and
 `GLEAN_APPROVED_RUN_ID`, `GLEAN_REJECTED_RUN_ID`, `GLEAN_CANCELLED_RUN_ID` from
 these checks. That gate reads snapshots with the shipped CLI; it does not
 create runs, approve tools, or inspect Slack. It always reports **partial
@@ -213,8 +220,8 @@ Glean before starting again. On a lost decision response, inspect the same run;
 an explicit replay must use the exact original decision and interaction ID.
 A 409 requires inspecting the conflict, not substituting new IDs. A cancellation
 409 can occur before the worker registers; inspect and explicitly retry later.
-On 401, sign in again as the same user; on 403, check `agents.run` and agent
-access; on 422, complete tool authentication in Glean. Do not disable approvals
+On 401, run `npm run login` again as the same user; on 403, check the
+`agents.run` scope and agent access; on 422, complete tool authentication in Glean. Do not disable approvals
 to fix an authentication error.
 
 ## Cleanup
