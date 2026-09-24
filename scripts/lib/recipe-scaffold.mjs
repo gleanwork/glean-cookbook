@@ -10,11 +10,31 @@ import { resolveFrameworkFeatureImplementations } from './framework-features.mjs
 import { readJsonc } from './jsonc.mjs';
 
 const TODO_MARKER = 'GLEAN_RECIPE_SCAFFOLD_TODO';
+const AUTH_RULE =
+  'See "Official Glean authentication" and "Reference recipes" in CONTRIBUTING.md.';
+// The reference recipes (validate-and-publish-skill,
+// search-with-discovered-filters) pin these. Bump them together.
+const OAUTH_DEPENDENCIES = {
+  '@gleanwork/api-client': '0.20.15',
+  '@gleanwork/auth': '1.0.0',
+};
 const TYPESCRIPT_DEV_DEPENDENCIES = {
   '@types/node': '22.20.1',
-  tsx: '4.23.1',
+  eslint: '10.10.0',
+  msw: '2.11.3',
+  tsx: '4.23.13',
   typescript: '6.0.3',
+  'typescript-eslint': '8.69.0',
+  vitest: '5.0.0',
 };
+const MODERN_LOGIN_SETUP =
+  /^(?:cd\s+(?:"[^"]+"|'[^']+'|[^\s&;|]+)\s*&&\s*)?npm run login(?:\s|$)/u;
+
+function oauthAuth(draft) {
+  return draft.execution.auth.find(
+    (auth) => auth.kind === 'oauth-with-token-fallback',
+  );
+}
 
 function fail(message) {
   throw new Error(`Recipe scaffold failed: ${message}`);
@@ -38,25 +58,172 @@ function renderReadme(draft) {
       return parts.join('');
     })
     .join('\n\n');
-  return `# ${draft.title}\n\n${draft.description}\n\n> **Draft:** \`${TODO_MARKER}\`. This scaffold contains no recipe-specific implementation yet. Implement and verify the documented workflow before making it visible.\n\n## Prerequisites\n\n${prerequisites}\n\n## Steps\n\n${steps}\n`;
+  const authentication = oauthAuth(draft)
+    ? `\n## Authentication\n\n\`npm run login -- --email <work-email>\` runs \`glean-auth login\` from the pinned \`@gleanwork/auth\` package. It discovers your Glean backend from your work email and stores refreshable credentials outside the project; it does not write \`.env\`. Pass \`--server-url\` (or set \`GLEAN_SERVER_URL\`) to target an explicit backend. For non-interactive runs, set \`GLEAN_API_TOKEN\` to a user-scoped token as a fallback.\n`
+    : '';
+  return `# ${draft.title}\n\n${draft.description}\n\n> **Draft:** \`${TODO_MARKER}\`. This scaffold contains no recipe-specific implementation yet. Implement and verify the documented workflow before making it visible.\n\n## Prerequisites\n\n${prerequisites}\n\n## Steps\n\n${steps}\n${authentication}`;
 }
 
-function authFiles(draft) {
-  const oauth = draft.execution.auth.find(
-    (auth) => auth.kind === 'oauth-with-token-fallback',
-  );
-  if (!oauth) return [];
-  return [
-    { path: '.gitignore', content: '.env\n.env.local\n' },
-    {
-      path: '.env.example',
-      content: `${oauth.backendVariable}=\n${oauth.credentialVariable}=\n`,
-    },
-  ];
+function typescriptClient(scopes) {
+  return `import { Glean, type SDKOptions } from '@gleanwork/api-client';
+import { createGleanTokenProvider, discoverGleanTenant } from '@gleanwork/auth';
+
+// Keep these identical to the \`login\` script in package.json.
+export const SCOPES = ${JSON.stringify(scopes).replaceAll('"', "'")};
+
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);
+
+export interface GleanClientTarget {
+  email?: string;
+  serverUrl?: string;
 }
+
+async function resolveServerUrl({ email, serverUrl }: GleanClientTarget) {
+  const explicit = serverUrl?.trim();
+  if (explicit) return explicit;
+
+  const workEmail = email?.trim();
+  if (workEmail) return (await discoverGleanTenant(workEmail)).serverUrl;
+
+  const configured = process.env.GLEAN_SERVER_URL?.trim();
+  if (configured) return configured;
+
+  throw new Error(
+    'Pass --email or --server-url, or set GLEAN_SERVER_URL in your environment.',
+  );
+}
+
+export async function createGleanClient(target: GleanClientTarget) {
+  const server = new URL(await resolveServerUrl(target));
+  const loopback = LOOPBACK_HOSTS.has(server.hostname);
+  if (
+    (server.protocol !== 'https:' && !loopback) ||
+    server.username ||
+    server.password ||
+    server.search ||
+    server.hash ||
+    (server.pathname && server.pathname !== '/') ||
+    (!loopback && server.port)
+  ) {
+    throw new Error('Use a complete Glean backend HTTPS origin.');
+  }
+
+  // GLEAN_API_TOKEN is a non-interactive fallback. Otherwise the provider
+  // reads and refreshes the credentials that \`npm run login\` stored.
+  const options = {
+    serverURL: server.origin,
+    apiToken:
+      process.env.GLEAN_API_TOKEN?.trim() ||
+      createGleanTokenProvider({ serverUrl: server.origin, scopes: SCOPES }),
+  } satisfies SDKOptions;
+
+  return new Glean(options);
+}
+`;
+}
+
+const TYPESCRIPT_CLIENT_TEST = `import assert from 'node:assert/strict';
+import { Glean } from '@gleanwork/api-client';
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
+import { afterAll, afterEach, beforeAll, test } from 'vitest';
+
+import { createGleanClient } from './client.js';
+
+const originalApiToken = process.env.GLEAN_API_TOKEN;
+const originalServerUrl = process.env.GLEAN_SERVER_URL;
+const server = setupServer();
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'error' });
+});
+
+afterEach(() => {
+  server.resetHandlers();
+  if (originalApiToken === undefined) delete process.env.GLEAN_API_TOKEN;
+  else process.env.GLEAN_API_TOKEN = originalApiToken;
+  if (originalServerUrl === undefined) delete process.env.GLEAN_SERVER_URL;
+  else process.env.GLEAN_SERVER_URL = originalServerUrl;
+});
+
+afterAll(() => {
+  server.close();
+});
+
+// Exercises the real SDK over HTTP. Replace the search call with the Glean
+// API your workflow uses, and add tests for the workflow itself.
+test('discovers the backend from work email and sends the fallback token', async () => {
+  const authorizations: Array<string | null> = [];
+  process.env.GLEAN_API_TOKEN = 'fixture-token';
+  process.env.GLEAN_SERVER_URL = 'https://wrong-tenant.example.com';
+  server.use(
+    http.post('https://app.glean.com/config/search', () =>
+      HttpResponse.json({
+        search_config: { queryURL: 'https://example-be.glean.com' },
+      }),
+    ),
+    http.post('https://example-be.glean.com/api/search', ({ request }) => {
+      authorizations.push(request.headers.get('authorization'));
+      return HttpResponse.json({
+        request_id: 'fixture-request',
+        results: [],
+        has_more: false,
+        next_cursor: null,
+        warnings: [],
+      });
+    }),
+  );
+
+  const client = await createGleanClient({ email: 'person@example.com' });
+  assert.ok(client instanceof Glean);
+  await client.search.query({ query: 'policy' });
+  assert.deepEqual(authorizations, ['Bearer fixture-token']);
+});
+
+test('rejects a backend that is not an HTTPS origin', async () => {
+  await assert.rejects(
+    createGleanClient({ serverUrl: 'http://example-be.glean.com' }),
+    /complete Glean backend HTTPS origin/,
+  );
+});
+`;
+
+const TYPESCRIPT_ESLINT_CONFIG = `import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  { ignores: ['eslint.config.mjs'] },
+  tseslint.configs.recommendedTypeChecked,
+  {
+    files: ['**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-deprecated': 'error',
+    },
+  },
+);
+`;
 
 function typescriptFiles(draft, dependencies) {
+  const oauth = oauthAuth(draft);
+  const scripts = {
+    ...(oauth
+      ? { login: `glean-auth login --scopes ${oauth.scopes.join(',')}` }
+      : {}),
+    start: 'tsx src/main.ts',
+    // Without OAuth there is no generated client to test yet; add tests
+    // for the workflow alongside src/main.ts.
+    test: oauth ? 'vitest run' : 'vitest run --passWithNoTests',
+    lint: 'eslint src',
+    typecheck: 'tsc --noEmit',
+    'test:all': 'npm run test && npm run lint && npm run typecheck',
+  };
   return [
+    { path: '.gitignore', content: 'node_modules/\ndist/\n' },
     {
       path: 'package.json',
       content: json({
@@ -65,16 +232,13 @@ function typescriptFiles(draft, dependencies) {
         private: true,
         description: draft.description,
         type: 'module',
-        scripts: {
-          start: 'tsx src/main.ts',
-          typecheck: 'tsc --noEmit',
-          check: 'npm run typecheck',
-        },
+        scripts,
         dependencies,
         devDependencies: TYPESCRIPT_DEV_DEPENDENCIES,
         allowScripts: {
           'esbuild@0.28.2': true,
           fsevents: false,
+          'msw@2.11.3': true,
         },
         engines: { node: '>=22.12.0' },
       }),
@@ -88,15 +252,23 @@ function typescriptFiles(draft, dependencies) {
           moduleResolution: 'NodeNext',
           types: ['node'],
           strict: true,
+          noUncheckedIndexedAccess: true,
           noEmit: true,
           skipLibCheck: true,
         },
         include: ['src'],
       }),
     },
+    { path: 'eslint.config.mjs', content: TYPESCRIPT_ESLINT_CONFIG },
+    ...(oauth
+      ? [
+          { path: 'src/client.ts', content: typescriptClient(oauth.scopes) },
+          { path: 'src/client.test.ts', content: TYPESCRIPT_CLIENT_TEST },
+        ]
+      : []),
     {
       path: 'src/main.ts',
-      content: `// ${TODO_MARKER}\n\nthrow new Error(\n  'Implement the recipe-specific workflow before running this scaffold.',\n);\n`,
+      content: `// ${TODO_MARKER}\n//\n// Implement the recipe-specific workflow here, following the reference\n// recipes named in CONTRIBUTING.md.${oauth ? ' Create the SDK client with\n// createGleanClient() from ./client.js.' : ''}\n\nthrow new Error(\n  'Implement the recipe-specific workflow before running this scaffold.',\n);\n`,
     },
   ];
 }
@@ -203,20 +375,8 @@ async function validateDraft(repoRoot, draft) {
       `${asset.language} run command must use the generated entry point from the documented working directory`,
     );
   }
-  const oauth = draft.execution.auth.find(
-    (auth) => auth.kind === 'oauth-with-token-fallback',
-  );
-  if (
-    oauth &&
-    (oauth.configFile !== '.env' ||
-      oauth.backendVariable !== 'GLEAN_SERVER_URL' ||
-      oauth.credentialVariable !== 'GLEAN_API_TOKEN' ||
-      !/\bscripts\/glean-auth\.mjs login\b/u.test(oauth.setupCommand ?? ''))
-  ) {
-    fail(
-      'OAuth scaffolds must use scripts/glean-auth.mjs login with .env, GLEAN_SERVER_URL, and GLEAN_API_TOKEN',
-    );
-  }
+  const oauth = oauthAuth(draft);
+  if (oauth) validateOAuth(asset, oauth);
   for (const field of ['preview', 'codeWalkthrough', 'pastePromptFile']) {
     if (draft[field]) {
       fail(
@@ -225,6 +385,40 @@ async function validateDraft(repoRoot, draft) {
     }
   }
   return asset;
+}
+
+function validateOAuth(asset, oauth) {
+  if (asset.language === 'python') {
+    fail(
+      `Python OAuth scaffolds are not supported: there is no supported Python OAuth package path yet. Use a token-only auth kind, or scaffold a TypeScript recipe. ${AUTH_RULE}`,
+    );
+  }
+  const setup = oauth.setupCommand?.trim() ?? '';
+  if (setup.includes('glean-auth.mjs')) {
+    fail(
+      `OAuth setupCommand must not run the legacy copied scripts/glean-auth.mjs helper; use \`npm run login -- --email "<work-email>"\`. ${AUTH_RULE}`,
+    );
+  }
+  if (!MODERN_LOGIN_SETUP.test(setup)) {
+    fail(
+      `OAuth setupCommand must be \`npm run login -- --email "<work-email>"\` (optionally after \`cd <dir> &&\`). ${AUTH_RULE}`,
+    );
+  }
+  for (const field of ['configFile', 'backendVariable']) {
+    if (field in oauth) {
+      fail(
+        `OAuth auth must not declare ${field}: @gleanwork/auth stores credentials outside the project and never writes .env. ${AUTH_RULE}`,
+      );
+    }
+  }
+  if (oauth.credentialVariable !== 'GLEAN_API_TOKEN') {
+    fail(
+      `OAuth auth must declare credentialVariable GLEAN_API_TOKEN as the non-interactive fallback. ${AUTH_RULE}`,
+    );
+  }
+  if (!oauth.scopes?.length) {
+    fail(`OAuth auth must declare the scopes the recipe needs. ${AUTH_RULE}`);
+  }
 }
 
 export async function planRecipeScaffold({ repoRoot, draft }) {
@@ -251,18 +445,13 @@ export async function planRecipeScaffold({ repoRoot, draft }) {
     }
   }
 
-  const dependencies = mergeDependencies(implementations);
-  const generatedTargets = implementations.map(
-    (implementation) => implementation.target,
-  );
-  if (
-    draft.execution.auth.some(
-      (auth) => auth.kind === 'oauth-with-token-fallback',
-    )
-  ) {
-    generatedTargets.push('scripts/glean-auth.mjs');
-  }
-  generatedTargets.sort();
+  const dependencies = mergeDependencies([
+    ...implementations,
+    ...(oauthAuth(draft) ? [{ dependencies: OAUTH_DEPENDENCIES }] : []),
+  ]);
+  const generatedTargets = implementations
+    .map((implementation) => implementation.target)
+    .sort();
   if (
     new Set(generatedTargets.map((target) => target.toLowerCase())).size !==
     generatedTargets.length
@@ -272,7 +461,6 @@ export async function planRecipeScaffold({ repoRoot, draft }) {
   const files = [
     { path: 'recipe.json', content: json(draft) },
     { path: 'README.md', content: renderReadme(draft) },
-    ...authFiles(draft),
     ...(asset.language === 'typescript'
       ? typescriptFiles(draft, dependencies)
       : pythonFiles(dependencies)),
@@ -294,8 +482,19 @@ export async function planRecipeScaffold({ repoRoot, draft }) {
     lockCommand:
       asset.language === 'typescript'
         ? {
-            command: 'npm',
-            args: ['install', '--package-lock-only', '--ignore-scripts'],
+            // npm 10 (bundled with the pinned Node 22.16.0) crashes with
+            // "Cannot read properties of null (reading 'edgesOut')" when it
+            // resolves the vitest/vite peer set without a lock. Installing
+            // from the resulting lock works on npm 10, so only lock creation
+            // uses a pinned npm 11.
+            command: 'npx',
+            args: [
+              '-y',
+              'npm@11.20.0',
+              'install',
+              '--package-lock-only',
+              '--ignore-scripts',
+            ],
           }
         : { command: 'uv', args: ['lock', '--script', 'main.py'] },
   };

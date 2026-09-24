@@ -115,8 +115,14 @@ test('plans a standalone TypeScript CLI from framework metadata', async () => {
   assert.equal(plan.relativeDirectory, 'recipes/scaffold-typescript-contract');
   assert.deepEqual(plan.generatedTargets, ['src/output.ts']);
   assert.deepEqual(plan.lockCommand, {
-    command: 'npm',
-    args: ['install', '--package-lock-only', '--ignore-scripts'],
+    command: 'npx',
+    args: [
+      '-y',
+      'npm@11.20.0',
+      'install',
+      '--package-lock-only',
+      '--ignore-scripts',
+    ],
   });
 
   const packageJson = JSON.parse(file(plan, 'package.json'));
@@ -125,7 +131,15 @@ test('plans a standalone TypeScript CLI from framework metadata', async () => {
     'marked-terminal': '7.3.0',
     'strip-ansi': '7.2.0',
   });
-  assert.equal(packageJson.scripts.check, 'npm run typecheck');
+  assert.equal(packageJson.scripts.check, undefined);
+  assert.equal(packageJson.scripts.test, 'vitest run --passWithNoTests');
+  assert.equal(packageJson.scripts.lint, 'eslint src');
+  assert.equal(packageJson.scripts.typecheck, 'tsc --noEmit');
+  assert.equal(packageJson.scripts.login, undefined);
+  assert.equal(packageJson.devDependencies.vitest, '5.0.0');
+  assert.equal(packageJson.allowScripts['msw@2.11.3'], true);
+  assert.equal(file(plan, 'src/client.ts'), undefined);
+  assert.equal(file(plan, '.env.example'), undefined);
   assert.deepEqual(
     JSON.parse(file(plan, 'tsconfig.json')).compilerOptions.types,
     ['node'],
@@ -274,6 +288,63 @@ test('refuses an existing or mismatched recipe directory', async () => {
   );
 });
 
+function modernOAuth(id) {
+  return {
+    kind: 'oauth-with-token-fallback',
+    scopes: ['chat'],
+    setupCommand: `cd ${id} && npm run login -- --email "<work-email>"`,
+    credentialVariable: 'GLEAN_API_TOKEN',
+  };
+}
+
+test('rejects legacy OAuth draft contracts with a pointer to CONTRIBUTING', async () => {
+  const id = 'scaffold-legacy-oauth-contract';
+  const cases = [
+    [
+      {
+        setupCommand: `cd ${id} && node scripts/glean-auth.mjs login --scopes chat`,
+      },
+      /must not run the legacy copied scripts\/glean-auth\.mjs helper/,
+    ],
+    [
+      { setupCommand: `cd ${id} && tsx src/login.ts` },
+      /must be `npm run login/,
+    ],
+    [{ configFile: '.env' }, /must not declare configFile/],
+    [
+      { backendVariable: 'GLEAN_SERVER_URL' },
+      /must not declare backendVariable/,
+    ],
+    [
+      { credentialVariable: 'GLEAN_TOKEN' },
+      /credentialVariable GLEAN_API_TOKEN/,
+    ],
+    [{ scopes: [] }, /must declare the scopes/],
+  ];
+  for (const [override, message] of cases) {
+    const legacy = draft(id);
+    legacy.execution.auth = [{ ...modernOAuth(id), ...override }];
+    await assert.rejects(
+      planRecipeScaffold({ repoRoot, draft: legacy }),
+      (error) => {
+        assert.match(error.message, message);
+        assert.match(error.message, /CONTRIBUTING\.md/);
+        return true;
+      },
+    );
+  }
+});
+
+test('refuses Python OAuth drafts instead of emitting the Node helper', async () => {
+  const id = 'scaffold-python-oauth-contract';
+  const python = draft(id, 'python');
+  python.execution.auth = [modernOAuth(id)];
+  await assert.rejects(
+    planRecipeScaffold({ repoRoot, draft: python }),
+    /no supported Python OAuth package path/,
+  );
+});
+
 test('dry-run returns the complete plan without writing or running commands', async (t) => {
   const temp = await fs.mkdtemp(
     path.join(os.tmpdir(), 'recipe-scaffold-dry-run-'),
@@ -281,16 +352,7 @@ test('dry-run returns the complete plan without writing or running commands', as
   t.after(() => fs.rm(temp, { recursive: true, force: true }));
   const input = path.join(temp, 'recipe.json');
   const oauthDraft = draft('scaffold-dry-run-contract');
-  oauthDraft.execution.auth = [
-    {
-      kind: 'oauth-with-token-fallback',
-      setupCommand:
-        'cd scaffold-dry-run-contract && node scripts/glean-auth.mjs login',
-      configFile: '.env',
-      backendVariable: 'GLEAN_SERVER_URL',
-      credentialVariable: 'GLEAN_API_TOKEN',
-    },
-  ];
+  oauthDraft.execution.auth = [modernOAuth('scaffold-dry-run-contract')];
   await fs.writeFile(input, JSON.stringify(oauthDraft));
   let commandRuns = 0;
 
@@ -307,16 +369,33 @@ test('dry-run returns the complete plan without writing or running commands', as
   await assert.rejects(
     fs.access(path.join(repoRoot, 'recipes/scaffold-dry-run-contract')),
   );
-  assert.ok(plan.files.length >= 5);
-  assert.deepEqual(plan.generatedTargets, [
-    'scripts/glean-auth.mjs',
-    'src/output.ts',
-  ]);
-  assert.equal(file(plan, '.gitignore'), '.env\n.env.local\n');
-  assert.equal(
-    file(plan, '.env.example'),
-    'GLEAN_SERVER_URL=\nGLEAN_API_TOKEN=\n',
+  assert.deepEqual(plan.generatedTargets, ['src/output.ts']);
+  assert.ok(!plan.files.some((entry) => entry.path.includes('glean-auth.mjs')));
+  assert.equal(file(plan, '.env.example'), undefined);
+  assert.doesNotMatch(file(plan, '.gitignore'), /\.env/);
+
+  const packageJson = JSON.parse(file(plan, 'package.json'));
+  assert.equal(packageJson.scripts.login, 'glean-auth login --scopes chat');
+  assert.equal(packageJson.scripts.test, 'vitest run');
+  assert.equal(packageJson.dependencies['@gleanwork/auth'], '1.0.0');
+  assert.equal(packageJson.dependencies['@gleanwork/api-client'], '0.20.15');
+  assert.equal(packageJson.dependencies.dotenv, undefined);
+
+  const client = file(plan, 'src/client.ts');
+  assert.match(client, /export const SCOPES = \['chat'\];/);
+  assert.match(client, /discoverGleanTenant\(workEmail\)/);
+  assert.match(
+    client,
+    /process\.env\.GLEAN_API_TOKEN\?\.trim\(\) \|\|\s+createGleanTokenProvider/,
   );
+  assert.doesNotMatch(client, /readFile|dotenv/);
+  const clientTest = file(plan, 'src/client.test.ts');
+  assert.match(clientTest, /onUnhandledRequest: 'error'/);
+  assert.match(clientTest, /server\.resetHandlers\(\)/);
+  assert.match(clientTest, /server\.close\(\)/);
+  assert.doesNotMatch(clientTest, /globalThis\.fetch|node:test/);
+  assert.match(file(plan, 'src/main.ts'), /GLEAN_RECIPE_SCAFFOLD_TODO/);
+  assert.match(file(plan, 'README.md'), /GLEAN_API_TOKEN.*fallback/);
 });
 
 test('applies a scaffold only after clean generated-output preflights', async (t) => {
@@ -325,7 +404,7 @@ test('applies a scaffold only after clean generated-output preflights', async (t
   const calls = [];
   const run = async (command, args, { cwd }) => {
     calls.push({ command, args, cwd });
-    if (command === 'npm') {
+    if (command === 'npx') {
       await fs.writeFile(path.join(cwd, 'package-lock.json'), '{}\n');
     } else if (
       args[0] === 'scripts/build-artifacts.mjs' &&
@@ -365,7 +444,14 @@ test('applies a scaffold only after clean generated-output preflights', async (t
     [
       ['node', 'scripts/build-artifacts.mjs', '--check'],
       ['node', 'scripts/build-registry.mjs', '--check'],
-      ['npm', 'install', '--package-lock-only', '--ignore-scripts'],
+      [
+        'npx',
+        '-y',
+        'npm@11.20.0',
+        'install',
+        '--package-lock-only',
+        '--ignore-scripts',
+      ],
       ['node', 'scripts/build-artifacts.mjs'],
       ['node', 'scripts/build-registry.mjs'],
     ],
@@ -382,7 +468,7 @@ test('rolls back the new directory and registry when generation fails', async (t
   const id = 'scaffold-rollback-contract';
   const fixture = await fixtureRepo(t, id);
   const run = async (command, args, { cwd }) => {
-    if (command === 'npm') {
+    if (command === 'npx') {
       await fs.writeFile(path.join(cwd, 'package-lock.json'), '{}\n');
     } else if (
       args[0] === 'scripts/build-registry.mjs' &&
