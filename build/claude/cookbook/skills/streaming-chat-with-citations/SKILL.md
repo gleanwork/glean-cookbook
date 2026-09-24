@@ -42,7 +42,7 @@ path when the documented one fails.
    ```
 
 3. **Run the fixture tests**
-   Runs Vitest with MSW-backed fixtures, without credentials or live network access, covering typed `createStream` events, exact-once delta composition, `conversation_id` propagation, and citation separation.
+   Runs Vitest with MSW-backed fixtures, without credentials or live network access, covering typed `createStream` events, exact-once delta composition, `conversation_id` propagation, citation separation, and typed SDK error formatting.
 
    ```bash
    cd streaming-chat-with-citations && npm test
