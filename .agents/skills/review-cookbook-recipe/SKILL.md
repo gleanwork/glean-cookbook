@@ -118,6 +118,20 @@ a replacement OAuth client, token store, `.env` parser, HTTP layer, or response-
 needs a demonstrated gap in supported facilities. Remove unnecessary mechanisms. Keep any
 justified adapter small, documented, and tested. Verify current API and scope support.
 
+Check the official-auth requirement in CONTRIBUTING.md explicitly: local Node.js recipes
+using user OAuth must call the `glean-auth login` CLI from pinned `@gleanwork/auth` and use its
+`createGleanTokenProvider` for SDK requests. Verify the package script, dependency, provider
+call, and matching supported scopes—not just the command's name. A copied
+`scripts/glean-auth.mjs` is not the official CLI. Reject custom login, refresh, credential-store,
+or scope-fallback machinery unless a documented, tested gap in the supported package justifies
+it. Do not impose this CLI flow on another runtime, a hosted or multi-user service, a token-only
+path, or cookie SSO. In particular, a CLI user's credentials do not replace per-user authorization.
+
+Compare new TypeScript CLI code against the reference recipes in CONTRIBUTING.md's "Reference
+recipes", not against the nearest existing recipe. A directory on the legacy allowlist in
+`scripts/lib/legacy-recipe-patterns.mjs` passes CI without meeting this bar. Treat its patterns
+as migration debt, never as precedent, and reject any change that adds an allowlist entry.
+
 - Use only the selected path's authentication and minimum required scopes. Never combine
   scopes across variants or add API tokens to a cookie-SSO path.
 - Keep secrets in the declared ignored environment file, secure auth-library store, or host
@@ -132,6 +146,14 @@ justified adapter small, documented, and tested. Verify current API and scope su
   boundaries wherever promised. Never bypass safety properties to make verification pass.
 - Missing review credentials or tooling means BLOCKED. Reproduced failure of a promised
   capability means FAIL, even when caused by the platform. Record cause separately.
+
+Before adding a test mechanism, follow CONTRIBUTING.md's Vitest and MSW convention for
+in-process HTTP tests, as shown in the reference recipes. Exercise the real SDK through HTTP handlers with
+strict unhandled-request errors and lifecycle cleanup; do not patch global fetch or replace
+SDK methods with a handwritten fake. Keep pure logic tests and genuine subprocess/socket
+tests at their own boundaries. Do not invent a new framework or assume parent-process MSW
+intercepts child processes. Check that regressions fail for the intended request or outcome,
+not merely because a mock accepts the implementation's inputs.
 
 ## Source and generated output
 

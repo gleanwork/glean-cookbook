@@ -65,9 +65,15 @@ cold walkthrough. Never carry an old pass across a change that invalidates it.
   scaffold cannot establish hosted verification.
 - **CLI:** inspect command results; do not invent a browser URL or persistent process.
   **Web/hybrid:** keep required processes running and use their reported URLs. Verify UI claims.
-- **Auth:** only the selected path and required scopes. Preserve cookie-SSO user handoff;
-  never add token auth to it or automate the user's sign-in. Use each recipe's declared secure
-  store, not a universal `.env` assumption. Never expose secrets in conversation or output.
+- **Auth:** for local Node.js user OAuth, verify the package script calls official `glean-auth login`
+  from pinned `@gleanwork/auth`, and SDK requests use its `createGleanTokenProvider` with
+  matching supported scopes. A copied `scripts/glean-auth.mjs` does not satisfy this check;
+  any custom adapter needs evidence of a supported-package gap. A legacy-allowlist entry
+  (`scripts/lib/legacy-recipe-patterns.mjs`) explains why CI passes; it is not a PASS here. Use only the selected path
+  and required scopes. Preserve cookie-SSO user handoff; never add token auth to it or automate
+  sign-in. Other runtimes and hosted/multi-user services use their supported path, not a shared
+  CLI user's credentials in place of per-user authorization. Use each recipe's declared secure store,
+  not a universal `.env` assumption. Never expose secrets in conversation or output.
 - **Fixtures:** test appropriate offline behavior. Demo modes must be declared, clearly
   labeled, and explicitly selected. Honor the existing presentation-demo opt-in. Never use
   sample results as live evidence or suppress required tests when demo mode is off.

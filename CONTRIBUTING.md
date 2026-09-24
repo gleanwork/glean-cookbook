@@ -108,11 +108,32 @@ mise exec -- pnpm create:recipe -- --from /path/to/recipe.json
 ```
 
 The command creates the package shell, derives exact feature dependencies, writes the normal npm or
-uv lock, generates framework-owned files, and rebuilds `registry.json`. It leaves one explicit
-`GLEAN_RECIPE_SCAFFOLD_TODO` in the entry point. Replace that stub with the recipe-specific workflow,
-add authentication support and tests, and verify the documented commands before changing `hidden`.
-CI rejects a visible recipe that still contains the scaffold marker. Multi-asset and non-CLI recipes
-continue to use the manual workflow below.
+uv lock, generates framework-owned files, and rebuilds `registry.json`. A TypeScript scaffold gets
+`test` (Vitest), `lint` (ESLint), `typecheck`, and `test:all` scripts with the MSW, tsx, and
+TypeScript versions the reference recipes pin. An OAuth draft also gets a `login` script that runs
+`glean-auth login` from pinned `@gleanwork/auth`, a `src/client.ts` that resolves the backend and uses
+`createGleanTokenProvider` with the draft's scopes, and a passing MSW test for that client. Its
+`oauth-with-token-fallback` auth must declare `scopes`, `credentialVariable: "GLEAN_API_TOKEN"`, and
+`setupCommand: "npm run login -- --email \"<work-email>\""` (optionally after `cd <dir> &&`), with
+no `configFile` or `backendVariable`. The scaffolder rejects the legacy copied-helper contract. It
+refuses Python OAuth drafts because no supported Python OAuth package path exists yet; Python
+scaffolds support token-only auth.
+
+The scaffold leaves one explicit `GLEAN_RECIPE_SCAFFOLD_TODO` in the entry point. Replace that stub
+with the recipe-specific workflow, following `validate-and-publish-skill` and
+`search-with-discovered-filters`. Add tests for the workflow and verify the documented commands
+before changing `hidden`. CI rejects a visible recipe that still contains the scaffold marker.
+Multi-asset and non-CLI recipes continue to use the manual workflow below.
+
+### Reference recipes
+
+For a TypeScript CLI, model a new recipe on `recipes/validate-and-publish-skill` and
+`recipes/search-with-discovered-filters`. Both show official OAuth, backend discovery, token
+fallback, and Vitest + MSW tests. Other existing recipes may be legacy, and are **not** templates,
+even when they look similar. `scripts/lib/legacy-recipe-patterns.mjs` lists the legacy code: the
+copied OAuth helper, static `.env` tokens, `dotenv` or hand-rolled `.env` parsing, `node:test`
+runners, and login wrappers. `pnpm test` accepts those patterns only in the listed directories.
+Those lists only shrink as recipes migrate; do not add entries or copy code from them.
 
 ## Recipe directory conventions
 
@@ -131,6 +152,21 @@ and templates in the copied directory; do not require unstated repo-root files.
   browser SSO. Do not require API tokens for a cookie-SSO path. Include `.env.example` when that
   path uses `.env`, with required variable names and comments matching the actual code. Never
   request secrets in conversation, log them, or embed their values in commands.
+- **Official Glean authentication.** For local Node.js recipes using user OAuth, use the `glean-auth login`
+  CLI shipped by a pinned `@gleanwork/auth` dependency as the package `login` script, and that
+  package's `createGleanTokenProvider` for SDK requests. Resolve the backend from `--server-url`,
+  then `discoverGleanTenant` for a `--email` work address, then `GLEAN_SERVER_URL`. Accept
+  `GLEAN_API_TOKEN` only as a non-interactive fallback ahead of the provider. Let the package own
+  discovery, login, refresh, and credential storage. It never writes `.env`, so do not add a `.env`
+  parser; if a recipe genuinely needs `.env` for its own settings, use `node:process`
+  `loadEnvFile` and ignore `ENOENT`. A copied `scripts/glean-auth.mjs` is not the official CLI;
+  do not copy that older pattern into new recipes or wrap the CLI in scope-fallback logic. A
+  custom adapter requires a verified gap in the supported package, with rationale and focused
+  tests. Keep login and provider scopes consistent and supported. Other runtimes, hosted apps,
+  and multi-user services must use their supported authentication path; do not substitute one
+  CLI user's credentials for per-user authorization. This rule does not add OAuth to token-only
+  or cookie-SSO recipes. Follow the documented credential store rather than assuming login
+  writes `.env`. See [Reference recipes](#reference-recipes).
 - **Pinned dependencies.** Glean SDKs (`glean-api-client`, `@gleanwork/api-client`,
   `@gleanwork/web-sdk`, `glean-indexing-sdk`) are pinned to an exact released version — no `^`, `~`,
   or `latest`. CI (`pinned-deps`) fails a recipe that isn't, for both npm and Python (including PEP
@@ -275,6 +311,18 @@ and opt-in; do not require an artificial demo mode for every live API quickstart
 presentation demos, honor `GLEAN_COOKBOOK_DEMO` and the recipe's declared demo support. An
 optional demo never replaces testing the normal configured path or required offline tests.
 
+New TypeScript recipes use Vitest as their test runner. For in-process JavaScript/TypeScript
+HTTP tests, follow the MSW pattern in the `validate-and-publish-skill` and
+`search-with-discovered-filters` recipes: real SDK calls, HTTP handlers,
+`onUnhandledRequest: 'error'`, and reset/close lifecycle hooks. Do not replace
+`globalThis.fetch` or substitute a handwritten SDK object. Keep each recipe standalone; do not
+add a shared test framework, and do not move a legacy recipe off its runner except as part of
+its migration. Pure logic needs no HTTP mock. Keep loopback servers for genuine subprocess,
+socket, or callback-server tests: an MSW server in the parent process does not intercept a
+child process. `import-skill-from-github` and `skill-publishing-pipeline` also use MSW, but
+their `scripts/login.mjs` scope-fallback wrappers are allowlisted legacy pending migration;
+do not copy them.
+
 What "verify" means depends on the recipe's `buildMethod`:
 
 - **`scaffold`** recipes render from `steps`, not a hand-written `aiPrompt` — building one means
@@ -360,9 +408,12 @@ Two sources, both at the repo root:
 
 `mise exec -- pnpm build:artifacts` materializes them into every UI scaffold discovered by
 `scripts/artifacts.config.mjs` and copies the logomark alongside. The same declarative artifact plan
-distributes the shared authentication and local-server runtimes. Those copies are committed—a recipe
+distributes the local-server runtime. It also keeps the legacy copied OAuth helper
+(`scripts/glean-auth.mjs`) in sync, but only for the directories on
+`LEGACY_OAUTH_HELPER_TARGETS`; new recipes must not use it. Those copies are committed—a recipe
 is scaffolded one directory at a time with `tiged`, so root files would never reach it. CI evaluates
-the plan in read-only mode and fails if any output is stale.
+the plan in read-only mode and fails if any output is stale, if a helper appears outside the
+allowlist, or if an OAuth recipe is neither allowlisted nor on the official CLI.
 
 Integrations into an existing app should follow that app's design system; do not impose a
 second global stylesheet. Third-party builders follow the recipe's host-specific styling
@@ -403,7 +454,8 @@ Every PR runs:
    Code, Cursor, Codex). Generated plugin output is temporary on PRs and is committed automatically
    by the main-branch sync workflow after CI succeeds.
 6. **`harness-tests`** — `mise exec -- pnpm test`, covering the verify harness's OAuth state validation and PKCE
-   derivation.
+   derivation, the recipe execution contracts, and `code-patterns:check`, which rejects legacy recipe
+   code outside `scripts/lib/legacy-recipe-patterns.mjs`.
 7. **`snippets-check`** — recipe prose and the code it embeds stay in sync.
 
 ## Releasing the plugin

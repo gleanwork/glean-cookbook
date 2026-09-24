@@ -21,8 +21,8 @@ Cursor and Codex read their own manifests from the same repo (`.cursor-plugin/`,
 Then run a recipe, or browse them first:
 
 ```
-/cookbook:oncall-copilot     # build a specific recipe
-/cookbook:browse-cookbook      # list what's available and pick one
+/cookbook:search-with-discovered-filters   # build a specific recipe
+/cookbook:browse-cookbook                  # list what's available and pick one
 ```
 
 Fixture-backed presentation demos are opt-in. Launch the coding host with

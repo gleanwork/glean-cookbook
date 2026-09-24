@@ -66,6 +66,13 @@ Likewise, a remembered `.env` cannot fill undocumented configuration on the read
 
 ## Auth and SDK behavior belong to their supported interfaces
 
+The official `glean-auth` executable comes from `@gleanwork/auth`. Older recipes also contain
+a copied helper called `scripts/glean-auth.mjs`; the similar name does not make it the same
+implementation. Inspect the package script and runtime provider. Use the official CLI and
+`createGleanTokenProvider` for local Node.js user OAuth rather than carrying forward the copied helper or
+adding a custom scope-fallback wrapper. Apply the supported-package-gap rule in CONTRIBUTING.md
+when assessing an adapter, not historical usage as justification.
+
 Do not assume that every login command writes `.env`, or that every recipe uses the same
 variable names. Some auth libraries store refreshable credentials outside the project;
 cookie SSO uses the user's browser; hosted apps use host secret stores. Follow the selected

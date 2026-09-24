@@ -41,6 +41,17 @@ _Avoid_: Recipe type
 **Demo mode**:
 An explicitly enabled sample-data execution path. It is available only when the cookbook demo environment flag is present and is never offered during a configured run.
 
+**Reference recipe**:
+A recipe named in `CONTRIBUTING.md` as the model to start from for its kind of implementation,
+such as `validate-and-publish-skill` and `search-with-discovered-filters` for TypeScript CLIs.
+
+**Legacy recipe pattern**:
+Code that predates the reference pattern and is tolerated only in the directories listed in
+`scripts/lib/legacy-recipe-patterns.mjs`, pending migration. Examples are the copied
+`scripts/glean-auth.mjs` helper and static `.env` tokens. A recipe that still passes because it is
+allowlisted is not a template.
+_Avoid_: Existing convention
+
 **Verification**:
 Evidence that the actual deployed instructions produce the promised outcome when followed cold
 in the declared environment. Local tests, a merge, a visibility flag, and deployment alone are
