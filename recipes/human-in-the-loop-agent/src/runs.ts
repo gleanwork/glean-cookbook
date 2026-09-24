@@ -4,8 +4,9 @@ import { HTTPClient } from '@gleanwork/api-client/lib/http.js';
 import type { RequestOptions } from '@gleanwork/api-client/lib/sdks.js';
 import type { PlatformDurableAgentRun } from '@gleanwork/api-client/models/components';
 import type { PlatformAgentsCreateRunResponse } from '@gleanwork/api-client/models/operations';
+import { RecipeError, type Settings } from './client.js';
 
-export class RecipeError extends Error {}
+export { RecipeError };
 
 export const ACTIVE = new Set(['QUEUED', 'RUNNING', 'CANCELLING']);
 export const TERMINAL = new Set([
@@ -21,48 +22,10 @@ const REQUEST_OPTIONS = {
   redirect: 'error',
 } satisfies RequestOptions;
 
-export interface Settings {
-  serverURL: string;
-  apiToken: string;
-  agentId: string;
-}
-
 export interface Snapshot {
   run: PlatformDurableAgentRun;
   // The human reviews the wire JSON, not numbers rounded by JSON.parse.
   json: string;
-}
-
-export function settings(env: NodeJS.ProcessEnv = process.env): Settings {
-  const names = ['GLEAN_SERVER_URL', 'GLEAN_API_TOKEN', 'GLEAN_AGENT_ID'];
-  const missing = names.filter((name) => !env[name]?.trim());
-  if (missing.length)
-    throw new RecipeError(`Set these values in .env: ${missing.join(', ')}`);
-  let url: URL;
-  try {
-    url = new URL(env.GLEAN_SERVER_URL!.trim());
-  } catch {
-    throw new RecipeError(
-      'GLEAN_SERVER_URL must be the HTTPS backend origin, without a path.',
-    );
-  }
-  if (
-    url.protocol !== 'https:' ||
-    url.username ||
-    url.password ||
-    url.pathname !== '/' ||
-    url.search ||
-    url.hash
-  ) {
-    throw new RecipeError(
-      'GLEAN_SERVER_URL must be the HTTPS backend origin, without a path.',
-    );
-  }
-  return {
-    serverURL: url.origin,
-    apiToken: env.GLEAN_API_TOKEN!.trim(),
-    agentId: env.GLEAN_AGENT_ID!.trim(),
-  };
 }
 
 export function validateSnapshot(
@@ -120,7 +83,8 @@ export class AgentRuns {
       json = await response.clone().text();
     });
     const glean = new Glean({
-      ...this.config,
+      serverURL: this.config.serverURL,
+      apiToken: this.config.apiToken,
       httpClient,
       retryConfig: { strategy: 'none' },
     });
@@ -129,7 +93,7 @@ export class AgentRuns {
     return { run, json };
   }
 
-  start(message: string): Promise<Snapshot> {
+  async start(message: string): Promise<Snapshot> {
     if (!message.trim())
       throw new RecipeError('Set GLEAN_MESSAGE in .env or pass --message.');
     // Each POST creates a new execution. Never retry it blindly.

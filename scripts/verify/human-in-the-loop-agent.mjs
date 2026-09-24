@@ -55,8 +55,8 @@ export async function run(query, context) {
   }
   try {
     const { stdout } = await execFileAsync(
-      process.execPath,
-      ['dist/cli.js', 'status', '--run-id', runId],
+      'npm',
+      ['start', '--silent', '--', 'status', '--run-id', runId],
       {
         cwd: path.join(context.repoRoot, 'recipes/human-in-the-loop-agent'),
         env: { ...process.env },

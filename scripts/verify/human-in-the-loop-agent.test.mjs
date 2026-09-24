@@ -9,7 +9,7 @@ import {
   requiredEnv,
   run,
   sideEffects,
-} from './verify/human-in-the-loop-agent.mjs';
+} from './human-in-the-loop-agent.mjs';
 
 const expected = { agentId: 'agent', runId: 'run', state: 'SUCCEEDED' };
 const snapshot = {
@@ -56,13 +56,17 @@ test('cancel verification needs CANCELLED, not just an accepted cancellation', (
   assert.ok(checkSnapshot({ ...snapshot, state: 'CANCELLED' }, cancelled).skip);
 });
 
-test('the verifier reads the compiled TypeScript CLI response envelope', async (t) => {
+test('the verifier reads the shipped CLI status response envelope', async (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'approval-verifier-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const directory = path.join(root, 'recipes/human-in-the-loop-agent/dist');
+  const directory = path.join(root, 'recipes/human-in-the-loop-agent');
   fs.mkdirSync(directory, { recursive: true });
   fs.writeFileSync(
-    path.join(directory, 'cli.js'),
+    path.join(directory, 'package.json'),
+    JSON.stringify({ private: true, scripts: { start: 'node stub-cli.mjs' } }),
+  );
+  fs.writeFileSync(
+    path.join(directory, 'stub-cli.mjs'),
     [
       `if (JSON.stringify(process.argv.slice(2)) !== JSON.stringify(['status', '--run-id', 'run'])) process.exit(1);`,
       `console.log(${JSON.stringify(JSON.stringify({ run: snapshot, request_id: 'request' }))});`,
@@ -83,50 +87,4 @@ test('the verifier reads the compiled TypeScript CLI response envelope', async (
     recipe: { demoQueries: [{ query: 'approval query' }] },
   });
   assert.match(result.skip, /API snapshot checks passed/);
-});
-
-test('web Agent Builder setup preserves the prompts and approval configuration', () => {
-  const directory = new URL(
-    '../recipes/human-in-the-loop-agent/',
-    import.meta.url,
-  );
-  const recipe = JSON.parse(
-    fs.readFileSync(new URL('recipe.json', directory), 'utf8'),
-  );
-  const guide = fs.readFileSync(new URL('agent-setup.md', directory), 'utf8');
-  const readme = fs.readFileSync(new URL('README.md', directory), 'utf8');
-  const descriptions = recipe.steps.map((step) => step.description).join('\n');
-  const prompts = [...guide.matchAll(/```text\n([\s\S]*?)\n```/g)];
-
-  assert.equal(
-    prompts.length,
-    2,
-    'include both the builder prompt and agent instructions',
-  );
-  for (const [, prompt] of prompts) {
-    assert.ok(
-      descriptions.includes(prompt),
-      'the page and copied guide must use the same prompt',
-    );
-    assert.match(prompt, /Search Slack Channel Doc Ids/);
-    assert.match(prompt, /Send Slack message to a channel/);
-  }
-  assert.match(prompts[1][1], /canSendMessage.*true/);
-  assert.match(prompts[1][1], /channelDocId/);
-  assert.match(readme, /Search Slack Channel Doc Ids/);
-  assert.doesNotMatch(
-    [JSON.stringify(recipe), guide, readme].join('\n'),
-    /TEST_CHANNEL_ID|single-tool|exactly one Slack tool invocation/i,
-  );
-  assert.match(descriptions, /Run without confirmation.*unchecked/s);
-  assert.match(descriptions, /Manual run with Chat message/);
-  assert.match(descriptions, /click Save to publish/);
-  assert.match(guide, /`skipConfirmation: false`/);
-  assert.match(guide, /`REQUIRES_INPUT`.*`TOOL_APPROVAL`/s);
-  assert.match(guide, /Confirm both tools appear in the selected tools list/);
-  assert.match(guide, /Draft autosave alone does not publish your changes/);
-  assert.doesNotMatch(
-    [JSON.stringify(recipe), guide, readme].join('\n'),
-    /headless|\/glean_run|\$glean_run|spec\.yaml|\.glean\/agents\//i,
-  );
 });

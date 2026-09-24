@@ -1721,7 +1721,7 @@
     "level": "Intermediate",
     "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~30 min after Slack tool setup",
-    "icon": "check-circle",
+    "icon": "agent",
     "requiredScopes": ["agents.run"],
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
@@ -1734,13 +1734,13 @@
       "A Glean tenant with durable Platform Agents endpoints deployed and enabled",
       "Access to Agent Builder in the Glean web app, with Auto mode enabled and permission to create and save an agent",
       "The native Slack Actions channel-lookup and send-message tools enabled, plus a dedicated test channel where you may post; add the Glean app to a private channel",
-      "A per-user Platform API credential with agents.run; create the agent in your signed-in Glean browser session, then sign in separately for the CLI"
+      "Permission to sign in with the agents.run scope. Create the agent in your signed-in Glean browser session, then sign in separately for the CLI"
     ],
     "execution": {
       "type": "cli",
       "questions": [
         {
-          "id": "email",
+          "id": "work-email",
           "prompt": "What is your work email for tenant discovery and browser sign-in?"
         },
         {
@@ -1752,9 +1752,7 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["agents.run"],
-          "setupCommand": "node scripts/glean-auth.mjs login --scopes agents.run --email \"<work-email>\"",
-          "configFile": ".env",
-          "backendVariable": "GLEAN_SERVER_URL",
+          "setupCommand": "npm run login -- --email \"<work-email>\"",
           "credentialVariable": "GLEAN_API_TOKEN"
         }
       ],
@@ -1763,7 +1761,10 @@
         "expectedDuration": "10 minutes after agent setup; requires observing the test channel",
         "startsOwnServer": false
       },
-      "run": { "command": "npm start -- start", "userBrowser": false }
+      "run": {
+        "command": "npm start -- start --email \"<work-email>\"",
+        "userBrowser": false
+      }
     },
     "codeAssets": [
       {
@@ -1776,14 +1777,14 @@
       {
         "kind": "scaffold",
         "title": "Copy the project",
-        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/human-in-the-loop-agent human-in-the-loop-agent\ncd human-in-the-loop-agent",
-        "description": "Run all later shell commands in this directory. Creating the agent and starting runs records activity in Glean. Approving the write can send a real Slack message; use only your dedicated test channel."
+        "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/human-in-the-loop-agent human-in-the-loop-agent",
+        "description": "Creating the agent and starting runs records activity in Glean. Approving the write can send a real Slack message; use only your dedicated test channel."
       },
       {
         "kind": "install",
         "title": "Install and run the offline tests",
-        "command": "npm ci\nnpm test",
-        "description": "npm ci installs the locked dependencies. npm test compiles TypeScript into dist/ and exercises the released SDK with an offline HTTP transport. They do not sign in, create agents, or contact Slack."
+        "command": "cd human-in-the-loop-agent && npm ci\nnpm test",
+        "description": "Run the rest of this walkthrough from this directory in the same shell. npm ci installs the locked dependencies. npm test runs the SDK against local HTTP handlers; it does not sign in, create agents, or contact Slack."
       },
       {
         "kind": "manual",
@@ -1803,35 +1804,36 @@
       {
         "kind": "authenticate",
         "title": "Sign in for the CLI",
-        "command": "node scripts/glean-auth.mjs login --scopes agents.run --email \"<work-email>\"",
-        "description": "Complete browser sign-in yourself. Login writes the backend origin and credential to the ignored .env. If dynamic registration cannot grant agents.run, use an admin-registered public client via GLEAN_OAUTH_CLIENT_ID. If no OAuth path is available, copy .env.example to .env and enter a user-scoped Glean-issued token with access to agents.run. Never paste secrets in chat or commands. Global tokens and act-as are not supported."
+        "command": "npm run login -- --email \"<work-email>\"",
+        "description": "Complete browser sign-in yourself. The official glean-auth CLI finds your Glean backend from your work email and stores a refreshable OAuth session outside this project, so a run can wait for review without the token expiring. It does not write .env. If your instance cannot grant agents.run through sign-in, set GLEAN_API_TOKEN in .env to a user-scoped Glean-issued token with agents.run instead; that token is not refreshed. Never paste secrets in chat or commands. Global tokens and act-as are not supported."
       },
       {
         "kind": "configure",
         "title": "Set the agent and test message",
-        "description": "Open .env and set GLEAN_AGENT_ID to the published ID and GLEAN_MESSAGE to harmless text with a unique marker. The initial example is Cookbook approval test 001: ready for review. Use a new marker for each new run. Resolve any required Slack tool authentication in Glean before starting."
+        "description": "Copy .env.example to .env. Set GLEAN_AGENT_ID to the published ID and GLEAN_MESSAGE to harmless text with a unique marker. The initial example is Cookbook approval test 001: ready for review. Use a new marker for each new run. Resolve any required Slack tool authentication in Glean before starting.",
+        "command": "cp .env.example .env"
       },
       {
         "kind": "run",
         "title": "Start one durable run",
-        "command": "npm start -- start",
-        "description": "Copy the printed run.run_id into a shell variable with export RUN_ID='the printed run.run_id'. This request uses execution_mode: DURABLE and stream: false. Never repeat start to check progress: each start creates a new execution."
+        "command": "npm start -- start --email \"<work-email>\"",
+        "description": "Copy the printed run.run_id into a shell variable with export RUN_ID='the printed run.run_id'. This request uses execution_mode: DURABLE and stream: false. Every command takes --email to find your backend. Never repeat start to check progress: each start creates a new execution."
       },
       {
         "kind": "manual",
         "title": "Wait for approval and review the arguments",
-        "command": "npm start -- watch --run-id \"$RUN_ID\"",
+        "command": "npm start -- watch --run-id \"$RUN_ID\" --email \"<work-email>\"",
         "description": "After the read-only channel lookup succeeds, expect REQUIRES_INPUT and one TOOL_APPROVAL for the send-message tool. If lookup fails, inspect its actual result in Debug and follow agent-setup.md; a run that stops without sending is not a completed approval test. Review the displayed tool and complete arguments, including the channel and message. Check that no matching Slack post exists. Copy the reviewed interaction_id into export INTERACTION_ID='the reviewed interaction_id'. If the run completes or posts before approval, stop and fix the agent configuration. A polling deadline or closing the CLI does not cancel the run. Reconnect with status or watch and the same run ID."
       },
       {
         "kind": "manual",
         "title": "Submit your decision",
-        "description": "Choose one action. To approve the reviewed invocation, run `npm start -- approve --run-id \"$RUN_ID\" --interaction-id \"$INTERACTION_ID\"`. To reject it, replace approve with reject. To cancel the run, use `npm start -- cancel --run-id \"$RUN_ID\"`. Approval can immediately send a message. Use only the exact reviewed ID; the server binds the decision to the stored invocation, not a session-wide grant."
+        "description": "Choose one action. To approve the reviewed invocation, run `npm start -- approve --run-id \"$RUN_ID\" --interaction-id \"$INTERACTION_ID\" --email \"<work-email>\"`. To reject it, replace approve with reject. To cancel the run, use `npm start -- cancel --run-id \"$RUN_ID\" --email \"<work-email>\"`. Approval can immediately send a message. Use only the exact reviewed ID; the server binds the decision to the stored invocation, not a session-wide grant."
       },
       {
         "kind": "manual",
         "title": "Read the final result",
-        "command": "npm start -- watch --run-id \"$RUN_ID\"",
+        "command": "npm start -- watch --run-id \"$RUN_ID\" --email \"<work-email>\"",
         "description": "After approval, expect the same run ID to reach SUCCEEDED and exactly one matching Slack post. Rejection should stop without posting or requesting another tool attempt. Cancellation while paused should return CANCELLED with no pending interaction and no post. Active cancellation is cooperative and cannot undo completed writes. An accepted decision is not proof of a successful tool result."
       },
       {
@@ -1879,7 +1881,7 @@
       }
     ],
     "aiPrompt": "Copy the supplied scaffold and follow its numbered steps in one shell session. Guide the user through the Glean web Agent Builder to create and save an Auto mode agent with one read-only Slack channel lookup and one approval-gated Slack write only with user authorization. Use the supplied Builder Assistant prompt and agent instructions, then confirm both Search Slack Channel Doc Ids and Send Slack message to a channel are selected. A prompt reference does not enable a tool. Use the returned channelDocId, not a raw Slack channel ID or an invented document ID. Inspect Tools and Triggers: keep Run without confirmation unchecked (skipConfirmation: false) on the write and use Manual run with Chat message input. Require Save after configuration changes and before the first CLI run. Do not use a coding-assistant plugin or local agent specification for creation. Use the pinned SDK and shipped login command; do not recreate authentication. Ask the human to review the exact persisted tool arguments and explicitly authorize each approve, reject, or cancel command. Starting the recipe is not permission to approve a write. Run offline tests without credentials. Treat live runs, Slack observations, deployment, and publication as separate gates.",
-    "llmContext": "Use @gleanwork/api-client 0.20.15 with agents.run, execution_mode: DURABLE, and stream: false. Responses and cancellations use /api/agents/{agent_id}/responses and /api/agents/{agent_id}/cancellations, with run_id in the body. No act-as, experimental header, or automatic write retries. Submit only the reviewed interaction_id; decisions cannot edit arguments. In Agent Builder, select search_slack_channel_doc_ids and send_slack_message_to_a_channel. Require canSendMessage: true and pass the lookup's returned channelDocId to the write. Keep skipConfirmation: false and save the manual Chat message agent before CLI runs. Preserve original response JSON for review; JavaScript can round numeric arguments. Offline tests and snapshots do not prove live Slack outcomes or deployment.",
+    "llmContext": "Use @gleanwork/api-client 0.20.15 with an @gleanwork/auth createGleanTokenProvider session for agents.run (GLEAN_API_TOKEN only as a fallback), execution_mode: DURABLE, and stream: false. Responses and cancellations use /api/agents/{agent_id}/responses and /api/agents/{agent_id}/cancellations, with run_id in the body. No act-as, experimental header, or automatic write retries. Submit only the reviewed interaction_id; decisions cannot edit arguments. In Agent Builder, select search_slack_channel_doc_ids and send_slack_message_to_a_channel. Require canSendMessage: true and pass the lookup's returned channelDocId to the write. Keep skipConfirmation: false and save the manual Chat message agent before CLI runs. Preserve original response JSON for review; JavaScript can round numeric arguments. Offline tests and snapshots do not prove live Slack outcomes or deployment.",
     "content": {
       "problem": "A tool can change something outside Glean before your application has a chance to review it. Durable agent runs let your application wait for a stored tool approval, show the proposed arguments, and submit a decision without losing the run when its HTTP connection closes. This recipe creates one Slack-posting agent in the Glean web Agent Builder and uses a small TypeScript CLI to walk that flow.",
       "guardrails": [
@@ -1897,7 +1899,7 @@
         },
         {
           "title": "Keep credentials and retries bounded",
-          "rule": "Use a per-user agents.run credential in the ignored .env. Do not log credentials or send printed arguments to shared logs. Automatic retries are disabled: a repeated start creates a separate execution. Reconcile unknown outcomes before another write."
+          "rule": "Sign in with npm run login so the agents.run session refreshes while a run waits for review; a GLEAN_API_TOKEN fallback is per-user and stays in the ignored .env. Do not log credentials or send printed arguments to shared logs. Automatic retries are disabled: a repeated start creates a separate execution. Reconcile unknown outcomes before another write."
         }
       ],
       "limitations": [
