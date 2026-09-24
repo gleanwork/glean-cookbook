@@ -54,6 +54,16 @@ npm start -- \
 
 The follow-up sends `conversation_id` from the first stored turn. Omit `--follow-up` to run one turn.
 
+## Handle failures
+
+`src/main.ts` catches failures at the process boundary and delegates to `formatSdkError`:
+
+- Platform problem details include the HTTP status, stable error code, request ID, and `Retry-After` when present.
+- Generic SDK HTTP errors retain their status and message.
+- Timeout and connection failures get actionable transport-specific guidance.
+
+The formatter reports diagnostics without printing access tokens or other credential material. The fixture tests cover each branch without making network requests.
+
 ## API sequence
 
 - `glean.chat.createStream({ input, store: true })` returns a typed `EventStream`.
