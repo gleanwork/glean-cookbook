@@ -5,70 +5,132 @@ import test from 'node:test';
 
 import fs from 'fs-extra';
 
-import { hasRecipeOwnedOAuth } from './oauth-entrypoint.mjs';
+import {
+  hasOfficialOAuthLogin,
+  hasRecipeOwnedOAuth,
+  legacyHelperScripts,
+  oauthEntrypointKind,
+} from './oauth-entrypoint.mjs';
+
+const target = 'recipes/example';
+const legacy = { [target]: 'legacy fixture' };
 
 async function createRecipe(context, packageJson, files = {}) {
   const repoRoot = await fs.mkdtemp(
     path.join(os.tmpdir(), 'oauth-entrypoint-'),
   );
   context.after(() => fs.remove(repoRoot));
-  const target = 'recipes/example';
   const recipeRoot = path.join(repoRoot, target);
   await fs.outputJson(path.join(recipeRoot, 'package.json'), packageJson);
   for (const [file, contents] of Object.entries(files)) {
     await fs.outputFile(path.join(recipeRoot, file), contents);
   }
-  return { repoRoot, target };
+  return repoRoot;
 }
 
-test('recognizes the installed Glean auth CLI as recipe-owned OAuth', async (context) => {
-  const fixture = await createRecipe(context, {
+test('recognizes the pinned official Glean auth CLI', async (context) => {
+  const repoRoot = await createRecipe(context, {
     scripts: { login: 'glean-auth login --scopes search' },
-    dependencies: { '@gleanwork/auth': '0.5.1' },
+    dependencies: { '@gleanwork/auth': '1.0.0' },
   });
 
-  assert.equal(hasRecipeOwnedOAuth(fixture.repoRoot, fixture.target), true);
+  assert.equal(hasOfficialOAuthLogin(repoRoot, target), true);
+  assert.equal(hasRecipeOwnedOAuth(repoRoot, target, {}), true);
+  assert.equal(
+    oauthEntrypointKind(repoRoot, target, {
+      helperTargets: {},
+      wrapperTargets: {},
+    }),
+    'official',
+  );
 });
 
-test('does not trust a glean-auth script without the package dependency', async (context) => {
-  const fixture = await createRecipe(context, {
+test('requires the dependency and an exact pin', async (context) => {
+  const missing = await createRecipe(context, {
     scripts: { login: 'glean-auth login --scopes search' },
   });
+  assert.equal(hasRecipeOwnedOAuth(missing, target, {}), false);
 
-  assert.equal(hasRecipeOwnedOAuth(fixture.repoRoot, fixture.target), false);
+  const ranged = await createRecipe(context, {
+    scripts: { login: 'glean-auth login --scopes search' },
+    dependencies: { '@gleanwork/auth': '^1.0.0' },
+  });
+  assert.equal(hasRecipeOwnedOAuth(ranged, target, {}), false);
 });
 
-test('accepts a recipe-owned source entry point only when it exists', async (context) => {
-  const fixture = await createRecipe(context, {
+test('rejects a recipe-owned login wrapper unless it is allowlisted legacy', async (context) => {
+  const repoRoot = await createRecipe(
+    context,
+    {
+      scripts: { login: 'node scripts/login.mjs' },
+      dependencies: { '@gleanwork/auth': '1.0.0' },
+    },
+    { 'scripts/login.mjs': 'export {};\n' },
+  );
+
+  assert.equal(hasRecipeOwnedOAuth(repoRoot, target, {}), false);
+  assert.equal(
+    oauthEntrypointKind(repoRoot, target, {
+      helperTargets: {},
+      wrapperTargets: {},
+    }),
+    undefined,
+  );
+  assert.equal(hasRecipeOwnedOAuth(repoRoot, target, legacy), true);
+  assert.equal(
+    oauthEntrypointKind(repoRoot, target, {
+      helperTargets: {},
+      wrapperTargets: legacy,
+    }),
+    'legacy-wrapper',
+  );
+});
+
+test('an allowlisted wrapper still needs its entry point to exist', async (context) => {
+  const repoRoot = await createRecipe(context, {
     scripts: { login: 'tsx src/login.ts' },
   });
-
-  assert.equal(hasRecipeOwnedOAuth(fixture.repoRoot, fixture.target), false);
+  assert.equal(hasRecipeOwnedOAuth(repoRoot, target, legacy), false);
   await fs.outputFile(
-    path.join(fixture.repoRoot, fixture.target, 'src/login.ts'),
+    path.join(repoRoot, target, 'src/login.ts'),
     'export {};\n',
   );
-  assert.equal(hasRecipeOwnedOAuth(fixture.repoRoot, fixture.target), true);
+  assert.equal(hasRecipeOwnedOAuth(repoRoot, target, legacy), true);
 });
 
-test('rejects placeholder and generated shared-helper commands', async (context) => {
-  const fixture = await createRecipe(context, {
-    scripts: { login: 'echo TODO' },
-  });
-  const packageFile = path.join(
-    fixture.repoRoot,
-    fixture.target,
-    'package.json',
+test('the copied helper is legacy only for allowlisted targets', async (context) => {
+  const repoRoot = await createRecipe(
+    context,
+    { scripts: { login: 'node scripts/glean-auth.mjs login' } },
+    { 'scripts/glean-auth.mjs': '#!/usr/bin/env node\n' },
   );
 
-  assert.equal(hasRecipeOwnedOAuth(fixture.repoRoot, fixture.target), false);
-
-  await fs.outputJson(packageFile, {
-    scripts: { login: 'node scripts/glean-auth.mjs login' },
-  });
-  await fs.outputFile(
-    path.join(fixture.repoRoot, fixture.target, 'scripts/glean-auth.mjs'),
-    '#!/usr/bin/env node\n',
+  assert.equal(hasRecipeOwnedOAuth(repoRoot, target, legacy), false);
+  assert.equal(
+    oauthEntrypointKind(repoRoot, target, {
+      helperTargets: {},
+      wrapperTargets: {},
+    }),
+    undefined,
   );
-  assert.equal(hasRecipeOwnedOAuth(fixture.repoRoot, fixture.target), false);
+  assert.equal(
+    oauthEntrypointKind(repoRoot, target, {
+      helperTargets: legacy,
+      wrapperTargets: {},
+    }),
+    'legacy-helper',
+  );
+});
+
+test('finds login and configure scripts that invoke the copied helper', () => {
+  assert.deepEqual(
+    legacyHelperScripts({
+      scripts: {
+        login: 'glean-auth login --scopes chat',
+        configure: 'node scripts/glean-auth.mjs configure',
+        start: 'node scripts/glean-auth.mjs whoami',
+      },
+    }),
+    [['configure', 'node scripts/glean-auth.mjs configure']],
+  );
 });

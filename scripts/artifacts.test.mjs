@@ -73,3 +73,63 @@ test('duplicate artifact ownership fails before writing', async () => {
     /produced by both one and two/,
   );
 });
+
+async function oauthRepo(t, { helper = false, login } = {}) {
+  const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'oauth-plan-'));
+  t.after(() => fs.remove(repoRoot));
+  const recipe = path.join(repoRoot, 'recipes/example');
+  await fs.outputJson(path.join(recipe, 'recipe.json'), {
+    id: 'example',
+    codeAssets: [{ repoPath: 'recipes/example' }],
+    execution: { auth: [{ kind: 'oauth-with-token-fallback' }] },
+  });
+  await fs.outputJson(path.join(recipe, 'package.json'), {
+    scripts: { login },
+    dependencies: { '@gleanwork/auth': '1.0.0' },
+  });
+  if (helper) {
+    await fs.outputFile(path.join(recipe, 'scripts/glean-auth.mjs'), '//\n');
+  }
+  return repoRoot;
+}
+
+test('the legacy OAuth helper plan follows only the explicit allowlist', async (t) => {
+  const { legacyOAuthHelperTargets } = await import('./artifacts.config.mjs');
+  const allowlist = { 'recipes/example': 'legacy fixture' };
+
+  const modern = await oauthRepo(t, {
+    login: 'glean-auth login --scopes chat',
+  });
+  assert.deepEqual(
+    await legacyOAuthHelperTargets({ repoRoot: modern }, {}),
+    [],
+  );
+
+  const legacy = await oauthRepo(t, {
+    helper: true,
+    login: 'node scripts/glean-auth.mjs login',
+  });
+  assert.deepEqual(
+    await legacyOAuthHelperTargets({ repoRoot: legacy }, allowlist),
+    ['recipes/example/scripts/glean-auth.mjs'],
+  );
+  await assert.rejects(
+    legacyOAuthHelperTargets({ repoRoot: legacy }, {}),
+    /not on LEGACY_OAUTH_HELPER_TARGETS[\s\S]*not an allowlisted legacy target/,
+  );
+
+  await assert.rejects(
+    legacyOAuthHelperTargets({ repoRoot: modern }, allowlist),
+    /no longer ships scripts\/glean-auth\.mjs/,
+  );
+
+  const wrapper = await oauthRepo(t, { login: 'tsx src/login.ts' });
+  await fs.outputFile(
+    path.join(wrapper, 'recipes/example/src/login.ts'),
+    'export {};\n',
+  );
+  await assert.rejects(
+    legacyOAuthHelperTargets({ repoRoot: wrapper }, {}),
+    /glean-auth login.*pinned @gleanwork\/auth/,
+  );
+});
