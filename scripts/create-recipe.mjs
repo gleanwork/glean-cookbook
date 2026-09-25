@@ -15,6 +15,14 @@ The input must be a complete, schema-valid hidden recipe with one Python or
 TypeScript code asset and a recipe-level CLI execution contract. The command
 creates only the package shell and framework-owned infrastructure; it does not
 invent recipe-specific behavior.
+
+TypeScript scaffolds get Vitest, MSW, ESLint, and tsc. An OAuth draft
+(oauth-with-token-fallback) must declare scopes, credentialVariable
+GLEAN_API_TOKEN, and setupCommand \`npm run login -- --email "<work-email>"\`;
+it gets a \`login\` script running \`glean-auth login\` from pinned
+@gleanwork/auth, src/client.ts using createGleanTokenProvider, and an MSW
+client test. Python scaffolds support token-only auth. See "Start a CLI
+recipe" and "Reference recipes" in CONTRIBUTING.md.
 `;
 }
 
@@ -66,7 +74,7 @@ try {
   );
   if (!values['dry-run']) {
     console.log(
-      '\nNext: replace the scaffold TODO with the recipe-specific implementation, add its tests and authentication support, then run the repository checks.',
+      '\nNext: replace the scaffold TODO with the recipe-specific workflow, following the reference recipes in CONTRIBUTING.md (validate-and-publish-skill, search-with-discovered-filters). Add its tests, then run the repository checks.',
     );
   }
 } catch (error) {

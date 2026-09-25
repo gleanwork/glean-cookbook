@@ -107,18 +107,22 @@
                 }
               },
               "setupCommand": {
+                "description": "Documented command that establishes this auth path. For oauth-with-token-fallback, use `npm run login -- --email \"<work-email>\"` (optionally after `cd <dir> &&`), where the package `login` script runs `glean-auth login` from pinned @gleanwork/auth. Invoking the copied scripts/glean-auth.mjs helper is legacy, accepted only for allowlisted recipes.",
                 "type": "string",
                 "minLength": 1
               },
               "configFile": {
+                "description": "Legacy .env flow: the project file where setup writes the backend and a static token. @gleanwork/auth stores credentials outside the project, so new OAuth recipes omit it.",
                 "type": "string",
                 "minLength": 1
               },
               "backendVariable": {
+                "description": "Legacy .env flow: the variable in configFile that holds the Glean backend URL. New OAuth recipes resolve the backend from --email, --server-url, or GLEAN_SERVER_URL and omit it.",
                 "type": "string",
                 "minLength": 1
               },
               "credentialVariable": {
+                "description": "Environment variable a non-interactive run can set instead of signing in, such as GLEAN_API_TOKEN for a user-scoped token. It is a fallback, not where OAuth login stores credentials.",
                 "type": "string",
                 "minLength": 1
               }
@@ -830,6 +834,7 @@
       "minLength": 1
     },
     "lastVerified": {
+      "description": "Date the recipe last passed an end-to-end verification of its deployed page against a live instance (see CONTRIBUTING.md, 'The verify gate'). Fixture or test-suite passes do not qualify. Omit when unverified or when a change invalidated the verified path.",
       "type": "string",
       "format": "date",
       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"

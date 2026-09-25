@@ -44,6 +44,11 @@ explicit. A deliberate, documented simplification is different from a workaround
 a flawed example look complete. Passing CI, matching another consumer, or reaching a release
 date cannot substitute for this quality bar.
 
+When starting a TypeScript CLI recipe, model it on the reference recipes named in
+`CONTRIBUTING.md` (`validate-and-publish-skill`, `search-with-discovered-filters`), not on
+whichever existing recipe looks closest. Recipes on the legacy allowlist in
+`scripts/lib/legacy-recipe-patterns.mjs` still pass CI, but they are not templates.
+
 ## Fix the authored recipe, not its presentation
 
 The developer's documented workflow is the contract. Existing checkers, generators, and

@@ -5,7 +5,10 @@ import path from 'node:path';
 import fg from 'fast-glob';
 
 import { readJsonc } from './lib/jsonc.mjs';
-import { hasRecipeOwnedOAuth } from './lib/oauth-entrypoint.mjs';
+import {
+  legacyHelperScriptErrors,
+  oauthAuthErrors,
+} from './lib/oauth-execution.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const recipesRoot = path.join(repoRoot, 'recipes');
@@ -103,15 +106,15 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
   }
 
   for (const auth of execution.auth) {
-    if (
-      auth.kind === 'oauth-with-token-fallback' &&
-      !/\b(?:npm run login|glean-auth\.mjs login)\b/u.test(
-        auth.setupCommand ?? '',
-      )
-    ) {
+    if (auth.kind !== 'oauth-with-token-fallback') continue;
+    if (!target) {
       errors.push(
-        `${recipe.id} ${location}: OAuth auth has no shipped login command`,
+        `${recipe.id} ${location}: cannot resolve the scaffold that owns its OAuth execution contract`,
       );
+      continue;
+    }
+    for (const error of oauthAuthErrors({ repoRoot, target, auth })) {
+      errors.push(`${recipe.id} ${location}: ${error}`);
     }
   }
   if (
@@ -182,19 +185,6 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
 
   if (!target) return;
   const absoluteTarget = path.join(repoRoot, target);
-  if (
-    execution.auth.some((auth) => auth.kind === 'oauth-with-token-fallback')
-  ) {
-    const sharedHelper = path.join(absoluteTarget, 'scripts', 'glean-auth.mjs');
-    if (
-      !fs.existsSync(sharedHelper) &&
-      !hasRecipeOwnedOAuth(repoRoot, target)
-    ) {
-      errors.push(
-        `${recipe.id} ${location}: scaffold does not ship an OAuth login entry point`,
-      );
-    }
-  }
   const gitignore = fs.existsSync(path.join(absoluteTarget, '.gitignore'))
     ? fs.readFileSync(path.join(absoluteTarget, '.gitignore'), 'utf8')
     : '';
@@ -309,6 +299,10 @@ for (const skill of fg.sync('*/SKILL.md', {
     }
   }
 }
+
+// Independent of declared auth kind: the web-sdk scaffolds call the helper
+// from `configure` while declaring `browser-cookie`.
+errors.push(...legacyHelperScriptErrors({ repoRoot }));
 
 if (errors.length > 0) {
   console.error(

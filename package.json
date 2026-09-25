@@ -25,10 +25,11 @@
     "recipe-packages:check": "node scripts/check-recipe-packages.mjs",
     "recipe-scaffolds:check": "node scripts/check-recipe-scaffolds.mjs",
     "snippets:sync": "md-code sync",
-    "test": "node --test \"scripts/**/*.test.mjs\" && npm run framework-features:check && npm run recipe-scaffolds:check && npm run recipe-packages:check && npm run artifacts:check && npm run execution:check",
+    "test": "node --test \"scripts/**/*.test.mjs\" && npm run framework-features:check && npm run recipe-scaffolds:check && npm run recipe-packages:check && npm run artifacts:check && npm run execution:check && npm run code-patterns:check",
     "verify:login": "node scripts/verify-login.mjs",
     "artifacts:check": "node scripts/build-artifacts.mjs --check",
     "execution:check": "node scripts/check-recipe-execution.mjs",
+    "code-patterns:check": "node scripts/check-recipe-code-patterns.mjs",
     "recipe-questions:check": "node scripts/check-recipe-questions.mjs",
     "mdx:check": "node scripts/check-recipe-mdx.mjs"
   },
