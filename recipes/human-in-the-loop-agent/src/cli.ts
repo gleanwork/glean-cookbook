@@ -1,171 +1,173 @@
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { parseArgs } from 'node:util';
-import {
-  GleanBaseError,
-  HTTPClientError,
-} from '@gleanwork/api-client/models/errors';
+import readline from 'node:readline/promises';
+import { stdin, stdout } from 'node:process';
+import meow from 'meow';
 import { loadDotEnv, RecipeError, resolveSettings } from './client.js';
-import { AgentRuns, outcome, show, watch, type Snapshot } from './runs.js';
+import { printCliError } from './errors.js';
+import { AgentRuns, type Decision } from './runs.js';
+import { command, drive, type Io } from './workflow.js';
 
-const HELP = `Usage: npm start -- <command> --email <work-email> [options]
+const cli = meow(
+  `
+    Usage
+      $ npm start -- --agent-id <id> --email <work-email> [--message <text>]
+      $ npm start -- resume --agent-id <id> --run-id <id> --email <work-email>
+      $ npm start -- status --agent-id <id> --run-id <id> --email <work-email>
+      $ npm start -- cancel --agent-id <id> --run-id <id> --email <work-email>
 
-  start    [--message TEXT]                 Create one durable run (never retried).
-  status   --run-id ID                      Inspect an existing run.
-  watch    --run-id ID [--wait-seconds 120]  Poll until approval, completion, or deadline.
-  approve  --run-id ID --interaction-id ID   Approve only the invocation you reviewed.
-  reject   --run-id ID --interaction-id ID   Reject only the invocation you reviewed.
-  cancel   --run-id ID                      Request cancellation (not rollback).
+    With no command, starts one durable run of your agent, waits for it to ask
+    for approval, shows you the exact tool call, and sends your decision.
 
-Every command finds your Glean backend from --email. Use --server-url or
-GLEAN_SERVER_URL instead if discovery is unavailable. Sign in first with
-npm run login -- --email <work-email>. GLEAN_AGENT_ID and GLEAN_MESSAGE come
-from .env; --message overrides GLEAN_MESSAGE.
+    Options
+      --agent-id        Agent to run (default: GLEAN_AGENT_ID in .env)
+      --message         Text for the agent to send you (default: a timestamped test message)
+      --run-id          An existing run, for resume, status, or cancel
+      --decision        approve or reject, for when there's no terminal to ask in
+      --interaction-id  The pending approval the decision is for (printed by resume)
+      --wait-seconds    How long to wait for each step (default: 120)
+      --email           Work email used to find your Glean backend
+      --server-url      Complete Glean backend origin; overrides --email
 
-An explicit approval replay must use the exact original run and interaction IDs.
-`;
+    Example
+      $ npm start -- --agent-id 3a2139bdf60540248c270d77887053f0 --email you@example.com
+  `,
+  {
+    importMeta: import.meta,
+    flags: {
+      agentId: { type: 'string' },
+      message: { type: 'string' },
+      runId: { type: 'string' },
+      decision: { type: 'string' },
+      interactionId: { type: 'string' },
+      waitSeconds: { type: 'number', default: 120 },
+      email: { type: 'string' },
+      serverUrl: { type: 'string' },
+    },
+  },
+);
 
-export function parseCommand(args: string[]) {
-  let parsed: ReturnType<typeof parseArgs>;
+// The run the CLI is currently watching, so Ctrl-C can say how to continue.
+let watching: string | undefined;
+
+async function ask(question: string) {
+  const terminal = readline.createInterface({ input: stdin, output: stdout });
   try {
-    parsed = parseArgs({
-      args,
-      allowPositionals: true,
-      strict: true,
-      options: {
-        'run-id': { type: 'string' },
-        'interaction-id': { type: 'string' },
-        message: { type: 'string' },
-        'wait-seconds': { type: 'string' },
-        email: { type: 'string' },
-        'server-url': { type: 'string' },
-        help: { type: 'boolean', short: 'h' },
-      },
-    });
-  } catch {
-    throw new RecipeError('Invalid options. Run npm start -- --help.');
-  }
-  const { values, positionals } = parsed;
-  if (values.help) return { command: 'help' as const, target: {} };
-  const command = positionals[0];
-  if (
-    positionals.length !== 1 ||
-    !command ||
-    !['start', 'status', 'watch', 'approve', 'reject', 'cancel'].includes(
-      command,
-    )
-  ) {
-    throw new RecipeError(
-      'Choose start, status, watch, approve, reject, or cancel. See --help.',
-    );
-  }
-  function value(name: string): string | undefined {
-    const input = values[name];
-    if (input === undefined) return undefined;
-    if (typeof input !== 'string' || !input.trim())
-      throw new RecipeError(`--${name} must not be blank.`);
-    return input;
-  }
-  const runId = value('run-id');
-  const interactionId = value('interaction-id');
-  const message = value('message');
-  const seconds = value('wait-seconds');
-  if (command !== 'start' && !runId)
-    throw new RecipeError('--run-id is required.');
-  if (['approve', 'reject'].includes(command) && !interactionId)
-    throw new RecipeError('--interaction-id is required.');
-  if (
-    (command === 'start' && runId) ||
-    (!['approve', 'reject'].includes(command) && interactionId) ||
-    (command !== 'start' && message !== undefined) ||
-    (command !== 'watch' && seconds !== undefined)
-  ) {
-    throw new RecipeError(
-      'An option does not apply to this command. See --help.',
-    );
-  }
-  const waitSeconds = seconds === undefined ? 120 : Number(seconds);
-  if (!Number.isFinite(waitSeconds) || waitSeconds <= 0)
-    throw new RecipeError(
-      '--wait-seconds must be finite and greater than zero.',
-    );
-  const target = { email: value('email'), serverUrl: value('server-url') };
-  return { command, runId, interactionId, message, waitSeconds, target };
-}
-
-export function errorMessage(error: unknown): string {
-  if (error instanceof RecipeError) return error.message;
-  if (error instanceof GleanBaseError) {
-    const guidance: Record<number, string> = {
-      401: 'Sign in again with npm run login -- --email <work-email>, as the same user who owns the run.',
-      403: "Sign in with agents.run (npm run login) and check the user's access to the agent.",
-      404: 'Check deployment, IDs, run ownership, and current agent access.',
-      409: 'State conflict. Read status; do not replace an old ID and silently reapprove.',
-      422: "Complete the agent's tool authentication in Glean before starting a new run.",
-      429: 'Rate limited. Wait before polling again; do not blindly retry a write.',
-      503: 'Service unavailable. Inspect the same run before deciding whether to retry.',
-    };
-    return `HTTP ${error.statusCode}. ${guidance[error.statusCode] ?? 'Inspect the same run and API contract; do not blindly retry a write.'}`;
-  }
-  if (error instanceof HTTPClientError) {
-    return 'Network/request error; the write outcome may be unknown. Do not repeat start. Inspect the saved run ID, or reconcile in Glean before creating another run.';
-  }
-  // SDK validation errors and arbitrary errors can embed sensitive payloads.
-  return 'Invalid response or local error. Inspect the contract and configuration. No write was retried.';
-}
-
-export async function main(args = process.argv.slice(2)): Promise<number> {
-  try {
-    const command = parseCommand(args);
-    if (command.command === 'help') {
-      console.log(HELP);
-      return 0;
-    }
-    loadDotEnv();
-    const runs = new AgentRuns(await resolveSettings(command.target));
-    let snapshot: Snapshot;
-    switch (command.command) {
-      case 'watch':
-        return await watch(runs, command.runId!, command.waitSeconds);
-      case 'start':
-        snapshot = await runs.start(
-          command.message ?? process.env.GLEAN_MESSAGE ?? '',
-        );
-        break;
-      case 'status':
-        snapshot = await runs.get(command.runId!);
-        break;
-      case 'cancel':
-        snapshot = await runs.cancel(command.runId!);
-        break;
-      case 'approve':
-      case 'reject':
-        snapshot = await runs.respond(
-          command.runId!,
-          command.interactionId!,
-          command.command === 'approve' ? 'APPROVE' : 'REJECT',
-        );
-        break;
-      default:
-        throw new RecipeError('Unsupported command. Run npm start -- --help.');
-    }
-    show(snapshot);
-    return outcome(snapshot.run);
+    const answer = (await terminal.question(question)).trim().toLowerCase();
+    if (answer === 'a' || answer === 'approve') return 'APPROVE' as const;
+    if (answer === 'r' || answer === 'reject') return 'REJECT' as const;
+    if (answer === 'c' || answer === 'cancel') return 'CANCEL' as const;
+    // Anything else, including Enter, leaves the run waiting. Nothing is sent.
+    return null;
   } catch (error) {
-    console.error(errorMessage(error));
-    return 1;
+    // Ctrl-C at the prompt: readline rejects instead of raising SIGINT.
+    // Treat it like Enter, so the person gets the command to continue.
+    if ((error as Error).name === 'AbortError') return null;
+    throw error;
+  } finally {
+    terminal.close();
   }
 }
 
-if (
-  process.argv[1] &&
-  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
-) {
+function runIdFlag() {
+  const runId = cli.flags.runId?.trim();
+  if (!runId) throw new RecipeError('--run-id is required for this command.');
+  return runId;
+}
+
+function decisionFlag() {
+  const decision = cli.flags.decision?.trim().toLowerCase();
+  const interactionId = cli.flags.interactionId?.trim();
+  if (!decision && !interactionId) return undefined;
+  if (!decision || !interactionId) {
+    throw new RecipeError('--decision and --interaction-id go together.');
+  }
+  if (decision !== 'approve' && decision !== 'reject') {
+    throw new RecipeError('--decision must be approve or reject.');
+  }
+  return { value: decision.toUpperCase() as Decision, interactionId };
+}
+
+/** The backend flag to repeat in printed commands, as the person passed it. */
+function targetFlag() {
+  const serverUrl = cli.flags.serverUrl?.trim();
+  if (serverUrl) return `--server-url ${JSON.stringify(serverUrl)}`;
+  const email = cli.flags.email?.trim();
+  return email ? `--email ${JSON.stringify(email)}` : undefined;
+}
+
+async function main(): Promise<number> {
+  const [subcommand, extra] = cli.input;
+  if (extra) throw new RecipeError(`Unexpected argument: ${extra}`);
+  if (subcommand && !['resume', 'status', 'cancel'].includes(subcommand)) {
+    throw new RecipeError(`Unknown command: ${subcommand}. See --help.`);
+  }
+  if (!(cli.flags.waitSeconds > 0)) {
+    throw new RecipeError('--wait-seconds must be greater than zero.');
+  }
+  if (!subcommand && (cli.flags.runId || cli.flags.decision)) {
+    throw new RecipeError(
+      'To continue an existing run, use: npm start -- resume --agent-id <id> --run-id <id>',
+    );
+  }
+  const decision = decisionFlag();
+
+  loadDotEnv();
+  const runs = new AgentRuns(
+    await resolveSettings({
+      agentId: cli.flags.agentId,
+      email: cli.flags.email,
+      serverUrl: cli.flags.serverUrl,
+    }),
+  );
+  const io: Io = {
+    log: (line) => console.log(line),
+    ask: stdin.isTTY ? ask : undefined,
+  };
+  const target = targetFlag();
+  const options = { waitSeconds: cli.flags.waitSeconds, decision, target };
+
   process.once('SIGINT', () => {
     console.error(
-      'Client stopped. The run was NOT cancelled. Reuse its ID to watch or cancel.',
+      watching
+        ? `\nStopped watching. The run was not cancelled. Continue with:\n  ${command(runs, 'resume', watching, { target })}`
+        : '\nStopped.',
     );
     process.exit(130);
   });
-  process.exitCode = await main();
+
+  switch (subcommand) {
+    case 'status':
+      // Machine-readable, for scripts and the repository verifier.
+      console.log(JSON.stringify(await runs.get(runIdFlag()), null, 2));
+      return 0;
+    case 'cancel': {
+      const run = await runs.cancel(runIdFlag());
+      console.log(
+        `Cancellation requested. Run ${run.run_id} is ${run.state.toLowerCase()}.`,
+      );
+      return 0;
+    }
+    case 'resume': {
+      watching = runIdFlag();
+      return drive(runs, await runs.get(watching), io, options);
+    }
+    default: {
+      const message =
+        cli.flags.message?.trim() ||
+        `Cookbook approval test ${new Date().toISOString()}`;
+      const run = await runs.start(message);
+      watching = run.run_id;
+      console.log(`Started run ${run.run_id}. Waiting for the agent…`);
+      return drive(runs, run, io, { ...options, expectPause: true });
+    }
+  }
 }
+
+main().then(
+  (code) => {
+    process.exitCode = code;
+  },
+  (error: unknown) => {
+    printCliError(error);
+    process.exitCode = 1;
+  },
+);

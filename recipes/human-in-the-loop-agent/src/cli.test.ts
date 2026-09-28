@@ -1,131 +1,54 @@
-import { afterEach, expect, test, vi } from 'vitest';
-import { main, parseCommand } from './cli.js';
-import { resolveSettings, type Settings } from './client.js';
-import { AgentRuns, type Snapshot } from './runs.js';
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { expect, test } from 'vitest';
 
-vi.mock('./client.js', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./client.js')>()),
-  loadDotEnv: vi.fn(),
-  resolveSettings: vi.fn(),
-}));
+const recipeRoot = fileURLToPath(new URL('..', import.meta.url));
+const tsx = path.join(recipeRoot, 'node_modules', '.bin', 'tsx');
 
-const settings: Settings = {
-  serverURL: 'https://tenant.example',
-  apiToken: 'fixture-token',
-  agentId: 'agent-1',
-};
-const snapshot = {
-  run: {
-    run_id: 'run-1',
-    agent_id: 'agent-1',
-    state: 'SUCCEEDED',
-    pending_interactions: [],
-  },
-  json: '{}',
-} as unknown as Snapshot;
+function runCli(args: string[]) {
+  // Only help and argument errors run here: they fail before any request.
+  // The network workflow is covered with MSW in workflow.test.ts.
+  return spawnSync(tsx, ['src/cli.ts', ...args], {
+    cwd: recipeRoot,
+    encoding: 'utf8',
+    timeout: 10_000,
+    env: {
+      ...process.env,
+      GLEAN_API_TOKEN: 'fixture-token',
+      GLEAN_SERVER_URL: 'https://example.test',
+      GLEAN_AGENT_ID: 'agent-1',
+      NO_COLOR: '1',
+    },
+  });
+}
 
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllEnvs();
+test('--help lists the one-command flow and the reconnect commands', () => {
+  const result = runCli(['--help']);
+  expect(result.status).toBe(0);
+  expect(result.stdout).toMatch(/--agent-id <id> --email <work-email>/);
+  expect(result.stdout).toMatch(/resume --agent-id <id> --run-id <id>/);
 });
 
 test.each([
-  [['approve', '--run-id', '']],
-  [['approve', '--run-id', 'run-1']],
-  [['start', '--run-id', 'run-1']],
-  [['cancel', '--run-id', 'run-1', '--message', 'x']],
-  [['bogus']],
-  [['status', 'extra', '--run-id', 'run-1']],
-  [['start', '--unknown', 'x']],
-  [['start', '--message', ' ']],
-  [['start', '--email', ' ']],
-  ...['-1', '0', 'NaN', 'Infinity'].map((seconds) => [
-    ['watch', '--run-id', 'run-1', '--wait-seconds', seconds],
-  ]),
-])('rejects %j', (args) => {
-  expect(() => parseCommand(args)).toThrow();
+  [['frobnicate'], /Unknown command: frobnicate/],
+  [['resume'], /--run-id is required/],
+  [['--run-id', 'run-1'], /use: npm start -- resume --agent-id <id> --run-id/],
+  [['resume', '--run-id', 'r', '--decision', 'approve'], /go together/],
+  [
+    ['resume', '--run-id', 'r', '--decision', 'yes', '--interaction-id', 'c'],
+    /--decision must be approve or reject/,
+  ],
+  // A decision only makes sense for a run someone has already reviewed.
+  [
+    ['--decision', 'approve', '--interaction-id', 'c'],
+    /continue an existing run, use: npm start -- resume/,
+  ],
+  [['--wait-seconds', '0'], /greater than zero/],
+])('rejects %j before contacting Glean', (args, message) => {
+  const result = runCli(args);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toMatch(message);
+  // A clean one-line error, never a stack trace.
+  expect(result.stderr).not.toMatch(/\n\s+at /);
 });
-
-test('parses help and defaults', () => {
-  expect(parseCommand(['--help']).command).toBe('help');
-  expect(
-    parseCommand(['watch', '--run-id', 'run-1', '--email', 'me@example.com']),
-  ).toEqual({
-    command: 'watch',
-    runId: 'run-1',
-    interactionId: undefined,
-    message: undefined,
-    waitSeconds: 120,
-    target: { email: 'me@example.com', serverUrl: undefined },
-  });
-});
-
-const cases = [
-  {
-    name: 'start with an explicit message',
-    args: ['start', '--message', 'CLI message'],
-    method: 'start',
-    expected: ['CLI message'],
-  },
-  {
-    name: 'start with the configured message',
-    args: ['start'],
-    method: 'start',
-    expected: ['Configured message'],
-  },
-  {
-    name: 'status',
-    args: ['status', '--run-id', 'run-1'],
-    method: 'get',
-    expected: ['run-1'],
-  },
-  {
-    name: 'watch',
-    args: ['watch', '--run-id', 'run-1'],
-    method: 'get',
-    expected: ['run-1'],
-  },
-  {
-    name: 'cancel',
-    args: ['cancel', '--run-id', 'run-1'],
-    method: 'cancel',
-    expected: ['run-1'],
-  },
-  ...(['approve', 'reject'] as const).map((decision) => ({
-    name: decision,
-    args: [decision, '--run-id', 'run-1', '--interaction-id', 'reviewed-id'],
-    method: 'respond',
-    expected: ['run-1', 'reviewed-id', decision.toUpperCase()],
-  })),
-];
-
-test.each(cases)(
-  'dispatches $name with the reviewed IDs and message',
-  async (scenario) => {
-    vi.stubEnv('GLEAN_MESSAGE', 'Configured message');
-    vi.mocked(resolveSettings).mockResolvedValue(settings);
-    vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    const methods = {
-      start: vi.spyOn(AgentRuns.prototype, 'start').mockResolvedValue(snapshot),
-      get: vi.spyOn(AgentRuns.prototype, 'get').mockResolvedValue(snapshot),
-      respond: vi
-        .spyOn(AgentRuns.prototype, 'respond')
-        .mockResolvedValue(snapshot),
-      cancel: vi
-        .spyOn(AgentRuns.prototype, 'cancel')
-        .mockResolvedValue(snapshot),
-    };
-
-    expect(await main([...scenario.args, '--email', 'me@example.com'])).toBe(0);
-    expect(resolveSettings).toHaveBeenCalledWith({
-      email: 'me@example.com',
-      serverUrl: undefined,
-    });
-    for (const [name, method] of Object.entries(methods)) {
-      expect(
-        method.mock.calls,
-        `${name} must only run for its command`,
-      ).toEqual(name === scenario.method ? [scenario.expected] : []);
-    }
-  },
-);

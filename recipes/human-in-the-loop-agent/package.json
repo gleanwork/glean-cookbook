@@ -5,7 +5,7 @@
   "description": "Review and approve a durable Glean agent run from a TypeScript CLI.",
   "type": "module",
   "scripts": {
-    "login": "glean-auth login --scopes agents.run",
+    "login": "glean-auth login --scopes agents",
     "start": "tsx src/cli.ts",
     "test": "vitest run",
     "lint": "eslint src",
@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@gleanwork/api-client": "0.20.15",
-    "@gleanwork/auth": "1.0.0"
+    "@gleanwork/auth": "1.0.0",
+    "meow": "14.1.0"
   },
   "devDependencies": {
     "@types/node": "22.20.1",

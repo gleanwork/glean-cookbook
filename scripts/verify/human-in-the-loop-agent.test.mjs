@@ -29,7 +29,7 @@ test('a successful snapshot is partial evidence, never a live Slack pass', () =>
     'GLEAN_REJECTED_RUN_ID',
     'GLEAN_CANCELLED_RUN_ID',
   ]);
-  assert.match(checkSnapshot(snapshot, expected).skip, /Slack counts/);
+  assert.match(checkSnapshot(snapshot, expected).skip, /from Slack/);
 });
 
 test('wrong run, wrong agent, pending interactions, and wrong state fail', () => {
@@ -56,7 +56,7 @@ test('cancel verification needs CANCELLED, not just an accepted cancellation', (
   assert.ok(checkSnapshot({ ...snapshot, state: 'CANCELLED' }, cancelled).skip);
 });
 
-test('the verifier reads the shipped CLI status response envelope', async (t) => {
+test('the verifier reads the run printed by the shipped status command', async (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'approval-verifier-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const directory = path.join(root, 'recipes/human-in-the-loop-agent');
@@ -69,7 +69,7 @@ test('the verifier reads the shipped CLI status response envelope', async (t) =>
     path.join(directory, 'stub-cli.mjs'),
     [
       `if (JSON.stringify(process.argv.slice(2)) !== JSON.stringify(['status', '--run-id', 'run'])) process.exit(1);`,
-      `console.log(${JSON.stringify(JSON.stringify({ run: snapshot, request_id: 'request' }))});`,
+      `console.log(${JSON.stringify(JSON.stringify(snapshot))});`,
     ].join('\n'),
   );
   const original = { ...process.env };

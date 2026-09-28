@@ -1,29 +1,25 @@
 # Approve an agent action from a CLI
 
-Create an Auto mode agent with a read-only Slack channel lookup and one Slack
-write tool. Start a durable run from TypeScript, review the pending tool arguments,
-then approve, reject, or cancel it.
-Glean keeps the same run ID when approval resumes execution.
+Start a durable agent run from TypeScript, see the exact tool call the agent
+wants to make, and approve or reject it before it happens. The agent sends you
+a Slack direct message, so the only thing it can change is your own DMs.
 
-The example uses `@gleanwork/api-client@0.20.15`, which supports durable creation,
-polling, approval responses, and cancellation. The SDK handles API serialization,
-response validation, and errors. Sign-in uses the official `glean-auth` CLI and
-`createGleanTokenProvider` from `@gleanwork/auth`, so the OAuth session refreshes
-while a run waits for your review.
+A durable run lives on the server, not in your HTTP connection. When the agent
+reaches a tool that needs confirmation, the run stops in `REQUIRES_INPUT` with
+the stored tool call. Your code reads it, shows it to a person, and sends the
+decision. The same run then continues.
+
+The example uses `@gleanwork/api-client@0.20.15`. Sign-in uses the official
+`glean-auth` CLI and `createGleanTokenProvider` from `@gleanwork/auth`, so the
+session refreshes while a run waits for you.
 
 ## Prerequisites
 
-- Node.js 22.12+ and npm. Python and uv are not required.
-- A tenant with durable Platform Agents endpoints deployed and enabled.
-- Access to Agent Builder in the Glean web app, with Auto mode enabled and
-  permission to create and save an agent.
-- The native Slack Actions channel-lookup and send-message tools enabled, plus
-  a dedicated test channel where you may post. Creation records an agent; each start records a run;
-  approval can send a real Slack message. Do not use a production channel.
-- Permission to sign in with the **`agents.run`** scope. Create the agent in
-  your signed-in Glean browser session, then sign in separately for the CLI.
-  This CLI does not need `agents.read`, search scopes, global tokens, or
-  `X-Glean-ActAs`.
+- Node.js 22.12+ and npm
+- A Glean instance with durable agent runs available
+- Access to Agent Builder, and Slack Actions enabled with your Slack account
+  connected, so the agent can use **Send Slack message to user**
+- Permission to sign in with the **`agents`** scope
 
 ## 1. Copy and test
 
@@ -33,201 +29,164 @@ cd human-in-the-loop-agent && npm ci
 npm test
 ```
 
-The tests run the real SDK against local HTTP handlers. They neither sign in,
-create an agent, nor post to Slack. All later shell commands run in this same
-directory.
+The tests run the real SDK against local HTTP handlers. They don't sign in or
+contact Glean or Slack. Run every later command from this directory.
 
 ## 2. Create the agent
 
-Follow [agent-setup.md](./agent-setup.md) in the Glean web app: open the Agent
-library, click **Create agent**, and use **Auto mode**. In **Tools → Slack Actions**,
-select both **Search Slack Channel Doc Ids** and **Send Slack message to a channel**.
-Keep **Run without confirmation** unchecked for the write. Use a manual **Chat
-message** trigger and paste the supplied instructions with your test channel name.
+In Glean, open the **Agent library**, click **Create agent**, and keep **Auto
+mode**. Then set up the agent in the configuration tabs:
 
-The lookup returns the `channelDocId` required by the send-message tool. Do not
-use a raw Slack channel ID or general Glean Search as a substitute. Mentioning
-the lookup in Instructions does not enable it; check the selected tools list.
+1. **Name:** `Cookbook approval demo`.
+2. **Instructions:** paste this text:
 
-Click **Save** to publish the agent with access limited to you before running the
-CLI. Draft autosave alone does not publish changes. Save again after changing
-the tools, instructions, or trigger.
+   ```text
+   You send the user a Slack direct message.
 
-The guide includes the Builder Assistant prompt and the exact agent instructions.
-No coding-assistant plugin or local agent specification is required. Do not run
-the builder's Preview or enable scheduled/background runs. The CLI walkthrough
-below is the first test run.
+   Call "Send Slack message to user" exactly once, addressed to the current user,
+   with the user's message text unchanged as the message body. Do not call any
+   other tool. After the tool returns, reply with one sentence saying whether the
+   message was sent. If the call is rejected, say it was not sent and stop.
+   ```
 
-## 3. Sign in and configure
+3. **Tools:** under **Slack Actions**, select **Send Slack message to user**.
+   Leave **Run without confirmation** unchecked. That setting is the approval
+   boundary this recipe demonstrates.
+4. **Triggers:** keep **Manual run** with **Chat message** input.
+5. Click **Save**. Draft autosave alone doesn't publish, and API runs use the
+   saved agent.
+
+Copy the agent ID from the page URL: the 32-character ID after `/agents/`.
+
+Why not ship the agent as a spec file? A spec refers to Slack by a tool
+provider ID that is different on every Glean instance, so a file that works on
+one instance silently loses its Slack tool on another. Building it in Agent
+Builder takes a minute and works everywhere.
+
+## 3. Sign in
 
 ```bash
 npm run login -- --email "<work-email>"
-cp .env.example .env
 ```
 
 Complete browser sign-in yourself. `glean-auth` finds your Glean backend from
-your work email and stores a refreshable OAuth session in its own secure local
-store, outside this project. It does not write `.env`. Sign in as the same user
-for every command on a run.
+your email and stores a refreshable session outside this project.
 
-In `.env`, set `GLEAN_AGENT_ID` and `GLEAN_MESSAGE`. Use harmless text with a
-unique marker, such as `Cookbook approval test 001: ready for review.` Change
-the marker for each new run. Environment variables take precedence over `.env`.
+If you can't sign in with OAuth, copy `.env.example` to `.env` and set
+`GLEAN_API_TOKEN` to a user-scoped token with the `agents` scope. It isn't
+refreshed, so a run waiting for you can outlive it. Never paste a token into a
+chat or a command.
 
-Every command below takes `--email "<work-email>"` to find your backend. To
-skip discovery, set `GLEAN_SERVER_URL` to your backend origin in `.env`, or pass
-`--server-url`.
-
-If your instance cannot grant `agents.run` through sign-in, set `GLEAN_API_TOKEN`
-in `.env` to a **user-scoped** Glean-issued token with access to `agents.run`.
-That token is not refreshed, so a run waiting for review can outlive it. See
-[Platform API authentication](https://developers.glean.com/api/platform-api/authentication).
-Never paste credentials into a chat or a command. Global/act-as tokens are not
-supported by this recipe.
-
-## 4. Start and inspect a durable run
+## 4. Run it
 
 ```bash
-npm start -- start --email "<work-email>"
+npm start -- --agent-id "<agent-id>" --email "<work-email>"
 ```
 
-The JSON response contains the snapshot under `run`, including `run.run_id`.
-Copy that exact value into a shell variable: `export RUN_ID='the printed run_id'`. Do not run `start` again to
-check progress; every start creates another execution.
+The command starts one durable run, waits for the agent, and shows you what it
+wants to do:
+
+```text
+The agent is waiting for your approval before it runs this tool:
+
+Tool:        Send Slack message to user
+What it does: Glean will send a direct message in Slack to the current user.
+Arguments:
+  {
+    "message": "Cookbook approval test 2026-09-28T18:20:02.674Z"
+  }
+
+Approve (a), reject (r), cancel the run (c), or press Enter to decide later:
+```
+
+- **`a`** approves that one call. The DM arrives in Slack and the run succeeds.
+- **`r`** rejects it. The agent says the message wasn't sent, and nothing
+  arrives.
+- **`c`** cancels the run.
+- **Enter** leaves the run waiting and sends nothing.
+
+Pass `--message "<text>"` to choose the text; by default it's a timestamped
+test message. Set `GLEAN_AGENT_ID` in `.env` to skip `--agent-id`.
+
+If the run finishes without asking, the CLI says so. That means the tool isn't
+selected, **Run without confirmation** is checked, or the agent wasn't saved.
+
+## 5. Pick a run back up
+
+Closing the CLI, pressing Ctrl-C, or reaching the 120-second wait doesn't
+cancel the run. The CLI prints the full command to continue, with the run ID
+filled in:
 
 ```bash
-npm start -- watch --run-id "$RUN_ID" --email "<work-email>"
+npm start -- resume --agent-id "<agent-id>" --run-id "<run-id>" --email "<work-email>"
+npm start -- status --agent-id "<agent-id>" --run-id "<run-id>" --email "<work-email>"   # the run as JSON
+npm start -- cancel --agent-id "<agent-id>" --run-id "<run-id>" --email "<work-email>"
 ```
 
-Expect `REQUIRES_INPUT` and exactly one `pending_interactions` entry of type
-`TOOL_APPROVAL`. Read its `display_name`, `tool_id` when present, and complete
-`arguments`. Check the destination channel, message, and messaging identity.
-Confirm the marker does **not** appear in Slack. If the agent completes or posts
-before this pause, stop: the configured approval boundary failed.
+A resumed run can take a few minutes to finish after a decision. If the wait
+runs out, `resume` again.
 
-Copy the displayed `interaction_id` into
-`export INTERACTION_ID='the reviewed interaction_id'`. This identifies one
-stored invocation, not a tool definition. Do not edit the arguments or reuse
-an ID from a different pause. If the arguments are wrong, reject or cancel;
-start a new run only after reconciling the previous one.
-
-The watcher stops after 120 seconds by default (plus an in-flight request's
-15-second timeout). Exit code 2 means polling stopped, not cancellation. To
-reconnect, reopen this directory, set `RUN_ID` to the saved ID, and run:
+Without a terminal to ask in (for example, when a coding assistant runs the
+command), `resume` never decides. It shows the pending call and prints a
+command bound to its `interaction_id`:
 
 ```bash
-npm start -- status --run-id "$RUN_ID" --email "<work-email>"
-npm start -- watch --run-id "$RUN_ID" --wait-seconds 120 --email "<work-email>"
+npm start -- resume --agent-id "<agent-id>" --run-id "<run-id>" --decision reject --interaction-id "<interaction-id>" --email "<work-email>"
 ```
 
-These commands only inspect the existing run. They never approve anything.
-The CLI prints the original response JSON after SDK validation. This preserves
-large numeric arguments exactly instead of showing values rounded by JavaScript.
-Do not parse and re-serialize the JSON to produce your approval preview.
-
-## 5. Approve, reject, or cancel
-
-Choose **one** action for the paused run. Only approve arguments you have
-reviewed. An approval command can immediately post to Slack.
-
-Approve the stored invocation:
-
-```bash
-npm start -- approve --run-id "$RUN_ID" --interaction-id "$INTERACTION_ID" --email "<work-email>"
-npm start -- watch --run-id "$RUN_ID" --email "<work-email>"
-```
-
-Expect the same run ID, eventual `SUCCEEDED`, and exactly one matching Slack
-post. An accepted response is not proof that the tool succeeded; check the
-terminal output and Slack. The CLI never approves a later pause automatically.
-
-To test rejection, start a **new** run with a new message marker, wait for its
-pause, and replace both shell variables with that run's reviewed IDs:
-
-```bash
-npm start -- reject --run-id "$RUN_ID" --interaction-id "$INTERACTION_ID" --email "<work-email>"
-npm start -- watch --run-id "$RUN_ID" --email "<work-email>"
-```
-
-Expect the agent to acknowledge rejection and stop without a post or another
-tool attempt. Rejection follows the agent's workflow; it is not cancellation.
-
-For cancellation, start another marked run and wait for its approval pause:
-
-```bash
-npm start -- cancel --run-id "$RUN_ID" --email "<work-email>"
-npm start -- watch --run-id "$RUN_ID" --email "<work-email>"
-```
-
-Expect `CANCELLED`, no pending interactions, and no post. For an active run,
-cancellation is cooperative: keep polling, because completion may win the race.
-Cancellation cannot undo an already completed write or guarantee external work
-has stopped. Closing the CLI or pressing Ctrl-C does **not** cancel a run.
+Only run a decision after a person has reviewed that call.
 
 ## Verify
 
-Use a unique marker for every new run and record run IDs and observations:
+1. Run step 4 and approve. Exactly one DM arrives, and the run succeeds.
+2. Run step 4 again and reject. No DM arrives, and the agent replies that the
+   message wasn't sent.
+3. Run step 4 again and press Enter. Nothing arrives. Then `resume` that run
+   and cancel it (`c`). The run is cancelled with nothing pending.
 
-| Scenario             | Required observation                                                                                                                  |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Pause and reconnect  | One pending approval, no Slack post; a fresh CLI process reads the same run and stored arguments.                                     |
-| Approve              | Same run ID reaches `SUCCEEDED`; exactly one matching Slack post.                                                                     |
-| Replay               | After completion, repeat the exact accepted approval command once; the same run returns and the Slack count remains one.              |
-| Conflicting decision | Reject that already-approved interaction; expect HTTP 409, with no new post.                                                          |
-| Reject               | A new run stops after rejection without any matching post or another tool attempt.                                                    |
-| Cancel while paused  | A new paused run becomes `CANCELLED`, with no pending interactions and no matching post.                                              |
-| Wrong owner or agent | With separately authorized test access, polling another user's run or mismatching the agent/run returns 404, without exposing output. |
+Maintainers can record those three run IDs and run
+`mise exec -- pnpm verify:recipe human-in-the-loop-agent` from the cookbook
+root. It reads the runs' final state only. It can't see Slack, so it reports
+partial verification.
 
-An unexpected second pause requires a fresh review. Never reuse old approval
-IDs there: the API rejects stale decisions with 409. This recipe does not add
-a second tool just to generate another pause. Unit tests cover the client's
-409 handling; a live later-pause test needs a separately configured test agent.
+## How it works
 
-Maintainers can run `mise exec -- pnpm verify:recipe human-in-the-loop-agent`
-from the cookbook root after running `npm ci` in `recipes/human-in-the-loop-agent`,
-then exporting the credential/configuration and
-`GLEAN_APPROVED_RUN_ID`, `GLEAN_REJECTED_RUN_ID`, `GLEAN_CANCELLED_RUN_ID` from
-these checks. That gate reads snapshots with the shipped CLI; it does not
-create runs, approve tools, or inspect Slack. It always reports **partial
-verification**. A reviewer must record the Slack, replay, ownership, and
-reconnect observations separately. Never set `lastVerified` from offline tests
-or snapshots alone. The deployed recipe page must also pass a cold walkthrough.
+| SDK method (`glean.agents`)                                               | HTTP request                                |
+| ------------------------------------------------------------------------- | ------------------------------------------- |
+| `createRun({ execution_mode: 'DURABLE', stream: false, … }, id)`          | `POST /api/agents/{agent_id}/runs`          |
+| `getRun(id, runId)`                                                       | `GET /api/agents/{agent_id}/runs/{run_id}`  |
+| `respondToRun({ run_id, responses: [{ interaction_id, decision }] }, id)` | `POST /api/agents/{agent_id}/responses`     |
+| `cancelRun({ run_id }, id)`                                               | `POST /api/agents/{agent_id}/cancellations` |
 
-## API calls and limits
+[`src/workflow.ts`](src/workflow.ts) is the decision loop and
+[`src/runs.ts`](src/runs.ts) wraps the SDK. Things to keep when you build your
+own approval screen:
 
-| SDK method                                                                     | HTTP request                                                          |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| `agents.createRun({ execution_mode: 'DURABLE', stream: false, ... }, agentId)` | `POST /api/agents/{agent_id}/runs` → 201                              |
-| `agents.getRun`                                                                | `GET /api/agents/{agent_id}/runs/{run_id}`                            |
-| `agents.respondToRun`                                                          | `POST /api/agents/{agent_id}/responses` with `run_id` and `responses` |
-| `agents.cancelRun`                                                             | `POST /api/agents/{agent_id}/cancellations` with `run_id`             |
+- **Decide on the call you showed.** Send the `interaction_id` the person
+  reviewed, never a newly polled one. A decision can't edit the arguments; to
+  change them, reject and start again.
+- **One decision covers one call.** If the agent pauses again, show the new
+  call. This CLI stops instead of reusing the first decision.
+- **Don't retry a start.** Retrying a start after an unknown outcome creates
+  a second run. The client never retries on its own; after a network error,
+  check the run with `status` before doing anything else.
+- **Treat arguments as untrusted text.** The model writes them. The CLI escapes
+  control, bidirectional, and zero-width characters before printing. The SDK
+  parses them with `JSON.parse`, which rounds integers above 2^53. That's fine
+  for a text message, but show the raw response for tools that take large
+  numeric IDs.
 
-No experimental header is required. The response and cancellation routes are
-**not** nested under `/runs/{run_id}`. Approval sends one `APPROVE` or `REJECT`
-decision for the exact reviewed interaction ID. It grants no session-wide
-permission and cannot edit the stored arguments. The server requires the
-complete pending batch; this example deliberately uses one write tool.
+## Limits
 
-Durable means execution outlives the HTTP request, not automatic crash recovery.
-An active turn has a 30-minute execution timeout; a subsequent read marks an
-overdue turn failed after 40 minutes. There is no periodic sweep or automatic
-replay. Approval-paused runs do not expire through this cleanup. Each accepted
-continuation starts a new deadline. Failure alone does not prove external work
-has stopped.
-
-All automatic retries are disabled. On a lost create response, reconcile in
-Glean before starting again. On a lost decision response, inspect the same run;
-an explicit replay must use the exact original decision and interaction ID.
-A 409 requires inspecting the conflict, not substituting new IDs. A cancellation
-409 can occur before the worker registers; inspect and explicitly retry later.
-On 401, run `npm run login` again as the same user; on 403, check the
-`agents.run` scope and agent access; on 422, complete tool authentication in Glean. Do not disable approvals
-to fix an authentication error.
+- **One pending call at a time.** The CLI refuses a run waiting on more than
+  one approval. Cancel it instead.
+- **Durable isn't crash recovery.** A run survives your connection closing,
+  not a server worker crashing. An active turn times out after 30 minutes.
+  Runs waiting for approval don't expire through that timeout.
+- **Cancelling isn't undo.** It stops future work. A tool call that already
+  ran stays done.
 
 ## Cleanup
 
-Cancel each unfinished test run explicitly and check its final state. With the
-appropriate permission, remove only the marked test messages from Slack and
-archive or delete your disposable agent in Agent Builder. Nothing here deletes
-runs, messages, or agents automatically. Keep credentials and printed tool
-arguments out of shared logs and version control.
+Delete or archive the `Cookbook approval demo` agent in Agent Builder when
+you're done. Nothing here deletes runs, messages, or agents.

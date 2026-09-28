@@ -11,7 +11,7 @@ const scenarios = [
 ];
 
 // Only inspect the runs the reviewer created. This gate never starts a run,
-// submits a decision, posts to Slack, or deletes test artifacts.
+// submits a decision, sends a message, or deletes anything.
 export const sideEffects = 'read-only';
 export const requiredEnv = [
   'GLEAN_SERVER_URL',
@@ -33,10 +33,10 @@ export function checkSnapshot(snapshot, { agentId, runId, state }) {
   ) {
     return 'Expected no pending interactions on the terminal run.';
   }
-  // A completed run alone cannot prove a particular decision, its replay
-  // safety, or the number of Slack messages. Never report full verification.
+  // A finished run alone cannot prove which decision was made or what reached
+  // Slack. Never report full verification.
   return {
-    skip: 'API snapshot checks passed. Record the README live checks: no post before approval, actual Slack counts, rejection, cancellation, accepted replay, conflicting decisions, reconnect, and authorized wrong-owner/agent access. A terminal snapshot cannot prove those outcomes.',
+    skip: 'API snapshot checks passed. Record the README Verify results from Slack: exactly one DM after approval, none after rejection or cancellation. A terminal snapshot cannot prove what was sent.',
   };
 }
 
@@ -64,7 +64,8 @@ export async function run(query, context) {
         maxBuffer: 2 * 1024 * 1024,
       },
     );
-    return checkSnapshot(JSON.parse(stdout).run, {
+    // status prints the run itself as JSON.
+    return checkSnapshot(JSON.parse(stdout), {
       agentId: process.env.GLEAN_AGENT_ID,
       runId,
       state: scenario.state,

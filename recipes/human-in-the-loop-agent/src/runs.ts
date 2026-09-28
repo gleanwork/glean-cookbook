@@ -1,14 +1,22 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import { Glean } from '@gleanwork/api-client';
-import { HTTPClient } from '@gleanwork/api-client/lib/http.js';
 import type { RequestOptions } from '@gleanwork/api-client/lib/sdks.js';
-import type { PlatformDurableAgentRun } from '@gleanwork/api-client/models/components';
+import type {
+  PlatformDurableAgentRun,
+  PlatformAgentRunToolApproval,
+} from '@gleanwork/api-client/models/components';
 import type { PlatformAgentsCreateRunResponse } from '@gleanwork/api-client/models/operations';
 import { RecipeError, type Settings } from './client.js';
 
-export { RecipeError };
+export type Run = PlatformDurableAgentRun;
+export type Approval = PlatformAgentRunToolApproval;
+export type Decision = 'APPROVE' | 'REJECT';
 
+/** States in which the run is still working and a poll will see progress. */
 export const ACTIVE = new Set(['QUEUED', 'RUNNING', 'CANCELLING']);
+/** IDs that can be printed into a shell command unchanged. */
+export const SAFE_ID = /^[\w-]+$/;
+
 export const TERMINAL = new Set([
   'SUCCEEDED',
   'FAILED',
@@ -16,193 +24,161 @@ export const TERMINAL = new Set([
   'EXPIRED',
 ]);
 
-const REQUEST_OPTIONS = {
-  retries: { strategy: 'none' },
-  timeoutMs: 15_000,
-  redirect: 'error',
-} satisfies RequestOptions;
+// The client never retries (see the constructor): retrying a start after an
+// unknown outcome creates a second run. The CLI tells the person what to check.
+const REQUEST_OPTIONS = { timeoutMs: 15_000 } satisfies RequestOptions;
 
-export interface Snapshot {
-  run: PlatformDurableAgentRun;
-  // The human reviews the wire JSON, not numbers rounded by JSON.parse.
-  json: string;
-}
-
-export function validateSnapshot(
+/**
+ * Checks that a response is the durable run we asked about. `createRun` can
+ * also return a streaming or wait-mode body; neither is a durable run, and a
+ * run we didn't ask for must never receive a decision.
+ */
+export function checkRun(
   response: PlatformAgentsCreateRunResponse,
   agentId: string,
   runId?: string,
-): PlatformDurableAgentRun {
-  if (
-    typeof response === 'string' ||
-    !response.run ||
-    !('pending_interactions' in response.run)
-  ) {
+): Run {
+  const run = typeof response === 'string' ? undefined : response.run;
+  if (!run || !('pending_interactions' in run)) {
     throw new RecipeError(
-      'Expected a durable run snapshot. Confirm API deployment; do not retry creation.',
+      'Glean did not return a durable run. Check that durable runs are available on your Glean instance. Nothing was retried.',
     );
   }
-  const run = response.run;
-  if (
-    !run.run_id ||
-    run.agent_id !== agentId ||
-    (runId && run.run_id !== runId)
-  ) {
+  // The CLI prints these IDs into commands to copy. Check them on arrival,
+  // before any decision is sent, rather than when a command is printed.
+  const ids = [
+    run.run_id,
+    ...run.pending_interactions.map((p) => p.interaction_id),
+  ];
+  if (!ids.every((id) => SAFE_ID.test(id))) {
     throw new RecipeError(
-      'The returned agent/run identity does not match the request.',
+      'Glean returned an unexpected run or interaction ID. Nothing was sent.',
     );
   }
-  if (
-    !ACTIVE.has(run.state) &&
-    !TERMINAL.has(run.state) &&
-    run.state !== 'REQUIRES_INPUT'
-  ) {
-    throw new RecipeError(
-      'Unknown run state. Inspect the API contract before continuing.',
-    );
+  if (run.agent_id !== agentId || (runId && run.run_id !== runId)) {
+    throw new RecipeError('The returned run does not match the one requested.');
   }
   return run;
 }
 
-export class AgentRuns {
-  constructor(
-    private readonly config: Settings,
-    private readonly transport = new HTTPClient(),
-  ) {}
+/**
+ * The single pending tool approval this recipe knows how to review, or null
+ * when the run isn't waiting for one. Anything else is refused rather than
+ * partially answered: the server needs a decision for every pending call.
+ */
+export function pendingApproval(run: Run): Approval | null {
+  if (run.state !== 'REQUIRES_INPUT') return null;
+  const [approval, ...rest] = run.pending_interactions;
+  if (!approval || rest.length > 0 || approval.type !== 'TOOL_APPROVAL') {
+    throw new RecipeError(
+      `This recipe reviews one tool approval at a time; the run is waiting on ${run.pending_interactions.length}. Cancel it with the cancel command and this run ID.`,
+    );
+  }
+  return approval;
+}
 
-  private async request(
-    operation: (glean: Glean) => Promise<PlatformAgentsCreateRunResponse>,
-    runId?: string,
-  ): Promise<Snapshot> {
-    // The SDK validates the response and owns serialization/error handling.
-    // Its JSON.parse rounds large integers, so preserve the original JSON for
-    // approval review. A per-request SDK hook keeps concurrent snapshots paired.
-    let json = '';
-    const httpClient = this.transport.clone();
-    httpClient.addHook('response', async (response) => {
-      json = await response.clone().text();
-    });
-    const glean = new Glean({
-      serverURL: this.config.serverURL,
-      apiToken: this.config.apiToken,
-      httpClient,
+/** The agent's last text reply, if the run produced one. */
+export function lastReply(run: Run): string | undefined {
+  const messages: unknown = run.output?.messages;
+  if (!Array.isArray(messages)) return undefined;
+  const texts = messages.flatMap((message: { content?: unknown }) =>
+    Array.isArray(message?.content)
+      ? message.content.flatMap((part: { type?: string; text?: unknown }) =>
+          part?.type === 'text' &&
+          typeof part.text === 'string' &&
+          part.text.trim()
+            ? [part.text.trim()]
+            : [],
+        )
+      : [],
+  );
+  return texts.at(-1);
+}
+
+export class AgentRuns {
+  private readonly glean: Glean;
+
+  constructor(private readonly settings: Settings) {
+    this.glean = new Glean({
+      serverURL: settings.serverURL,
+      apiToken: settings.apiToken,
       retryConfig: { strategy: 'none' },
     });
-    const response = await operation(glean);
-    const run = validateSnapshot(response, this.config.agentId, runId);
-    return { run, json };
   }
 
-  async start(message: string): Promise<Snapshot> {
-    if (!message.trim())
-      throw new RecipeError('Set GLEAN_MESSAGE in .env or pass --message.');
-    // Each POST creates a new execution. Never retry it blindly.
-    return this.request((glean) =>
-      glean.agents.createRun(
-        {
-          execution_mode: 'DURABLE',
-          stream: false,
-          messages: [
-            { role: 'USER', content: [{ type: 'text', text: message }] },
-          ],
-        },
-        this.config.agentId,
-        REQUEST_OPTIONS,
-      ),
+  get agentId() {
+    return this.settings.agentId;
+  }
+
+  /** Starts one durable run. Each call creates a new run; never retry it. */
+  async start(message: string): Promise<Run> {
+    const response = await this.glean.agents.createRun(
+      {
+        execution_mode: 'DURABLE',
+        stream: false,
+        messages: [
+          { role: 'USER', content: [{ type: 'text', text: message }] },
+        ],
+      },
+      this.agentId,
+      REQUEST_OPTIONS,
     );
+    return checkRun(response, this.agentId);
   }
 
-  get(runId: string): Promise<Snapshot> {
-    return this.request(
-      (glean) =>
-        glean.agents.getRun(this.config.agentId, runId, REQUEST_OPTIONS),
+  async get(runId: string): Promise<Run> {
+    const response = await this.glean.agents.getRun(
+      this.agentId,
       runId,
+      REQUEST_OPTIONS,
     );
+    return checkRun(response, this.agentId, runId);
   }
 
-  respond(
-    runId: string,
-    interactionId: string,
-    decision: 'APPROVE' | 'REJECT',
-  ): Promise<Snapshot> {
-    // Use the ID the human reviewed; never substitute a newly polled ID.
-    // One decision covers this recipe's complete single-tool approval batch.
-    // The server rejects stale/incomplete batches and deduplicates accepted replays.
-    return this.request(
-      (glean) =>
-        glean.agents.respondToRun(
-          {
-            run_id: runId,
-            responses: [{ interaction_id: interactionId, decision }],
-          },
-          this.config.agentId,
-          REQUEST_OPTIONS,
-        ),
-      runId,
+  /**
+   * Answers the approval the person reviewed. Pass the reviewed interaction ID,
+   * never a newly polled one: the decision applies to that exact tool call.
+   */
+  async respond(runId: string, interactionId: string, decision: Decision) {
+    const response = await this.glean.agents.respondToRun(
+      {
+        run_id: runId,
+        responses: [{ interaction_id: interactionId, decision }],
+      },
+      this.agentId,
+      REQUEST_OPTIONS,
     );
+    return checkRun(response, this.agentId, runId);
   }
 
-  cancel(runId: string): Promise<Snapshot> {
-    return this.request(
-      (glean) =>
-        glean.agents.cancelRun(
-          { run_id: runId },
-          this.config.agentId,
-          REQUEST_OPTIONS,
-        ),
-      runId,
+  /** Requests cancellation. It stops future work; it can't undo finished work. */
+  async cancel(runId: string): Promise<Run> {
+    const response = await this.glean.agents.cancelRun(
+      { run_id: runId },
+      this.agentId,
+      REQUEST_OPTIONS,
     );
+    return checkRun(response, this.agentId, runId);
   }
-}
 
-export function show(snapshot: Snapshot): void {
-  // Do not log these arguments to a shared service. Escape terminal control
-  // characters without parsing/re-serializing numbers in the approval preview.
-  console.log(
-    snapshot.json.replace(
-      /[\u007f-\u009f]/gu,
-      (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`,
-    ),
-  );
-}
-
-export function outcome(run: PlatformDurableAgentRun): number {
-  if (run.state === 'FAILED' || run.state === 'EXPIRED') return 1;
-  if (run.state === 'REQUIRES_INPUT') {
-    if (
-      run.pending_interactions.length !== 1 ||
-      run.pending_interactions[0]?.type !== 'TOOL_APPROVAL'
-    ) {
-      console.error(
-        'This recipe expects exactly one TOOL_APPROVAL. Do not approve a partial batch; cancel this run.',
-      );
-      return 1;
+  /**
+   * Polls until the run needs a decision or finishes. Returns the last run
+   * seen if the deadline passes first; the run keeps going either way.
+   */
+  async wait(
+    run: Run,
+    { seconds = 120, intervalMs = 2000 } = {},
+    onPoll: (run: Run) => void = () => undefined,
+  ): Promise<Run> {
+    const deadline = performance.now() + seconds * 1000;
+    let current = run;
+    while (ACTIVE.has(current.state)) {
+      const remaining = deadline - performance.now();
+      if (remaining <= 0) break;
+      await sleep(Math.min(intervalMs, remaining));
+      current = await this.get(current.run_id);
+      onPoll(current);
     }
-    console.error(
-      'Review the tool, destination, and arguments. Approval is never automatic.',
-    );
-  }
-  return 0;
-}
-
-export async function watch(
-  runs: AgentRuns,
-  runId: string,
-  seconds: number,
-  pollIntervalMs = 2000,
-): Promise<number> {
-  const deadline = performance.now() + seconds * 1000;
-  while (true) {
-    const snapshot = await runs.get(runId);
-    show(snapshot);
-    if (!ACTIVE.has(snapshot.run.state)) return outcome(snapshot.run);
-    const remaining = deadline - performance.now();
-    if (remaining <= 0) {
-      console.error(
-        'Polling stopped. The run was NOT cancelled. Reuse this run ID to watch or cancel.',
-      );
-      return 2;
-    }
-    await sleep(Math.min(pollIntervalMs, remaining));
+    return current;
   }
 }
