@@ -1726,7 +1726,7 @@
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
     "languages": ["typescript"],
-    "visibility": "preview",
+    "visibility": "public",
     "featured": false,
     "tags": ["human-in-the-loop", "approvals", "durable-runs", "slack"],
     "prerequisites": [
