@@ -28,6 +28,7 @@ test('--help lists the one-command flow and the reconnect commands', () => {
   expect(result.status).toBe(0);
   expect(result.stdout).toMatch(/--agent-id <id> --email <work-email>/);
   expect(result.stdout).toMatch(/resume --agent-id <id> --run-id <id>/);
+  expect(result.stdout).toMatch(/--show-json +Also print each run/);
 });
 
 test.each([

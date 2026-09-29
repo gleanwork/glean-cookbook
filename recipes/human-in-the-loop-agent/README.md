@@ -108,6 +108,12 @@ Approve (a), reject (r), cancel the run (c), or press Enter to decide later:
 Pass `--message "<text>"` to choose the text; by default it's a timestamped
 test message. Set `GLEAN_AGENT_ID` in `.env` to skip `--agent-id`.
 
+Add `--show-json` to see the API responses too. Each time Glean returns a run,
+the CLI prints it as JSON under the SDK call and request that returned it, and
+skips polls where nothing changed. It's the run as the SDK parsed it, the same
+JSON that `status` prints. It includes the agent's messages and tool
+arguments, escaped like the review above, so keep it out of shared logs.
+
 If the run finishes without asking, the CLI says so. That means the tool isn't
 selected, **Run without confirmation** is checked, or the agent wasn't saved.
 

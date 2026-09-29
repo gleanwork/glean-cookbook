@@ -11,6 +11,13 @@ import { RecipeError, type Settings } from './client.js';
 export type Run = PlatformDurableAgentRun;
 export type Approval = PlatformAgentRunToolApproval;
 export type Decision = 'APPROVE' | 'REJECT';
+/** The `glean.agents` method that returned a run. */
+export type RunCall = 'createRun' | 'getRun' | 'respondToRun' | 'cancelRun';
+
+export interface AgentRunsOptions {
+  /** Receives every run Glean returns, after checkRun accepts it. */
+  onRun?: (call: RunCall, run: Run) => void;
+}
 
 /** States in which the run is still working and a poll will see progress. */
 export const ACTIVE = new Set(['QUEUED', 'RUNNING', 'CANCELLING']);
@@ -98,7 +105,10 @@ export function lastReply(run: Run): string | undefined {
 export class AgentRuns {
   private readonly glean: Glean;
 
-  constructor(private readonly settings: Settings) {
+  constructor(
+    private readonly settings: Settings,
+    private readonly options: AgentRunsOptions = {},
+  ) {
     this.glean = new Glean({
       serverURL: settings.serverURL,
       apiToken: settings.apiToken,
@@ -108,6 +118,16 @@ export class AgentRuns {
 
   get agentId() {
     return this.settings.agentId;
+  }
+
+  private accept(
+    call: RunCall,
+    response: PlatformAgentsCreateRunResponse,
+    runId?: string,
+  ): Run {
+    const run = checkRun(response, this.agentId, runId);
+    this.options.onRun?.(call, run);
+    return run;
   }
 
   /** Starts one durable run. Each call creates a new run; never retry it. */
@@ -123,7 +143,7 @@ export class AgentRuns {
       this.agentId,
       REQUEST_OPTIONS,
     );
-    return checkRun(response, this.agentId);
+    return this.accept('createRun', response);
   }
 
   async get(runId: string): Promise<Run> {
@@ -132,7 +152,7 @@ export class AgentRuns {
       runId,
       REQUEST_OPTIONS,
     );
-    return checkRun(response, this.agentId, runId);
+    return this.accept('getRun', response, runId);
   }
 
   /**
@@ -148,7 +168,7 @@ export class AgentRuns {
       this.agentId,
       REQUEST_OPTIONS,
     );
-    return checkRun(response, this.agentId, runId);
+    return this.accept('respondToRun', response, runId);
   }
 
   /** Requests cancellation. It stops future work; it can't undo finished work. */
@@ -158,7 +178,7 @@ export class AgentRuns {
       this.agentId,
       REQUEST_OPTIONS,
     );
-    return checkRun(response, this.agentId, runId);
+    return this.accept('cancelRun', response, runId);
   }
 
   /**
@@ -168,7 +188,6 @@ export class AgentRuns {
   async wait(
     run: Run,
     { seconds = 120, intervalMs = 2000 } = {},
-    onPoll: (run: Run) => void = () => undefined,
   ): Promise<Run> {
     const deadline = performance.now() + seconds * 1000;
     let current = run;
@@ -177,7 +196,6 @@ export class AgentRuns {
       if (remaining <= 0) break;
       await sleep(Math.min(intervalMs, remaining));
       current = await this.get(current.run_id);
-      onPoll(current);
     }
     return current;
   }

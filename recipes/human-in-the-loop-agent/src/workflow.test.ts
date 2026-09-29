@@ -7,7 +7,8 @@ import type {
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest';
 import type { Settings } from './client.js';
 import { formatCliError } from './errors.js';
-import { AgentRuns, type Run } from './runs.js';
+import { printRuns, runJson } from './review.js';
+import { AgentRuns, type Run, type RunCall } from './runs.js';
 import { drive, type Io } from './workflow.js';
 
 const base = 'https://tenant.example';
@@ -421,5 +422,77 @@ describe('deciding', () => {
     await drive(runs(), running, out.io, fast);
     expect(out.text()).toContain('safe\\u202egnp.exe\\u200b\\u001b[2J');
     expect(out.text()).not.toMatch(/[\u202e\u200b\u001b]/u);
+  });
+});
+
+describe('showing the run JSON', () => {
+  test('every SDK call reports the run it returned', async () => {
+    server.use(
+      http.post(runsUrl, () =>
+        HttpResponse.json(body('RUNNING'), { status: 201 }),
+      ),
+      http.get(runUrl, () => HttpResponse.json(body('REQUIRES_INPUT'))),
+      http.post(responsesUrl, () => HttpResponse.json(body('RUNNING'))),
+      http.post(cancellationsUrl, () => HttpResponse.json(body('CANCELLED'))),
+    );
+    const seen: [RunCall, string][] = [];
+    const agentRuns = new AgentRuns(settings, {
+      onRun: (call, run) => seen.push([call, run.state]),
+    });
+    await agentRuns.start('hello');
+    await agentRuns.get('run-1');
+    await agentRuns.respond('run-1', 'call-1', 'APPROVE');
+    await agentRuns.cancel('run-1');
+    expect(seen).toEqual([
+      ['createRun', 'RUNNING'],
+      ['getRun', 'REQUIRES_INPUT'],
+      ['respondToRun', 'RUNNING'],
+      ['cancelRun', 'CANCELLED'],
+    ]);
+  });
+
+  test('prints each new run once, under the request that returned it', async () => {
+    serveStates(
+      body('RUNNING'),
+      body('RUNNING'),
+      body('REQUIRES_INPUT'),
+      body('SUCCEEDED', { reply: 'Sent.' }),
+    );
+    server.use(
+      http.post(responsesUrl, () => HttpResponse.json(body('RUNNING'))),
+    );
+    const printed: string[] = [];
+    const agentRuns = new AgentRuns(settings, {
+      onRun: printRuns((text) => printed.push(text)),
+    });
+    const out = recorder('APPROVE');
+
+    expect(await drive(agentRuns, running, out.io, fast)).toBe(0);
+    const blocks = printed.map((text) => {
+      const [, heading, ...json] = text.split('\n');
+      return [heading, (JSON.parse(json.join('\n')) as Run).state];
+    });
+    // The second RUNNING poll returned the same run, so it isn't repeated.
+    expect(blocks).toEqual([
+      ['getRun: GET /api/agents/{agent_id}/runs/{run_id}', 'RUNNING'],
+      ['getRun: GET /api/agents/{agent_id}/runs/{run_id}', 'REQUIRES_INPUT'],
+      ['respondToRun: POST /api/agents/{agent_id}/responses', 'RUNNING'],
+      ['getRun: GET /api/agents/{agent_id}/runs/{run_id}', 'SUCCEEDED'],
+    ]);
+    expect(out.questions).toHaveLength(1);
+  });
+
+  test('run JSON is escaped for the terminal and still parses to the same run', () => {
+    const { run } = body('REQUIRES_INPUT', {
+      pending: [
+        {
+          ...approval(),
+          arguments: { message: 'safe\u202egnp.exe\u200b\u009b2J\u001b[2J' },
+        },
+      ],
+    });
+    const text = runJson(run as unknown as Run);
+    expect(text).not.toMatch(/[\u202e\u200b\u009b\u001b]/u);
+    expect(JSON.parse(text)).toEqual(run);
   });
 });

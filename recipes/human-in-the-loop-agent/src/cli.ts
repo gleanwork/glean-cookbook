@@ -3,6 +3,7 @@ import { stdin, stdout } from 'node:process';
 import meow from 'meow';
 import { loadDotEnv, RecipeError, resolveSettings } from './client.js';
 import { printCliError } from './errors.js';
+import { printRuns, runJson } from './review.js';
 import { AgentRuns, type Decision } from './runs.js';
 import { command, drive, type Io } from './workflow.js';
 
@@ -24,6 +25,7 @@ const cli = meow(
       --decision        approve or reject, for when there's no terminal to ask in
       --interaction-id  The pending approval the decision is for (printed by resume)
       --wait-seconds    How long to wait for each step (default: 120)
+      --show-json       Also print each run Glean returns, as JSON
       --email           Work email used to find your Glean backend
       --server-url      Complete Glean backend origin; overrides --email
 
@@ -39,6 +41,7 @@ const cli = meow(
       decision: { type: 'string' },
       interactionId: { type: 'string' },
       waitSeconds: { type: 'number', default: 120 },
+      showJson: { type: 'boolean', default: false },
       email: { type: 'string' },
       serverUrl: { type: 'string' },
     },
@@ -117,6 +120,13 @@ async function main(): Promise<number> {
       email: cli.flags.email,
       serverUrl: cli.flags.serverUrl,
     }),
+    {
+      // status already prints the run as JSON.
+      onRun:
+        cli.flags.showJson && subcommand !== 'status'
+          ? printRuns((text) => console.log(text))
+          : undefined,
+    },
   );
   const io: Io = {
     log: (line) => console.log(line),
@@ -137,7 +147,7 @@ async function main(): Promise<number> {
   switch (subcommand) {
     case 'status':
       // Machine-readable, for scripts and the repository verifier.
-      console.log(JSON.stringify(await runs.get(runIdFlag()), null, 2));
+      console.log(runJson(await runs.get(runIdFlag())));
       return 0;
     case 'cancel': {
       const run = await runs.cancel(runIdFlag());
