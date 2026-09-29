@@ -38,15 +38,11 @@ In Glean, open the **Agent library**, click **Create agent**, and keep **Auto
 mode**. Then set up the agent in the configuration tabs:
 
 1. **Name:** `Cookbook approval demo`.
-2. **Instructions:** paste this text:
+2. **Instructions:** paste the text of
+   [`agent-instructions.txt`](agent-instructions.txt). To print it:
 
-   ```text
-   You send the user a Slack direct message.
-
-   Call "Send Slack message to user" exactly once, addressed to the current user,
-   with the user's message text unchanged as the message body. Do not call any
-   other tool. After the tool returns, reply with one sentence saying whether the
-   message was sent. If the call is rejected, say it was not sent and stop.
+   ```bash
+   cat agent-instructions.txt
    ```
 
 3. **Tools:** under **Slack Actions**, select **Send Slack message to user**.
@@ -173,6 +169,11 @@ own approval screen:
 - **Decide on the call you showed.** Send the `interaction_id` the person
   reviewed, never a newly polled one. A decision can't edit the arguments; to
   change them, reject and start again.
+- **Only count input given after the review.** A terminal keeps what you type
+  until a program reads it, so a line typed while the CLI waits would
+  otherwise answer the prompt the moment it opens. [`src/prompt.ts`](src/prompt.ts)
+  throws that input away first. A web or chat approval screen has the same
+  problem with a click that lands as the call appears.
 - **One decision covers one call.** If the agent pauses again, show the new
   call. This CLI stops instead of reusing the first decision.
 - **Don't retry a start.** Retrying a start after an unknown outcome creates
