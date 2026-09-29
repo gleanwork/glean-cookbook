@@ -11,24 +11,22 @@ const recipe = JSON.parse(read('recipe.json')) as {
   steps: { description?: string; command?: string }[];
 };
 const readme = read('README.md');
-// Fenced text blocks, with any list indentation removed.
-const textBlocks = (source: string) =>
-  [...source.matchAll(/^( *)```text\n([\s\S]*?)\n *```/gm)].map(
-    ([, indent = '', block = '']) =>
-      block.replace(new RegExp(`^ {0,${indent.length}}`, 'gm'), ''),
-  );
 
-test('the page and README give the same agent instructions', () => {
-  const pageInstructions = recipe.steps
-    .flatMap((step) => textBlocks(step.description ?? ''))
-    .filter((block) =>
-      block.startsWith('You send the user a Slack direct message.'),
-    );
-  const readmeInstructions = textBlocks(readme).filter((block) =>
-    block.startsWith('You send the user a Slack direct message.'),
+test('the page and README both point at the shipped agent instructions', () => {
+  expect(read('agent-instructions.txt')).toMatch(
+    /^You send the user a Slack direct message\./,
   );
-  expect(pageInstructions).toHaveLength(1);
-  expect(readmeInstructions).toEqual(pageInstructions);
+  const print = 'cat agent-instructions.txt';
+  expect(recipe.steps.map((step) => step.command)).toContain(print);
+  expect(readme).toContain(print);
+});
+
+test('step descriptions stay inline text the page can render', () => {
+  // The page renders a step description as one paragraph, so a fenced block
+  // shows up as stray backticks. Put copyable text in a command or a file.
+  for (const step of recipe.steps) {
+    expect(step.description ?? '').not.toContain('```');
+  }
 });
 
 test('every declared scope matches the scope the client requests', () => {
