@@ -42,20 +42,13 @@ path when the documented one fails.
    ```
 
 3. **Create the agent in Agent Builder**
-   In Glean, open the Agent library, click Create agent, and keep Auto mode. In the configuration tabs, name it Cookbook approval demo and paste these instructions:
-
-   ```text
-   You send the user a Slack direct message.
-
-   Call "Send Slack message to user" exactly once, addressed to the current user,
-   with the user's message text unchanged as the message body. Do not call any
-   other tool. After the tool returns, reply with one sentence saying whether the
-   message was sent. If the call is rejected, say it was not sent and stop.
-   ```
-
-   In Tools, under Slack Actions, select Send Slack message to user and leave Run without confirmation unchecked. That setting is the approval boundary. Keep the Manual run trigger with Chat message input, then click Save; draft autosave alone doesn't publish. Copy the agent ID from the page URL: the 32-character ID after /agents/.
+   In Glean, open the Agent library, click Create agent, and keep Auto mode. In the configuration tabs, name it Cookbook approval demo and paste the instructions this command prints. In Tools, under Slack Actions, select Send Slack message to user and leave Run without confirmation unchecked. That setting is the approval boundary. Keep the Manual run trigger with Chat message input, then click Save; draft autosave alone doesn't publish. Copy the agent ID from the page URL: the 32-character ID after /agents/.
 
    A spec file can't do this step portably: it refers to Slack by a tool provider ID that is different on every Glean instance, so the Slack tool would be silently dropped on yours.
+
+   ```bash
+   cat agent-instructions.txt
+   ```
 
 4. **Sign in**
    Complete browser sign-in yourself. glean-auth finds your Glean backend from your email and keeps a refreshable session outside this project, so a run can wait for you. If OAuth isn't available, copy .env.example to .env and set GLEAN_API_TOKEN to a user-scoped token with the agents scope instead. Never paste a token into a chat or a command.
