@@ -24,6 +24,7 @@ import prettier from 'prettier';
 import { materializeArtifacts } from './lib/artifacts.mjs';
 import { readJsonc } from './lib/jsonc.mjs';
 import { extractPastePrompt } from './lib/paste-prompt.mjs';
+import { materializeApiFlow } from './lib/api-flow.mjs';
 import { materializeCodeWalkthrough } from './lib/code-walkthrough.mjs';
 import { stripFrameworkCompilerMetadata } from './lib/registry-metadata.mjs';
 
@@ -87,8 +88,11 @@ const entries = recipeFiles
     }
     const recipeDir = path.dirname(file);
     try {
-      return materializeCodeWalkthrough(
-        inlinePastePrompt(stripFrameworkCompilerMetadata(entry), recipeDir),
+      return materializeApiFlow(
+        materializeCodeWalkthrough(
+          inlinePastePrompt(stripFrameworkCompilerMetadata(entry), recipeDir),
+          recipeDir,
+        ),
         recipeDir,
       );
     } catch (error) {

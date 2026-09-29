@@ -7,6 +7,7 @@ import fg from 'fast-glob';
 import { readJsonc } from './lib/jsonc.mjs';
 import { extractPastePrompt } from './lib/paste-prompt.mjs';
 import { compileFrameworkFeatures } from './lib/framework-features.mjs';
+import { materializeApiFlow } from './lib/api-flow.mjs';
 import { materializeCodeWalkthrough } from './lib/code-walkthrough.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -126,6 +127,7 @@ for (const { file, entry } of registry) {
 
   try {
     materializeCodeWalkthrough(entry, recipeDir);
+    materializeApiFlow(entry, recipeDir);
   } catch (error) {
     failed = true;
     console.error(`✗ ${label}: ${error.message}`);
