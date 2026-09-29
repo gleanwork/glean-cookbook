@@ -42,6 +42,7 @@ the coding agent must not substitute its isolated browser for your Glean SSO ses
 | ----------------------------------------------------------------- | ------------ | ------- | ------------------------------------------ |
 | **Customer 360: an account page built from your own content**     | Intermediate | ~1 hr   | `/cookbook:customer-360`                   |
 | **Trigger a customer meeting prep request**                       | Beginner     | ~20 min | `/cookbook:customer-meeting-prep-trigger`  |
+| **Approve an agent action from a CLI**                            | Beginner     | ~5 min  | `/cookbook:human-in-the-loop-agent`        |
 | **Import a skill from GitHub**                                    | Intermediate | ~20 min | `/cookbook:import-skill-from-github`       |
 | **Build an IT helpdesk page in Lovable**                          | Beginner     | ~45 min | `/cookbook:no-code-it-helpdesk-lovable`    |
 | **Build a PTO lookup page in Replit**                             | Beginner     | ~45 min | `/cookbook:no-code-pto-lookup-replit`      |
