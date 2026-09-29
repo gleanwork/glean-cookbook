@@ -108,13 +108,14 @@ Approve (a), reject (r), cancel the run (c), or press Enter to decide later:
 Pass `--message "<text>"` to choose the text; by default it's a timestamped
 test message. Set `GLEAN_AGENT_ID` in `.env` to skip `--agent-id`.
 
-`--show-json` shows the API responses as the run goes. Each time Glean returns
-a run, the CLI prints it as JSON under the SDK call and request that returned
-it, such as `getRun: GET /api/agents/{agent_id}/runs/{run_id}`, and skips polls
-where nothing changed. It's the run as the SDK parsed it, the same JSON that
-`status` prints. It includes the agent's messages and tool arguments, escaped
-like the review above, so keep it out of shared logs. Leave the flag off to see
-only the review.
+`--show-json` shows each API call as the run goes: the SDK method and HTTP
+request, such as `respondToRun: POST /api/agents/{agent_id}/responses`, then
+the request body it sent and the response Glean returned. Polls where the run
+didn't change are skipped. Responses are shown as the SDK parsed them. The JSON
+includes the agent's messages and tool arguments, escaped like the review
+above, so keep it out of shared logs. Leave the flag off to see only the
+review. [How it works](#how-it-works) shows which values carry from one call to
+the next.
 
 If the run finishes without asking, the CLI says so. That means the tool isn't
 selected, **Run without confirmation** is checked, or the agent wasn't saved.
@@ -158,6 +159,35 @@ root. It reads the runs' final state only. It can't see Slack, so it reports
 partial verification.
 
 ## How it works
+
+Each call needs a value from an earlier response. Keep the `run_id` from the
+start, poll until the run needs a decision, and answer with the
+`interaction_id` the person reviewed:
+
+```mermaid
+sequenceDiagram
+    participant App as Your code
+    participant Glean
+    actor Person
+    App->>Glean: createRun: POST /api/agents/{agent_id}/runs
+    Glean-->>App: run.run_id, state RUNNING
+    loop Every 2 seconds while QUEUED or RUNNING
+        App->>Glean: getRun: GET /api/agents/{agent_id}/runs/{run_id}
+    end
+    Glean-->>App: state REQUIRES_INPUT, pending_interactions[0].interaction_id
+    App->>Person: The tool and its exact arguments
+    Person-->>App: decision: APPROVE or REJECT
+    App->>Glean: respondToRun: POST /api/agents/{agent_id}/responses (run_id, interaction_id, decision)
+    Glean-->>App: state RUNNING
+    loop Until SUCCEEDED, FAILED, CANCELLED, or EXPIRED
+        App->>Glean: getRun: GET /api/agents/{agent_id}/runs/{run_id}
+    end
+    Glean-->>App: state SUCCEEDED, the agent's reply in output.messages
+```
+
+[`api-flow/`](api-flow/) has the request and response bodies of one approved
+run, with example IDs. The tests serve them to the real SDK, so they match what
+the CLI sends and what `--show-json` prints.
 
 | SDK method (`glean.agents`)                                               | HTTP request                                |
 | ------------------------------------------------------------------------- | ------------------------------------------- |

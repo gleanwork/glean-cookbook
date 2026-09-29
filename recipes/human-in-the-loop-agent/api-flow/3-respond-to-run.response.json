@@ -1,0 +1,19 @@
+{
+  "run": {
+    "run_id": "5d0c9e1f7a2b4c6e8f1a3b5c7d9e0f12",
+    "agent_id": "3a2139bdf60540248c270d77887053f0",
+    "state": "RUNNING",
+    "created_at": "2026-09-29T21:51:07.000Z",
+    "updated_at": "2026-09-29T21:52:08.331Z",
+    "pending_interactions": [],
+    "output": {
+      "messages": [
+        {
+          "content": [],
+          "role": "GLEAN_AI"
+        }
+      ]
+    }
+  },
+  "request_id": "d4f0b7a3c5e94d1b8f2a6c0e3b5d7f9a"
+}

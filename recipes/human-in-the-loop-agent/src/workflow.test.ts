@@ -7,7 +7,7 @@ import type {
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest';
 import type { Settings } from './client.js';
 import { formatCliError } from './errors.js';
-import { printRuns, runJson } from './review.js';
+import { printCalls, runJson } from './review.js';
 import { AgentRuns, type Run, type RunCall } from './runs.js';
 import { drive, type Io } from './workflow.js';
 
@@ -426,7 +426,7 @@ describe('deciding', () => {
 });
 
 describe('showing the run JSON', () => {
-  test('every SDK call reports the run it returned', async () => {
+  test('every SDK call reports the body it sent and the run it returned', async () => {
     server.use(
       http.post(runsUrl, () =>
         HttpResponse.json(body('RUNNING'), { status: 201 }),
@@ -435,23 +435,43 @@ describe('showing the run JSON', () => {
       http.post(responsesUrl, () => HttpResponse.json(body('RUNNING'))),
       http.post(cancellationsUrl, () => HttpResponse.json(body('CANCELLED'))),
     );
-    const seen: [RunCall, string][] = [];
+    const seen: [RunCall, unknown, string, string][] = [];
     const agentRuns = new AgentRuns(settings, {
-      onRun: (call, run) => seen.push([call, run.state]),
+      onCall: ({ call, request, response, run }) =>
+        seen.push([call, request, run.state, response.request_id]),
     });
     await agentRuns.start('hello');
     await agentRuns.get('run-1');
     await agentRuns.respond('run-1', 'call-1', 'APPROVE');
     await agentRuns.cancel('run-1');
     expect(seen).toEqual([
-      ['createRun', 'RUNNING'],
-      ['getRun', 'REQUIRES_INPUT'],
-      ['respondToRun', 'RUNNING'],
-      ['cancelRun', 'CANCELLED'],
+      [
+        'createRun',
+        {
+          execution_mode: 'DURABLE',
+          stream: false,
+          messages: [
+            { role: 'USER', content: [{ type: 'text', text: 'hello' }] },
+          ],
+        },
+        'RUNNING',
+        'request-1',
+      ],
+      ['getRun', undefined, 'REQUIRES_INPUT', 'request-1'],
+      [
+        'respondToRun',
+        {
+          run_id: 'run-1',
+          responses: [{ interaction_id: 'call-1', decision: 'APPROVE' }],
+        },
+        'RUNNING',
+        'request-1',
+      ],
+      ['cancelRun', { run_id: 'run-1' }, 'CANCELLED', 'request-1'],
     ]);
   });
 
-  test('prints each new run once, under the request that returned it', async () => {
+  test('prints each call once, with the body it sent and the response', async () => {
     serveStates(
       body('RUNNING'),
       body('RUNNING'),
@@ -463,21 +483,39 @@ describe('showing the run JSON', () => {
     );
     const printed: string[] = [];
     const agentRuns = new AgentRuns(settings, {
-      onRun: printRuns((text) => printed.push(text)),
+      onCall: printCalls((text) => printed.push(text)),
     });
     const out = recorder('APPROVE');
 
     expect(await drive(agentRuns, running, out.io, fast)).toBe(0);
     const blocks = printed.map((text) => {
-      const [, heading, ...json] = text.split('\n');
-      return [heading, (JSON.parse(json.join('\n')) as Run).state];
+      const [, heading, ...lines] = text.split('\n');
+      const split = lines.indexOf('Response body:');
+      const request =
+        lines[0] === 'Request body:'
+          ? (JSON.parse(lines.slice(1, split).join('\n')) as unknown)
+          : undefined;
+      const response = JSON.parse(lines.slice(split + 1).join('\n')) as {
+        run: Run;
+        request_id: string;
+      };
+      return [heading, request, response.run.state, response.request_id];
     });
     // The second RUNNING poll returned the same run, so it isn't repeated.
+    const getRun = 'getRun: GET /api/agents/{agent_id}/runs/{run_id}';
     expect(blocks).toEqual([
-      ['getRun: GET /api/agents/{agent_id}/runs/{run_id}', 'RUNNING'],
-      ['getRun: GET /api/agents/{agent_id}/runs/{run_id}', 'REQUIRES_INPUT'],
-      ['respondToRun: POST /api/agents/{agent_id}/responses', 'RUNNING'],
-      ['getRun: GET /api/agents/{agent_id}/runs/{run_id}', 'SUCCEEDED'],
+      [getRun, undefined, 'RUNNING', 'request-1'],
+      [getRun, undefined, 'REQUIRES_INPUT', 'request-1'],
+      [
+        'respondToRun: POST /api/agents/{agent_id}/responses',
+        {
+          run_id: 'run-1',
+          responses: [{ interaction_id: 'call-1', decision: 'APPROVE' }],
+        },
+        'RUNNING',
+        'request-1',
+      ],
+      [getRun, undefined, 'SUCCEEDED', 'request-1'],
     ]);
     expect(out.questions).toHaveLength(1);
   });

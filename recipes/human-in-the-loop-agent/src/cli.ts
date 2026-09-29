@@ -3,7 +3,7 @@ import { stdin, stdout } from 'node:process';
 import meow from 'meow';
 import { loadDotEnv, RecipeError, resolveSettings } from './client.js';
 import { printCliError } from './errors.js';
-import { printRuns, runJson } from './review.js';
+import { printCalls, runJson } from './review.js';
 import { AgentRuns, type Decision } from './runs.js';
 import { command, drive, type Io } from './workflow.js';
 
@@ -25,7 +25,7 @@ const cli = meow(
       --decision        approve or reject, for when there's no terminal to ask in
       --interaction-id  The pending approval the decision is for (printed by resume)
       --wait-seconds    How long to wait for each step (default: 120)
-      --show-json       Also print each run Glean returns, as JSON
+      --show-json       Also print each API request and response body, as JSON
       --email           Work email used to find your Glean backend
       --server-url      Complete Glean backend origin; overrides --email
 
@@ -128,9 +128,9 @@ async function main(): Promise<number> {
     }),
     {
       // status already prints the run as JSON.
-      onRun:
+      onCall:
         cli.flags.showJson && subcommand !== 'status'
-          ? printRuns((text) => console.log(text))
+          ? printCalls((text) => console.log(text))
           : undefined,
     },
   );
