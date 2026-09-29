@@ -89,12 +89,18 @@ function decisionFlag() {
   return { value: decision.toUpperCase() as Decision, interactionId };
 }
 
-/** The backend flag to repeat in printed commands, as the person passed it. */
-function targetFlag() {
+/** The backend flag the person passed, as they passed it. */
+function backendFlag() {
   const serverUrl = cli.flags.serverUrl?.trim();
   if (serverUrl) return `--server-url ${JSON.stringify(serverUrl)}`;
   const email = cli.flags.email?.trim();
   return email ? `--email ${JSON.stringify(email)}` : undefined;
+}
+
+/** Flags to repeat in printed commands, so a copied command keeps the same view. */
+function targetFlags() {
+  const flags = [backendFlag(), cli.flags.showJson ? '--show-json' : ''];
+  return flags.filter(Boolean).join(' ') || undefined;
 }
 
 async function main(): Promise<number> {
@@ -132,7 +138,7 @@ async function main(): Promise<number> {
     log: (line) => console.log(line),
     ask: stdin.isTTY ? ask : undefined,
   };
-  const target = targetFlag();
+  const target = targetFlags();
   const options = { waitSeconds: cli.flags.waitSeconds, decision, target };
 
   process.once('SIGINT', () => {

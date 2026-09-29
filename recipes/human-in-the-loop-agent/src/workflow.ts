@@ -29,7 +29,10 @@ export interface Options {
    * pause. A resumed run may already have been decided elsewhere.
    */
   expectPause?: boolean;
-  /** The backend flag the person used (for example `--email you@x.com`). */
+  /**
+   * Flags to repeat in printed commands: the backend flag the person used
+   * (for example `--email you@x.com`), plus `--show-json` if they passed it.
+   */
   target?: string;
 }
 
