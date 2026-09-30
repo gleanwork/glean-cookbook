@@ -1,5 +1,6 @@
 import readline from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
+import { discardTypeAhead } from './prompt.js';
 import meow from 'meow';
 import { loadDotEnv, RecipeError, resolveSettings } from './client.js';
 import { printCliError } from './errors.js';
@@ -52,6 +53,12 @@ const cli = meow(
 let watching: string | undefined;
 
 async function ask(question: string) {
+  // Only a keypress made after the review is on screen can decide.
+  const earlier = await discardTypeAhead(stdin);
+  if (earlier.interrupted) return null;
+  if (earlier.typed) {
+    console.log('(Ignored what was typed before this prompt.)');
+  }
   const terminal = readline.createInterface({ input: stdin, output: stdout });
   try {
     const answer = (await terminal.question(question)).trim().toLowerCase();

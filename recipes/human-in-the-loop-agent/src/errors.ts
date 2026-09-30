@@ -46,7 +46,7 @@ export function formatCliError(error: unknown): CliError {
   if (error instanceof PlatformUnauthorizedAgentToolsProblemError) {
     return {
       error: `HTTP 422: ${safeForTerminal(error.detail)}`,
-      hint: "Connect the agent's tools in Glean (for Slack, sign in to Slack Actions), then start a new run.",
+      hint: "Connect the agent's apps to your Glean account (for this recipe, Slack), then start a new run.",
     };
   }
 

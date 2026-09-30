@@ -377,7 +377,7 @@ describe('deciding', () => {
     ).toBe(1);
     expect(out.questions).toHaveLength(0);
     expect(out.text()).toMatch(/finished without asking for approval/);
-    expect(out.text()).toMatch(/Run without confirmation/);
+    expect(out.text()).toMatch(/"Run without user confirmation" is unchecked/);
   });
 
   test('the reply is the last text part, after messages with no content', async () => {
