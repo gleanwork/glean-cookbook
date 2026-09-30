@@ -174,7 +174,7 @@ export async function drive(
     // paused, the tool wasn't attached or doesn't require confirmation.
     report(run, io);
     io.log(
-      '\nThe run finished without asking for approval. In Agent Builder, check that Slack is added in the Tools tab with its direct message tool, "Run without user confirmation" is unchecked, and the agent is saved.',
+      '\nThe run finished without asking for approval. In Agent Builder, check that Slack Actions is added with "Send Slack message to user", "Allow agent to use write tools without approval" is unchecked, and the agent is published.',
     );
     return 1;
   }
