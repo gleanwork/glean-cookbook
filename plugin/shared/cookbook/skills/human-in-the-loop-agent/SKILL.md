@@ -8,7 +8,8 @@ disable-model-invocation: true
 
 - Node.js 22.12+ and npm
 - A Glean instance with durable agent runs available
-- Access to Agent Builder, and Slack Actions enabled with your Slack account connected, so the agent can use Send Slack message to user
+- Permission to create agents in Agent Builder
+- Slack tools enabled for agents by a Glean admin, and your Slack account connected in Glean, so the agent can send you a direct message
 - Permission to sign in with the agents scope
 
 Build "Approve an agent action from a CLI" following https://developers.glean.com/cookbook/human-in-the-loop-agent
@@ -35,7 +36,7 @@ Build "Approve an agent action from a CLI" following https://developers.glean.co
    ```
 
 3. **Create the agent in Agent Builder**
-   In Glean, open the Agent library, click Create agent, and keep Auto mode. In the configuration tabs, name it Cookbook approval demo and paste the instructions this command prints. In Tools, under Slack Actions, select Send Slack message to user and leave Run without confirmation unchecked. That setting is the approval boundary. Keep the Manual run trigger with Chat message input, then click Save; draft autosave alone doesn't publish. Copy the agent ID from the page URL: the 32-character ID after /agents/.
+   In Glean, open the Agent library and click Create agent; Auto mode is selected by default. Builder Assistant opens next to the configuration tabs; you don't need it here (if it asks you to describe the agent first, paste the instructions into it, then check each tab). Name the agent Cookbook approval demo. In the Instructions tab, replace any text with the instructions this command prints. In the Tools tab, add Slack and no other app; if Slack lists its tools, keep only the direct message tool (Send message as DM in Glean's Slack tools docs, Send Slack message to user in runs). Leave Run without user confirmation unchecked; new tools start unchecked. That setting is the approval boundary. In the Triggers tab, use Manual run with Chat message input, then click Save; until you save, edits are only a draft. Copy the agent ID from the page URL: the 32-character ID after /agents/.
 
    A spec file can't do this step portably: it refers to Slack by a tool provider ID that is different on every Glean instance, so the Slack tool would be silently dropped on yours.
 
@@ -51,7 +52,7 @@ Build "Approve an agent action from a CLI" following https://developers.glean.co
    ```
 
 5. **Run the agent and decide**
-   The command starts one durable run, waits for the agent to pause, and shows the tool, what it does, and its exact arguments. Type a to approve that one call (the DM arrives), r to reject it (nothing is sent), c to cancel the run, or press Enter to leave it waiting. --show-json also prints each run Glean returns as JSON, under the SDK call that returned it, so you can see the API responses; leave it off to see only the review. The JSON includes the tool arguments, so keep it out of shared logs. If the run finishes without asking, the tool isn't selected, Run without confirmation is checked, or the agent wasn't saved. Closing the CLI or reaching the 120-second wait doesn't cancel the run; the CLI prints the full resume command, with the agent and run IDs, to continue. A resumed run can take a few minutes to finish after a decision; if the wait runs out, resume again. Without a terminal to ask in, resume prints a decision command bound to the pending interaction ID; run it only after a person has reviewed that call.
+   The command starts one durable run, waits for the agent to pause, and shows the tool, what it does, and its exact arguments. Type a to approve that one call (the DM arrives), r to reject it (nothing is sent), c to cancel the run, or press Enter to leave it waiting. --show-json also prints each run Glean returns as JSON, under the SDK call that returned it, so you can see the API responses; leave it off to see only the review. The JSON includes the tool arguments, so keep it out of shared logs. If the run finishes without asking, the tool isn't added, Run without user confirmation is checked, or the agent wasn't saved. Closing the CLI or reaching the 120-second wait doesn't cancel the run; the CLI prints the full resume command, with the agent and run IDs, to continue. A resumed run can take a few minutes to finish after a decision; if the wait runs out, resume again. Without a terminal to ask in, resume prints a decision command bound to the pending interaction ID; run it only after a person has reviewed that call.
 
    ```bash
    npm start -- --agent-id "<agent-id>" --email "<work-email>" --show-json
