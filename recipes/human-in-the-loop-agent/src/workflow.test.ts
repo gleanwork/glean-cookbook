@@ -377,7 +377,9 @@ describe('deciding', () => {
     ).toBe(1);
     expect(out.questions).toHaveLength(0);
     expect(out.text()).toMatch(/finished without asking for approval/);
-    expect(out.text()).toMatch(/"Run without user confirmation" is unchecked/);
+    expect(out.text()).toMatch(
+      /"Allow agent to use write tools without approval" is unchecked/,
+    );
   });
 
   test('resuming a run that already finished is not a setup problem', async () => {
