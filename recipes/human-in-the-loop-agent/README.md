@@ -58,8 +58,10 @@ paste the instructions below into it, then check each setting.
 5. Click **Publish**. Until you publish, your edits are only a draft, and API
    runs use the published agent.
 
-Copy the agent ID from the page URL, which ends in
-`/chat/agents/<agent-id>/edit`: the 32-character ID after `/agents/`.
+To copy the agent ID, click **Share** at the top right of the agent. Under
+**Publishing options**, the **API** section shows the **Agent ID** with a copy
+button. You don't need **Create token** there; step 3 signs you in instead. The
+ID is also the 32-character value after `/agents/` in the page URL.
 
 Why not ship the agent as a spec file? A spec refers to Slack by a tool
 provider ID that is different on every Glean instance, so a file that works on
