@@ -9,18 +9,6 @@
     "output": {
       "messages": [
         {
-          "content": [],
-          "role": "GLEAN_AI"
-        },
-        {
-          "content": [],
-          "role": "GLEAN_AI"
-        },
-        {
-          "content": [],
-          "role": "GLEAN_AI"
-        },
-        {
           "content": [
             {
               "text": "Sent your Slack message.",

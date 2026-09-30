@@ -18,12 +18,7 @@
       }
     ],
     "output": {
-      "messages": [
-        {
-          "content": [],
-          "role": "GLEAN_AI"
-        }
-      ]
+      "messages": []
     }
   },
   "request_id": "c2d8a5f1e3b74c9a8d6f0b1e2a3c4d5f"

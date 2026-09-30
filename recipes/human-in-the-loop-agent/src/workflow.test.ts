@@ -380,6 +380,30 @@ describe('deciding', () => {
     expect(out.text()).toMatch(/Run without confirmation/);
   });
 
+  test('the reply is the last text part, after messages with no content', async () => {
+    const done = body('SUCCEEDED');
+    const empty = { role: 'GLEAN_AI', content: [] };
+    serveStates({
+      ...done,
+      run: {
+        ...done.run,
+        output: {
+          messages: [
+            empty,
+            empty,
+            {
+              role: 'GLEAN_AI',
+              content: [{ type: 'text', text: 'Sent your Slack message.' }],
+            },
+          ],
+        },
+      },
+    });
+    const out = recorder('APPROVE');
+    expect(await drive(runs(), running, out.io, fast)).toBe(0);
+    expect(out.text()).toMatch(/Agent: Sent your Slack message\./);
+  });
+
   test('resuming a run that already finished is not a setup problem', async () => {
     // For example, a slow resume after a rejection finished while no one was
     // watching, and the person picks it back up.

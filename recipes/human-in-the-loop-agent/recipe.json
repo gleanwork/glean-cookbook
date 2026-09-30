@@ -139,7 +139,7 @@
     }
   ],
   "apiFlow": {
-    "intro": "An approval takes four calls, and each one needs a value from an earlier response. Keep the `run_id` from the start, poll until the run needs a decision, and answer with the `interaction_id` the person reviewed. These are the bodies from one approved run, with example IDs.",
+    "intro": "An approval takes four calls, and each one needs a value from an earlier response. Keep the `run_id` from the start, poll until the run needs a decision, and answer with the `interaction_id` the person reviewed. These are the bodies from one approved run, with example IDs and empty messages left out.",
     "inputs": [
       {
         "value": "agent_id",
@@ -294,8 +294,8 @@
           },
           {
             "in": "response",
-            "pointer": "/run/output/messages/3/content/0/text",
-            "note": "The agent's reply is the last text part in output.messages. Earlier messages can be empty."
+            "pointer": "/run/output/messages/0/content/0/text",
+            "note": "The agent's reply is the last text part in output.messages. A real run can also return messages with empty content."
           }
         ]
       }

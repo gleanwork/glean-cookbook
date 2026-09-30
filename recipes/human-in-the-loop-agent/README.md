@@ -186,8 +186,8 @@ sequenceDiagram
 ```
 
 [`api-flow/`](api-flow/) has the request and response bodies of one approved
-run, with example IDs. The tests serve them to the real SDK, so they match what
-the CLI sends and what `--show-json` prints.
+run, with example IDs and empty messages left out. The tests serve them to the
+real SDK, so they match what the CLI sends and what `--show-json` prints.
 
 | SDK method (`glean.agents`)                                               | HTTP request                                |
 | ------------------------------------------------------------------------- | ------------------------------------------- |
