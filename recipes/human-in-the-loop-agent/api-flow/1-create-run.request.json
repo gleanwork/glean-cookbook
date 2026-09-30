@@ -1,0 +1,15 @@
+{
+  "execution_mode": "DURABLE",
+  "stream": false,
+  "messages": [
+    {
+      "role": "USER",
+      "content": [
+        {
+          "type": "text",
+          "text": "Cookbook approval test 2026-09-29T21:51:07.008Z"
+        }
+      ]
+    }
+  ]
+}

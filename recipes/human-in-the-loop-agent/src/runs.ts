@@ -2,6 +2,8 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { Glean } from '@gleanwork/api-client';
 import type { RequestOptions } from '@gleanwork/api-client/lib/sdks.js';
 import type {
+  PlatformAgentRunCreateRequest,
+  PlatformAgentRunResponse,
   PlatformDurableAgentRun,
   PlatformAgentRunToolApproval,
 } from '@gleanwork/api-client/models/components';
@@ -14,9 +16,19 @@ export type Decision = 'APPROVE' | 'REJECT';
 /** The `glean.agents` method that returned a run. */
 export type RunCall = 'createRun' | 'getRun' | 'respondToRun' | 'cancelRun';
 
+/** One SDK call: the body sent, and the response Glean returned. */
+export interface Exchange {
+  call: RunCall;
+  /** The request body; getRun sends none. */
+  request?: object;
+  /** The response as the SDK parsed it: the run and a request ID. */
+  response: PlatformAgentRunResponse;
+  run: Run;
+}
+
 export interface AgentRunsOptions {
-  /** Receives every run Glean returns, after checkRun accepts it. */
-  onRun?: (call: RunCall, run: Run) => void;
+  /** Receives every call after checkRun accepts the run it returned. */
+  onCall?: (exchange: Exchange) => void;
 }
 
 /** States in which the run is still working and a poll will see progress. */
@@ -122,28 +134,33 @@ export class AgentRuns {
 
   private accept(
     call: RunCall,
+    request: object | undefined,
     response: PlatformAgentsCreateRunResponse,
     runId?: string,
   ): Run {
     const run = checkRun(response, this.agentId, runId);
-    this.options.onRun?.(call, run);
+    this.options.onCall?.({
+      call,
+      request,
+      response: response as PlatformAgentRunResponse,
+      run,
+    });
     return run;
   }
 
   /** Starts one durable run. Each call creates a new run; never retry it. */
   async start(message: string): Promise<Run> {
+    const request: PlatformAgentRunCreateRequest = {
+      execution_mode: 'DURABLE',
+      stream: false,
+      messages: [{ role: 'USER', content: [{ type: 'text', text: message }] }],
+    };
     const response = await this.glean.agents.createRun(
-      {
-        execution_mode: 'DURABLE',
-        stream: false,
-        messages: [
-          { role: 'USER', content: [{ type: 'text', text: message }] },
-        ],
-      },
+      request,
       this.agentId,
       REQUEST_OPTIONS,
     );
-    return this.accept('createRun', response);
+    return this.accept('createRun', request, response);
   }
 
   async get(runId: string): Promise<Run> {
@@ -152,7 +169,7 @@ export class AgentRuns {
       runId,
       REQUEST_OPTIONS,
     );
-    return this.accept('getRun', response, runId);
+    return this.accept('getRun', undefined, response, runId);
   }
 
   /**
@@ -160,25 +177,27 @@ export class AgentRuns {
    * never a newly polled one: the decision applies to that exact tool call.
    */
   async respond(runId: string, interactionId: string, decision: Decision) {
+    const request = {
+      run_id: runId,
+      responses: [{ interaction_id: interactionId, decision }],
+    };
     const response = await this.glean.agents.respondToRun(
-      {
-        run_id: runId,
-        responses: [{ interaction_id: interactionId, decision }],
-      },
+      request,
       this.agentId,
       REQUEST_OPTIONS,
     );
-    return this.accept('respondToRun', response, runId);
+    return this.accept('respondToRun', request, response, runId);
   }
 
   /** Requests cancellation. It stops future work; it can't undo finished work. */
   async cancel(runId: string): Promise<Run> {
+    const request = { run_id: runId };
     const response = await this.glean.agents.cancelRun(
-      { run_id: runId },
+      request,
       this.agentId,
       REQUEST_OPTIONS,
     );
-    return this.accept('cancelRun', response, runId);
+    return this.accept('cancelRun', request, response, runId);
   }
 
   /**

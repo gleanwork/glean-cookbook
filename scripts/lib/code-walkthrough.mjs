@@ -1,5 +1,6 @@
-import fs from 'node:fs';
 import path from 'node:path';
+
+import { readRecipeSource } from './recipe-source.mjs';
 
 export const MAX_WALKTHROUGH_CODE_BYTES = 30_000;
 
@@ -23,7 +24,6 @@ function fail(entry, message) {
 export function materializeCodeWalkthrough(entry, recipeDir) {
   if (!entry.codeWalkthrough) return entry;
 
-  const recipeRoot = fs.realpathSync(recipeDir);
   const examples = entry.codeWalkthrough.examples.map((example) => {
     if (example.code !== undefined) {
       fail(
@@ -32,33 +32,12 @@ export function materializeCodeWalkthrough(entry, recipeDir) {
       );
     }
 
-    const candidate = path.resolve(recipeRoot, example.source);
-    const relative = path.relative(recipeRoot, candidate);
-    if (
-      relative === '' ||
-      relative.startsWith(`..${path.sep}`) ||
-      path.isAbsolute(relative)
-    ) {
-      fail(
-        entry,
-        `code walkthrough source must stay inside recipes/${entry.id}: ${example.source}`,
-      );
-    }
-    if (!fs.existsSync(candidate) || !fs.statSync(candidate).isFile()) {
-      fail(entry, `code walkthrough source does not exist: ${example.source}`);
-    }
-
-    const sourceFile = fs.realpathSync(candidate);
-    const realRelative = path.relative(recipeRoot, sourceFile);
-    if (
-      realRelative.startsWith(`..${path.sep}`) ||
-      path.isAbsolute(realRelative)
-    ) {
-      fail(
-        entry,
-        `code walkthrough source resolves outside recipes/${entry.id}: ${example.source}`,
-      );
-    }
+    const { sourceFile, text } = readRecipeSource(
+      entry,
+      recipeDir,
+      example.source,
+      { label: 'code walkthrough', maxBytes: MAX_WALKTHROUGH_CODE_BYTES },
+    );
 
     const allowedExtensions = LANGUAGE_EXTENSIONS[example.language];
     const extension = path.extname(sourceFile).toLowerCase();
@@ -69,21 +48,7 @@ export function materializeCodeWalkthrough(entry, recipeDir) {
       );
     }
 
-    const buffer = fs.readFileSync(sourceFile);
-    if (buffer.length === 0) {
-      fail(entry, `code walkthrough source is empty: ${example.source}`);
-    }
-    if (buffer.length > MAX_WALKTHROUGH_CODE_BYTES) {
-      fail(
-        entry,
-        `code walkthrough source exceeds ${MAX_WALKTHROUGH_CODE_BYTES} bytes: ${example.source}`,
-      );
-    }
-    if (buffer.includes(0)) {
-      fail(entry, `code walkthrough source must be text: ${example.source}`);
-    }
-
-    return { ...example, code: buffer.toString('utf8') };
+    return { ...example, code: text };
   });
 
   return {
