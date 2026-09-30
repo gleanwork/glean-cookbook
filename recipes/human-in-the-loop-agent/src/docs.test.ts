@@ -29,6 +29,14 @@ test('step descriptions stay inline text the page can render', () => {
   }
 });
 
+test('each step description is short enough to scan as one paragraph', () => {
+  // The page has no lists inside a step, so a long step becomes a wall of
+  // text. Split it into more steps instead.
+  for (const step of recipe.steps) {
+    expect((step.description ?? '').length).toBeLessThanOrEqual(450);
+  }
+});
+
 test('every declared scope matches the scope the client requests', () => {
   expect(recipe.requiredScopes).toEqual(SCOPES);
   expect(recipe.execution.auth[0]?.scopes).toEqual(SCOPES);
