@@ -32,8 +32,17 @@ test('step descriptions stay inline text the page can render', () => {
 test('each step description is short enough to scan as one paragraph', () => {
   // The page has no lists inside a step, so a long step becomes a wall of
   // text. Split it into more steps instead.
+  const visible = (text: string) => text.replace(/\*\*|`/g, '');
   for (const step of recipe.steps) {
-    expect((step.description ?? '').length).toBeLessThanOrEqual(450);
+    expect(visible(step.description ?? '').length).toBeLessThanOrEqual(450);
+  }
+});
+
+test('bold marks in step descriptions come in pairs', () => {
+  // An unpaired ** renders as literal asterisks on the page.
+  for (const step of recipe.steps) {
+    const outsideCode = (step.description ?? '').replace(/`[^`]+`/g, '');
+    expect((outsideCode.match(/\*\*/g) ?? []).length % 2).toBe(0);
   }
 });
 

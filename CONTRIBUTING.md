@@ -215,6 +215,12 @@ plugin needs. The shape is defined by the canonical `schemas/recipe.schema.json`
 repo. The developer site's `src/types/recipe.ts` is a structural
 consumer adapter; capability and surface values are synced as data instead of duplicated there.
 
+Text fields in `recipe.json`, such as step titles and descriptions, prerequisites, and
+descriptions, support two inline marks: `` `code` `` for commands, flags, IDs, and paths, and
+`**bold**` for labels a reader clicks or types into (**Create agent**, **Publish**). Nothing else
+renders on the page: no links, italics, lists, or fenced blocks. Each step description renders as
+one paragraph, so when a step needs a list, split it into more steps instead.
+
 Capability and surface values, display labels, and filter order live in
 `config/recipe-taxonomy.json`. Update that file and the matching schema enum together when
 adding one. `validate:registry` rejects drift between them.
