@@ -1004,10 +1004,6 @@
       "default": false,
       "type": "boolean"
     },
-    "featured": {
-      "default": false,
-      "type": "boolean"
-    },
     "visibility": {
       "default": "public",
       "description": "Preview recipes remain available to the developer site for query-string testing but are omitted from public discovery and cookbook plugin output.",
