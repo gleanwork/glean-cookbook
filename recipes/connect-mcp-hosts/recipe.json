@@ -94,7 +94,6 @@
   "aiPrompt": "Detect the installed supported MCP hosts. Ask for the user's work email, run the cookbook plugin's bundled resolve-backend.mjs script, and configure each host with @gleanwork/configure-mcp-server using the returned backend plus /mcp/default. Do not ask for an API token when the default OAuth flow is available. Tell the user which apps to restart, then have them verify with a topic they know exists in their Glean instance.",
   "llmContext": "Use https://{instance}-be.glean.com/mcp/{server-name}; the default server name is default. Configure hosts with npx -y @gleanwork/configure-mcp-server remote --url <url> --client <host>. OAuth with Dynamic Client Registration is the default. Claude Code and Cursor connect over HTTP; Claude Desktop uses the CLI-managed mcp-remote bridge. Supply --token only when the host cannot use OAuth.",
   "goDependency": false,
-  "featured": false,
   "hidden": true,
   "tags": ["mcp", "starter"],
   "lastVerified": "2026-08-02",

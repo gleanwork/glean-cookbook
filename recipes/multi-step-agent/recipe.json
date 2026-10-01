@@ -146,7 +146,6 @@
   "aiPrompt": "Build the multi-step-agent demo from https://developers.glean.com/cookbook/multi-step-agent. Start its inert tool server, expose port 8080 through a public HTTPS cloudflared tunnel, and replace the OpenAPI servers[0].url placeholder with the tunnel origin so the operation resolves to <origin>/file_incident_ticket. Have me upload that specification in Admin > Platform > Tools > Add, then create an Agent Builder agent with retrieval and the tool attached. Invoke it with glean.client.agents.run using Message and MessageTextBlock. Demonstrate allow and deny by changing AUTHORIZED_EMAILS. State clearly that Glean-User-Email is spoofable on the public demo endpoint: authenticate requests as coming from Glean before connecting a real write action.",
   "llmContext": "Run agents with glean.client.agents.run(agent_id, messages) using Message and MessageTextBlock. Expose a local demo tool through public HTTPS and set the OpenAPI server URL to that origin with route paths aligned. Register tools manually in the admin console. Glean-User-Email supports an authorization allow-list only after the request is authenticated as coming from Glean; the sample server is demo-only and must not front a real write action.",
   "goDependency": false,
-  "featured": true,
   "hidden": true,
   "tags": ["agents", "governance"],
   "content": {

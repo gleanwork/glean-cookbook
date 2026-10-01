@@ -19,7 +19,6 @@
   "buildMethod": "scaffold",
   "languages": ["typescript"],
   "visibility": "public",
-  "featured": false,
   "tags": ["human-in-the-loop", "approvals", "durable-runs", "slack"],
   "prerequisites": [
     "Node.js 22.12+ and npm",

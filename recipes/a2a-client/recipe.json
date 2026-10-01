@@ -104,7 +104,6 @@
   "aiPrompt": "Build the A2A client from the scaffold. Ask for GLEAN_INSTANCE, GLEAN_AGENT_ID, and an OAuth access token or Glean API token with the AGENTS scope. Use the published agent card at /rest/api/v1/a2a/agents/{agentId}/agent-card.json. Run the initial message, the same-context follow-up, and the streaming example, then report their actual results.",
   "llmContext": "Use /rest/api/v1/a2a/agents/{agentId}/agent-card.json for discovery and the sibling JSON-RPC endpoint for message/send, message/stream, and tasks/get. The agent must be published, use a chat-message trigger, and be text-only. Use an AGENTS-scoped credential. Pin a2a-sdk to 0.3.26 and use ClientFactory with Client.send_message(); the server implements the 0.3 method names. Read task answers from task.artifacts[].parts[].root.text. Streaming events contain the accumulated answer, not deltas. Consume them as they arrive; write deltas immediately for raw Markdown output, but buffer terminal output until Rich can render the complete Markdown. Set an httpx timeout of at least 60 seconds.",
   "goDependency": false,
-  "featured": false,
   "hidden": true,
   "tags": ["a2a", "interop"],
   "content": {
