@@ -28,6 +28,12 @@ and its `repoPath` owns the generated target and normal standalone dependency ma
 The problem domain a recipe addresses, such as search, workflow, agent, or portal.
 _Avoid_: Recipe type
 
+**Collection**:
+An ordered set of recipes that teaches one feature end to end, from the simplest recipe to the
+most complete. Collections and their order live in `config/recipe-collections.json`. Every
+listed recipe belongs to exactly one collection.
+_Avoid_: Category, capability, track
+
 **Build method**:
 How the implementation is produced: from a deterministic scaffold, by adapting an existing system, or in an external builder.
 

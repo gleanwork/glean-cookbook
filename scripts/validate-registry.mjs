@@ -9,6 +9,7 @@ import { extractPastePrompt } from './lib/paste-prompt.mjs';
 import { compileFrameworkFeatures } from './lib/framework-features.mjs';
 import { materializeApiFlow } from './lib/api-flow.mjs';
 import { materializeCodeWalkthrough } from './lib/code-walkthrough.mjs';
+import { checkRecipeCollections } from './lib/recipe-collections.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const schema = JSON.parse(
@@ -212,6 +213,44 @@ for (const { file, entry } of registry) {
   }
 
   console.log(`✓ ${label}`);
+}
+
+// Collections group the recipes the developer site lists, so check them
+// against every recipe source, not just the ones that passed above.
+const collectionsFile = 'config/recipe-collections.json';
+const collections = JSON.parse(
+  fs.readFileSync(path.join(repoRoot, collectionsFile), 'utf8'),
+);
+const validateCollections = ajv.compile(
+  JSON.parse(
+    fs.readFileSync(
+      path.join(repoRoot, 'schemas', 'recipe-collections.schema.json'),
+      'utf8',
+    ),
+  ),
+);
+if (!validateCollections(collections)) {
+  failed = true;
+  console.error(
+    `✗ ${collectionsFile}: fails schemas/recipe-collections.schema.json`,
+  );
+  for (const err of validateCollections.errors ?? []) {
+    console.error(`    ${err.instancePath || '(root)'} ${err.message}`);
+  }
+} else {
+  const collectionErrors = checkRecipeCollections(
+    collections,
+    registry
+      .map(({ entry }) => entry)
+      .filter((entry) => typeof entry?.id === 'string'),
+  );
+  for (const message of collectionErrors) {
+    failed = true;
+    console.error(`✗ ${collectionsFile}: ${message}`);
+  }
+  if (collectionErrors.length === 0) {
+    console.log(`✓ ${collectionsFile}`);
+  }
 }
 
 if (!failed) {

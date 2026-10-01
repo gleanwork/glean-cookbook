@@ -2,7 +2,7 @@
   "id": "pre-meeting-brief",
   "title": "Brief recurring meetings with Glean Triggers and Cursor Automations",
   "description": "Use a Glean calendar trigger to start Cursor Automations before a recurring meeting, summarize what changed, and update the project tracker.",
-  "sidebarLabel": "Pre-meeting brief",
+  "sidebarLabel": "Brief recurring meetings",
   "surfaces": ["platform-api"],
   "capabilities": ["workflows", "search"],
   "status": "showcase",

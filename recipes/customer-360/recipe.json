@@ -2,7 +2,7 @@
   "id": "customer-360",
   "title": "Customer 360: an account page built from your own content",
   "description": "One page per account — status, risks, and a drill-in chat — assembled from whatever your instance already knows about that customer. No CRM export, no separate index.",
-  "sidebarLabel": "Customer 360",
+  "sidebarLabel": "Build a customer 360 page",
   "preview": {
     "path": "recipes/customer-360/assets/preview.webp",
     "alt": "Customer 360 workspace with account evidence and an assistant conversation",

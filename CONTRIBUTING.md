@@ -75,6 +75,31 @@ scope owner; do not weaken expectations just to pass verification. Keep `demoQue
 `expectedBehavior` accurate and meaningful. Examples must work with appropriate content from
 a reader's own instance, and `aiPrompt` must produce what it promises.
 
+### Placing a recipe in a collection
+
+Every recipe the developer site lists, including preview recipes, belongs to exactly one
+collection in `config/recipe-collections.json`. A collection teaches one feature end to end,
+and its `recipes` array is the learning path: the first recipe is where a reader starts, and
+each later recipe builds on the ones before it. Collection order is display order.
+
+- Name collections after the developer-site guide section for the same feature (Chat,
+  Search, Agents, Triggers) so each guide can link to its collection. Complete apps, for
+  end-to-end builds that combine features, stays last.
+- Put a new recipe where it fits in the path, not automatically at the end. Keep the first
+  recipe the quickest successful run.
+- Leave hidden recipes out. Add a recipe when you unhide it.
+
+`validate:registry` fails when a listed recipe is in no collection or in more than one, or
+when a collection names an unknown or hidden recipe. The developer site uses the file to group
+the Cookbook index and sidebar and to keep previous/next links inside a collection.
+
+### Writing a sidebar label
+
+`sidebarLabel` is the short name the site shows in the sidebar and in previous/next links,
+where it appears under its collection's name. Use sentence case, start with a verb, and keep
+it to 32 characters: "Stream chat with citations", "Import a skill from GitHub". Don't
+repeat the collection name or use Title Case.
+
 ### Choosing an icon
 
 Every recipe sets `icon`, which the site renders on the recipe card and banner. Architecture

@@ -35,6 +35,20 @@ test('reports recipe schema errors before compiling framework declarations', asy
       path.join(sourceRoot, 'config/execution-types.json'),
       path.join(repoRoot, 'config/execution-types.json'),
     ),
+    fs.copy(
+      path.join(sourceRoot, 'schemas/recipe-collections.schema.json'),
+      path.join(repoRoot, 'schemas/recipe-collections.schema.json'),
+    ),
+    writeJson(path.join(repoRoot, 'config/recipe-collections.json'), {
+      collections: [
+        {
+          id: 'examples',
+          label: 'Examples',
+          description: 'Example recipes.',
+          recipes: ['example'],
+        },
+      ],
+    }),
     writeJson(path.join(repoRoot, 'package.json'), {}),
     writeJson(path.join(repoRoot, 'recipes/example/recipe.json'), {
       id: 'example',

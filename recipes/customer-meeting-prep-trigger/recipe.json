@@ -2,7 +2,7 @@
   "id": "customer-meeting-prep-trigger",
   "title": "Trigger a customer meeting prep request",
   "description": "Register a calendar Trigger through the Platform Triggers API and deliver one signed event to a small receiver that prints a customer-meeting prep request.",
-  "sidebarLabel": "Customer Meeting Prep Trigger",
+  "sidebarLabel": "Trigger meeting prep",
   "codeWalkthrough": {
     "intro": "The runnable service centralizes experimental Triggers API authentication and headers, discovers a tenant-supported preset, registers one signed webhook delivery, and verifies the event before printing a prep request.",
     "examples": [

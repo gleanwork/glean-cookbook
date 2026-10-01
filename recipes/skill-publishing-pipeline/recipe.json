@@ -2,7 +2,7 @@
   "id": "skill-publishing-pipeline",
   "title": "Publish a versioned skill bundle",
   "description": "After a first persist, prove name-based version supersession, retrieve a specific version, stage downloaded bytes in a bounded zip sandbox, and delete only the run-owned skill.",
-  "sidebarLabel": "Version a skill",
+  "sidebarLabel": "Publish versioned skills",
   "codeWalkthrough": {
     "intro": "The runnable scaffold opts into the experimental Skills API through the official SDK, keeps validation separate from persistence, verifies version supersession directly, and treats downloaded archives as untrusted.",
     "examples": [

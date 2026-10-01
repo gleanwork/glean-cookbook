@@ -2,7 +2,7 @@
   "id": "triage-support-issue",
   "title": "Triage one support issue with a Glean Agent",
   "description": "Give a published support-triage Agent one issue URL or description and get an evidence-backed summary, next diagnostic step, and customer-safe response.",
-  "sidebarLabel": "Triage One Support Issue",
+  "sidebarLabel": "Triage a support issue",
   "codeWalkthrough": {
     "intro": "The runnable CLI resolves a refreshable Glean credential, builds an explicit USER prompt, calls the Platform Agents run endpoint, and prints only the Agent's structured response.",
     "examples": [

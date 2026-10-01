@@ -2,7 +2,7 @@
   "id": "multi-step-agent",
   "title": "Multi-step agent with governed tools",
   "description": "Build a Glean agent that plans, retrieves, and acts through a governed custom tool — with a safe fallback when the tool is denied.",
-  "sidebarLabel": "Multi-Step Agent",
+  "sidebarLabel": "Run a multi-step agent",
   "surfaces": ["agents", "tools"],
   "capabilities": ["agents", "tools"],
   "status": "production-pattern",

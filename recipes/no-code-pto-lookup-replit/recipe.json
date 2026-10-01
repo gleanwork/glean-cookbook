@@ -2,7 +2,7 @@
   "id": "no-code-pto-lookup-replit",
   "title": "Build a PTO lookup page in Replit",
   "description": "Paste a prompt into Replit Agent to get a private page that answers PTO and benefits questions from your Glean docs.",
-  "sidebarLabel": "PTO Lookup (Replit)",
+  "sidebarLabel": "Build a PTO lookup in Replit",
   "surfaces": ["client-api"],
   "capabilities": ["chat"],
   "status": "showcase",

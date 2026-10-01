@@ -2,7 +2,7 @@
   "id": "a2a-client",
   "title": "Call a Glean agent from an A2A client",
   "description": "Discover a published Glean agent's A2A card and run it from any A2A client — multi-turn, streamed, permission-aware.",
-  "sidebarLabel": "A2A Client",
+  "sidebarLabel": "Call an agent over A2A",
   "surfaces": ["agents", "client-api"],
   "capabilities": ["agents"],
   "status": "production-pattern",

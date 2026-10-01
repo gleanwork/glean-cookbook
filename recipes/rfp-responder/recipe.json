@@ -2,7 +2,7 @@
   "id": "rfp-responder",
   "title": "Answer an RFP or security questionnaire",
   "description": "A review app that drafts cited answers to an RFP or security questionnaire, leaves unsupported questions blank, and requires a person to approve each answer. It starts with recorded Chat responses, so you can inspect its refusal paths before connecting it to Glean.",
-  "sidebarLabel": "RFP responder",
+  "sidebarLabel": "Answer an RFP",
   "preview": {
     "path": "recipes/rfp-responder/assets/preview.webp",
     "alt": "RFP Responder review screen with cited draft answers and approval controls",

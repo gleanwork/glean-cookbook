@@ -445,8 +445,10 @@
       "minLength": 1
     },
     "sidebarLabel": {
+      "description": "Short navigation label: sentence case, starting with a verb (\"Stream chat with citations\"). The developer site shows it in the sidebar and in previous/next links.",
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "maxLength": 32
     },
     "preview": {
       "type": "object",

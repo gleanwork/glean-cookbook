@@ -2,7 +2,7 @@
   "id": "oncall-copilot",
   "title": "On-call Copilot",
   "description": "An on-call dashboard that takes an alarm to a proposed action and puts a person in front of that action. It names a cause only when a past incident backs it, turns away an approver who is neither on call nor the service owner, and escalates instead of approving itself when nobody answers. It runs on recorded incidents, so you can watch it refuse things before connecting it to anything.",
-  "sidebarLabel": "On-call Copilot",
+  "sidebarLabel": "Build an on-call copilot",
   "preview": {
     "path": "recipes/oncall-copilot/assets/preview.webp",
     "alt": "On-call Copilot triaging an alert with evidence and an approval gate",

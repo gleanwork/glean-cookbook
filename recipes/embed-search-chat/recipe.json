@@ -2,7 +2,7 @@
   "id": "embed-search-chat",
   "title": "Embed search & chat in an internal app",
   "description": "Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.",
-  "sidebarLabel": "Embed Search & Chat",
+  "sidebarLabel": "Embed search and chat",
   "surfaces": ["web-sdk"],
   "capabilities": ["embed", "search", "chat"],
   "status": "production-pattern",
