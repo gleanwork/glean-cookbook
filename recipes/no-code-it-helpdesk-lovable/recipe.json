@@ -2,7 +2,7 @@
   "id": "no-code-it-helpdesk-lovable",
   "title": "Build an IT helpdesk page in Lovable",
   "description": "Paste a prompt into Lovable to get a private page that answers common IT questions from your Glean docs.",
-  "sidebarLabel": "IT Helpdesk (Lovable)",
+  "sidebarLabel": "Build an IT helpdesk in Lovable",
   "surfaces": ["client-api"],
   "capabilities": ["chat"],
   "status": "showcase",

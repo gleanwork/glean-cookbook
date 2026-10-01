@@ -2,7 +2,7 @@
   "id": "onboarding-hub",
   "title": "Onboarding Hub: a day-one checklist grounded in your own docs",
   "description": "A guided first-week hub for new hires: a checklist with progress, and every step able to answer itself from your own onboarding content.",
-  "sidebarLabel": "Onboarding Hub",
+  "sidebarLabel": "Build an onboarding hub",
   "preview": {
     "path": "recipes/onboarding-hub/assets/preview.webp",
     "alt": "Onboarding Hub with a first-week checklist and cited assistant guidance",

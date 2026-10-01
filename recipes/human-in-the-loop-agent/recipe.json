@@ -2,7 +2,7 @@
   "id": "human-in-the-loop-agent",
   "title": "Approve an agent action from a CLI",
   "description": "Start a durable agent run from TypeScript, see the exact tool call it wants to make, and approve or reject it before it happens. The agent only sends you a Slack DM.",
-  "sidebarLabel": "Human-in-the-loop agent",
+  "sidebarLabel": "Approve agent actions",
   "surfaces": ["platform-api", "agents", "tools", "sdk-client"],
   "capabilities": ["agents", "tools"],
   "status": "quickstart",

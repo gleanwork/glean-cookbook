@@ -2,7 +2,7 @@
   "id": "validate-and-publish-skill",
   "title": "Validate skill publishing",
   "description": "Validate a local SKILL.md, test publishing and retrieval in Glean, confirm the downloaded file matches, and delete the test skill.",
-  "sidebarLabel": "Validate publishing",
+  "sidebarLabel": "Validate and publish a skill",
   "codeWalkthrough": {
     "intro": "The example uses the official SDK to validate your file before creating a skill. It retrieves the saved skill, compares the downloaded SKILL.md with the upload, and cleans up afterward. It never extracts files to disk or executes them.",
     "examples": [

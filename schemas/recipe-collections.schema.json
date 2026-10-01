@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/gleanwork/glean-cookbook/schemas/recipe-collections.schema.json",
+  "title": "Recipe collections",
+  "description": "Ordered collections of recipes. Each collection teaches one feature end to end; its recipes are listed in learning-path order. Collection order is display order.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["collections"],
+  "properties": {
+    "collections": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/collection" }
+    }
+  },
+  "$defs": {
+    "collection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "description", "recipes"],
+      "properties": {
+        "id": {
+          "description": "Stable kebab-case id. The developer site uses it as the collection's anchor on the Cookbook index.",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "label": {
+          "description": "Display name. Match the developer-site guide section for the same feature where one exists.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "description": {
+          "description": "One sentence describing what the collection's recipes build, in order.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "recipes": {
+          "description": "Recipe ids in learning-path order: the first recipe is the starting point.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

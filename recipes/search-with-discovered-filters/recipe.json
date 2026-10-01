@@ -2,7 +2,7 @@
   "id": "search-with-discovered-filters",
   "title": "Search Glean with discovered filters",
   "description": "Use the official TypeScript API client to search across all of your Glean content by default, or discover datasources and common filter fields before applying an explicit selection to permission-aware Platform Search.",
-  "sidebarLabel": "Search with filters",
+  "sidebarLabel": "Search with discovered filters",
   "codeWalkthrough": {
     "intro": "The runnable scaffold uses the published Glean auth package for tenant discovery and refreshable OAuth credentials, gives that token provider to the official API client, and keeps the Search sequence explicit.",
     "examples": [

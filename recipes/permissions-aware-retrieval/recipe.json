@@ -2,7 +2,7 @@
   "id": "permissions-aware-retrieval",
   "title": "Ground your own LLM app in Glean",
   "description": "Use Glean's Platform API as the retrieval layer for your own LLM app — every result ACL-filtered for the caller before it ever reaches the model.",
-  "sidebarLabel": "Permissions-aware retrieval",
+  "sidebarLabel": "Ground your LLM app in Glean",
   "surfaces": ["platform-api", "sdk-client"],
   "capabilities": ["search"],
   "status": "production-pattern",

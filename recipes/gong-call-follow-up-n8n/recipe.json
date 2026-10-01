@@ -2,7 +2,7 @@
   "id": "gong-call-follow-up-n8n",
   "title": "Automate Gong call follow-up with Glean Triggers in n8n",
   "description": "Use the Glean Trigger node in n8n to summarize a Gong call, log it in Salesforce, and post a Slack heads-up.",
-  "sidebarLabel": "Gong + n8n",
+  "sidebarLabel": "Follow up on Gong calls in n8n",
   "surfaces": ["platform-api", "client-api"],
   "capabilities": ["workflows", "search", "chat"],
   "status": "showcase",

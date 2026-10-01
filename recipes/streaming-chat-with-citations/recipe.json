@@ -2,7 +2,7 @@
   "id": "streaming-chat-with-citations",
   "title": "Stream a cited Chat response",
   "description": "Use the modern Platform Chat API to send a permission-aware question, continue the conversation, and read server-sent events with the official TypeScript API client's `createStream` `EventStream`.",
-  "sidebarLabel": "Streaming Chat",
+  "sidebarLabel": "Stream chat with citations",
   "codeWalkthrough": {
     "intro": "The runnable scaffold uses `glean.chat.createStream`, the published Glean auth package, and the official API client. Every turn iterates a typed `EventStream`.",
     "examples": [

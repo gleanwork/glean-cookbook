@@ -2,7 +2,7 @@
   "id": "import-skill-from-github",
   "title": "Import a skill from GitHub",
   "description": "Preview a public GitHub skill on a branch URL with the official TypeScript API client, import the selected URL, sync that captured skill, confirm it with get and list, then delete only IDs this run created.",
-  "sidebarLabel": "Import from GitHub",
+  "sidebarLabel": "Import a skill from GitHub",
   "codeWalkthrough": {
     "intro": "The runnable scaffold opts into the experimental Skills API through the official SDK, previews a GitHub URL without persisting a source, imports only selected URLs, and syncs one captured skill.",
     "examples": [

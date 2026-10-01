@@ -74,7 +74,7 @@ try {
   );
   if (!values['dry-run']) {
     console.log(
-      '\nNext: replace the scaffold TODO with the recipe-specific workflow, following the reference recipes in CONTRIBUTING.md (validate-and-publish-skill, search-with-discovered-filters). Add its tests, then run the repository checks.',
+      '\nNext: replace the scaffold TODO with the recipe-specific workflow, following the reference recipes in CONTRIBUTING.md (validate-and-publish-skill, search-with-discovered-filters). Add its tests, then run the repository checks. When you unhide the recipe, add it to its collection in config/recipe-collections.json (see CONTRIBUTING.md).',
     );
   }
 } catch (error) {
