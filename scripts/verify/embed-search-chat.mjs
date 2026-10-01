@@ -9,16 +9,13 @@ export const requiredEnv = [];
 
 const REQUIRED_SOURCE_MARKERS = [
   "authMethod: 'sso'",
-  "authMethod: 'token'",
-  'onAuthTokenRequired',
-  '/api/glean-token',
   'renderSearchBox',
   'renderSearchResults',
   'renderChat',
 ];
 
 export async function setup({ repoRoot }) {
-  const sourcePaths = ['main.tsx', 'auth.ts'].map((file) =>
+  const sourcePaths = ['main.tsx'].map((file) =>
     path.join(repoRoot, 'recipes', 'embed-search-chat', 'react', 'src', file),
   );
   const source = (
@@ -38,7 +35,7 @@ export async function setup({ repoRoot }) {
 export async function run(query) {
   return {
     skip:
-      `The shipped Search and Chat widgets require a live authenticated auth path for “${query}”. ` +
-      'Run the React example in SSO mode or token mode, verify citations and token refresh when applicable, and repeat with a second authorized user to confirm the per-user boundary. The local package check validates lint, types, and the production bundle; it cannot substitute for those live checks.',
+      `The shipped Search and Chat widgets require a live signed-in Glean browser session for “${query}”. ` +
+      'Run the React example in SSO mode, verify citations, and repeat with a second authorized user to confirm the per-user boundary. The local package check validates lint, types, and the production bundle; it cannot substitute for those live checks.',
   };
 }

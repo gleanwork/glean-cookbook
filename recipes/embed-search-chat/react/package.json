@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm run build",
-    "configure": "node scripts/glean-auth.mjs configure --config-file .env.local --backend-variable VITE_GLEAN_BACKEND"
+    "configure": "node scripts/configure-backend.mjs configure --config-file .env.local --backend-variable VITE_GLEAN_BACKEND"
   },
   "dependencies": {
     "@gleanwork/web-sdk": "2.4.0",

@@ -15,7 +15,7 @@
   "timeEstimate": "~15 min (minimal)",
   "icon": "deep-research",
   "requiredScopes": ["SEARCH", "CHAT"],
-  "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
+  "authMethod": ["web-sdk-cookie"],
   "buildMethod": "integrate",
   "execution": {
     "type": "existing-app",
@@ -33,10 +33,6 @@
       {
         "kind": "browser-cookie",
         "scopes": []
-      },
-      {
-        "kind": "host-managed",
-        "scopes": ["SEARCH", "CHAT"]
       }
     ],
     "verification": {
@@ -54,7 +50,7 @@
     "A Glean instance with content indexed",
     "Your Glean Web app URL from Admin > About Glean > Web app URL",
     "A frontend app or page where you can install @gleanwork/web-sdk@2.4.0 and add sized container elements",
-    "For the React variant: Node 20.19+ or 22.12+ and either a signed-in Glean browser session or an authenticated host app with a backend endpoint that mints short-lived Glean user tokens"
+    "For the React variant: Node 20.19+ or 22.12+ and a signed-in Glean browser session"
   ],
   "demoQueries": [
     {
@@ -94,13 +90,6 @@
             "setupCommand": "cd embed-search-chat && npm run configure -- --email \"<work-email>\"",
             "configFile": ".env.local",
             "backendVariable": "VITE_GLEAN_BACKEND"
-          },
-          {
-            "kind": "host-managed",
-            "scopes": ["SEARCH", "CHAT"],
-            "setupCommand": "cd embed-search-chat && npm run configure -- --email \"<work-email>\"",
-            "configFile": ".env.local",
-            "backendVariable": "VITE_GLEAN_BACKEND"
           }
         ],
         "verification": {
@@ -134,19 +123,19 @@
           "description": "Uses your email once to find the tenant backend and writes VITE_GLEAN_BACKEND to .env.local. If the backend is already known, set that variable manually instead. This is setup-time configuration, not a runtime tenant picker, and it does not request or store an API key."
         },
         {
-          "title": "Configure the Web app URL, token endpoint, and questions",
-          "description": "Open .env.local. Set VITE_GLEAN_WEB_APP_URL to the exact value shown in Glean Admin > About Glean > Web app URL; keep backend and Web app URL as setup/deployment configuration rather than runtime user inputs. Leave VITE_GLEAN_AUTH_MODE=sso for the original browser-session flow, or set it to token and configure VITE_GLEAN_TOKEN_ENDPOINT for host-managed auth. Set VITE_GLEAN_INITIAL_QUERY and VITE_GLEAN_INITIAL_MESSAGE to topics you know exist in your Glean content.",
+          "title": "Configure the Web app URL and questions",
+          "description": "Open .env.local. Set VITE_GLEAN_WEB_APP_URL to the exact value shown in Glean Admin > About Glean > Web app URL; keep backend and Web app URL as setup/deployment configuration rather than runtime user inputs. Set VITE_GLEAN_INITIAL_QUERY and VITE_GLEAN_INITIAL_MESSAGE to topics you know exist in your Glean content.",
           "kind": "configure"
         },
         {
           "title": "Open the page",
           "command": "cd embed-search-chat && npm run dev",
           "kind": "run",
-          "description": "Starts Vite and prints a Local URL. Open that URL in the appropriate authenticated browser session for the selected auth mode."
+          "description": "Starts Vite and prints a Local URL. Open that URL in a browser where the user is signed in to Glean."
         },
         {
           "title": "Verify search, chat, and the user boundary",
-          "description": "Confirm autocomplete appears above Search Results, a known query returns accessible content with citations, and Chat answers the configured question. Repeat the check with a second authorized user and confirm neither Search nor Chat reveals content that user cannot access. For token mode, confirm refresh succeeds before the initial token expires and the host endpoint never returns a global or admin token. If a vanity SSO hostname redirects an embedded frame to app.glean.com, confirm the exact Web app URL in Admin > About Glean and test that supported URL before switching to token mode; never proxy or frame the full app.",
+          "description": "Confirm autocomplete appears above Search Results, a known query returns accessible content with citations, and Chat answers the configured question. Repeat the check with a second authorized user and confirm neither Search nor Chat reveals content that user cannot access. If a vanity SSO hostname redirects an embedded frame to app.glean.com, confirm the exact Web app URL in Admin > About Glean; never proxy or frame the full app.",
           "kind": "verify-live"
         }
       ]
@@ -166,9 +155,8 @@
       "icon": "message-with-sparkles"
     },
     {
-      "label": "Host app auth",
-      "caption": "short-lived user token",
-      "category": "agent",
+      "label": "Browser SSO",
+      "caption": "signed-in user session",
       "icon": "verification"
     },
     {
@@ -177,8 +165,8 @@
       "emphasized": true
     }
   ],
-  "aiPrompt": "Embed Glean Search and Chat in my internal web app using the Glean Web SDK, following the recipe at https://developers.glean.com/cookbook/embed-search-chat. Ask for my work email and a topic I know exists before changing the app.\n\nFor an existing app:\n1. Use the work email already supplied to resolve the Glean backend.\n2. Install the pinned SDK with npm install @gleanwork/web-sdk@2.4.0.\n3. Ask for the Glean Web app URL from Admin > About Glean > Web app URL.\n4. Default to the original browser SSO flow with authMethod: 'sso' and the user's signed-in Glean session. Add explicitly sized search-box and search-results containers with coordinated onSearch callbacks, and add a chat container with position: relative, display: block, width: 100%, and height of at least 480px. Pass the supplied topic as initialMessage.\n5. If the host app cannot complete iframe SSO, use token mode instead: add an authenticated host-app endpoint returning { token, expirationTime } for the signed-in user, mint the short-lived Glean token server-side through createAuthToken, and render with authMethod: 'token', authToken, and onAuthTokenRequired. Never expose an API key or IDP credential in browser code.\n\nIf the app cannot install npm packages, use the current script-tag instructions from the Glean Web SDK documentation and keep the selected auth contract. For the shipped React variant, copy the recipe asset, install its pinned dependencies, run the configure command, set VITE_GLEAN_WEB_APP_URL and VITE_GLEAN_AUTH_MODE in .env.local, and set VITE_GLEAN_TOKEN_ENDPOINT when using token mode. Ask the user to open the printed URL in the appropriate authenticated browser. Verify Search autocomplete, permission-aware results with citations, Chat with citations, token refresh in token mode, and the same checks as a second authorized user.",
-  "llmContext": "The recipe preserves the original browser SSO path with authMethod: 'sso', explicit backend/webAppUrl, and permission-aware widgets. If a vanity iframe SSO hostname redirects to the full app, confirm the exact Web app URL in Admin > About Glean and test that supported URL first. If the supported URL still cannot complete in the tenant/browser, use the alternate host-managed token path: authMethod: 'token', a short-lived user-scoped authToken from the host app, and onAuthTokenRequired for refresh. The token endpoint must exchange the signed-in user's IDP OAuth token through createAuthToken and never expose an API key in browser code. Search requires coordinated renderSearchBox and renderSearchResults calls; both need onSearch, backend, and explicit container sizing. Chat uses renderChat with the supplied initialMessage. The shipped React example uses @gleanwork/web-sdk 2.4.0, React, and Vite. Live verification requires the selected auth path and a second authorized user.",
+  "aiPrompt": "Embed Glean Search and Chat in my internal web app using the Glean Web SDK, following the recipe at https://developers.glean.com/cookbook/embed-search-chat. Ask for my work email and a topic I know exists before changing the app.\n\nFor an existing app:\n1. Use the work email already supplied to resolve the Glean backend, or let the developer set the known backend directly.\n2. Install the pinned SDK with npm install @gleanwork/web-sdk@2.4.0.\n3. Ask for the Glean Web app URL from Admin > About Glean > Web app URL.\n4. Use the browser SSO flow with authMethod: 'sso' and the user's signed-in Glean session. Add explicitly sized search-box and search-results containers with coordinated onSearch callbacks, and add a chat container with position: relative, display: block, width: 100%, and height of at least 480px. Pass the supplied topic as initialMessage.\n\nIf the app cannot install npm packages, use the current script-tag instructions from the Glean Web SDK documentation. For the shipped React variant, copy the recipe asset, install its pinned dependencies, run the configure command, set VITE_GLEAN_WEB_APP_URL in .env.local, and start Vite. Ask the user to open the printed URL in a browser where they are signed in to Glean. Verify Search autocomplete, permission-aware results with citations, Chat with citations, and the same checks as a second authorized user.",
+  "llmContext": "Use @gleanwork/web-sdk 2.4.0 with the browser SSO flow: authMethod: 'sso', explicit backend and webAppUrl, and the signed-in user's permission-scoped session. Search requires coordinated renderSearchBox and renderSearchResults calls; both need onSearch, backend, webAppUrl, and explicit container sizing. Chat uses renderChat with the supplied initialMessage. The shipped React example uses React and Vite, resolves the backend during setup, and requires the exact Web app URL from Admin > About Glean. Live verification requires a signed-in browser session and a second authorized user.",
   "goDependency": false,
   "hidden": true,
   "tags": ["embed", "web-sdk"],
