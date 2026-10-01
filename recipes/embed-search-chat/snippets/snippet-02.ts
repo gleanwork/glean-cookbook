@@ -1,8 +1,25 @@
 import { renderSearchBox, renderSearchResults } from '@gleanwork/web-sdk';
 
-renderSearchBox(searchBoxElement, {
+const commonOptions = {
   backend: 'https://{your}-be.glean.com',
-  onSearch: (query) => {
-    renderSearchResults(resultsElement, { query });
-  },
+  webAppUrl: 'https://{your}.glean.com',
+  authMethod: 'sso' as const,
+};
+
+let currentQuery = '';
+
+function renderResults(query: string): void {
+  currentQuery = query;
+  resultsElement.replaceChildren();
+  renderSearchResults(resultsElement, {
+    ...commonOptions,
+    query: currentQuery,
+    onSearch: renderResults,
+  });
+}
+
+renderSearchBox(searchBoxElement, {
+  ...commonOptions,
+  onSearch: renderResults,
 });
+renderResults(currentQuery);

@@ -1,0 +1,35 @@
+{
+  "name": "embed-search-chat-react",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Embed Glean Search and Chat with the Web SDK in a React page.",
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm run build",
+    "configure": "node scripts/glean-auth.mjs configure --config-file .env.local --backend-variable VITE_GLEAN_BACKEND"
+  },
+  "dependencies": {
+    "@gleanwork/web-sdk": "2.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.0.0",
+    "eslint": "10.8.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.65.0",
+    "vite": "8.1.5"
+  },
+  "allowScripts": {
+    "fsevents": false
+  }
+}
