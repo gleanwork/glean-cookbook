@@ -45,11 +45,11 @@ Verify that:
 5. A second user cannot retrieve content that the first user is not authorized to
    see.
 
-If a vanity tenant hostname redirects an embedded `/frame/*` request to
-`app.glean.com`, confirm the exact Web app URL in Admin → About Glean. For this
-tenant, `https://app.glean.com` renders the embedded Search and Chat frames and
-is the working local value. Do not use the backend hostname or proxy the full
-app.
+If a vanity tenant hostname redirects an embedded `/frame/*` request to the
+generic `app.glean.com` front end, confirm the exact Web app URL in Admin → About
+Glean. The generic front end may route to the tenant backend, but it is not a
+substitute for confirming the tenant's supported Web app configuration. Do not
+use the backend hostname or proxy the full app.
 
 The containers intentionally use explicit dimensions and a visible stacking
 context. Keep those layout constraints when moving the widgets into your own app.

@@ -30,10 +30,11 @@ instructions from the [Web SDK documentation](https://developers.glean.com/libra
 Do not use the backend hostname as the Web app URL and do not proxy the full
 Glean app.
 
-If a vanity tenant hostname redirects an embedded `/frame/*` request to
-`app.glean.com`, confirm the exact Web app URL in Admin → About Glean. For this
-tenant, `https://app.glean.com` renders the embedded Search and Chat frames
-successfully.
+If a vanity tenant hostname redirects an embedded `/frame/*` request to the
+generic `app.glean.com` front end, confirm the exact Web app URL in Admin → About
+Glean. The generic front end may route to the tenant backend, but it is not a
+substitute for confirming the tenant's supported Web app configuration. Do not
+use the backend hostname or proxy the full app.
 
 ## React example
 
