@@ -64,7 +64,7 @@ export function formatCliError(error: unknown): CliError {
       error: `HTTP ${error.status}: ${error.detail}`,
       hint:
         error.status === 404
-          ? 'This client already opts into experimental APIs. A 404 can mean Skills APIs are not enabled for this tenant, or the exact skill ID is wrong.'
+          ? 'A 404 can mean Skills is not enabled for this tenant, or the exact skill ID is wrong.'
           : undefined,
     };
   }
@@ -74,7 +74,7 @@ export function formatCliError(error: unknown): CliError {
       error: httpSummary(error),
       hint:
         error.statusCode === 404
-          ? 'This client already opts into experimental APIs. A 404 can mean Skills APIs are not enabled for this tenant, or the exact skill ID is wrong.'
+          ? 'A 404 can mean Skills is not enabled for this tenant, or the exact skill ID is wrong.'
           : undefined,
     };
   }

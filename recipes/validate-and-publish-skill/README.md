@@ -12,7 +12,7 @@ file. It never extracts files to disk or executes the skill.
 ## Prerequisites
 
 - Node.js 22.12.0 or newer
-- A Glean instance with the experimental Skills Platform APIs enabled
+- A Glean instance with Skills enabled
 - Your work email, or the complete Glean backend HTTPS origin
 - Permission to create and delete test skills using the `SKILLS` OAuth scope or
   the `SKILLS` permission on a user-scoped token
@@ -127,5 +127,3 @@ the test skill. It does not modify your local file.
   byte length, even if the archive declares a false size. Nothing is extracted to
   disk or executed. Matching file bytes does not prove that an agent will execute
   the skill correctly.
-- The API is experimental. Instance availability, scope policy, and response
-  behavior still require live verification.

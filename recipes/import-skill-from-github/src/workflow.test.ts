@@ -1,5 +1,12 @@
 import assert from 'node:assert/strict';
-import { afterAll, afterEach, beforeAll, expect, test } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  expect,
+  test,
+} from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { createGleanClient } from './client.js';
@@ -17,6 +24,11 @@ import {
 } from './workflow.js';
 
 const originalToken = process.env.GLEAN_API_TOKEN;
+const originalExperimental = process.env.X_GLEAN_INCLUDE_EXPERIMENTAL;
+
+function expectNoExperimentalHeader(request: Request) {
+  expect(request.headers.get('x-glean-include-experimental')).toBeNull();
+}
 const baseUrl = 'https://fixture.glean.example.com';
 const server = setupServer();
 const skill = githubSkillFixture();
@@ -25,10 +37,19 @@ beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' });
 });
 
+beforeEach(() => {
+  delete process.env.X_GLEAN_INCLUDE_EXPERIMENTAL;
+});
+
 afterEach(() => {
   server.resetHandlers();
   if (originalToken === undefined) delete process.env.GLEAN_API_TOKEN;
   else process.env.GLEAN_API_TOKEN = originalToken;
+  if (originalExperimental === undefined) {
+    delete process.env.X_GLEAN_INCLUDE_EXPERIMENTAL;
+  } else {
+    process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = originalExperimental;
+  }
 });
 
 afterAll(() => {
@@ -44,6 +65,7 @@ function defaultHandlers(options?: {
   const deleted = options?.deleted ?? [];
   return [
     http.post(`${baseUrl}/api/skills/sources/preview`, async ({ request }) => {
+      expectNoExperimentalHeader(request);
       if (options?.preview) {
         const preview = options.preview();
         return preview;
@@ -57,6 +79,7 @@ function defaultHandlers(options?: {
       return HttpResponse.json(PREVIEW_FIXTURE);
     }),
     http.post(`${baseUrl}/api/skills/import`, async ({ request }) => {
+      expectNoExperimentalHeader(request);
       const body = (await request.json()) as { source_urls?: string[] };
       expect(body.source_urls).toEqual([DEFAULT_SOURCE_URL]);
       return HttpResponse.json({
@@ -64,13 +87,15 @@ function defaultHandlers(options?: {
         request_id: 'request-import-fixture',
       });
     }),
-    http.get(`${baseUrl}/api/skills/${skill.id}`, () =>
-      HttpResponse.json({
+    http.get(`${baseUrl}/api/skills/${skill.id}`, ({ request }) => {
+      expectNoExperimentalHeader(request);
+      return HttpResponse.json({
         skill,
         request_id: 'request-get-fixture',
-      }),
-    ),
+      });
+    }),
     http.get(`${baseUrl}/api/skills`, ({ request }) => {
+      expectNoExperimentalHeader(request);
       const cursor = new URL(request.url).searchParams.get('cursor');
       if (options?.paginated && !cursor) {
         return HttpResponse.json({
@@ -87,15 +112,17 @@ function defaultHandlers(options?: {
         request_id: 'request-list-fixture',
       });
     }),
-    http.post(`${baseUrl}/api/skills/${skill.id}/sync`, () =>
-      HttpResponse.json({
+    http.post(`${baseUrl}/api/skills/${skill.id}/sync`, ({ request }) => {
+      expectNoExperimentalHeader(request);
+      return HttpResponse.json({
         sync_status: 'UP_TO_DATE',
         commit_sha: 'fixture-commit-sha',
         updated: false,
         request_id: 'request-sync-fixture',
-      }),
-    ),
-    http.delete(`${baseUrl}/api/skills/${skill.id}`, () => {
+      });
+    }),
+    http.delete(`${baseUrl}/api/skills/${skill.id}`, ({ request }) => {
+      expectNoExperimentalHeader(request);
       if (options?.deleteStatus && options.deleteStatus !== 204) {
         return HttpResponse.json(
           {
@@ -180,8 +207,9 @@ test('paginates list confirmation past the first 100 skills', async () => {
 test('fails loudly when the tenant cannot fetch GitHub', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   server.use(
-    http.post(`${baseUrl}/api/skills/sources/preview`, () =>
-      HttpResponse.json(
+    http.post(`${baseUrl}/api/skills/sources/preview`, ({ request }) => {
+      expectNoExperimentalHeader(request);
+      return HttpResponse.json(
         {
           type: 'about:blank',
           title: 'Forbidden',
@@ -194,8 +222,8 @@ test('fails loudly when the tenant cannot fetch GitHub', async () => {
           status: 403,
           headers: { 'Content-Type': 'application/problem+json' },
         },
-      ),
-    ),
+      );
+    }),
   );
   const client = await createGleanClient({ serverUrl: baseUrl });
 
@@ -208,8 +236,9 @@ test('fails loudly when the tenant cannot fetch GitHub', async () => {
 test('explains HTTP 400 as a rejected source URL', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   server.use(
-    http.post(`${baseUrl}/api/skills/sources/preview`, () =>
-      HttpResponse.json(
+    http.post(`${baseUrl}/api/skills/sources/preview`, ({ request }) => {
+      expectNoExperimentalHeader(request);
+      return HttpResponse.json(
         {
           type: 'about:blank',
           title: 'Bad Request',
@@ -222,8 +251,8 @@ test('explains HTTP 400 as a rejected source URL', async () => {
           status: 400,
           headers: { 'Content-Type': 'application/problem+json' },
         },
-      ),
-    ),
+      );
+    }),
   );
   const client = await createGleanClient({ serverUrl: baseUrl });
 
@@ -245,8 +274,9 @@ test('distinguishes unsupported URL, disabled import, forbidden, and rate-limit 
 test('Skills API 404s are not labeled as a GitHub fetch failure', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   server.use(
-    http.post(`${baseUrl}/api/skills/sources/preview`, () =>
-      HttpResponse.json(
+    http.post(`${baseUrl}/api/skills/sources/preview`, ({ request }) => {
+      expectNoExperimentalHeader(request);
+      return HttpResponse.json(
         {
           type: 'about:blank',
           title: 'Not Found',
@@ -259,8 +289,8 @@ test('Skills API 404s are not labeled as a GitHub fetch failure', async () => {
           status: 404,
           headers: { 'Content-Type': 'application/problem+json' },
         },
-      ),
-    ),
+      );
+    }),
   );
   const client = await createGleanClient({ serverUrl: baseUrl });
 
@@ -269,7 +299,7 @@ test('Skills API 404s are not labeled as a GitHub fetch failure', async () => {
   ).rejects.toSatisfy((error: unknown) => {
     expect(String(error)).not.toMatch(/GitHub import failed/);
     const formatted = formatCliError(error);
-    expect(formatted.hint).toMatch(/Skills APIs are not enabled/);
+    expect(formatted.hint).toMatch(/Skills is not enabled/);
     return true;
   });
 });
@@ -277,14 +307,15 @@ test('Skills API 404s are not labeled as a GitHub fetch failure', async () => {
 test('list miss is not reported as a GitHub fetch failure', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   server.use(
-    http.get(`${baseUrl}/api/skills`, () =>
-      HttpResponse.json({
+    http.get(`${baseUrl}/api/skills`, ({ request }) => {
+      expectNoExperimentalHeader(request);
+      return HttpResponse.json({
         skills: [githubSkillFixture('skill-other')],
         has_more: false,
         next_cursor: null,
         request_id: 'request-list-miss',
-      }),
-    ),
+      });
+    }),
     ...defaultHandlers(),
   );
   const client = await createGleanClient({ serverUrl: baseUrl });

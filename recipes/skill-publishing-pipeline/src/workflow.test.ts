@@ -2,7 +2,14 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { strToU8, zipSync } from 'fflate';
-import { afterAll, afterEach, beforeAll, expect, test } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  expect,
+  test,
+} from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { createGleanClient } from './client.js';
@@ -27,7 +34,14 @@ afterAll(() => {
   server.close();
 });
 
+const originalExperimental = process.env.X_GLEAN_INCLUDE_EXPERIMENTAL;
+
+function expectNoExperimentalHeader(request: Request) {
+  expect(request.headers.get('x-glean-include-experimental')).toBeNull();
+}
+
 async function uploadedManifest(request: Request) {
+  expectNoExperimentalHeader(request);
   expect(request.headers.get('authorization')).toBe('Bearer fixture-token');
   expect(request.headers.get('content-type')).toMatch(/^multipart\/form-data;/);
   const form = await request.formData();
@@ -128,10 +142,12 @@ function defaultHandlers(options?: {
         request_id: `request-create-${manifests.length}`,
       });
     }),
-    http.get(`${baseUrl}/api/skills/${skillId}`, () =>
-      HttpResponse.json({ skill: skill(), request_id: 'request-get' }),
-    ),
+    http.get(`${baseUrl}/api/skills/${skillId}`, ({ request }) => {
+      expectNoExperimentalHeader(request);
+      return HttpResponse.json({ skill: skill(), request_id: 'request-get' });
+    }),
     http.get(`${baseUrl}/api/skills/${skillId}/content`, ({ request }) => {
+      expectNoExperimentalHeader(request);
       contentPaths.push(new URL(request.url).pathname);
       if (options?.invalidContent) {
         return new HttpResponse('not-a-zip', {
@@ -141,6 +157,7 @@ function defaultHandlers(options?: {
       return zipResponse(manifests.at(-1) ?? '');
     }),
     http.get(`${baseUrl}/api/skills/${skillId}/versions`, ({ request }) => {
+      expectNoExperimentalHeader(request);
       expect(new URL(request.url).searchParams.get('page_size')).toBe('100');
       return HttpResponse.json({
         versions: manifests.map((_, index) => version(index + 1)),
@@ -151,7 +168,8 @@ function defaultHandlers(options?: {
     }),
     http.get(
       `${baseUrl}/api/skills/${skillId}/versions/:version`,
-      ({ params }) => {
+      ({ params, request }) => {
+        expectNoExperimentalHeader(request);
         const requestedVersion = Number(params.version);
         expect(manifests[requestedVersion - 1]).toBeDefined();
         return HttpResponse.json({
@@ -163,13 +181,15 @@ function defaultHandlers(options?: {
     http.get(
       `${baseUrl}/api/skills/${skillId}/versions/:version/content`,
       ({ params, request }) => {
+        expectNoExperimentalHeader(request);
         contentPaths.push(new URL(request.url).pathname);
         const manifest = manifests[Number(params.version) - 1];
         expect(manifest).toBeDefined();
         return zipResponse(manifest!);
       },
     ),
-    http.delete(`${baseUrl}/api/skills/:skillId`, ({ params }) => {
+    http.delete(`${baseUrl}/api/skills/:skillId`, ({ params, request }) => {
+      expectNoExperimentalHeader(request);
       expect(params.skillId).toBe(skillId);
       if (options?.deleteStatus) {
         return HttpResponse.json(
@@ -199,10 +219,19 @@ function defaultHandlers(options?: {
   };
 }
 
+beforeEach(() => {
+  delete process.env.X_GLEAN_INCLUDE_EXPERIMENTAL;
+});
+
 afterEach(async () => {
   server.resetHandlers();
   if (originalToken === undefined) delete process.env.GLEAN_API_TOKEN;
   else process.env.GLEAN_API_TOKEN = originalToken;
+  if (originalExperimental === undefined) {
+    delete process.env.X_GLEAN_INCLUDE_EXPERIMENTAL;
+  } else {
+    process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = originalExperimental;
+  }
   await Promise.all(
     roots
       .splice(0)
