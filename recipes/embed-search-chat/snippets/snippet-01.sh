@@ -1,1 +1,1 @@
-npm install @gleanwork/web-sdk
+npm install @gleanwork/web-sdk@2.4.0

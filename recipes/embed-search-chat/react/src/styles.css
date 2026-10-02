@@ -1,0 +1,184 @@
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  color: #1f2024;
+  background: #f7f8fa;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.site-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 28px max(24px, calc((100vw - 1400px) / 2));
+  background: #fff;
+  border-bottom: 1px solid #e3e5ea;
+}
+
+.site-header h1,
+.card h2,
+.error-card h1 {
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.site-header h1 {
+  font-size: clamp(24px, 3vw, 36px);
+}
+
+.header-note {
+  max-width: 420px;
+  margin: 0;
+  color: #565a64;
+  line-height: 1.5;
+  text-align: right;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #343ced;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  width: min(1400px, 100%);
+  min-height: calc(100vh - 121px);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.card,
+.error-card {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e3e5ea;
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgb(31 32 36 / 6%);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 20px;
+}
+
+.card-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  flex: 0 0 auto;
+  margin-bottom: 16px;
+}
+
+.card h2 {
+  font-size: 22px;
+}
+
+.auth-badge {
+  padding: 5px 9px;
+  color: #216e39;
+  background: #dcfce7;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* Glean's autocomplete dropdown needs a positioned, visible stacking context. */
+.search-box-container {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  flex: 0 0 auto;
+}
+
+.search-results-container,
+.chat-container {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  min-height: 480px;
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+.search-results-container {
+  margin-top: 16px;
+}
+
+.chat-container {
+  height: 100%;
+}
+
+.shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.error-card {
+  width: min(560px, 100%);
+  padding: 32px;
+}
+
+.error-card p {
+  color: #565a64;
+  line-height: 1.6;
+}
+
+.error-card code {
+  padding: 2px 5px;
+  background: #f0f1f4;
+  border-radius: 4px;
+}
+
+@media (max-width: 900px) {
+  .site-header {
+    display: block;
+  }
+
+  .header-note {
+    margin-top: 16px;
+    text-align: left;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .search-card,
+  .chat-card {
+    min-height: 680px;
+  }
+}
