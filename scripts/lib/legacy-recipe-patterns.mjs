@@ -121,13 +121,9 @@ export const LEGACY_CODE_PATTERN_TARGETS = Object.freeze({
   }),
   'missing-vitest': Object.freeze({
     'recipes/company-answers/chat-api': NO_VITEST_NODE_TEST,
-    'recipes/company-answers/web-sdk':
-      'browser UI package with typecheck/build only; no test script.',
     'recipes/customer-360/platform-agents': 'no test script.',
     'recipes/customer-360/platform-search-chat': NO_VITEST_NODE_TEST,
     'recipes/onboarding-hub/platform-chat': NO_VITEST_NODE_TEST,
-    'recipes/onboarding-hub/web-sdk':
-      'browser UI package with typecheck/build only; no test script.',
     'recipes/oncall-copilot': NO_VITEST_NODE_TEST,
     'recipes/permissions-aware-retrieval/typescript':
       'check runs lint and typecheck only; no test script.',

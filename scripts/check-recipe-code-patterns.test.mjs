@@ -128,6 +128,24 @@ try {
   assert.deepEqual(rules(repoRoot), []);
 });
 
+test('allows browser-only Web SDK packages to use setup-time backend configuration without CLI test scaffolding', async (t) => {
+  const repoRoot = await fixture(t, {
+    'package.json': JSON.stringify({
+      dependencies: { '@gleanwork/web-sdk': '2.4.0' },
+    }),
+    'tsconfig.json': '{}\n',
+    'scripts/configure-backend.mjs': `import fs from 'node:fs';
+const contents = fs.readFileSync('.env.local', 'utf8');
+for (const line of contents.split('\\n')) {
+  if (line.startsWith('VITE_GLEAN_BACKEND=')) console.log(line);
+}
+`,
+    'src/main.tsx':
+      "import { renderChat } from '@gleanwork/web-sdk';\nrenderChat(document.body, { authMethod: 'sso' });\n",
+  });
+  assert.deepEqual(rules(repoRoot), []);
+});
+
 test('rejects node:test and a missing Vitest script in TypeScript packages', async (t) => {
   const files = modernPackage();
   const packageJson = JSON.parse(files['package.json']);

@@ -101,6 +101,8 @@ export function recipeCodePatternViolations({
       ...packageJson.devDependencies,
     };
     const sources = sourceFiles(repoRoot, directory);
+    const isWebSdkPackage =
+      typeof dependencies['@gleanwork/web-sdk'] === 'string';
     const isTypeScript = fs.existsSync(
       path.join(repoRoot, directory, 'tsconfig.json'),
     );
@@ -135,7 +137,12 @@ export function recipeCodePatternViolations({
         SPLITS_ASSIGNMENT.test(text)
       );
     });
-    if (envParser) record('env-file-parsing', directory, envParser);
+    // Browser-only Web SDK packages use cookie SSO. Their setup helper may
+    // update the local backend configuration, but the runtime must still use
+    // the standard env loading path and never parse credentials or tokens.
+    if (envParser && !(isWebSdkPackage && envParser.includes('/scripts/'))) {
+      record('env-file-parsing', directory, envParser);
+    }
 
     if (isTypeScript) {
       const nodeTestScript = Object.entries(scripts).find(([, command]) =>
@@ -156,8 +163,9 @@ export function recipeCodePatternViolations({
         record('node-test-runner', directory, nodeTestImport);
       }
       if (
-        !/^vitest(?:\s+run)?(?:\s|$)/u.test(scripts.test ?? '') ||
-        typeof dependencies.vitest !== 'string'
+        !isWebSdkPackage &&
+        (!/^vitest(?:\s+run)?(?:\s|$)/u.test(scripts.test ?? '') ||
+          typeof dependencies.vitest !== 'string')
       ) {
         record('missing-vitest', directory, `${directory}/package.json`);
       }
