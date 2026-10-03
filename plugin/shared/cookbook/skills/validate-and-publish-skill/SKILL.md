@@ -7,7 +7,7 @@ disable-model-invocation: true
 ## Before you start
 
 - Node.js 22.12.0 or newer
-- A Glean instance with the experimental Skills Platform APIs enabled
+- A Glean instance with Skills enabled
 - Your work email, or the complete Glean backend HTTPS origin
 - Permission to create and delete test skills, using the SKILLS OAuth scope or the SKILLS permission on a user-scoped token.
 

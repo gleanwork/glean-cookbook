@@ -7,7 +7,7 @@ disable-model-invocation: true
 ## Before you start
 
 - Node.js 22.12.0 or newer
-- A Glean instance with the experimental Skills Platform APIs enabled
+- A Glean instance with Skills enabled
 - Your work email, or the complete Glean backend HTTPS origin
 - A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback
 - The scaffold includes a sample SKILL.md at fixtures/sample-skill/SKILL.md; the later publish step can use that sample or your own bundle
