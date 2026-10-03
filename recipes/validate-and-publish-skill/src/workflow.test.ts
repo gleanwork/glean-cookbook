@@ -33,8 +33,11 @@ beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' });
 });
 
+const originalExperimental = process.env.X_GLEAN_INCLUDE_EXPERIMENTAL;
+
 beforeEach(() => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
+  delete process.env.X_GLEAN_INCLUDE_EXPERIMENTAL;
 });
 
 afterAll(() => {
@@ -55,7 +58,12 @@ function problem(status: number, detail: string, code = 'invalid_request') {
   );
 }
 
+function expectNoExperimentalHeader(request: Request) {
+  expect(request.headers.get('x-glean-include-experimental')).toBeNull();
+}
+
 async function uploadedBytes(request: Request) {
+  expectNoExperimentalHeader(request);
   expect(request.headers.get('authorization')).toBe('Bearer fixture-token');
   expect(request.headers.get('content-type')).toMatch(/^multipart\/form-data;/);
   const file = (await request.formData()).get('file');
@@ -126,13 +134,15 @@ function defaultHandlers(options?: {
         request_id: 'request-create',
       });
     }),
-    http.get(`${baseUrl}/api/skills/${skillId}`, () =>
-      HttpResponse.json({
+    http.get(`${baseUrl}/api/skills/${skillId}`, ({ request }) => {
+      expectNoExperimentalHeader(request);
+      return HttpResponse.json({
         skill: skill(options?.retrievedId),
         request_id: 'request-get',
-      }),
-    ),
+      });
+    }),
     http.get(`${baseUrl}/api/skills/${skillId}/content`, ({ request }) => {
+      expectNoExperimentalHeader(request);
       // The pilot requests latest content, not a version-specific endpoint.
       expect(new URL(request.url).search).toBe('');
       const content =
@@ -143,7 +153,8 @@ function defaultHandlers(options?: {
         headers: { 'Content-Type': 'application/octet-stream' },
       });
     }),
-    http.delete(`${baseUrl}/api/skills/:skillId`, ({ params }) => {
+    http.delete(`${baseUrl}/api/skills/:skillId`, ({ params, request }) => {
+      expectNoExperimentalHeader(request);
       expect(params.skillId).toBe(skillId);
       if (options?.deleteStatus)
         return problem(options.deleteStatus, 'Skill is in use', 'conflict');
@@ -151,6 +162,7 @@ function defaultHandlers(options?: {
       return new HttpResponse(null, { status: 204 });
     }),
     http.get(`${baseUrl}/api/skills`, ({ request }) => {
+      expectNoExperimentalHeader(request);
       listCalls += 1;
       expect(new URL(request.url).searchParams.get('page_size')).toBe('100');
       return HttpResponse.json({
@@ -173,6 +185,11 @@ afterEach(async () => {
   vi.useRealTimers();
   if (originalToken === undefined) delete process.env.GLEAN_API_TOKEN;
   else process.env.GLEAN_API_TOKEN = originalToken;
+  if (originalExperimental === undefined) {
+    delete process.env.X_GLEAN_INCLUDE_EXPERIMENTAL;
+  } else {
+    process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = originalExperimental;
+  }
   await Promise.all(
     roots
       .splice(0)

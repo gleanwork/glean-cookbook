@@ -6,13 +6,12 @@ Glean, and inspect the downloaded files safely before you use them elsewhere.
 ## Prerequisites
 
 - Node.js 22.12.0 or newer
-- A Glean instance with the experimental Skills Platform APIs enabled
+- A Glean instance with Skills enabled
 - Your work email, or the complete Glean backend HTTPS origin
 - A tenant that grants Skills read and write access through OAuth or a
   user-scoped token
 
-Skills are still experimental and may not be enabled on every tenant. This
-recipe stores and downloads bundles; it does not run their contents.
+This recipe stores and downloads bundles; it does not run their contents.
 
 ## Copy and test the project
 

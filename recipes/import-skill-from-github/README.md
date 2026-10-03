@@ -6,14 +6,13 @@ instance, and sync the imported copy with its source.
 ## Prerequisites
 
 - Node.js 22.12.0 or newer
-- A Glean instance with the experimental Skills Platform APIs enabled
+- A Glean instance with Skills enabled
 - Your work email, or the complete Glean backend HTTPS origin
 - A tenant that grants Skills read and write access through OAuth or a
   user-scoped token
 - Tenant-side GitHub source fetching enabled for Skills
 
-Skills are still experimental and may not be enabled on every tenant. This
-recipe stores and syncs the bundle; it does not run retrieved files.
+This recipe stores and syncs the bundle; it does not run retrieved files.
 
 ## Copy and test the project
 
