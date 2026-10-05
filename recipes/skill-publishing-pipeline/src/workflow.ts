@@ -68,10 +68,10 @@ export async function findSkillByName(
   let cursor: string | undefined;
   do {
     const page = await api.list(100, cursor);
-    const match = page.skills.find(
+    const match = page.results.find(
       (skill) => skill.display_name === displayName,
     );
-    if (match) return match.id;
+    if (match) return match.skill_id;
     cursor = page.next_cursor ?? undefined;
   } while (cursor);
   return undefined;
@@ -105,7 +105,7 @@ export async function publishBundle(
     throw new Error('Published skill name does not match validated metadata.');
   }
   return {
-    id: created.skill.id,
+    id: created.skill.skill_id,
     displayName: created.skill.display_name,
     version: created.skill.latest_version,
     minorVersion: created.skill.latest_minor_version,
@@ -233,9 +233,9 @@ export async function verifyPublishingLifecycle(
 
     log('Publishing the first version of a uniquely named skill...');
     const first = await api.create({ file: firstBundle });
-    createdId = first.skill.id;
+    createdId = first.skill.skill_id;
     const retrieved = await api.retrieve(createdId);
-    if (retrieved.skill.id !== createdId) {
+    if (retrieved.skill.skill_id !== createdId) {
       throw new Error('Direct retrieval returned a different skill.');
     }
     await assertManifest(
@@ -247,7 +247,7 @@ export async function verifyPublishingLifecycle(
 
     log('Publishing the same name again to create a newer version...');
     const second = await api.create({ file: await readBundle(secondPath) });
-    if (second.skill.id !== createdId) {
+    if (second.skill.skill_id !== createdId) {
       throw new Error('Name-based supersession created a different skill ID.');
     }
     if (!versionAdvanced(first.skill, second.skill)) {
@@ -255,7 +255,7 @@ export async function verifyPublishingLifecycle(
     }
 
     const versions = await api.listVersions(createdId, 100);
-    const latest = versions.versions.find(
+    const latest = versions.results.find(
       (version) =>
         version.version === second.skill.latest_version && version.is_latest,
     );

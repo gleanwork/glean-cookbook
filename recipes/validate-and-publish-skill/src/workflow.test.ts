@@ -90,7 +90,7 @@ function defaultHandlers(options?: {
 
   function skill(id = skillId) {
     return {
-      id,
+      skill_id: id,
       display_name:
         /^name:\s*(.+)$/mu.exec(uploaded.toString('utf8'))?.[1] ?? '',
       description: 'fixture',
@@ -129,10 +129,13 @@ function defaultHandlers(options?: {
       createCalls += 1;
       uploaded = await uploadedBytes(request);
       if (options?.createResponse) return options.createResponse();
-      return HttpResponse.json({
-        skill: skill(),
-        request_id: 'request-create',
-      });
+      return HttpResponse.json(
+        {
+          skill: skill(),
+          request_id: 'request-create',
+        },
+        { status: 201 },
+      );
     }),
     http.get(`${baseUrl}/api/skills/${skillId}`, ({ request }) => {
       expectNoExperimentalHeader(request);
@@ -166,7 +169,7 @@ function defaultHandlers(options?: {
       listCalls += 1;
       expect(new URL(request.url).searchParams.get('page_size')).toBe('100');
       return HttpResponse.json({
-        skills: createCalls ? [skill()] : [],
+        results: createCalls ? [skill()] : [],
         has_more: false,
         next_cursor: null,
         request_id: 'request-list',

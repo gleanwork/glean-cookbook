@@ -55,7 +55,7 @@ export async function findSkillById(api: SkillsApi, skillId: string) {
   let cursor: string | undefined;
   do {
     const page = await api.list(100, cursor);
-    if (page.skills.some((skill) => skill.id === skillId)) return true;
+    if (page.results.some((skill) => skill.skill_id === skillId)) return true;
     cursor = page.next_cursor ?? undefined;
   } while (cursor);
   return false;
@@ -65,10 +65,10 @@ export async function findSkillByName(api: SkillsApi, displayName: string) {
   let cursor: string | undefined;
   do {
     const page = await api.list(100, cursor);
-    const match = page.skills.find(
+    const match = page.results.find(
       (skill) => skill.display_name === displayName,
     );
-    if (match) return match.id;
+    if (match) return match.skill_id;
     cursor = page.next_cursor ?? undefined;
   } while (cursor);
   return undefined;
@@ -179,10 +179,10 @@ export async function verifyFirstPersist(
       created.skill.latest_minor_version !== 1
     ) {
       throw new Error(
-        `Create returned version ${created.skill.latest_version}.${created.skill.latest_minor_version} for ${created.skill.id}; expected a new skill at version 1.1. This may be an existing skill; it was not deleted. Inspect it before continuing.`,
+        `Create returned version ${created.skill.latest_version}.${created.skill.latest_minor_version} for ${created.skill.skill_id}; expected a new skill at version 1.1. This may be an existing skill; it was not deleted. Inspect it before continuing.`,
       );
     }
-    createdId = created.skill.id;
+    createdId = created.skill.skill_id;
     if (created.skill.display_name !== displayName) {
       throw new Error('Created skill name does not match validated metadata.');
     }
@@ -192,7 +192,7 @@ export async function verifyFirstPersist(
       throw new Error('List did not include the skill this run just created.');
     }
     const retrieved = await api.retrieve(createdId);
-    if (retrieved.skill.id !== createdId) {
+    if (retrieved.skill.skill_id !== createdId) {
       throw new Error('Direct retrieval returned a different skill.');
     }
 
