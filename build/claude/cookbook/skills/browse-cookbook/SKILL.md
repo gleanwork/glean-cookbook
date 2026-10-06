@@ -17,6 +17,7 @@ before running its command. Full write-ups live at
 
 - **Customer 360: an account page built from your own content** (`/cookbook:customer-360`) — One page per account — status, risks, and a drill-in chat — assembled from whatever your instance already knows about that customer. No CRM export, no separate index.
 - **Trigger a customer meeting prep request** (`/cookbook:customer-meeting-prep-trigger`) — Register a calendar Trigger through the Platform Triggers API and deliver one signed event to a small receiver that prints a customer-meeting prep request.
+- **Embed search & chat in an internal app** (`/cookbook:embed-search-chat`) — Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.
 - **Approve an agent action from a CLI** (`/cookbook:human-in-the-loop-agent`) — Start a durable agent run from TypeScript, see the exact tool call it wants to make, and approve or reject it before it happens. The agent only sends you a Slack DM.
 - **Import a skill from GitHub** (`/cookbook:import-skill-from-github`) — Preview a public GitHub skill on a branch URL with the official TypeScript API client, import the selected URL, sync that captured skill, confirm it with get and list, then delete only IDs this run created.
 - **Build an IT helpdesk page in Lovable** (`/cookbook:no-code-it-helpdesk-lovable`) — Paste a prompt into Lovable to get a private page that answers common IT questions from your Glean docs.
