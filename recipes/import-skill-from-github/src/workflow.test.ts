@@ -67,8 +67,14 @@ function defaultHandlers(options?: {
     http.post(`${baseUrl}/api/skills/sources/preview`, async ({ request }) => {
       expectNoExperimentalHeader(request);
       if (options?.preview) {
-        const preview = options.preview();
-        return preview;
+        const body = (await request.json()) as {
+          source_url?: string;
+          stream?: boolean;
+        };
+        expect(body.source_url).toBe(DEFAULT_SOURCE_URL);
+        expect(body.stream).toBe(true);
+        expect(request.headers.get('accept')).toBe('text/event-stream');
+        return options.preview();
       }
       const body = (await request.json()) as {
         source_url?: string;
@@ -82,12 +88,15 @@ function defaultHandlers(options?: {
       expectNoExperimentalHeader(request);
       const body = (await request.json()) as { source_urls?: string[] };
       expect(body.source_urls).toEqual([DEFAULT_SOURCE_URL]);
-      return HttpResponse.json({
-        skills: [skill],
-        request_id: 'request-import-fixture',
-      });
+      return HttpResponse.json(
+        {
+          skills: [skill],
+          request_id: 'request-import-fixture',
+        },
+        { status: 201 },
+      );
     }),
-    http.get(`${baseUrl}/api/skills/${skill.id}`, ({ request }) => {
+    http.get(`${baseUrl}/api/skills/${skill.skill_id}`, ({ request }) => {
       expectNoExperimentalHeader(request);
       return HttpResponse.json({
         skill,
@@ -99,29 +108,29 @@ function defaultHandlers(options?: {
       const cursor = new URL(request.url).searchParams.get('cursor');
       if (options?.paginated && !cursor) {
         return HttpResponse.json({
-          skills: [githubSkillFixture('skill-other')],
+          results: [githubSkillFixture('skill-other')],
           has_more: true,
           next_cursor: 'page-2',
           request_id: 'request-list-page-1',
         });
       }
       return HttpResponse.json({
-        skills: [skill],
+        results: [skill],
         has_more: false,
         next_cursor: null,
         request_id: 'request-list-fixture',
       });
     }),
-    http.post(`${baseUrl}/api/skills/${skill.id}/sync`, ({ request }) => {
+    http.post(`${baseUrl}/api/skills/${skill.skill_id}/sync`, ({ request }) => {
       expectNoExperimentalHeader(request);
       return HttpResponse.json({
         sync_status: 'UP_TO_DATE',
         commit_sha: 'fixture-commit-sha',
-        updated: false,
+        is_updated: false,
         request_id: 'request-sync-fixture',
       });
     }),
-    http.delete(`${baseUrl}/api/skills/${skill.id}`, ({ request }) => {
+    http.delete(`${baseUrl}/api/skills/${skill.skill_id}`, ({ request }) => {
       expectNoExperimentalHeader(request);
       if (options?.deleteStatus && options.deleteStatus !== 204) {
         return HttpResponse.json(
@@ -139,7 +148,7 @@ function defaultHandlers(options?: {
           },
         );
       }
-      deleted.push(skill.id);
+      deleted.push(skill.skill_id);
       return new HttpResponse(null, { status: 204 });
     }),
   ];
@@ -156,14 +165,14 @@ test('previews, imports, syncs, and deletes only run-owned IDs', async () => {
   });
 
   expect(result).toMatchObject({
-    ids: [skill.id],
+    ids: [skill.skill_id],
     displayName: 'skill-creator',
     sourceUrl: DEFAULT_SOURCE_URL,
     commitSha: 'fixture-commit-sha',
-    updated: false,
+    is_updated: false,
   });
   expect(importedSuccessLine(result)).toMatch(/cleanup completed\.$/);
-  expect(deleted).toEqual([skill.id]);
+  expect(deleted).toEqual([skill.skill_id]);
 });
 
 test('optional --stream consumes recorded SSE preview payloads', async () => {
@@ -187,8 +196,8 @@ test('optional --stream consumes recorded SSE preview payloads', async () => {
       cleanup: true,
       log: (message) => logs.push(message),
     }),
-  ).resolves.toMatchObject({ ids: [skill.id] });
-  expect(deleted).toEqual([skill.id]);
+  ).resolves.toMatchObject({ ids: [skill.skill_id] });
+  expect(deleted).toEqual([skill.skill_id]);
   expect(logs.join('\n')).toMatch(/Scan progress: 1 item\(s\)/);
 });
 
@@ -200,8 +209,8 @@ test('paginates list confirmation past the first 100 skills', async () => {
 
   await expect(
     importSkillFromGithub(client.skills, { cleanup: true }),
-  ).resolves.toMatchObject({ ids: [skill.id] });
-  expect(deleted).toEqual([skill.id]);
+  ).resolves.toMatchObject({ ids: [skill.skill_id] });
+  expect(deleted).toEqual([skill.skill_id]);
 });
 
 test('fails loudly when the tenant cannot fetch GitHub', async () => {
@@ -310,7 +319,7 @@ test('list miss is not reported as a GitHub fetch failure', async () => {
     http.get(`${baseUrl}/api/skills`, ({ request }) => {
       expectNoExperimentalHeader(request);
       return HttpResponse.json({
-        skills: [githubSkillFixture('skill-other')],
+        results: [githubSkillFixture('skill-other')],
         has_more: false,
         next_cursor: null,
         request_id: 'request-list-miss',
@@ -339,8 +348,8 @@ test('failed delete exits without reporting cleanup completed', async () => {
   ).rejects.toSatisfy((error: unknown) => {
     expect(error).toBeInstanceOf(CleanupFailedError);
     expect(error).toMatchObject({
-      remainingIds: [skill.id],
-      cleanupCommand: `npm start -- cleanup --id ${skill.id} --yes --email <your-work-email>`,
+      remainingIds: [skill.skill_id],
+      cleanupCommand: `npm start -- cleanup --id ${skill.skill_id} --yes --email <your-work-email>`,
     });
     expect(String(error)).not.toMatch(/cleanup completed/);
     return true;

@@ -3,15 +3,20 @@ import {
   GleanBaseError,
   PlatformProblemDetailError,
 } from '@gleanwork/api-client/models/errors';
-import { PreviewSourceAcceptEnum } from '@gleanwork/api-client/sdk/skills.js';
 import type { PlatformSkillSourcePreviewResponse } from '@gleanwork/api-client/models/components';
 import { CleanupFailedError, formatCliError } from './errors.js';
 import { DEFAULT_SOURCE_URL } from './fixture.js';
-import { parsePreviewResult } from './preview.js';
+import { readPreviewStream } from './preview.js';
 
 export type SkillsApi = Pick<
   Glean['skills'],
-  'delete' | 'import' | 'list' | 'previewSource' | 'retrieve' | 'sync'
+  | 'delete'
+  | 'import'
+  | 'list'
+  | 'previewSource'
+  | 'previewSourceStream'
+  | 'retrieve'
+  | 'sync'
 >;
 
 export interface ImportResult {
@@ -19,7 +24,7 @@ export interface ImportResult {
   displayName: string;
   sourceUrl: string;
   commitSha: string;
-  updated: boolean;
+  is_updated: boolean;
 }
 
 function rethrow(error: unknown): never {
@@ -95,7 +100,7 @@ export async function findSkillById(api: SkillsApi, skillId: string) {
   let cursor: string | undefined;
   do {
     const page = await api.list(100, cursor);
-    if (page.skills.some((skill) => skill.id === skillId)) return true;
+    if (page.results.some((skill) => skill.skill_id === skillId)) return true;
     cursor = page.next_cursor ?? undefined;
   } while (cursor);
   return false;
@@ -125,13 +130,11 @@ export async function resolvePreview(
   log: (message: string) => void = () => undefined,
 ): Promise<PlatformSkillSourcePreviewResponse> {
   try {
-    const preview = await api.previewSource(
-      { source_url: sourceUrl, stream },
-      stream
-        ? { acceptHeaderOverride: PreviewSourceAcceptEnum.textEventStream }
-        : undefined,
+    if (!stream) return await api.previewSource({ source_url: sourceUrl });
+    return await readPreviewStream(
+      await api.previewSourceStream({ source_url: sourceUrl, stream: true }),
+      log,
     );
-    return parsePreviewResult(preview, log);
   } catch (error) {
     reraiseSourceError(error);
   }
@@ -184,21 +187,23 @@ export async function importSkillFromGithub(
     if (!skill) {
       throw new Error('Import returned no skills.');
     }
-    createdIds.push(...imported.skills.map((item) => item.id));
+    createdIds.push(...imported.skills.map((item) => item.skill_id));
 
     log('Confirming get and list return the imported skill...');
-    const retrieved = await api.retrieve(skill.id);
-    if (retrieved.skill.id !== skill.id) {
+    const retrieved = await api.retrieve(skill.skill_id);
+    if (retrieved.skill.skill_id !== skill.skill_id) {
       throw new Error('Direct retrieval returned a different skill.');
     }
-    if (!(await findSkillById(api, skill.id))) {
+    if (!(await findSkillById(api, skill.skill_id))) {
       throw new Error('List did not include the skill this run just imported.');
     }
 
-    log(`Syncing imported skill ${skill.id} from its stored GitHub URL...`);
+    log(
+      `Syncing imported skill ${skill.skill_id} from its stored GitHub URL...`,
+    );
     let synced;
     try {
-      synced = await api.sync(skill.id);
+      synced = await api.sync(skill.skill_id);
     } catch (error) {
       reraiseSourceError(error);
     }
@@ -208,7 +213,7 @@ export async function importSkillFromGithub(
       displayName: retrieved.skill.display_name,
       sourceUrl: selected.source_url,
       commitSha: synced.commit_sha,
-      updated: synced.updated,
+      is_updated: synced.is_updated,
     };
   } catch (error) {
     workError = error;

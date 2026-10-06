@@ -72,7 +72,7 @@ function defaultHandlers(options?: {
   function skill() {
     const currentManifest = manifests.at(-1) ?? '';
     return {
-      id: skillId,
+      skill_id: skillId,
       display_name: /^name:\s*(.+)$/mu.exec(currentManifest)?.[1] ?? '',
       description: /^description:\s*(.+)$/mu.exec(currentManifest)?.[1] ?? '',
       latest_version: manifests.length,
@@ -137,10 +137,13 @@ function defaultHandlers(options?: {
       expect(content).toMatch(/^name:\s*.+$/mu);
       expect(content).toMatch(/^description:\s*.+$/mu);
       manifests.push(content);
-      return HttpResponse.json({
-        skill: skill(),
-        request_id: `request-create-${manifests.length}`,
-      });
+      return HttpResponse.json(
+        {
+          skill: skill(),
+          request_id: `request-create-${manifests.length}`,
+        },
+        { status: 201 },
+      );
     }),
     http.get(`${baseUrl}/api/skills/${skillId}`, ({ request }) => {
       expectNoExperimentalHeader(request);
@@ -160,7 +163,7 @@ function defaultHandlers(options?: {
       expectNoExperimentalHeader(request);
       expect(new URL(request.url).searchParams.get('page_size')).toBe('100');
       return HttpResponse.json({
-        versions: manifests.map((_, index) => version(index + 1)),
+        results: manifests.map((_, index) => version(index + 1)),
         has_more: false,
         next_cursor: null,
         request_id: 'request-versions',

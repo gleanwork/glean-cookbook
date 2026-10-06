@@ -20,7 +20,7 @@ export const PREVIEW_FIXTURE = {
 
 export function githubSkillFixture(id = 'skill-imported') {
   return {
-    id,
+    skill_id: id,
     display_name: 'skill-creator',
     description: 'Guide for creating effective skills.',
     latest_version: 1,

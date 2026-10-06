@@ -1,73 +1,36 @@
-import type { PlatformSkillSourcePreviewResponse } from '@gleanwork/api-client/models/components';
+import type {
+  PlatformSkillSourcePreviewResponse,
+  PlatformSkillSourcePreviewStreamEventServerSentEvent,
+} from '@gleanwork/api-client/models/components';
 
-function previewPayload(
-  value: unknown,
-): value is PlatformSkillSourcePreviewResponse {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    Array.isArray((value as PlatformSkillSourcePreviewResponse).skills) &&
-    Array.isArray((value as PlatformSkillSourcePreviewResponse).failures) &&
-    typeof (value as PlatformSkillSourcePreviewResponse).request_id === 'string'
-  );
-}
-
-function sseBlocks(preview: string) {
-  return preview.split(/\r\n\r\n|\n\n/);
-}
-
-function sseLines(block: string) {
-  return block.split(/\r\n|\n/);
-}
-
-export function parsePreviewResult(
-  preview: PlatformSkillSourcePreviewResponse | string,
+export async function readPreviewStream(
+  events: AsyncIterable<PlatformSkillSourcePreviewStreamEventServerSentEvent>,
   log: (message: string) => void = () => undefined,
-): PlatformSkillSourcePreviewResponse {
-  if (typeof preview !== 'string') return preview;
-
+): Promise<PlatformSkillSourcePreviewResponse> {
   let result: PlatformSkillSourcePreviewResponse | undefined;
   let streamError: string | undefined;
 
-  for (const block of sseBlocks(preview)) {
-    const dataLine = sseLines(block).find((line) => line.startsWith('data:'));
-    if (!dataLine) continue;
-    const data = dataLine.slice('data:'.length).trim();
-    if (!data || data === '[DONE]') continue;
-
-    let event: {
-      type?: string;
-      message?: string;
-      code?: string;
-      total?: number;
-      response?: unknown;
-    };
-    try {
-      event = JSON.parse(data) as {
-        type?: string;
-        message?: string;
-        code?: string;
-        total?: number;
-        response?: unknown;
-      };
-    } catch {
-      throw new Error('Streaming preview returned an unreadable event.');
-    }
-
-    if (event.type === 'error') {
-      streamError = event.message ?? event.code ?? 'GitHub preview failed.';
-      continue;
-    }
-    if (event.type === 'scan') {
-      const detail =
-        typeof event.total === 'number'
-          ? `${event.total} item(s)`
-          : event.message?.trim() || 'repository scan';
-      log(`Scan progress: ${detail}`);
-      continue;
-    }
-    if (event.type === 'result' && previewPayload(event.response)) {
-      result = event.response;
+  for await (const message of events) {
+    switch (message.event) {
+      case 'SCAN':
+        log(`Scan progress: ${message.data.total} item(s)`);
+        break;
+      case 'PROGRESS':
+        break;
+      case 'SKILL':
+        break;
+      case 'RESULT':
+        result = message.data.response;
+        break;
+      case 'ERROR':
+        streamError = message.data.error.detail || message.data.error.title;
+        break;
+      default: {
+        const unexpected: never = message;
+        throw new Error(
+          `Streaming preview returned an unexpected event: ${JSON.stringify(unexpected)}`,
+        );
+      }
     }
   }
 
@@ -86,12 +49,20 @@ export function previewStreamFixture(
   response: PlatformSkillSourcePreviewResponse,
   newline: '\n' | '\r\n' = '\n',
 ): string {
+  const scan = {
+    type: 'SCAN',
+    total: 1,
+    skill_paths: ['skills/skill-creator'],
+  };
+  const result = { type: 'RESULT', response };
+  // The SDK emits an event only after its terminating blank line.
   return [
-    'data: {"type":"scan","total":1}',
+    'event: SCAN',
+    `data: ${JSON.stringify(scan)}`,
     '',
-    `data: ${JSON.stringify({ type: 'result', response })}`,
+    'event: RESULT',
+    `data: ${JSON.stringify(result)}`,
     '',
-    'data: [DONE]',
     '',
   ].join(newline);
 }
