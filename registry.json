@@ -1242,7 +1242,7 @@
     "surfaces": ["web-sdk"],
     "capabilities": ["embed", "search", "chat"],
     "status": "production-pattern",
-    "visibility": "preview",
+    "visibility": "public",
     "category": "search",
     "level": "Beginner",
     "levels": { "minimal": true, "wow": true },
