@@ -24,6 +24,8 @@ Build "Trigger a customer meeting prep request" following https://developers.gle
 
 {{> oauth-setup}}
 
+{{> step-shell}}
+
 1. **Scaffold the recipe**
 
    ```bash
@@ -41,14 +43,14 @@ Build "Trigger a customer meeting prep request" following https://developers.gle
    Verify preset selection, experimental Platform API headers, input resolution, and Standard Webhooks signing before connecting a tenant.
 
    ```bash
-   cd customer-meeting-prep-trigger && npm run verify:fixture
+   npm run verify:fixture
    ```
 
 4. **Sign in to Glean**
    Use @gleanwork/auth for tenant discovery and refreshable OAuth credentials stored outside the project. If OAuth is unavailable, provide a user-scoped token with the Triggers permission as a CI fallback.
 
    ```bash
-   cd customer-meeting-prep-trigger && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Configure the meeting pattern and receiver**
@@ -58,13 +60,13 @@ Build "Trigger a customer meeting prep request" following https://developers.gle
    The receiver listens on loopback, verifies bearer delivery auth and the Standard Webhooks signature, and prints a prep request for matching meeting titles. Expose /webhook through a public HTTPS tunnel before registering the trigger.
 
    ```bash
-   cd customer-meeting-prep-trigger && npm start
+   npm start
    ```
 
    {{> run-hybrid-service}}
 
-7. **Register the Platform Trigger**
-   Setup reads GET /api/trigger-presets and the selected preset detail, then creates one trigger through POST /api/triggers. It saves the returned trigger ID and signing secret locally.
+7. **Register the Platform Trigger** (new terminal)
+   Leave the receiver running and open a new terminal in the folder where you started. Setup reads GET /api/trigger-presets and the selected preset detail, then creates one trigger through POST /api/triggers. It saves the returned trigger ID and signing secret locally.
 
    ```bash
    cd customer-meeting-prep-trigger && npm run setup
@@ -74,11 +76,11 @@ Build "Trigger a customer meeting prep request" following https://developers.gle
    Send one fixture delivery through the same signed webhook contract without waiting for a calendar event. Then schedule one real matching meeting to verify forward delivery from the Platform Trigger.
 
    ```bash
-   cd customer-meeting-prep-trigger && npm run test:webhook
+   npm run test:webhook
    ```
 
 9. **Delete the trigger**
    Delete only the trigger ID created by this recipe and clear the local signing secret.
    ```bash
-   cd customer-meeting-prep-trigger && npm run delete
+   npm run delete
    ```

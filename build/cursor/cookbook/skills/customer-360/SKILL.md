@@ -52,6 +52,14 @@ and use that path's declared secure configuration. Keep sign-in and secret entry
 Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
 path when the documented one fails.
 
+### Run the commands in order
+
+Run the step commands in one shell session, starting in the directory where the project should be
+created. A `cd` in one step still applies to later steps, so do not repeat it. If your tool starts
+each command in a fresh process, run each later command from the directory the earlier `cd` entered.
+A step marked (new terminal) runs while an earlier step keeps running: start it in a new shell in
+the starting directory, and run the steps after it in that shell.
+
 1. **Copy the project onto your machine**
    Creates a customer-360 folder in whatever directory you run this from. Every command after this one runs inside that folder.
 
@@ -70,14 +78,14 @@ path when the documented one fails.
    Runs the whole page against recorded answers for a fictional account named Globex, so you can see what it produces before you connect anything. This needs no Glean credentials.
 
    ```bash
-   cd customer-360 && npm run verify:fixture
+   npm run verify:fixture
    ```
 
 4. **Sign in to Glean**
    Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the SEARCH and CHAT scopes.
 
    ```bash
-   cd customer-360 && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Choose which customer the page is about**
@@ -87,13 +95,13 @@ path when the documented one fails.
    Takes 1 to 3 minutes. It starts its own server, asks your Glean instance the three demo questions about the account you chose, and fails if any answer comes back without citing a real document.
 
    ```bash
-   cd customer-360 && npm run verify
+   npm run verify
    ```
 
 7. **Open the page**
    Starts the server and prints a Local URL. Open that URL in your browser.
    ```bash
-   cd customer-360 && npm start
+   npm start
    ```
    Keep the server running and report its exact printed local URL as a clickable Markdown link.
    For a non-cookie-SSO path, use available authorized browser tools to exercise the documented
@@ -120,6 +128,14 @@ and use that path's declared secure configuration. Keep sign-in and secret entry
 Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
 path when the documented one fails.
 
+### Run the commands in order
+
+Run the step commands in one shell session, starting in the directory where the project should be
+created. A `cd` in one step still applies to later steps, so do not repeat it. If your tool starts
+each command in a fresh process, run each later command from the directory the earlier `cd` entered.
+A step marked (new terminal) runs while an earlier step keeps running: start it in a new shell in
+the starting directory, and run the steps after it in that shell.
+
 1. **Build the Account Brief agent**
    In Agent Builder, create a conversational agent that writes an account brief, and copy its ID from the browser URL. It must be conversational, because this page sends it a question and reads the reply. A form-triggered agent will not work here.
 
@@ -141,7 +157,7 @@ path when the documented one fails.
    Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the SEARCH and AGENTS scopes.
 
    ```bash
-   cd customer-360 && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Choose the customer and point at your agent**
@@ -151,13 +167,13 @@ path when the documented one fails.
    Takes 1 to 3 minutes. It starts its own server, confirms your agent answers for the account you chose, and fails if the brief comes back without citing a real document.
 
    ```bash
-   cd customer-360 && npm run verify
+   npm run verify
    ```
 
 7. **Open the page**
    Starts the server and prints a Local URL. Open that URL in your browser.
    ```bash
-   cd customer-360 && npm start
+   npm start
    ```
    Keep the server running and report its exact printed local URL as a clickable Markdown link.
    For a non-cookie-SSO path, use available authorized browser tools to exercise the documented

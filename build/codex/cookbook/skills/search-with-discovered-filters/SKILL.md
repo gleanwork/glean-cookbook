@@ -27,6 +27,14 @@ and use that path's declared secure configuration. Keep sign-in and secret entry
 Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
 path when the documented one fails.
 
+### Run the commands in order
+
+Run the step commands in one shell session, starting in the directory where the project should be
+created. A `cd` in one step still applies to later steps, so do not repeat it. If your tool starts
+each command in a fresh process, run each later command from the directory the earlier `cd` entered.
+A step marked (new terminal) runs while an earlier step keeps running: start it in a new shell in
+the starting directory, and run the steps after it in that shell.
+
 1. **Scaffold the project**
    Copies the runnable TypeScript Search CLI and fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.
 
@@ -44,27 +52,27 @@ path when the documented one fails.
    Runs the Vitest fixture suite without credentials or network access, covering catalog discovery, query-backed suggestions, retries, typed errors, and field-filter propagation.
 
    ```bash
-   cd search-with-discovered-filters && npm test
+   npm test
    ```
 
 4. **Sign in with OAuth**
    Discovers your Glean backend from work email, completes Authorization Code with PKCE for search and offline_access, and stores refreshable credentials outside the project. Use --server-url for an explicit backend, GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN as a user-scoped fallback.
 
    ```bash
-   cd search-with-discovered-filters && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Verify against your instance**
    Searches your topic across all datasources and validates the Search response shape and pagination state. Add --pages 2 to fetch a second page, --datasources to narrow the query, or --auto-select to exercise the discovered datasource and suggested-filter path.
 
    ```bash
-   cd search-with-discovered-filters && npm run verify -- --email "<work-email>" --query "<search-query>"
+   npm run verify -- --email "<work-email>" --query "<search-query>"
    ```
 
 6. **Discover filters and search**
    Runs the non-interactive CLI path, selecting the first returned datasource and suggested field value, then prints results, warnings, pagination state, and request IDs. Add --pages 2 to fetch the next result page. Omit --auto-select when running interactively to choose them yourself.
    ```bash
-   cd search-with-discovered-filters && npm start -- --email "<work-email>" --query "<search-query>" --auto-select --pages 2
+   npm start -- --email "<work-email>" --query "<search-query>" --auto-select --pages 2
    ```
    Run the command in this chat and report its concise result rather than reproducing routine install
    or debug output. Do not invent a browser URL. Then give the first verification action.

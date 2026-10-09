@@ -27,6 +27,14 @@ and use that path's declared secure configuration. Keep sign-in and secret entry
 Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
 path when the documented one fails.
 
+### Run the commands in order
+
+Run the step commands in one shell session, starting in the directory where the project should be
+created. A `cd` in one step still applies to later steps, so do not repeat it. If your tool starts
+each command in a fresh process, run each later command from the directory the earlier `cd` entered.
+A step marked (new terminal) runs while an earlier step keeps running: start it in a new shell in
+the starting directory, and run the steps after it in that shell.
+
 1. **Copy the project onto your machine**
    Copy the runnable TypeScript GitHub import CLI and credential-free MSW fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.
 
@@ -44,14 +52,14 @@ path when the documented one fails.
    Run Vitest with recorded preview payloads and MSW, without GitHub or Glean credentials, covering JSON preview, optional SSE preview, import, sync, and captured-ID cleanup.
 
    ```bash
-   cd import-skill-from-github && npm test
+   npm test
    ```
 
 4. **Sign in with OAuth**
    Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.
 
    ```bash
-   cd import-skill-from-github && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Pass an explicit backend if you need one**
@@ -61,13 +69,13 @@ path when the documented one fails.
    Preview the public GitHub skill-creator directory on main, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. HTTP 400 means an unsupported GitHub URL or ref, including commit permalinks. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means this credential cannot import. HTTP 429 means rate-limiting. Success prints an Imported line that ends with cleanup completed.
 
    ```bash
-   cd import-skill-from-github && npm run verify -- --email "<work-email>"
+   npm run verify -- --email "<work-email>"
    ```
 
 7. **Watch repository scan progress**
    Run the same preview, import, and sync path with --stream. Scan events print as the tenant walks the GitHub directory. This command still deletes the captured skill when it finishes; there is no keep path. Pass --yes when the terminal is not interactive.
    ```bash
-   cd import-skill-from-github && npm start -- --email "<work-email>" --yes --stream
+   npm start -- --email "<work-email>" --yes --stream
    ```
    Run the command in this chat and report its concise result rather than reproducing routine install
    or debug output. Do not invent a browser URL. Then give the first verification action.

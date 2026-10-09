@@ -28,6 +28,14 @@ and use that path's declared secure configuration. Keep sign-in and secret entry
 Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
 path when the documented one fails.
 
+### Run the commands in order
+
+Run the step commands in one shell session, starting in the directory where the project should be
+created. A `cd` in one step still applies to later steps, so do not repeat it. If your tool starts
+each command in a fresh process, run each later command from the directory the earlier `cd` entered.
+A step marked (new terminal) runs while an earlier step keeps running: start it in a new shell in
+the starting directory, and run the steps after it in that shell.
+
 1. **Scaffold the recipe**
 
    ```bash
@@ -45,7 +53,7 @@ path when the documented one fails.
    Use @gleanwork/auth for tenant discovery and refreshable OAuth credentials stored outside the project. If OAuth is unavailable, provide a user-scoped token that can run the selected Agent.
 
    ```bash
-   cd triage-support-issue && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 4. **Set the Agent and issue**
@@ -55,7 +63,7 @@ path when the documented one fails.
    The command makes one Platform Agent run and prints the structured triage. It does not make any external write or customer-facing update.
 
    ```bash
-   cd triage-support-issue && npm run triage -- "<support-issue>"
+   npm run triage -- "<support-issue>"
    ```
 
    Run the command in this chat and report its concise result rather than reproducing routine install
@@ -64,5 +72,5 @@ path when the documented one fails.
 6. **Verify the response**
    Run the no-credential fixture check first. For a live check, set GLEAN_SUPPORT_ISSUE and run npm run verify; confirm the Agent separates evidence from hypotheses.
    ```bash
-   cd triage-support-issue && npm run verify:fixture
+   npm run verify:fixture
    ```

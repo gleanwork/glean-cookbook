@@ -21,6 +21,8 @@ Build "Approve an agent action from a CLI" following https://developers.glean.co
 
 {{> oauth-setup}}
 
+{{> step-shell}}
+
 1. **Copy the project**
 
    ```bash

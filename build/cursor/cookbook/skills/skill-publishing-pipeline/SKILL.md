@@ -27,6 +27,14 @@ and use that path's declared secure configuration. Keep sign-in and secret entry
 Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
 path when the documented one fails.
 
+### Run the commands in order
+
+Run the step commands in one shell session, starting in the directory where the project should be
+created. A `cd` in one step still applies to later steps, so do not repeat it. If your tool starts
+each command in a fresh process, run each later command from the directory the earlier `cd` entered.
+A step marked (new terminal) runs while an earlier step keeps running: start it in a new shell in
+the starting directory, and run the steps after it in that shell.
+
 1. **Copy the project onto your machine**
    Copy the Skills versioning CLI, sample bundle, CI example, and credential-free fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.
 
@@ -44,14 +52,14 @@ path when the documented one fails.
    Run name-based supersession, version retrieval, scope fallback classification, and adversarial archive tests without credentials or network access.
 
    ```bash
-   cd skill-publishing-pipeline && npm test
+   npm test
    ```
 
 4. **Sign in with OAuth**
    Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.
 
    ```bash
-   cd skill-publishing-pipeline && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Pass an explicit backend if you need one**
@@ -61,14 +69,14 @@ path when the documented one fails.
    Create a cryptographically unique sample, publish a second version under the same name, retrieve and stage that version's content in a bounded sandbox, then permanently delete only the ID returned by this run. Success prints a Verified line that ends with cleanup completed.
 
    ```bash
-   cd skill-publishing-pipeline && npm run verify -- --email "<work-email>"
+   npm run verify -- --email "<work-email>"
    ```
 
 7. **Publish a new version of your bundle**
    Validate fixtures/sample-skill/SKILL.md by default, confirm before name-based supersession if that display name already exists, and stage the returned zip under staged/ID/vVERSION.MINOR so a second publish does not overwrite the first. Pass --bundle with your own SKILL.md, .zip, or .skill, and --stage-dir to choose a different parent folder. The command prints the exact ID before staging, which you need for optional cleanup.
 
    ```bash
-   cd skill-publishing-pipeline && npm start -- publish --email "<work-email>"
+   npm start -- publish --email "<work-email>"
    ```
 
    Run the command in this chat and report its concise result rather than reproducing routine install
@@ -80,5 +88,5 @@ path when the documented one fails.
 9. **Delete the published skill only when you intend to**
    Deletion permanently removes every version. Pass only the exact ID printed by your publish run and read the confirmation prompt.
    ```bash
-   cd skill-publishing-pipeline && npm start -- cleanup --id "PASTE_THE_ID_PRINTED_BY_PUBLISH" --email "<work-email>"
+   npm start -- cleanup --id "PASTE_THE_ID_PRINTED_BY_PUBLISH" --email "<work-email>"
    ```

@@ -31,6 +31,8 @@ Path A — parallel Platform Search tiles + Platform Chat synthesis
 
 {{> oauth-setup}}
 
+{{> step-shell}}
+
 1. **Copy the project onto your machine**
    Creates a customer-360 folder in whatever directory you run this from. Every command after this one runs inside that folder.
 
@@ -49,14 +51,14 @@ Path A — parallel Platform Search tiles + Platform Chat synthesis
    Runs the whole page against recorded answers for a fictional account named Globex, so you can see what it produces before you connect anything. This needs no Glean credentials.
 
    ```bash
-   cd customer-360 && npm run verify:fixture
+   npm run verify:fixture
    ```
 
 4. **Sign in to Glean**
    Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the SEARCH and CHAT scopes.
 
    ```bash
-   cd customer-360 && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Choose which customer the page is about**
@@ -66,13 +68,13 @@ Path A — parallel Platform Search tiles + Platform Chat synthesis
    Takes 1 to 3 minutes. It starts its own server, asks your Glean instance the three demo questions about the account you chose, and fails if any answer comes back without citing a real document.
 
    ```bash
-   cd customer-360 && npm run verify
+   npm run verify
    ```
 
 7. **Open the page**
    Starts the server and prints a Local URL. Open that URL in your browser.
    ```bash
-   cd customer-360 && npm start
+   npm start
    ```
    {{> run-local-web}}
 
@@ -87,6 +89,8 @@ Path B — Platform Agents createRun for prescriptive account briefs
 - What is the ID of your Account Brief agent? It must be a conversational agent, not a form-triggered one.
 
 {{> oauth-setup}}
+
+{{> step-shell}}
 
 1. **Build the Account Brief agent**
    In Agent Builder, create a conversational agent that writes an account brief, and copy its ID from the browser URL. It must be conversational, because this page sends it a question and reads the reply. A form-triggered agent will not work here.
@@ -109,7 +113,7 @@ Path B — Platform Agents createRun for prescriptive account briefs
    Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the SEARCH and AGENTS scopes.
 
    ```bash
-   cd customer-360 && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Choose the customer and point at your agent**
@@ -119,12 +123,12 @@ Path B — Platform Agents createRun for prescriptive account briefs
    Takes 1 to 3 minutes. It starts its own server, confirms your agent answers for the account you chose, and fails if the brief comes back without citing a real document.
 
    ```bash
-   cd customer-360 && npm run verify
+   npm run verify
    ```
 
 7. **Open the page**
    Starts the server and prints a Local URL. Open that URL in your browser.
    ```bash
-   cd customer-360 && npm start
+   npm start
    ```
    {{> run-local-web}}

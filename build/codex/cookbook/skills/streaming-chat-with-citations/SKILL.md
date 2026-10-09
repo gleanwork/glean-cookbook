@@ -28,6 +28,14 @@ and use that path's declared secure configuration. Keep sign-in and secret entry
 Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
 path when the documented one fails.
 
+### Run the commands in order
+
+Run the step commands in one shell session, starting in the directory where the project should be
+created. A `cd` in one step still applies to later steps, so do not repeat it. If your tool starts
+each command in a fresh process, run each later command from the directory the earlier `cd` entered.
+A step marked (new terminal) runs while an earlier step keeps running: start it in a new shell in
+the starting directory, and run the steps after it in that shell.
+
 1. **Scaffold the project**
    Copies the runnable TypeScript Chat CLI and fixture tests into a new directory. OAuth login and secure token storage come from the pinned `@gleanwork/auth` package.
 
@@ -45,27 +53,27 @@ path when the documented one fails.
    Runs Vitest with MSW-backed fixtures, without credentials or live network access, covering typed `createStream` events, exact-once delta composition, `conversation_id` propagation, citation separation, and typed SDK error formatting.
 
    ```bash
-   cd streaming-chat-with-citations && npm test
+   npm test
    ```
 
 4. **Sign in with OAuth**
    Discovers your Glean backend from work email and completes Authorization Code with PKCE for Chat and `offline_access`. Use `--server-url` for an explicit backend. If DCR is restricted, set `GLEAN_OAUTH_CLIENT_ID` for an administrator-provisioned public client. If OAuth is not available, set `GLEAN_API_TOKEN` later as a user-scoped fallback.
 
    ```bash
-   cd streaming-chat-with-citations && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Run one streamed Chat turn**
    Sends a question through `createStream` and prints grounded citation data against your own instance. Pipes receive each raw Markdown delta as it arrives. Interactive terminals buffer one complete answer and render it once.
 
    ```bash
-   cd streaming-chat-with-citations && npm run verify -- --email "<work-email>" --prompt "<chat-question>"
+   npm run verify -- --email "<work-email>" --prompt "<chat-question>"
    ```
 
 6. **Stream a follow-up**
    Starts a stored conversation, consumes `createStream` events for each answer, and sends a follow-up using the returned `conversation_id`. Raw output streams incrementally; terminal-rendered output is buffered per turn.
    ```bash
-   cd streaming-chat-with-citations && npm start -- --email "<work-email>" --prompt "<chat-question>" --follow-up "<follow-up-question>"
+   npm start -- --email "<work-email>" --prompt "<chat-question>" --follow-up "<follow-up-question>"
    ```
    Run the command in this chat and report its concise result rather than reproducing routine install
    or debug output. Do not invent a browser URL. Then give the first verification action.

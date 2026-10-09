@@ -20,6 +20,8 @@ Build "Validate skill publishing" following https://developers.glean.com/cookboo
 
 {{> oauth-setup}}
 
+{{> step-shell}}
+
 1. **Copy the project onto your machine**
    Copy the runnable TypeScript Skills CLI, sample SKILL.md, and credential-free fixture tests into a new directory. OAuth uses the official @gleanwork/auth package.
 

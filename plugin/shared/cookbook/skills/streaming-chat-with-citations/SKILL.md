@@ -21,6 +21,8 @@ Build "Stream a cited Chat response" following https://developers.glean.com/cook
 
 {{> oauth-setup}}
 
+{{> step-shell}}
+
 1. **Scaffold the project**
    Copies the runnable TypeScript Chat CLI and fixture tests into a new directory. OAuth login and secure token storage come from the pinned `@gleanwork/auth` package.
 
@@ -38,26 +40,26 @@ Build "Stream a cited Chat response" following https://developers.glean.com/cook
    Runs Vitest with MSW-backed fixtures, without credentials or live network access, covering typed `createStream` events, exact-once delta composition, `conversation_id` propagation, citation separation, and typed SDK error formatting.
 
    ```bash
-   cd streaming-chat-with-citations && npm test
+   npm test
    ```
 
 4. **Sign in with OAuth**
    Discovers your Glean backend from work email and completes Authorization Code with PKCE for Chat and `offline_access`. Use `--server-url` for an explicit backend. If DCR is restricted, set `GLEAN_OAUTH_CLIENT_ID` for an administrator-provisioned public client. If OAuth is not available, set `GLEAN_API_TOKEN` later as a user-scoped fallback.
 
    ```bash
-   cd streaming-chat-with-citations && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Run one streamed Chat turn**
    Sends a question through `createStream` and prints grounded citation data against your own instance. Pipes receive each raw Markdown delta as it arrives. Interactive terminals buffer one complete answer and render it once.
 
    ```bash
-   cd streaming-chat-with-citations && npm run verify -- --email "<work-email>" --prompt "<chat-question>"
+   npm run verify -- --email "<work-email>" --prompt "<chat-question>"
    ```
 
 6. **Stream a follow-up**
    Starts a stored conversation, consumes `createStream` events for each answer, and sends a follow-up using the returned `conversation_id`. Raw output streams incrementally; terminal-rendered output is buffered per turn.
    ```bash
-   cd streaming-chat-with-citations && npm start -- --email "<work-email>" --prompt "<chat-question>" --follow-up "<follow-up-question>"
+   npm start -- --email "<work-email>" --prompt "<chat-question>" --follow-up "<follow-up-question>"
    ```
    {{> run-cli}}

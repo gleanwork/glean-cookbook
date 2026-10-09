@@ -27,6 +27,14 @@ questions for this recipe are:
 
 Cookie SSO requires the user's normal signed-in browser. Never open or automate the app yourself.
 
+### Run the commands in order
+
+Run the step commands in one shell session, starting in the directory where the project should be
+created. A `cd` in one step still applies to later steps, so do not repeat it. If your tool starts
+each command in a fresh process, run each later command from the directory the earlier `cd` entered.
+A step marked (new terminal) runs while an earlier step keeps running: start it in a new shell in
+the starting directory, and run the steps after it in that shell.
+
 1. **Copy the React example onto your machine**
    Creates an embed-search-chat folder in whatever directory you run this from. Every command after this one runs inside that folder.
 
@@ -45,17 +53,17 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
    Uses your email once to find the tenant backend and writes VITE_GLEAN_BACKEND to .env.local. If the backend is already known, set that variable manually instead. This is setup-time configuration, not a runtime tenant picker, and it does not request or store an API key.
 
    ```bash
-   cd embed-search-chat && npm run configure -- --email "<work-email>"
+   npm run configure -- --email "<work-email>"
    ```
 
 4. **Configure the Web app URL and questions**
-   Open .env.local. Set VITE_GLEAN_WEB_APP_URL to the exact value shown in Glean Admin > About Glean > Web app URL; keep backend and Web app URL as setup/deployment configuration rather than runtime user inputs. Set VITE_GLEAN_INITIAL_QUERY and VITE_GLEAN_INITIAL_MESSAGE to topics you know exist in your Glean content.
+   Open `.env.local`. Set `VITE_GLEAN_WEB_APP_URL` to the **Web app URL** row in Glean Admin > About Glean, such as `https://app.glean.com`. It is a different value from the backend the previous step wrote, which ends in `-be.glean.com`. Set `VITE_GLEAN_INITIAL_QUERY` and `VITE_GLEAN_INITIAL_MESSAGE` to topics you know your Glean content covers. Both URLs are deployment configuration, not values users enter at runtime.
 
 5. **Open the page**
    Starts Vite and prints a Local URL. Open that URL in a browser where the user is signed in to Glean.
 
    ```bash
-   cd embed-search-chat && npm run dev
+   npm run dev
    ```
 
    Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown

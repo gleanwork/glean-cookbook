@@ -44,6 +44,14 @@ and use that path's declared secure configuration. Keep sign-in and secret entry
 Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
 path when the documented one fails.
 
+### Run the commands in order
+
+Run the step commands in one shell session, starting in the directory where the project should be
+created. A `cd` in one step still applies to later steps, so do not repeat it. If your tool starts
+each command in a fresh process, run each later command from the directory the earlier `cd` entered.
+A step marked (new terminal) runs while an earlier step keeps running: start it in a new shell in
+the starting directory, and run the steps after it in that shell.
+
 1. **Scaffold the recipe**
 
    ```bash
@@ -61,14 +69,14 @@ path when the documented one fails.
    Verify preset selection, experimental Platform API headers, input resolution, and Standard Webhooks signing before connecting a tenant.
 
    ```bash
-   cd customer-meeting-prep-trigger && npm run verify:fixture
+   npm run verify:fixture
    ```
 
 4. **Sign in to Glean**
    Use @gleanwork/auth for tenant discovery and refreshable OAuth credentials stored outside the project. If OAuth is unavailable, provide a user-scoped token with the Triggers permission as a CI fallback.
 
    ```bash
-   cd customer-meeting-prep-trigger && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Configure the meeting pattern and receiver**
@@ -78,14 +86,14 @@ path when the documented one fails.
    The receiver listens on loopback, verifies bearer delivery auth and the Standard Webhooks signature, and prints a prep request for matching meeting titles. Expose /webhook through a public HTTPS tunnel before registering the trigger.
 
    ```bash
-   cd customer-meeting-prep-trigger && npm start
+   npm start
    ```
 
    Keep required services and tunnels running. Report the current checkpoint and any exact endpoint
    printed. Then give the next manual or verification action.
 
-7. **Register the Platform Trigger**
-   Setup reads GET /api/trigger-presets and the selected preset detail, then creates one trigger through POST /api/triggers. It saves the returned trigger ID and signing secret locally.
+7. **Register the Platform Trigger** (new terminal)
+   Leave the receiver running and open a new terminal in the folder where you started. Setup reads GET /api/trigger-presets and the selected preset detail, then creates one trigger through POST /api/triggers. It saves the returned trigger ID and signing secret locally.
 
    ```bash
    cd customer-meeting-prep-trigger && npm run setup
@@ -95,11 +103,11 @@ path when the documented one fails.
    Send one fixture delivery through the same signed webhook contract without waiting for a calendar event. Then schedule one real matching meeting to verify forward delivery from the Platform Trigger.
 
    ```bash
-   cd customer-meeting-prep-trigger && npm run test:webhook
+   npm run test:webhook
    ```
 
 9. **Delete the trigger**
    Delete only the trigger ID created by this recipe and clear the local signing secret.
    ```bash
-   cd customer-meeting-prep-trigger && npm run delete
+   npm run delete
    ```

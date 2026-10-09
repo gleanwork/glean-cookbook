@@ -12,6 +12,8 @@ disable-model-invocation: true
 
 Build "On-call Copilot" following https://developers.glean.com/cookbook/oncall-copilot
 
+{{> step-shell}}
+
 1. **Copy the project onto your machine**
    Creates an oncall-copilot folder in whatever directory you are in, holding the server, the dashboard, and the recorded incidents. Stay in that same directory for the rest of the steps, since each command changes into the folder itself.
 
@@ -30,14 +32,14 @@ Build "On-call Copilot" following https://developers.glean.com/cookbook/oncall-c
    Runs the unit tests, then replays the recorded incidents through the whole flow and checks the refusals: the gate turns away an actor who is neither on call nor the service owner, an unapproved proposal escalates without executing, an action the planner invented is refused, and a code-changing action with no supported cause drops to filing a ticket. The audit log records each of those decisions. The command reads no credentials and makes no network calls.
 
    ```bash
-   cd oncall-copilot && npm run verify:fixture
+   npm run verify:fixture
    ```
 
 4. **Open the dashboard**
    Starts the local server and prints a Local URL. Open that URL in a browser. The dashboard replays the same recorded Glean responses, so there is nothing to sign in to.
 
    ```bash
-   cd oncall-copilot && npm start
+   npm start
    ```
 
    {{> run-local-web}}

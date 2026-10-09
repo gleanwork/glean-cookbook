@@ -33,6 +33,14 @@ questions for this recipe are:
 
 Cookie SSO requires the user's normal signed-in browser. Never open or automate the app yourself.
 
+### Run the commands in order
+
+Run the step commands in one shell session, starting in the directory where the project should be
+created. A `cd` in one step still applies to later steps, so do not repeat it. If your tool starts
+each command in a fresh process, run each later command from the directory the earlier `cd` entered.
+A step marked (new terminal) runs while an earlier step keeps running: start it in a new shell in
+the starting directory, and run the steps after it in that shell.
+
 1. **Copy the project onto your machine**
    Creates an `onboarding-hub` folder in whatever directory you run this from. Every command after this one runs inside that folder.
 
@@ -51,7 +59,7 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
    Your email is used once to find which Glean tenant you belong to. The command creates `.env.local` and fills in `VITE_GLEAN_BACKEND`.
 
    ```bash
-   cd onboarding-hub && npm run configure -- --email "<work-email>"
+   npm run configure -- --email "<work-email>"
    ```
 
 4. **Keep the sample checklist, or use your own**
@@ -61,7 +69,7 @@ Cookie SSO requires the user's normal signed-in browser. Never open or automate 
    Starts Vite and prints a Local URL. Open that URL yourself in your normal browser where you are already signed in to Glean.
 
    ```bash
-   cd onboarding-hub && npm run dev
+   npm run dev
    ```
 
    Keep the server running. Capture the exact Local URL it prints and report it as a clickable Markdown
@@ -105,6 +113,14 @@ and use that path's declared secure configuration. Keep sign-in and secret entry
 Do not implement or alter OAuth while setting up the recipe, and do not silently substitute a
 path when the documented one fails.
 
+### Run the commands in order
+
+Run the step commands in one shell session, starting in the directory where the project should be
+created. A `cd` in one step still applies to later steps, so do not repeat it. If your tool starts
+each command in a fresh process, run each later command from the directory the earlier `cd` entered.
+A step marked (new terminal) runs while an earlier step keeps running: start it in a new shell in
+the starting directory, and run the steps after it in that shell.
+
 1. **Copy the project onto your machine**
    Creates an `onboarding-hub` folder in whatever directory you run this from. Every command after this one runs inside that folder.
 
@@ -123,14 +139,14 @@ path when the documented one fails.
    Runs the checklist and chat against recorded Sample Corp answers, so you can see cited first-day, VPN, and PTO replies plus unsupported-question escalation before you connect anything. This needs no Glean credentials.
 
    ```bash
-   cd onboarding-hub && npm run verify:fixture
+   npm run verify:fixture
    ```
 
 4. **Sign in to Glean**
    Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the `.env` file for you and fills in `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy `.env.example` to `.env`, then fill in your Glean instance URL and a Glean API token that has the `CHAT` scope.
 
    ```bash
-   cd onboarding-hub && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Keep the sample checklist, or use your own**
@@ -140,13 +156,13 @@ path when the documented one fails.
    Takes 1 to 3 minutes. It starts its own server, checks your onboarding topics for cited answers, and fails if an unsupported question does not escalate.
 
    ```bash
-   cd onboarding-hub && npm run verify
+   npm run verify
    ```
 
 7. **Open the page**
    Starts the server and prints a Local URL. Open that URL in your browser.
    ```bash
-   cd onboarding-hub && npm start
+   npm start
    ```
    Keep the server running and report its exact printed local URL as a clickable Markdown link.
    For a non-cookie-SSO path, use available authorized browser tools to exercise the documented

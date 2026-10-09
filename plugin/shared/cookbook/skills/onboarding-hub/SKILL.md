@@ -29,6 +29,8 @@ Web SDK variant — checklist + `renderChat`
 
 {{> browser-cookie-setup}}
 
+{{> step-shell}}
+
 1. **Copy the project onto your machine**
    Creates an `onboarding-hub` folder in whatever directory you run this from. Every command after this one runs inside that folder.
 
@@ -47,7 +49,7 @@ Web SDK variant — checklist + `renderChat`
    Your email is used once to find which Glean tenant you belong to. The command creates `.env.local` and fills in `VITE_GLEAN_BACKEND`.
 
    ```bash
-   cd onboarding-hub && npm run configure -- --email "<work-email>"
+   npm run configure -- --email "<work-email>"
    ```
 
 4. **Keep the sample checklist, or use your own**
@@ -57,7 +59,7 @@ Web SDK variant — checklist + `renderChat`
    Starts Vite and prints a Local URL. Open that URL yourself in your normal browser where you are already signed in to Glean.
 
    ```bash
-   cd onboarding-hub && npm run dev
+   npm run dev
    ```
 
    {{> run-local-web-cookie}}
@@ -78,6 +80,8 @@ Platform Chat variant — server-side API call, custom UI
 
 {{> oauth-setup}}
 
+{{> step-shell}}
+
 1. **Copy the project onto your machine**
    Creates an `onboarding-hub` folder in whatever directory you run this from. Every command after this one runs inside that folder.
 
@@ -96,14 +100,14 @@ Platform Chat variant — server-side API call, custom UI
    Runs the checklist and chat against recorded Sample Corp answers, so you can see cited first-day, VPN, and PTO replies plus unsupported-question escalation before you connect anything. This needs no Glean credentials.
 
    ```bash
-   cd onboarding-hub && npm run verify:fixture
+   npm run verify:fixture
    ```
 
 4. **Sign in to Glean**
    Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the `.env` file for you and fills in `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy `.env.example` to `.env`, then fill in your Glean instance URL and a Glean API token that has the `CHAT` scope.
 
    ```bash
-   cd onboarding-hub && npm run login -- --email "<work-email>"
+   npm run login -- --email "<work-email>"
    ```
 
 5. **Keep the sample checklist, or use your own**
@@ -113,12 +117,12 @@ Platform Chat variant — server-side API call, custom UI
    Takes 1 to 3 minutes. It starts its own server, checks your onboarding topics for cited answers, and fails if an unsupported question does not escalate.
 
    ```bash
-   cd onboarding-hub && npm run verify
+   npm run verify
    ```
 
 7. **Open the page**
    Starts the server and prints a Local URL. Open that URL in your browser.
    ```bash
-   cd onboarding-hub && npm start
+   npm start
    ```
    {{> run-local-web}}

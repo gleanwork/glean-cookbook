@@ -12,6 +12,8 @@ disable-model-invocation: true
 
 Build "Answer an RFP or security questionnaire" following https://developers.glean.com/cookbook/rfp-responder
 
+{{> step-shell}}
+
 1. **Copy the project onto your machine**
    Creates an rfp-responder folder containing the local server, review app, sample questionnaire, and recorded Chat responses. Stay in the same parent directory for the remaining commands.
 
@@ -30,14 +32,14 @@ Build "Answer an RFP or security questionnaire" following https://developers.gle
    Replays the recorded responses through the full questionnaire and checks that every draft has a citation, unsupported rows stay blank, weak evidence is flagged, and export stays behind approval. The command needs no credentials and makes no network calls.
 
    ```bash
-   cd rfp-responder && npm run verify:fixture
+   npm run verify:fixture
    ```
 
 4. **Open the review app**
    Starts the local server and prints a Local URL. Open that URL in a browser. The app uses the same recorded responses, so there is nothing to sign in to.
 
    ```bash
-   cd rfp-responder && npm start
+   npm start
    ```
 
    {{> run-local-web}}
