@@ -99,6 +99,10 @@ async function main() {
   const backendVariable =
     argument(args, '--backend-variable') ?? 'VITE_GLEAN_BACKEND';
   const { backend } = await discoverBackend(email);
+  // Start from the template so the file lists every setting the next step fills in.
+  if (!fs.existsSync(configFile) && fs.existsSync('.env.example')) {
+    fs.copyFileSync('.env.example', configFile);
+  }
   updateEnvFile(configFile, { [backendVariable]: backend });
   console.log(`Configured ${configFile} for ${new URL(backend).host}.`);
 }

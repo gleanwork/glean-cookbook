@@ -78,8 +78,8 @@ function ErrorState({ message }: { message: string }): ReactElement {
         <h1>Glean configuration needed</h1>
         <p>{message}</p>
         <p>
-          Configure the backend and Web app URL, copy <code>.env.example</code>{' '}
-          to <code>.env.local</code>, then restart Vite.
+          Run <code>npm run configure -- --email you@company.com</code>, set the
+          Web app URL in <code>.env.local</code>, then restart Vite.
         </p>
       </section>
     </main>

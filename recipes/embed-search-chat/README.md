@@ -42,14 +42,14 @@ use the backend hostname or proxy the full app.
 npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/embed-search-chat/react embed-search-chat
 cd embed-search-chat
 npm install
-cp .env.example .env.local
 npm run configure -- --email "you@company.com"
 # Or set VITE_GLEAN_BACKEND directly when the tenant backend is already known.
 # Set VITE_GLEAN_WEB_APP_URL in .env.local.
 npm run dev
 ```
 
-The configure command resolves the backend once during setup. The runtime app
+The configure command creates `.env.local` from `.env.example` and resolves the
+backend once during setup. The runtime app
 uses the signed-in Glean SSO session; it does not ask users to select a backend
 or provide runtime credentials.
 

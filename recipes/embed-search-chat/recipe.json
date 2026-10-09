@@ -125,7 +125,7 @@
         },
         {
           "title": "Configure the Web app URL and questions",
-          "description": "Open .env.local. Set VITE_GLEAN_WEB_APP_URL to the exact value shown in Glean Admin > About Glean > Web app URL; keep backend and Web app URL as setup/deployment configuration rather than runtime user inputs. Set VITE_GLEAN_INITIAL_QUERY and VITE_GLEAN_INITIAL_MESSAGE to topics you know exist in your Glean content.",
+          "description": "Open `.env.local`. Set `VITE_GLEAN_WEB_APP_URL` to the **Web app URL** row in Glean Admin > About Glean, such as `https://app.glean.com`. It is a different value from the backend the previous step wrote, which ends in `-be.glean.com`. Set `VITE_GLEAN_INITIAL_QUERY` and `VITE_GLEAN_INITIAL_MESSAGE` to topics you know your Glean content covers. Both URLs are deployment configuration, not values users enter at runtime.",
           "kind": "configure"
         },
         {
