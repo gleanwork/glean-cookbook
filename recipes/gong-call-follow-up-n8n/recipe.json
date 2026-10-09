@@ -41,7 +41,7 @@
     ],
     "verification": {
       "kind": "third-party",
-      "command": "cd gong-call-follow-up-n8n && npm run verify:fixture",
+      "command": "npm run verify:fixture",
       "expectedDuration": "5–15 minutes after a test Gong call is indexed",
       "startsOwnServer": false
     },
@@ -112,7 +112,7 @@
     },
     {
       "title": "Verify the workflow with no credentials",
-      "command": "cd gong-call-follow-up-n8n && npm run verify:fixture",
+      "command": "npm run verify:fixture",
       "description": "Run the fixture verifier against recorded data. If you edited the local workflow.json, run `npm run verify:config` too. That command cannot see values entered in the n8n UI or stored in n8n Variables, so verify those configurations inside n8n before publishing.",
       "kind": "verify-fixture"
     },

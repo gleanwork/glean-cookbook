@@ -56,7 +56,7 @@
       {
         "kind": "oauth-with-token-fallback",
         "scopes": ["AGENTS"],
-        "setupCommand": "cd triage-support-issue && npm run login -- --email \"<work-email>\"",
+        "setupCommand": "npm run login -- --email \"<work-email>\"",
         "configFile": ".env",
         "backendVariable": "GLEAN_SERVER_URL",
         "credentialVariable": "GLEAN_API_TOKEN"
@@ -64,12 +64,12 @@
     ],
     "verification": {
       "kind": "automated",
-      "command": "cd triage-support-issue && npm run verify:fixture",
+      "command": "npm run verify:fixture",
       "expectedDuration": "under 1 minute without credentials",
       "startsOwnServer": false
     },
     "run": {
-      "command": "cd triage-support-issue && npm run triage -- \"<support-issue>\"",
+      "command": "npm run triage -- \"<support-issue>\"",
       "userBrowser": false
     }
   },
@@ -106,7 +106,7 @@
     },
     {
       "title": "Sign in to Glean",
-      "command": "cd triage-support-issue && npm run login -- --email \"<work-email>\"",
+      "command": "npm run login -- --email \"<work-email>\"",
       "description": "Use @gleanwork/auth for tenant discovery and refreshable OAuth credentials stored outside the project. If OAuth is unavailable, provide a user-scoped token that can run the selected Agent.",
       "kind": "authenticate"
     },
@@ -117,13 +117,13 @@
     },
     {
       "title": "Run the triage",
-      "command": "cd triage-support-issue && npm run triage -- \"<support-issue>\"",
+      "command": "npm run triage -- \"<support-issue>\"",
       "description": "The command makes one Platform Agent run and prints the structured triage. It does not make any external write or customer-facing update.",
       "kind": "run"
     },
     {
       "title": "Verify the response",
-      "command": "cd triage-support-issue && npm run verify:fixture",
+      "command": "npm run verify:fixture",
       "description": "Run the no-credential fixture check first. For a live check, set GLEAN_SUPPORT_ISSUE and run npm run verify; confirm the Agent separates evidence from hypotheses.",
       "kind": "verify-live"
     }

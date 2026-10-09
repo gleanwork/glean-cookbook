@@ -139,7 +139,7 @@ TypeScript versions the reference recipes pin. An OAuth draft also gets a `login
 `glean-auth login` from pinned `@gleanwork/auth`, a `src/client.ts` that resolves the backend and uses
 `createGleanTokenProvider` with the draft's scopes, and a passing MSW test for that client. Its
 `oauth-with-token-fallback` auth must declare `scopes`, `credentialVariable: "GLEAN_API_TOKEN"`, and
-`setupCommand: "npm run login -- --email \"<work-email>\""` (optionally after `cd <dir> &&`), with
+`setupCommand: "npm run login -- --email \"<work-email>\""` (the exact command of its sign-in step), with
 no `configFile` or `backendVariable`. The scaffolder rejects the legacy copied-helper contract. It
 refuses Python OAuth drafts because no supported Python OAuth package path exists yet; Python
 scaffolds support token-only auth.
@@ -245,6 +245,23 @@ descriptions, support two inline marks: `` `code` `` for commands, flags, IDs, a
 `**bold**` for labels a reader clicks or types into (**Create agent**, **Publish**). Nothing else
 renders on the page: no links, italics, lists, or fenced blocks. Each step description renders as
 one paragraph, so when a step needs a list, split it into more steps instead.
+
+### Writing step commands
+
+A reader pastes numbered step commands into one terminal, in order, so a `cd` in one step still
+applies in the next. Enter the project once, as in `cd <dir> && npm install`, and write the later
+commands without the `cd`. If a step has to run while an earlier one keeps its terminal busy, such as
+a server or a tunnel, set `"newTerminal": true` on it and say so in its description. Its command
+starts from the directory where the reader began, so it enters the project again when it needs to
+(`cd <dir> && npm run setup`). The steps after it run in that new terminal. Use a subshell,
+`(cd <dir> && …)`, only for a command that must leave the directory unchanged. An execution
+command (`auth[].setupCommand`, `verification.command`, `run.command`) must be an exact copy of the
+step it describes.
+
+`pnpm recipe-commands:check` runs each step list's commands, unmodified, in `/bin/bash`. Every
+external program is a stub that records its directory, and the scaffold step recreates the recipe's
+real directory tree, so a repeated or wrong `cd` fails just as it would for the reader. Fix a failure
+in the recipe. Do not rewrite commands in a renderer or add a per-recipe exception.
 
 Capability and surface values, display labels, and filter order live in
 `config/recipe-taxonomy.json`. Update that file and the matching schema enum together when

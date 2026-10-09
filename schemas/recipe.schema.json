@@ -37,6 +37,10 @@
           "command": {
             "type": "string",
             "minLength": 1
+          },
+          "newTerminal": {
+            "description": "The reader runs this step in a new terminal opened in the starting directory, because an earlier step keeps its terminal busy (for example, a server). Later steps continue in this terminal. Without it, commands run in order in one shell, so a cd in one step still applies in the next.",
+            "const": true
           }
         },
         "required": ["title"],

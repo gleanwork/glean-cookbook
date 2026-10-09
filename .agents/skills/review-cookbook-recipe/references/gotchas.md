@@ -28,6 +28,16 @@ initial-directory checks. A raw-command regression must fail on the old source; 
 output must preserve the corrected sequence. Stubbing external operations proves directory
 behavior only, not live verification. Do not add a renderer repair or per-recipe exception.
 
+That first correction fixed one recipe, and the checker still accepted `cd <dir> &&` on every
+step, so the pattern spread to 21 step lists. `recipe-commands:check` now runs the raw commands
+in a real shell instead of matching patterns. When a step really needs a fresh shell, because an
+earlier server or tunnel keeps its terminal busy, mark it `"newTerminal": true`. Do not keep a
+repeated `cd` without that flag.
+
+The developer site still has its own `humanizeStepCommands` in
+`src/components/Cookbook/RecipeLayout.tsx`, which hid this defect on rendered pages. That makes
+the deployed page look right while the distributed skill is wrong. Walk both surfaces.
+
 ## A green harness is not the developer outcome
 
 Past failures included a fixture asserting a 403 while the dashboard made every reader an

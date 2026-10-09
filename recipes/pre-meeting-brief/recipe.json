@@ -41,7 +41,7 @@
       {
         "kind": "oauth-with-token-fallback",
         "scopes": ["TRIGGERS"],
-        "setupCommand": "cd pre-meeting-brief && npm run login -- --email \"<work-email>\"",
+        "setupCommand": "npm run login -- --email \"<work-email>\"",
         "configFile": ".env",
         "backendVariable": "GLEAN_SERVER_URL",
         "credentialVariable": "GLEAN_API_TOKEN"
@@ -109,13 +109,13 @@
     },
     {
       "title": "Sign in to Glean",
-      "command": "cd pre-meeting-brief && npm run login -- --email \"<work-email>\"",
+      "command": "npm run login -- --email \"<work-email>\"",
       "description": "Use the shipped OAuth flow to discover your tenant and request TRIGGERS before setup. A token with only SEARCH and CHAT receives 403 insufficient_permissions. For a token-first tenant, skip login and put GLEAN_SERVER_URL plus a user-scoped GLEAN_API_TOKEN with TRIGGERS in the ignored .env file.",
       "kind": "authenticate"
     },
     {
       "title": "Preview your calendar events",
-      "command": "cd pre-meeting-brief && npm run preview",
+      "command": "npm run preview",
       "description": "See which presets your deployment offers and review recent indexed events. Use real meeting titles to test your pattern before registering anything. This step is read-only.",
       "kind": "manual"
     },
@@ -128,11 +128,11 @@
       "title": "Test it before going live",
       "kind": "manual",
       "description": "Webhook triggers do not have a test button, so send one delivery yourself. The default command uses a non-matching title and writes nothing. After it succeeds, ask for explicit approval before running `npm run test:webhook -- --write`; that path creates one tracker update and each repeat is a new occurrence.",
-      "command": "cd pre-meeting-brief && npm run test:webhook"
+      "command": "npm run test:webhook"
     },
     {
       "title": "Register the calendar trigger",
-      "command": "cd pre-meeting-brief && npm run setup",
+      "command": "npm run setup",
       "description": "Setup reads the preset catalog, checks the selected preset's inputs, and rejects unsupported values. Set `GLEAN_TRIGGER_INPUT_TITLE` to the reviewed pattern so Glean filters by title at the source. Choose a calendar preset that supports delivery 1,800 seconds before the event.",
       "kind": "configure"
     },

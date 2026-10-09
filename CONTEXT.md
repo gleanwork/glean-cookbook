@@ -40,6 +40,9 @@ How the implementation is produced: from a deterministic scaffold, by adapting a
 **Execution contract**:
 The questions, authentication, verification, run behavior, and handoff that a coding agent follows for a recipe or variant.
 
+**Step sequence**:
+The ordered commands of a recipe or variant, run in one shell the way a reader pastes them. A `cd` carries into later steps. A step marked new terminal starts another shell in the starting directory, and the steps after it continue there.
+
 **Execution type**:
 The interaction shape of an execution contract: local web application, existing application, command-line program, host configuration, external builder, or hybrid service.
 _Avoid_: Recipe type

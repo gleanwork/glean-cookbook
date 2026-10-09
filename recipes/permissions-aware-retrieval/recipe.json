@@ -79,7 +79,7 @@
           "startsOwnServer": false
         },
         "run": {
-          "command": "cd permissions-aware-retrieval && uv run main.py \"<allowed-topic>\"",
+          "command": "uv run main.py \"<allowed-topic>\"",
           "userBrowser": false
         }
       },
@@ -97,7 +97,7 @@
         },
         {
           "title": "Run it",
-          "command": "cd permissions-aware-retrieval && uv run main.py \"<allowed-topic>\"",
+          "command": "uv run main.py \"<allowed-topic>\"",
           "description": "Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run — there's no requirements.txt, venv, or activate step.",
           "kind": "run"
         },
@@ -133,7 +133,7 @@
           {
             "kind": "oauth-with-token-fallback",
             "scopes": ["SEARCH"],
-            "setupCommand": "cd permissions-aware-retrieval && npm run login -- --email \"<work-email>\"",
+            "setupCommand": "npm run login -- --email \"<work-email>\"",
             "configFile": ".env",
             "backendVariable": "GLEAN_SERVER_URL",
             "credentialVariable": "GLEAN_API_TOKEN"
@@ -151,7 +151,7 @@
           "startsOwnServer": false
         },
         "run": {
-          "command": "cd permissions-aware-retrieval && npm start -- \"<allowed-topic>\"",
+          "command": "npm start -- \"<allowed-topic>\"",
           "userBrowser": false
         }
       },
@@ -168,13 +168,13 @@
         },
         {
           "title": "Set credentials",
-          "command": "cd permissions-aware-retrieval && npm run login -- --email \"<work-email>\"",
+          "command": "npm run login -- --email \"<work-email>\"",
           "description": "Use the shipped login flow. Then have the user enter ANTHROPIC_API_KEY in ignored .env without exposing it in chat or command output.",
           "kind": "authenticate"
         },
         {
           "title": "Run it",
-          "command": "cd permissions-aware-retrieval && npm start -- \"<allowed-topic>\"",
+          "command": "npm start -- \"<allowed-topic>\"",
           "description": "Interactive terminals render the model's Markdown with marked-terminal after removing model-supplied terminal controls. Pipes and redirects receive raw Markdown unchanged, and numbered source URLs print separately.",
           "kind": "run"
         },

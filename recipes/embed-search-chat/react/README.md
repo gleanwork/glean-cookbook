@@ -15,14 +15,14 @@ Web SDK's SSO flow. The browser does not receive an API key or other secret.
 
 ```bash
 npm install
-cp .env.example .env.local
 npm run configure -- --email "you@company.com"
 ```
 
-`npm run configure` writes `VITE_GLEAN_BACKEND` into `.env.local` by resolving
-the tenant from the supplied work email. If you already know the backend, you
-can enter it directly instead. Set `VITE_GLEAN_WEB_APP_URL` to the exact value
-in Glean Admin → About Glean → Web app URL.
+`npm run configure` creates `.env.local` from `.env.example` if it does not
+exist, then writes `VITE_GLEAN_BACKEND` by resolving the tenant from the supplied
+work email. If you already know the backend, you can enter it directly instead.
+Set `VITE_GLEAN_WEB_APP_URL` to the exact value in Glean Admin → About Glean →
+Web app URL. It is not the backend hostname, which ends in `-be.glean.com`.
 
 The backend and Web app URL are setup-time/deployment configuration. The app
 never asks browser users to choose a tenant or provide runtime credentials.
