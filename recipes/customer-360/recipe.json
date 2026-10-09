@@ -64,7 +64,7 @@
           {
             "kind": "oauth-with-token-fallback",
             "scopes": ["SEARCH", "CHAT"],
-            "setupCommand": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+            "setupCommand": "npm run login -- --email \"<work-email>\"",
             "configFile": ".env",
             "backendVariable": "GLEAN_SERVER_URL",
             "credentialVariable": "GLEAN_API_TOKEN"
@@ -72,12 +72,12 @@
         ],
         "verification": {
           "kind": "automated",
-          "command": "cd customer-360 && npm run verify",
+          "command": "npm run verify",
           "expectedDuration": "1–3 minutes",
           "startsOwnServer": true
         },
         "run": {
-          "command": "cd customer-360 && npm start",
+          "command": "npm start",
           "url": "the Local URL printed by the server",
           "userBrowser": true
         }
@@ -97,13 +97,13 @@
         },
         {
           "title": "See it work before you connect anything",
-          "command": "cd customer-360 && npm run verify:fixture",
+          "command": "npm run verify:fixture",
           "description": "Runs the whole page against recorded answers for a fictional account named Globex, so you can see what it produces before you connect anything. This needs no Glean credentials.",
           "kind": "verify-fixture"
         },
         {
           "title": "Sign in to Glean",
-          "command": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+          "command": "npm run login -- --email \"<work-email>\"",
           "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the SEARCH and CHAT scopes.",
           "kind": "authenticate"
         },
@@ -114,13 +114,13 @@
         },
         {
           "title": "Check it against your own content",
-          "command": "cd customer-360 && npm run verify",
+          "command": "npm run verify",
           "description": "Takes 1 to 3 minutes. It starts its own server, asks your Glean instance the three demo questions about the account you chose, and fails if any answer comes back without citing a real document.",
           "kind": "verify-live"
         },
         {
           "title": "Open the page",
-          "command": "cd customer-360 && npm start",
+          "command": "npm start",
           "kind": "run",
           "description": "Starts the server and prints a Local URL. Open that URL in your browser."
         }
@@ -150,7 +150,7 @@
           {
             "kind": "oauth-with-token-fallback",
             "scopes": ["SEARCH", "AGENTS"],
-            "setupCommand": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+            "setupCommand": "npm run login -- --email \"<work-email>\"",
             "configFile": ".env",
             "backendVariable": "GLEAN_SERVER_URL",
             "credentialVariable": "GLEAN_API_TOKEN"
@@ -158,12 +158,12 @@
         ],
         "verification": {
           "kind": "automated",
-          "command": "cd customer-360 && npm run verify",
+          "command": "npm run verify",
           "expectedDuration": "1–3 minutes",
           "startsOwnServer": true
         },
         "run": {
-          "command": "cd customer-360 && npm start",
+          "command": "npm start",
           "url": "the Local URL printed by the server",
           "userBrowser": true
         }
@@ -188,7 +188,7 @@
         },
         {
           "title": "Sign in to Glean",
-          "command": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+          "command": "npm run login -- --email \"<work-email>\"",
           "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the SEARCH and AGENTS scopes.",
           "kind": "authenticate"
         },
@@ -199,13 +199,13 @@
         },
         {
           "title": "Check it against your own content",
-          "command": "cd customer-360 && npm run verify",
+          "command": "npm run verify",
           "description": "Takes 1 to 3 minutes. It starts its own server, confirms your agent answers for the account you chose, and fails if the brief comes back without citing a real document.",
           "kind": "verify-live"
         },
         {
           "title": "Open the page",
-          "command": "cd customer-360 && npm start",
+          "command": "npm start",
           "kind": "run",
           "description": "Starts the server and prints a Local URL. Open that URL in your browser."
         }

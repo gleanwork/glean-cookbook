@@ -88,7 +88,7 @@
           {
             "kind": "browser-cookie",
             "scopes": [],
-            "setupCommand": "cd embed-search-chat && npm run configure -- --email \"<work-email>\"",
+            "setupCommand": "npm run configure -- --email \"<work-email>\"",
             "configFile": ".env.local",
             "backendVariable": "VITE_GLEAN_BACKEND"
           }
@@ -99,7 +99,7 @@
           "startsOwnServer": false
         },
         "run": {
-          "command": "cd embed-search-chat && npm run dev",
+          "command": "npm run dev",
           "url": "the Local URL printed by Vite",
           "userBrowser": true
         }
@@ -119,7 +119,7 @@
         },
         {
           "title": "Find your Glean backend",
-          "command": "cd embed-search-chat && npm run configure -- --email \"<work-email>\"",
+          "command": "npm run configure -- --email \"<work-email>\"",
           "kind": "configure",
           "description": "Uses your email once to find the tenant backend and writes VITE_GLEAN_BACKEND to .env.local. If the backend is already known, set that variable manually instead. This is setup-time configuration, not a runtime tenant picker, and it does not request or store an API key."
         },
@@ -130,7 +130,7 @@
         },
         {
           "title": "Open the page",
-          "command": "cd embed-search-chat && npm run dev",
+          "command": "npm run dev",
           "kind": "run",
           "description": "Starts Vite and prints a Local URL. Open that URL in a browser where the user is signed in to Glean."
         },

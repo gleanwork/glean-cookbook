@@ -45,12 +45,12 @@
     ],
     "verification": {
       "kind": "automated",
-      "command": "cd a2a-client && uv run main.py",
+      "command": "uv run main.py",
       "expectedDuration": "about 1 minute after sign-in",
       "startsOwnServer": false
     },
     "run": {
-      "command": "cd a2a-client && uv run main.py",
+      "command": "uv run main.py",
       "userBrowser": false
     }
   },
@@ -89,7 +89,7 @@
     },
     {
       "title": "Run it",
-      "command": "cd a2a-client && uv run main.py",
+      "command": "uv run main.py",
       "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.",
       "kind": "run"
     },

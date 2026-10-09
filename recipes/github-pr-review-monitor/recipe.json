@@ -37,7 +37,7 @@
       {
         "kind": "oauth-with-token-fallback",
         "scopes": ["TRIGGERS"],
-        "setupCommand": "cd github-pr-review-monitor && npm run login -- --email \"<work-email>\"",
+        "setupCommand": "npm run login -- --email \"<work-email>\"",
         "configFile": ".env",
         "backendVariable": "GLEAN_SERVER_URL",
         "credentialVariable": "GLEAN_API_TOKEN"
@@ -50,7 +50,7 @@
       "startsOwnServer": false
     },
     "run": {
-      "command": "cd github-pr-review-monitor && npm start",
+      "command": "npm start",
       "userBrowser": false,
       "url": "the Local URL printed by the receiver"
     }
@@ -96,13 +96,13 @@
     },
     {
       "title": "Sign in to Glean",
-      "command": "cd github-pr-review-monitor && npm run login -- --email \"<work-email>\"",
+      "command": "npm run login -- --email \"<work-email>\"",
       "description": "Sign in to discover your tenant and request TRIGGERS before setup. A token with only SEARCH and CHAT receives 403 insufficient_permissions from the preset and trigger APIs. For a token-first tenant, skip login and put GLEAN_SERVER_URL plus a user-scoped GLEAN_API_TOKEN with TRIGGERS in the ignored .env file. An exported token takes precedence over .env.",
       "kind": "authenticate"
     },
     {
       "title": "Run the receiver",
-      "command": "cd github-pr-review-monitor && npm start",
+      "command": "npm start",
       "description": "Keep the receiver running. It listens on loopback, verifies signatures, and queues each webhook ID once.",
       "kind": "run"
     },
@@ -113,19 +113,21 @@
     },
     {
       "title": "Expose the receiver over HTTPS",
-      "command": "cd github-pr-review-monitor && cloudflared tunnel --url http://127.0.0.1:8787",
-      "description": "Append /webhook to the printed origin and set GLEAN_WEBHOOK_URL before registering. Keep the tunnel running: triggers outlive the tunnel, so closing it sends future deliveries to a dead address.",
+      "command": "cloudflared tunnel --url http://127.0.0.1:8787",
+      "newTerminal": true,
+      "description": "Leave the receiver running and open a new terminal. Append /webhook to the printed origin and set GLEAN_WEBHOOK_URL before registering. Keep the tunnel running: triggers outlive the tunnel, so closing it sends future deliveries to a dead address.",
       "kind": "manual"
     },
     {
       "title": "Register the review triggers",
       "command": "cd github-pr-review-monitor && npm run setup",
-      "description": "Set GLEAN_TRIGGER_DATASOURCE and the preset IDs to register. If you leave the IDs empty, setup lists the presets available in your deployment and stops instead of guessing. Provide required preset inputs through GLEAN_TRIGGER_INPUT_<FIELD>.",
+      "newTerminal": true,
+      "description": "Leave the tunnel running and open another terminal in the folder where you started. Set GLEAN_TRIGGER_DATASOURCE and the preset IDs to register. If you leave the IDs empty, setup lists the presets available in your deployment and stops instead of guessing. Provide required preset inputs through GLEAN_TRIGGER_INPUT_<FIELD>.",
       "kind": "configure"
     },
     {
       "title": "Attach Claude Code Monitor",
-      "command": "cd github-pr-review-monitor && claude plugin validate . --strict",
+      "command": "claude plugin validate . --strict",
       "description": "Validate the plugin, then restart Claude Code from the repository under review so Monitor starts with the session. If Monitor is unavailable, run npm run stream to receive the same events in the terminal.",
       "kind": "handoff"
     },

@@ -73,8 +73,10 @@ function humanize(value) {
 }
 
 function executionView(execution, steps = []) {
+  const shellSteps = steps.some((step) => step.command);
   if (!execution) {
     return {
+      shellSteps,
       steps: steps.map((step, index) => ({
         ...step,
         number: index + 1,
@@ -102,6 +104,7 @@ function executionView(execution, steps = []) {
     ),
     browserCookie,
     demo: steps.some((step) => step.kind === 'verify-fixture'),
+    shellSteps,
     handoffPartial,
     steps: steps.map((step, index) => ({
       ...step,

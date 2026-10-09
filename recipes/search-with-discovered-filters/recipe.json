@@ -70,25 +70,25 @@
     {
       "title": "Run the fixture tests",
       "description": "Runs the Vitest fixture suite without credentials or network access, covering catalog discovery, query-backed suggestions, retries, typed errors, and field-filter propagation.",
-      "command": "cd search-with-discovered-filters && npm test",
+      "command": "npm test",
       "kind": "manual"
     },
     {
       "title": "Sign in with OAuth",
       "description": "Discovers your Glean backend from work email, completes Authorization Code with PKCE for search and offline_access, and stores refreshable credentials outside the project. Use --server-url for an explicit backend, GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN as a user-scoped fallback.",
-      "command": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\"",
+      "command": "npm run login -- --email \"<work-email>\"",
       "kind": "authenticate"
     },
     {
       "title": "Verify against your instance",
       "description": "Searches your topic across all datasources and validates the Search response shape and pagination state. Add --pages 2 to fetch a second page, --datasources to narrow the query, or --auto-select to exercise the discovered datasource and suggested-filter path.",
-      "command": "cd search-with-discovered-filters && npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
+      "command": "npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
       "kind": "verify-live"
     },
     {
       "title": "Discover filters and search",
       "description": "Runs the non-interactive CLI path, selecting the first returned datasource and suggested field value, then prints results, warnings, pagination state, and request IDs. Add --pages 2 to fetch the next result page. Omit --auto-select when running interactively to choose them yourself.",
-      "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
+      "command": "npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
       "kind": "run"
     }
   ],
@@ -108,18 +108,18 @@
       {
         "kind": "oauth-with-token-fallback",
         "scopes": ["search"],
-        "setupCommand": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\"",
+        "setupCommand": "npm run login -- --email \"<work-email>\"",
         "credentialVariable": "GLEAN_API_TOKEN"
       }
     ],
     "verification": {
       "kind": "automated",
-      "command": "cd search-with-discovered-filters && npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
+      "command": "npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
       "expectedDuration": "about 1 minute after sign-in",
       "startsOwnServer": false
     },
     "run": {
-      "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
+      "command": "npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
       "userBrowser": false
     }
   },

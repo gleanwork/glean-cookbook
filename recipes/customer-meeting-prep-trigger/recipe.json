@@ -62,7 +62,7 @@
       {
         "kind": "oauth-with-token-fallback",
         "scopes": ["TRIGGERS"],
-        "setupCommand": "cd customer-meeting-prep-trigger && npm run login -- --email \"<work-email>\"",
+        "setupCommand": "npm run login -- --email \"<work-email>\"",
         "configFile": ".env",
         "backendVariable": "GLEAN_SERVER_URL",
         "credentialVariable": "GLEAN_API_TOKEN"
@@ -70,12 +70,12 @@
     ],
     "verification": {
       "kind": "automated",
-      "command": "cd customer-meeting-prep-trigger && npm run verify:fixture",
+      "command": "npm run verify:fixture",
       "expectedDuration": "under 1 minute without credentials",
       "startsOwnServer": false
     },
     "run": {
-      "command": "cd customer-meeting-prep-trigger && npm start",
+      "command": "npm start",
       "userBrowser": false,
       "url": "http://127.0.0.1:8787/health"
     }
@@ -118,13 +118,13 @@
     },
     {
       "title": "Run the fixture verification",
-      "command": "cd customer-meeting-prep-trigger && npm run verify:fixture",
+      "command": "npm run verify:fixture",
       "description": "Verify preset selection, experimental Platform API headers, input resolution, and Standard Webhooks signing before connecting a tenant.",
       "kind": "verify-fixture"
     },
     {
       "title": "Sign in to Glean",
-      "command": "cd customer-meeting-prep-trigger && npm run login -- --email \"<work-email>\"",
+      "command": "npm run login -- --email \"<work-email>\"",
       "description": "Use @gleanwork/auth for tenant discovery and refreshable OAuth credentials stored outside the project. If OAuth is unavailable, provide a user-scoped token with the Triggers permission as a CI fallback.",
       "kind": "authenticate"
     },
@@ -135,25 +135,26 @@
     },
     {
       "title": "Start and expose the receiver",
-      "command": "cd customer-meeting-prep-trigger && npm start",
+      "command": "npm start",
       "description": "The receiver listens on loopback, verifies bearer delivery auth and the Standard Webhooks signature, and prints a prep request for matching meeting titles. Expose /webhook through a public HTTPS tunnel before registering the trigger.",
       "kind": "run"
     },
     {
       "title": "Register the Platform Trigger",
       "command": "cd customer-meeting-prep-trigger && npm run setup",
-      "description": "Setup reads GET /api/trigger-presets and the selected preset detail, then creates one trigger through POST /api/triggers. It saves the returned trigger ID and signing secret locally.",
+      "newTerminal": true,
+      "description": "Leave the receiver running and open a new terminal in the folder where you started. Setup reads GET /api/trigger-presets and the selected preset detail, then creates one trigger through POST /api/triggers. It saves the returned trigger ID and signing secret locally.",
       "kind": "configure"
     },
     {
       "title": "Test one signed delivery",
-      "command": "cd customer-meeting-prep-trigger && npm run test:webhook",
+      "command": "npm run test:webhook",
       "description": "Send one fixture delivery through the same signed webhook contract without waiting for a calendar event. Then schedule one real matching meeting to verify forward delivery from the Platform Trigger.",
       "kind": "verify-live"
     },
     {
       "title": "Delete the trigger",
-      "command": "cd customer-meeting-prep-trigger && npm run delete",
+      "command": "npm run delete",
       "description": "Delete only the trigger ID created by this recipe and clear the local signing secret.",
       "kind": "manual"
     }

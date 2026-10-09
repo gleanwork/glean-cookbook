@@ -5,6 +5,7 @@ import path from 'node:path';
 import fg from 'fast-glob';
 
 import { readJsonc } from './lib/jsonc.mjs';
+import { executionCommandErrors } from './lib/execution-commands.mjs';
 import {
   legacyHelperScriptErrors,
   oauthAuthErrors,
@@ -125,6 +126,9 @@ function checkExecution(recipe, execution, steps, location, repoPath) {
     errors.push(
       `${recipe.id} ${location}: execution.run command differs from the run step`,
     );
+  }
+  for (const error of executionCommandErrors(execution, steps)) {
+    errors.push(`${recipe.id} ${location}: ${error}`);
   }
 
   if (fixtureStep) {

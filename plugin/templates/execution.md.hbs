@@ -27,9 +27,13 @@
 
 {{{pluginPartial "browser-cookie-setup"}}}
 {{/if}}
+{{#if shellSteps}}
+
+{{{pluginPartial "step-shell"}}}
+{{/if}}
 {{#each steps}}
 
-{{number}}. **{{{title}}}**
+{{number}}. **{{{title}}}**{{#if newTerminal}} (new terminal){{/if}}
 {{#if description}}
 {{{indent description 3}}}
 {{/if}}
