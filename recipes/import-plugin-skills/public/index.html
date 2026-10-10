@@ -98,6 +98,9 @@
         font-size: 13px;
       }
       table.skills th {
+        position: sticky;
+        top: 0;
+        background: var(--gdt-card-bg);
         padding: 8px 6px;
         border-bottom: 1px solid var(--gdt-border-light);
         color: var(--gdt-text-secondary);
@@ -591,8 +594,11 @@
                 `Another skill has this name (${skill.conflicts.join(', ')}). Select only one of them.`,
               );
             }
-            for (const duplicate of skill.duplicates)
-              details.push(`Identical copy at ${duplicate}; uploaded once.`);
+            if (skill.duplicates.length) {
+              details.push(
+                `Identical copies, uploaded once: ${skill.duplicates.join(', ')}.`,
+              );
+            }
             if (skill.problem) details.push(skill.problem);
             for (const warning of skill.warnings)
               details.push(`Warning: ${warning}`);
