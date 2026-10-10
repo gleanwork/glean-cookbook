@@ -77,6 +77,8 @@ jobs:
       - run: npm --prefix recipes/skill-publishing-pipeline test
       - run: npm --prefix recipes/import-skill-from-github ci
       - run: npm --prefix recipes/import-skill-from-github test
+      - run: npm --prefix recipes/import-plugin-skills ci
+      - run: npm --prefix recipes/import-plugin-skills test
 
   format-check:
     name: Format check
