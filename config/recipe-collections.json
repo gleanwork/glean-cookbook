@@ -25,10 +25,11 @@
     {
       "id": "skills",
       "label": "Skills",
-      "description": "Publish and check one skill, import skills from GitHub, then manage versioned skill bundles.",
+      "description": "Publish and check one skill, import skills from GitHub or an agent plugin, then manage versioned skill bundles.",
       "recipes": [
         "validate-and-publish-skill",
         "import-skill-from-github",
+        "import-plugin-skills",
         "skill-publishing-pipeline"
       ]
     },
