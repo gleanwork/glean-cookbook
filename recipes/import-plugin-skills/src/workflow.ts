@@ -313,8 +313,12 @@ export function formatPlan(plan: ImportPlan) {
     invalid: 'invalid',
     conflict: 'conflict',
   };
+  const width = Math.max(
+    0,
+    ...plan.skills.map((entry) => (entry.displayName ?? '?').length),
+  );
   for (const entry of plan.skills) {
-    const name = entry.displayName ?? '?';
+    const name = (entry.displayName ?? '?').padEnd(width);
     const files = plural(entry.bundle.files.size, 'file');
     lines.push(
       `  ${actions[entry.action].padEnd(9)} ${name}  ${label(entry)} (${files})`,
