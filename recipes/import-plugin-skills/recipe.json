@@ -1,15 +1,15 @@
 {
   "id": "import-plugin-skills",
   "title": "Import skills from an agent plugin",
-  "description": "Point a local CLI at a Claude Code, Codex, or Agent Skills plugin folder or zip, sign in with OAuth, and publish every skill it contains through the Skills API.",
+  "description": "Run a local web app, sign in to Glean with OAuth, upload a Claude Code, Codex, or Agent Skills plugin, and publish every skill it contains through the Skills API.",
   "sidebarLabel": "Import skills from a plugin",
   "codeWalkthrough": {
-    "intro": "The CLI runs on your machine. It reads the plugin from a local folder or zip, finds skills the way the agent harnesses do, and publishes each skill folder as one ZIP bundle with the official SDK. Glean never needs access to the plugin's repository.",
+    "intro": "One command starts a small web app on your computer. The app signs you in with the official @gleanwork/auth package, reads the plugin you upload or point it at, finds its skills the way agent harnesses do, and publishes each skill folder as one ZIP bundle with the official SDK. Glean never needs access to the plugin's repository.",
     "examples": [
       {
-        "title": "Configure the Skills API client",
-        "description": "Find your Glean instance from your work email and get credentials from @gleanwork/auth, which registered an OAuth client dynamically when you signed in. A user-scoped token in GLEAN_API_TOKEN is the non-interactive fallback.",
-        "source": "src/client.ts",
+        "title": "Sign in with the official CLI",
+        "description": "The Sign in button runs the glean-auth binary from the pinned @gleanwork/auth package, the same command as npm run login. It registers an OAuth client dynamically and opens Glean's approval page. The app checks the session with createGleanTokenProvider and never handles the credentials itself.",
+        "source": "src/session.ts",
         "language": "typescript"
       },
       {
@@ -20,8 +20,14 @@
       },
       {
         "title": "Validate, plan, and publish",
-        "description": "Upload each distinct skill folder once. Validate every bundle without saving it, flag invalid skills and name conflicts, show which names already exist, and skip skills whose published files already match. Then create each remaining skill once, without automatic retries, and report what was created, updated, or failed.",
+        "description": "Upload each distinct skill folder once. Validate every bundle without saving it, flag invalid skills and name conflicts, show which names already exist, and skip skills whose published files already match. Then create each selected skill once, without automatic retries.",
         "source": "src/workflow.ts",
+        "language": "typescript"
+      },
+      {
+        "title": "Serve the app on this computer only",
+        "description": "The server listens on 127.0.0.1, answers only to its own host name, and requires the session key from the link it prints. That keeps other websites open in your browser from driving the importer.",
+        "source": "src/app.ts",
         "language": "typescript"
       }
     ]
@@ -43,20 +49,20 @@
   "buildMethod": "scaffold",
   "languages": ["typescript"],
   "prerequisites": [
-    "Node.js 22.12.0 or newer",
+    "Node.js 22.12.0 or newer, and a browser on the same computer",
     "A Glean instance with Skills enabled",
-    "Your work email, or the complete Glean backend HTTPS origin",
+    "Your Glean backend URL, usually https://your-company-be.glean.com",
     "Permission to create skills, using the SKILLS OAuth scope or the SKILLS permission on a user-scoped token",
     "A local copy of the plugin: a cloned repository, a plugin folder, or a zip of either"
   ],
   "demoQueries": [
     {
-      "query": "Verify plugin import by publishing a generated Claude Code marketplace, then delete the captured IDs",
-      "expectedBehavior": "Stdout ends with Verified plugin import: published 2 skills from a generated Claude Code marketplace, downloaded files match, cleanup completed. The plan must list both generated skills as create and note the plugin command it does not import. Each downloaded bundle must contain exactly the uploaded files with matching bytes. A mismatch fails verification and still deletes the captured IDs. If delete fails, the process exits non-zero and prints the remaining IDs with cleanup commands."
+      "query": "Sign in, then run a test import",
+      "expectedBehavior": "After sign-in, the header shows Signed in. Run a test import publishes a generated Claude Code marketplace with two uniquely named skills, downloads each one, and compares its files with the upload. The page shows Test import passed: published 2 generated skills, the downloaded files match, and both test skills were deleted. A mismatch fails the test and still deletes both skills. If a delete fails, the page lists the remaining IDs and offers Retry cleanup, which deletes only those IDs."
     },
     {
       "query": "Import every skill from my team's plugin repository",
-      "expectedBehavior": "With --dry-run, the CLI prints each discovered skill as create, update, unchanged, invalid, or conflict and publishes nothing. Without it, the CLI publishes each create and update once and ends with Published <n> skills from <path>: <c> created, <u> new versions, <k> unchanged. Running it again without changes publishes nothing. Any failed, invalid, or conflicting skill is listed and the process exits non-zero."
+      "expectedBehavior": "After choosing the zip or folder, the page lists each discovered skill as create, update, unchanged, or invalid, with notes for skipped commands, agents, hooks, MCP servers, and remote plugin sources. Nothing is published until Import is clicked. Skills that share a name are unselected, and only one of them can be selected. Import publishes each selected skill once and shows created, new version, or failed for each. Importing the same plugin again shows every skill as unchanged."
     }
   ],
   "codeAssets": [
@@ -69,97 +75,92 @@
   "steps": [
     {
       "title": "Copy the project onto your machine",
-      "description": "Copy the runnable TypeScript importer and its credential-free fixture tests into a new directory. OAuth uses the official @gleanwork/auth package.",
+      "description": "Copy the importer app and its credential-free tests into a new directory. Sign-in uses the official @gleanwork/auth package.",
       "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/import-plugin-skills import-plugin-skills",
       "kind": "scaffold"
     },
     {
       "title": "Install dependencies",
-      "description": "Enter the project directory and install its dependencies. Run the remaining commands from this directory.",
+      "description": "Enter the project directory and install its dependencies.",
       "command": "cd import-plugin-skills && npm install",
       "kind": "install"
     },
     {
       "title": "Run the fixture tests",
-      "description": "Run the tests without credentials or network access. They cover plugin discovery for each layout, zip handling, and the Skills API workflow through the real SDK with MSW HTTP handlers. Passing them does not verify access to your Glean instance.",
+      "description": "Run the tests without credentials or network access. They cover plugin discovery for each layout, zip handling, the app's session checks, and the Skills API workflow through the real SDK with MSW HTTP handlers. Passing them does not verify access to your Glean instance.",
       "command": "npm test",
       "kind": "manual"
     },
     {
-      "title": "Choose an authentication path",
-      "description": "OAuth is the default. @gleanwork/auth discovers your instance, registers an OAuth client dynamically, and stores credentials outside the project. If OAuth is unavailable, copy .env.example to .env, set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN with the SKILLS permission, skip the next step, and omit --email from the remaining commands. If email discovery finds the wrong instance, replace --email with --server-url and your complete backend HTTPS origin on the login and later commands.",
-      "kind": "configure"
+      "title": "Start the importer",
+      "description": "Start the app with your Glean backend URL. It opens the importer in your browser and prints an Open the importer link that includes this run's session key; use that link if no browser opens. Leave this terminal running while you use the app. If you do not know the backend URL, pass --email with your work email instead of --backend to discover it.",
+      "command": "npm start -- --backend \"<backend-url>\"",
+      "kind": "run"
     },
     {
-      "title": "Sign in with OAuth",
-      "description": "Run the login command and approve access in the browser window it opens. Wait for the terminal to print Signed in before continuing. Skip this step if you configured a token in .env.",
-      "command": "npm run login -- --email \"<work-email>\"",
+      "title": "Sign in with Glean",
+      "description": "Click **Sign in with Glean**. The app registers itself with your Glean instance and opens Glean's approval page in a new tab. Approve access, then return to the importer; the header changes to **Signed in**. Credentials are stored on this computer, outside the project.",
       "kind": "authenticate"
     },
     {
-      "title": "Verify against your instance",
-      "description": "Generate a small Claude Code marketplace with two uniquely named skills, publish it, download each skill and compare its files with the upload, then permanently delete both skills. This confirms sign-in and Skills API access before you import your own plugin.",
-      "command": "npm run verify -- --email \"<work-email>\"",
+      "title": "Or sign in from a terminal",
+      "description": "Use this instead of the button when the app cannot open a browser for you, for example on a remote machine. Open a new terminal, run the command, approve access in the browser, and reload the importer. To skip OAuth entirely, stop the app, copy .env.example to .env, set a user-scoped GLEAN_API_TOKEN with the SKILLS permission, and start it again.",
+      "command": "cd import-plugin-skills && npm run login -- --server-url \"<backend-url>\"",
+      "kind": "authenticate",
+      "newTerminal": true
+    },
+    {
+      "title": "Run a test import",
+      "description": "Click **Run a test import**. The app publishes two generated skills, downloads each one, compares its files with the upload, and permanently deletes both. Success confirms sign-in and Skills API access before you import your own plugin.",
       "kind": "verify-live"
     },
     {
-      "title": "Get the plugin onto this machine",
-      "description": "Clone the plugin repository with your own Git credentials, or download it as a zip. A private repository stays private: the importer reads it locally. Use the absolute path to the folder or zip as <plugin-path>. Pass the repository root for a marketplace, or a single plugin folder.",
-      "kind": "configure"
-    },
-    {
-      "title": "Preview the import",
-      "description": "Find every skill, validate each one without saving it, and print the plan. Each skill is marked create, update (you or someone else already has a skill with that name), unchanged (its latest published files already match), invalid, or conflict (two different skills share a name). Nothing is published. Add --plugin <name> or --skill <name> to narrow the import.",
-      "command": "npm start -- \"<plugin-path>\" --email \"<work-email>\" --dry-run",
+      "title": "Choose your plugin",
+      "description": "Clone the plugin repository with your own Git credentials, or download it as a zip. A private repository stays private: the app reads it on this computer. Drop the zip on the page, or enter the folder path and click **Preview folder**. Use the repository root for a marketplace, or one plugin folder.",
       "kind": "manual"
     },
     {
-      "title": "Import your plugin",
-      "description": "Publish every skill marked create or update, as yourself. An update adds a new version to a skill you own with that name. Run the same command again after the plugin changes: unchanged skills are skipped and changed ones get a new version. The command exits non-zero if any skill was not published.",
-      "command": "npm start -- \"<plugin-path>\" --email \"<work-email>\" --yes",
-      "kind": "run"
+      "title": "Review and import",
+      "description": "Review the plan. Each skill is marked create, update (the name already exists), unchanged (its published files already match), or invalid. Untick any skill you do not want, then click **Import**. Skills are published as you, and an update adds a new version to a skill you own. Import again after the plugin changes; unchanged skills are skipped.",
+      "kind": "manual"
     }
   ],
   "execution": {
-    "type": "cli",
+    "type": "local-web",
     "questions": [
       {
-        "id": "work-email",
-        "prompt": "What is your work email address?"
-      },
-      {
-        "id": "plugin-path",
-        "prompt": "What is the absolute path to the plugin folder or zip to import?"
+        "id": "backend-url",
+        "prompt": "What is your Glean backend URL, such as https://your-company-be.glean.com?"
       }
     ],
     "auth": [
       {
         "kind": "oauth-with-token-fallback",
         "scopes": ["SKILLS"],
-        "setupCommand": "npm run login -- --email \"<work-email>\"",
+        "setupCommand": "cd import-plugin-skills && npm run login -- --server-url \"<backend-url>\"",
         "credentialVariable": "GLEAN_API_TOKEN"
       }
     ],
     "verification": {
-      "kind": "automated",
-      "command": "npm run verify -- --email \"<work-email>\"",
+      "kind": "user-browser",
       "expectedDuration": "about 1 minute after sign-in",
       "startsOwnServer": false
     },
     "run": {
-      "command": "npm start -- \"<plugin-path>\" --email \"<work-email>\" --yes",
-      "userBrowser": false
+      "command": "npm start -- --backend \"<backend-url>\"",
+      "url": "the Open the importer link printed by the server",
+      "userBrowser": true
     }
   },
   "architecture": [
     {
       "label": "Local plugin",
-      "caption": "folder or zip; never leaves your machine",
+      "caption": "zip upload or folder; stays on your computer",
       "icon": "folder"
     },
     {
-      "label": "Discovery",
-      "caption": "marketplace, plugin manifest, skills/",
+      "label": "Importer app",
+      "caption": "localhost UI: sign in, preview, import",
       "category": "workflow"
     },
     {
@@ -174,8 +175,8 @@
       "icon": "skill"
     }
   ],
-  "aiPrompt": "Scaffold and run the plugin skill importer. Ask for the user's work email and the absolute path to the plugin folder or zip. Run credential-free fixture tests before authentication. Sign in with npm run login, which runs the official glean-auth CLI with the SKILLS scope and dynamic client registration; do not add a login wrapper. Run npm run verify to publish a generated two-skill Claude Code marketplace, compare each downloaded bundle file by file, and delete only the captured IDs. Then run npm start with the plugin path and --dry-run, show the plan, and confirm with the user before running it again with --yes. The importer reads marketplaces at .claude-plugin/marketplace.json, .agents/plugins/marketplace.json, and .cursor-plugin/marketplace.json, follows local plugin sources, reads skills paths from plugin.json, .claude-plugin/plugin.json, .codex-plugin/plugin.json, and .cursor-plugin/plugin.json, and scans each plugin's skills/ folder three levels deep. Without a manifest it scans skills/, .agents/skills/, .claude/skills/, and .cursor/skills/, then the whole tree. It uploads each distinct skill folder once as a ZIP, skips skills whose latest published files already match, never follows symbolic links, and reports remote plugin sources, commands, agents, hooks, and MCP servers instead of importing them. Never clone a repository for the user with credentials you supply, never delete a skill the verify run did not create, and never retry create automatically.",
-  "llmContext": "Use @gleanwork/api-client 0.20.16 with skills.validate, skills.list, skills.retrieveContent (to skip unchanged skills), and skills.create; verify also uses retrieve and delete. Create accepts SKILL.md, .zip, or .skill. A same-name create by the same user supersedes that user's skill with a new version; over a GitHub-imported skill it returns 409. Never retry create. Use the SKILLS OAuth scope from official @gleanwork/auth (dynamic client registration) or a user-scoped token with the SKILLS permission. The plugin is read locally from a folder or zip with no extraction to disk; symbolic links are skipped. Discovery follows the Claude Code plugin reference, the Codex plugin packaging guide, and npx skills. Only skills are imported. Verify deletes only captured IDs at version 1.1.",
+  "aiPrompt": "Scaffold and run the plugin skill importer app. Ask for the user's Glean backend URL. Run credential-free fixture tests, then start the app with npm start -- --backend and the URL, and give the user the Open the importer link it prints, which includes the session key. The user signs in in the browser: the Sign in button runs the official glean-auth CLI from the pinned @gleanwork/auth package with the SKILLS scope and dynamic client registration. If the app cannot open a browser, the user can run npm run login -- --server-url with the URL in a new terminal and reload the page. Have the user run a test import, then choose the plugin zip or folder, review the plan, and click Import. The app reads marketplaces at .claude-plugin/marketplace.json, .agents/plugins/marketplace.json, and .cursor-plugin/marketplace.json, follows local plugin sources, reads skills paths from plugin.json, .claude-plugin/plugin.json, .codex-plugin/plugin.json, and .cursor-plugin/plugin.json, and scans each plugin's skills/ folder three levels deep. Without a manifest it scans skills/, .agents/skills/, .claude/skills/, and .cursor/skills/, then the whole tree. It uploads each distinct skill folder once as a ZIP, skips skills whose latest published files already match, never follows symbolic links, and reports remote plugin sources, commands, agents, hooks, and MCP servers instead of importing them. Never click Import for the user without their review, never supply Git credentials, never delete a skill the test import did not create, and never retry create automatically.",
+  "llmContext": "Local web app (server.ts) on 127.0.0.1 with a per-run session key and Host check. Sign-in spawns glean-auth from pinned @gleanwork/auth (login --scopes SKILLS --server-url), the same as npm run login; createGleanTokenProvider supplies tokens. Use @gleanwork/api-client 0.20.16: skills.validate, list, retrieveContent (skip unchanged), and create; the test import also uses retrieve and delete. A same-name create by the same user adds a version; over a GitHub-imported skill it returns 409. Never retry create. Plugins are read in memory from a zip or folder; symbolic links are skipped. Only skills are imported. The test import deletes only captured IDs at version 1.1.",
   "goDependency": false,
   "hidden": false,
   "tags": [
@@ -184,19 +185,20 @@
     "import",
     "claude-code",
     "codex",
-    "platform-api"
+    "platform-api",
+    "local-web"
   ],
   "content": {
-    "problem": "Teams that share skills across agent harnesses usually keep them in a plugin repository: a Claude Code or Codex marketplace, a portable Agent Plugins package, or a folder of skills installed with npx skills. Those repositories are often private, and their skills are spread across several plugins. This recipe runs on your machine, reads the plugin locally, and publishes every skill it finds to Glean through the Skills API under your own account.",
+    "problem": "Teams that share skills across agent harnesses usually keep them in a plugin repository: a Claude Code or Codex marketplace, a portable Agent Plugins package, or a folder of skills installed with npx skills. Those repositories are often private, and their skills are spread across several plugins. This recipe starts a small web app on your computer: sign in to Glean in the browser, drop in the plugin, review what it found, and publish every skill to Glean under your own account.",
     "takeItFurther": [
-      "Run the import from CI after the plugin repository changes. Use a user-scoped token in GLEAN_API_TOKEN, because the browser sign-in needs a person.",
+      "Automate the import in CI after the plugin repository changes. Reuse planImport, selectSkills, and applyImport from src/workflow.ts with a user-scoped token in GLEAN_API_TOKEN, because the browser sign-in needs a person.",
       "Use the GitHub import recipe for a public repository you want Glean to keep in sync from its source.",
       "Use the skill publishing pipeline recipe to inspect versions and download a published bundle safely."
     ],
     "guardrails": [
       {
-        "title": "Preview before publishing",
-        "rule": "Run with --dry-run first. It validates every bundle without saving it and publishes nothing. Without --yes, the import asks for confirmation in an interactive terminal."
+        "title": "Review before publishing",
+        "rule": "Choosing a plugin validates every bundle without saving it. Nothing is published until you click Import, and only the selected skills are uploaded."
       },
       {
         "title": "Publish as yourself",
@@ -204,11 +206,15 @@
       },
       {
         "title": "Never retry a create",
-        "rule": "Create runs once per skill with automatic retries off, because a request that timed out may still have saved the skill. Check the reported failures, then run the import again."
+        "rule": "Create runs once per skill with automatic retries off, because a request that timed out may still have saved the skill. Check the reported failures, then import again."
+      },
+      {
+        "title": "Keep the app local",
+        "rule": "The app listens only on 127.0.0.1, answers only to its own host name, and requires the session key from the link it prints. Do not expose its port to a network."
       },
       {
         "title": "Read the plugin, never run it",
-        "rule": "The importer reads files from the folder or zip in memory, rejects zip entries that escape the archive, and skips symbolic links. It never executes plugin scripts, hooks, or MCP servers."
+        "rule": "The app reads files from the zip or folder in memory, rejects zip entries that escape the archive, and skips symbolic links. It never executes plugin scripts, hooks, or MCP servers."
       }
     ],
     "limitations": [
@@ -222,11 +228,11 @@
       },
       {
         "title": "Not a sync",
-        "description": "Imported skills are ordinary custom skills, not linked to the repository. Removing a skill from the plugin does not delete it from Glean. Run the import again to publish changes; skills whose files match their latest published version are skipped."
+        "description": "Imported skills are ordinary custom skills, not linked to the repository. Removing a skill from the plugin does not delete it from Glean. Import again to publish changes; skills whose files match their latest published version are skipped."
       },
       {
         "title": "Names are global to your account",
-        "description": "Glean has no plugin namespace, so two plugins with different skills of the same name conflict. Import those plugins separately with --plugin, or rename one skill."
+        "description": "Glean has no plugin namespace, so two plugins with different skills of the same name conflict. The app leaves both unselected; select one, or rename one skill in the plugin."
       }
     ]
   }

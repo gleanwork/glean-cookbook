@@ -5,13 +5,8 @@ import { removeTrees, skillMd, writeTree } from './test-helpers.js';
 
 afterEach(removeTrees);
 
-async function discover(
-  files: Record<string, string | object>,
-  plugins?: string[],
-) {
-  return discoverSkills(await openPluginSource(await writeTree(files)), {
-    plugins,
-  });
+async function discover(files: Record<string, string | object>) {
+  return discoverSkills(await openPluginSource(await writeTree(files)));
 }
 
 function dirs(discovery: Awaited<ReturnType<typeof discover>>) {
@@ -165,25 +160,6 @@ test('falls back to searching the whole tree when no standard folder has skills'
   });
   expect(discovery.layout).toBe('recursive');
   expect(dirs(discovery)).toEqual(['tools/lint']);
-});
-
-test('filters by plugin name and rejects an unknown one', async () => {
-  const files = {
-    '.claude-plugin/marketplace.json': {
-      name: 'team',
-      owner: { name: 'Team' },
-      plugins: [
-        { name: 'a', source: './a' },
-        { name: 'b', source: './b' },
-      ],
-    },
-    'a/skills/one/SKILL.md': skillMd('one'),
-    'b/skills/two/SKILL.md': skillMd('two'),
-  };
-  expect(dirs(await discover(files, ['b']))).toEqual(['b/skills/two']);
-  await expect(discover(files, ['c'])).rejects.toThrow(
-    'No plugin named c. Available: a, b.',
-  );
 });
 
 test('fails on a manifest that is not valid JSON', async () => {

@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { fromBufferPromise } from 'yauzl';
@@ -30,12 +31,18 @@ export const ZIP_LIMITS = {
 };
 
 export async function openPluginSource(input: string): Promise<PluginSource> {
-  const location = path.resolve(input);
+  const trimmed = input.trim();
+  const location = path.resolve(
+    trimmed === '~' || trimmed.startsWith('~/')
+      ? path.join(os.homedir(), trimmed.slice(1))
+      : trimmed,
+  );
   const stats = await fs.stat(location).catch(() => undefined);
   if (!stats) throw new Error(`No plugin folder or zip at ${location}.`);
   if (stats.isDirectory()) return openDirectory(location);
   if (stats.isFile() && location.toLowerCase().endsWith('.zip')) {
-    return openZip(location, stats.size);
+    if (stats.size > ZIP_LIMITS.maxArchiveBytes) throw zipTooLarge();
+    return openZip(location, await fs.readFile(location));
   }
   throw new Error('Pass a plugin folder or a .zip file.');
 }
@@ -88,14 +95,20 @@ async function readBounded(stream: Readable, maxBytes: number) {
   return Buffer.concat(chunks);
 }
 
-async function openZip(location: string, size: number): Promise<PluginSource> {
-  if (size > ZIP_LIMITS.maxArchiveBytes) {
-    throw new Error(
-      `The zip is larger than ${ZIP_LIMITS.maxArchiveBytes} bytes. Pass the unpacked folder instead.`,
-    );
-  }
+export function zipTooLarge() {
+  return new Error(
+    `The zip is larger than ${ZIP_LIMITS.maxArchiveBytes / 1024 / 1024} MiB. Use the unpacked folder instead.`,
+  );
+}
+
+/** Read a zip in memory. `location` is only a label for messages. */
+export async function openZip(
+  location: string,
+  archive: Buffer,
+): Promise<PluginSource> {
+  if (archive.byteLength > ZIP_LIMITS.maxArchiveBytes) throw zipTooLarge();
   // strictFileNames rejects absolute paths, ".." segments, and backslashes.
-  const zip = await fromBufferPromise(await fs.readFile(location), {
+  const zip = await fromBufferPromise(archive, {
     lazyEntries: true,
     strictFileNames: true,
   });

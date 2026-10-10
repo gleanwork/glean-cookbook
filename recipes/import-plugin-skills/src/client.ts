@@ -7,12 +7,12 @@ export const SCOPES = ['SKILLS'];
 
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);
 
-export interface GleanClientTarget {
+export interface BackendTarget {
+  backend?: string;
   email?: string;
-  serverUrl?: string;
 }
 
-function loadDotEnv() {
+export function loadDotEnv() {
   try {
     loadEnvFile();
   } catch (error) {
@@ -20,27 +20,25 @@ function loadDotEnv() {
   }
 }
 
-async function resolveServerUrl({ email, serverUrl }: GleanClientTarget) {
-  const explicit = serverUrl?.trim();
-  if (explicit) return explicit;
-
-  const workEmail = email?.trim();
-  if (workEmail) return (await discoverGleanTenant(workEmail)).serverUrl;
-
-  const configured = process.env.GLEAN_SERVER_URL?.trim();
-  if (configured) return configured;
-
-  throw new Error(
-    'Pass --email or --server-url, or set GLEAN_SERVER_URL in your environment.',
-  );
-}
-
-export async function createGleanClient(
-  target: GleanClientTarget,
-  log: (message: string) => void = () => undefined,
-) {
-  loadDotEnv();
-  const server = new URL(await resolveServerUrl(target));
+/** Resolve the Glean backend origin from --backend, --email, or GLEAN_SERVER_URL. */
+export async function resolveBackend({ backend, email }: BackendTarget) {
+  const configured =
+    backend?.trim() ||
+    (email?.trim()
+      ? (await discoverGleanTenant(email.trim())).serverUrl
+      : undefined) ||
+    process.env.GLEAN_SERVER_URL?.trim();
+  if (!configured) {
+    throw new Error(
+      'Pass --backend with your Glean backend URL, such as https://acme-be.glean.com, or --email to discover it.',
+    );
+  }
+  let server: URL;
+  try {
+    server = new URL(configured);
+  } catch {
+    throw new Error('Use a complete Glean backend HTTPS origin.');
+  }
   const loopback = LOOPBACK_HOSTS.has(server.hostname);
   if (
     (server.protocol !== 'https:' && !loopback) ||
@@ -53,18 +51,17 @@ export async function createGleanClient(
   ) {
     throw new Error('Use a complete Glean backend HTTPS origin.');
   }
+  return server.origin;
+}
 
+export function createGleanClient(backend: string) {
   // GLEAN_API_TOKEN is a non-interactive fallback. Otherwise the provider
-  // reads and refreshes the credentials that `npm run login` stored.
-  const staticToken = process.env.GLEAN_API_TOKEN?.trim();
-  if (staticToken) log('Using GLEAN_API_TOKEN from the environment.');
-  else log(`Using the OAuth session (${SCOPES.join(', ')}).`);
-
+  // reads and refreshes the credentials that sign-in stored.
   const options = {
-    serverURL: server.origin,
+    serverURL: backend,
     apiToken:
-      staticToken ||
-      createGleanTokenProvider({ serverUrl: server.origin, scopes: SCOPES }),
+      process.env.GLEAN_API_TOKEN?.trim() ||
+      createGleanTokenProvider({ serverUrl: backend, scopes: SCOPES }),
     timeoutMs: 60_000,
     retryConfig: {
       strategy: 'backoff',

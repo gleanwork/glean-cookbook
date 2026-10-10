@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Plugin skill importer</title>
+    <link rel="stylesheet" href="/glean-cookbook.css" />
+    <style>
+      /* Recipe-specific only. Everything else comes from the shared stylesheet. */
+      header.top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: min(1080px, calc(100% - 40px));
+        margin: 20px auto 0;
+      }
+      header.top img {
+        width: 28px;
+        height: 28px;
+      }
+      header.top .actions {
+        margin-left: auto;
+      }
+      .layout {
+        width: min(1080px, calc(100% - 40px));
+      }
+      .hero h2 {
+        margin: 0;
+        font-size: clamp(20px, 2.6vw, 26px);
+        letter-spacing: -0.03em;
+      }
+      .step-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .step-head h3 {
+        margin: 0;
+        font-size: 15px;
+      }
+      .step-number {
+        display: grid;
+        width: 26px;
+        height: 26px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--cookbook-primary-soft);
+        color: var(--gdt-primary);
+        font-size: 12px;
+        font-weight: 750;
+      }
+      .card.disabled {
+        opacity: 0.55;
+        pointer-events: none;
+      }
+      .source-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 16px;
+      }
+      .dropzone {
+        display: grid;
+        min-height: 130px;
+        place-items: center;
+        padding: 18px;
+        border: 1.5px dashed var(--gdt-border-dark);
+        border-radius: 14px;
+        background: var(--cookbook-card-muted);
+        text-align: center;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .dropzone:hover,
+      .dropzone.over {
+        border-color: var(--gdt-primary);
+        background: var(--cookbook-primary-soft);
+      }
+      .folder-form {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 8px;
+        font-size: 13px;
+      }
+      input[type='text'] {
+        width: 100%;
+        padding: 9px 11px;
+        border: 1px solid var(--gdt-border-dark);
+        border-radius: 8px;
+        font: inherit;
+        font-family: var(--font-jetbrains-mono);
+        font-size: 12.5px;
+      }
+      table.skills {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      table.skills th {
+        padding: 8px 6px;
+        border-bottom: 1px solid var(--gdt-border-light);
+        color: var(--gdt-text-secondary);
+        font-size: 11px;
+        font-weight: 650;
+        text-align: left;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      table.skills td {
+        padding: 9px 6px;
+        border-bottom: 1px solid var(--gdt-hairline);
+        vertical-align: top;
+      }
+      td.detail {
+        color: var(--gdt-text-secondary);
+        font-size: 12px;
+      }
+      td.detail div + div {
+        margin-top: 3px;
+      }
+      .path {
+        font-family: var(--font-jetbrains-mono);
+        font-size: 11.5px;
+        color: var(--gdt-text-secondary);
+      }
+      .log {
+        max-height: 140px;
+        overflow: auto;
+      }
+      .stack > * + * {
+        margin-top: 12px;
+      }
+      @media (max-width: 760px) {
+        .source-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <img src="/glean-logomark.svg" alt="" />
+      <div class="brand">
+        <div class="brand-title">Plugin skill importer</div>
+        <div class="brand-copy" id="backend">Connecting…</div>
+      </div>
+      <div class="actions">
+        <span class="pill pill-neutral" id="session-pill"
+          >Checking sign-in…</span
+        >
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="card hero">
+        <p class="eyebrow">Skills API</p>
+        <h2>Publish every skill in an agent plugin to Glean</h2>
+        <p>
+          Works with Claude Code and Codex plugin marketplaces, portable Agent
+          Plugins, and
+          <code>npx skills</code> folders. The plugin is read on this computer;
+          only the skills you choose are uploaded, under your account.
+        </p>
+      </section>
+
+      <div id="key-missing" class="note note-danger hidden">
+        This page needs the link printed in your terminal, which includes this
+        run’s session key. Copy the <b>Open the importer</b> link from the
+        terminal running <code>npm start</code>.
+      </div>
+
+      <section class="card stack" id="step-signin">
+        <div class="step-head">
+          <span class="step-number">1</span>
+          <h3>Sign in to Glean</h3>
+        </div>
+        <p class="muted" id="signin-copy">
+          Sign-in registers this app with your Glean instance and opens an
+          approval page in a new browser tab. Credentials are stored on this
+          computer, not in the project.
+        </p>
+        <div class="actions">
+          <button class="btn-primary" id="signin">Sign in with Glean</button>
+          <button class="btn-secondary hidden" id="verify">
+            Run a test import
+          </button>
+        </div>
+        <div id="signin-status" class="hidden"></div>
+        <div id="verify-panel" class="stack hidden">
+          <ol class="log" id="verify-log"></ol>
+          <div id="verify-status"></div>
+          <button class="btn-secondary btn-sm hidden" id="cleanup">
+            Retry cleanup
+          </button>
+        </div>
+      </section>
+
+      <section class="card stack disabled" id="step-source">
+        <div class="step-head">
+          <span class="step-number">2</span>
+          <h3>Choose a plugin</h3>
+        </div>
+        <div class="source-grid">
+          <label class="dropzone" id="dropzone">
+            <input type="file" id="zip" accept=".zip" class="visually-hidden" />
+            <span>
+              <b>Drop a .zip here</b> or click to choose one.<br />
+              <span class="muted"
+                >A GitHub “Download ZIP” of the repository works.</span
+              >
+            </span>
+          </label>
+          <form class="folder-form" id="folder-form">
+            <label for="folder"><b>Or a folder on this computer</b></label>
+            <input
+              type="text"
+              id="folder"
+              placeholder="/Users/you/src/team-plugins"
+              autocomplete="off"
+            />
+            <span class="muted"
+              >Use the repository root for a marketplace, or one plugin
+              folder.</span
+            >
+            <div>
+              <button class="btn-secondary" type="submit">
+                Preview folder
+              </button>
+            </div>
+          </form>
+        </div>
+        <ol class="log hidden" id="plan-log"></ol>
+        <div id="plan-error"></div>
+      </section>
+
+      <section class="card stack hidden" id="step-review">
+        <div class="step-head">
+          <span class="step-number">3</span>
+          <h3>Review and import</h3>
+        </div>
+        <p class="muted" id="plan-summary"></p>
+        <div class="kpi-grid" id="plan-kpis"></div>
+        <div id="plan-notes"></div>
+        <table class="skills">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Skill</th>
+              <th>Plan</th>
+              <th>Folder</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="plan-rows"></tbody>
+        </table>
+        <div class="actions">
+          <button class="btn-primary" id="import">Import</button>
+          <span class="muted" id="import-hint"></span>
+        </div>
+        <ol class="log hidden" id="import-log"></ol>
+        <div id="import-status"></div>
+      </section>
+
+      <section class="card stack hidden" id="step-results">
+        <div class="step-head">
+          <span class="step-number">✓</span>
+          <h3>Results</h3>
+        </div>
+        <div class="kpi-grid" id="result-kpis"></div>
+        <table class="skills">
+          <thead>
+            <tr>
+              <th>Skill</th>
+              <th>Result</th>
+              <th>Glean skill</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="result-rows"></tbody>
+        </table>
+        <p class="muted">
+          Import again after the plugin changes. Skills whose files already
+          match are skipped, and changed skills get a new version.
+        </p>
+      </section>
+    </main>
+
+    <script type="module">
+      const $ = (id) => document.getElementById(id);
+      const keyMatch = /session=([\w-]+)/.exec(location.hash);
+      if (keyMatch) sessionStorage.setItem('importer-session', keyMatch[1]);
+      history.replaceState(null, '', location.pathname);
+      const sessionKey = sessionStorage.getItem('importer-session');
+
+      function el(tag, options = {}, children = []) {
+        const node = document.createElement(tag);
+        if (options.className) node.className = options.className;
+        if (options.text !== undefined) node.textContent = options.text;
+        for (const child of children) if (child) node.append(child);
+        return node;
+      }
+
+      function note(kind, text, hint) {
+        const box = el('div', { className: `note note-${kind}` }, [
+          el('div', { text }),
+        ]);
+        if (hint) box.append(el('div', { className: 'muted', text: hint }));
+        return box;
+      }
+
+      function api(path, init = {}) {
+        return fetch(path, {
+          ...init,
+          headers: {
+            ...(init.headers ?? {}),
+            'x-importer-session': sessionKey ?? '',
+          },
+        });
+      }
+
+      /** Read a newline-delimited JSON stream, logging progress lines. */
+      async function streamEvents(response, logList) {
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw Object.assign(
+            new Error(body.error ?? `HTTP ${response.status}`),
+            body,
+          );
+        }
+        const reader = response.body
+          .pipeThrough(new TextDecoderStream())
+          .getReader();
+        let buffer = '';
+        let final;
+        logList.replaceChildren();
+        logList.classList.remove('hidden');
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += value;
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (const line of lines.filter(Boolean)) {
+            const event = JSON.parse(line);
+            if (event.type === 'log') {
+              logList.append(el('li', { text: event.message }));
+              logList.scrollTop = logList.scrollHeight;
+            } else {
+              final = event;
+            }
+          }
+        }
+        if (!final) throw new Error('The importer stopped before it finished.');
+        if (final.type === 'error')
+          throw Object.assign(new Error(final.error), final);
+        return final;
+      }
+
+      // Step 1: sign in through the official glean-auth CLI on the server.
+      let signedIn = false;
+      let polling;
+
+      function renderSession(state) {
+        $('backend').textContent = `Glean backend: ${state.backend}`;
+        signedIn = state.signedIn;
+        const pill = $('session-pill');
+        pill.className = `pill ${signedIn ? 'pill-success' : 'pill-neutral'}`;
+        pill.textContent = signedIn
+          ? state.via === 'token'
+            ? 'Using GLEAN_API_TOKEN'
+            : 'Signed in'
+          : 'Not signed in';
+        $('signin').classList.toggle('hidden', signedIn);
+        $('verify').classList.toggle('hidden', !signedIn);
+        $('step-source').classList.toggle('disabled', !signedIn);
+        $('signin-copy').textContent = signedIn
+          ? 'You are signed in. Optionally run a test import first: it publishes two generated skills, checks that the downloads match, and deletes them.'
+          : 'Sign-in registers this app with your Glean instance and opens an approval page in a new browser tab. Credentials are stored on this computer, not in the project.';
+
+        const status = $('signin-status');
+        const login = state.login ?? { status: 'idle' };
+        status.classList.toggle('hidden', signedIn || login.status === 'idle');
+        $('signin').disabled = login.status === 'running';
+        if (signedIn) return;
+        if (login.status === 'running') {
+          const box = note(
+            'info',
+            'Approve access in the Glean tab that just opened, then come back here.',
+          );
+          if (login.authorizationUrl) {
+            const link = el('a', { text: 'Open the Glean sign-in page' });
+            link.href = login.authorizationUrl;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            box.append(el('div', {}, [link]));
+          }
+          status.replaceChildren(box);
+        } else if (login.status === 'failed') {
+          status.replaceChildren(
+            note('danger', `Sign-in failed: ${login.message}`, 'Try again.'),
+          );
+        }
+      }
+
+      async function refreshSession() {
+        const response = await api('/api/session');
+        if (response.status === 403) {
+          $('key-missing').classList.remove('hidden');
+          $('step-signin').classList.add('disabled');
+          return;
+        }
+        const state = await response.json();
+        renderSession(state);
+        const waiting = state.login?.status === 'running' && !state.signedIn;
+        clearTimeout(polling);
+        if (waiting) polling = setTimeout(refreshSession, 1500);
+      }
+
+      $('signin').addEventListener('click', async () => {
+        await api('/api/login', { method: 'POST' });
+        await refreshSession();
+      });
+
+      $('verify').addEventListener('click', async () => {
+        $('verify').disabled = true;
+        $('verify-panel').classList.remove('hidden');
+        $('cleanup').classList.add('hidden');
+        $('verify-status').replaceChildren();
+        try {
+          const result = await streamEvents(
+            await api('/api/verify', { method: 'POST' }),
+            $('verify-log'),
+          );
+          $('verify-status').replaceChildren(note('success', result.message));
+        } catch (error) {
+          $('verify-status').replaceChildren(
+            note('danger', error.message, error.hint),
+          );
+          if (error.remainingIds?.length)
+            $('cleanup').classList.remove('hidden');
+        } finally {
+          $('verify').disabled = false;
+        }
+      });
+
+      $('cleanup').addEventListener('click', async () => {
+        const body = await (
+          await api('/api/cleanup', { method: 'POST' })
+        ).json();
+        $('verify-status').replaceChildren(
+          body.remaining.length === 0
+            ? note('success', 'Deleted the remaining test skills.')
+            : note(
+                'danger',
+                `Still could not delete ${body.remaining.join(', ')}.`,
+              ),
+        );
+        $('cleanup').classList.toggle('hidden', body.remaining.length === 0);
+      });
+
+      // Step 2: choose a plugin and preview the plan.
+      let plan;
+
+      async function preview(form) {
+        $('plan-error').replaceChildren();
+        $('step-review').classList.add('hidden');
+        $('step-results').classList.add('hidden');
+        try {
+          const result = await streamEvents(
+            await api('/api/plan', { method: 'POST', body: form }),
+            $('plan-log'),
+          );
+          plan = result;
+          renderPlan();
+        } catch (error) {
+          $('plan-error').replaceChildren(
+            note('danger', error.message, error.hint),
+          );
+        }
+      }
+
+      $('zip').addEventListener('change', () => {
+        const file = $('zip').files[0];
+        if (!file) return;
+        const form = new FormData();
+        form.append('zip', file, file.name);
+        preview(form);
+        $('zip').value = '';
+      });
+      const dropzone = $('dropzone');
+      dropzone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropzone.classList.add('over');
+      });
+      dropzone.addEventListener('dragleave', () =>
+        dropzone.classList.remove('over'),
+      );
+      dropzone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropzone.classList.remove('over');
+        const file = event.dataTransfer.files[0];
+        if (!file) return;
+        const form = new FormData();
+        form.append('zip', file, file.name);
+        preview(form);
+      });
+      $('folder-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const form = new FormData();
+        form.append('path', $('folder').value);
+        preview(form);
+      });
+
+      // Step 3: review the plan and import the selected skills.
+      const ACTIONS = {
+        create: ['create', 'pill-selected'],
+        'new-version': ['update', 'pill-warning'],
+        unchanged: ['unchanged', 'pill-neutral'],
+        invalid: ['invalid', 'pill-danger'],
+      };
+
+      function kpi(value, label) {
+        return el('div', { className: 'kpi' }, [
+          el('div', { className: 'kpi-value', text: String(value) }),
+          el('div', { className: 'kpi-label', text: label }),
+        ]);
+      }
+
+      function selection() {
+        return [...document.querySelectorAll('#plan-rows input:checked')].map(
+          (box) => Number(box.value),
+        );
+      }
+
+      function updateImportButton() {
+        const count = selection().length;
+        $('import').disabled = count === 0;
+        $('import').textContent =
+          count === 0
+            ? 'Import'
+            : `Import ${count} skill${count === 1 ? '' : 's'}`;
+        $('import-hint').textContent =
+          count === 0 ? 'Nothing selected to publish.' : 'Publishes as you.';
+      }
+
+      function renderPlan() {
+        const view = plan.plan;
+        const count = (action) =>
+          view.skills.filter((skill) => skill.action === action).length;
+        const layout = {
+          marketplace: 'plugin marketplace',
+          plugin: 'plugin',
+          skills: 'skills folder',
+          recursive: 'folder',
+        }[view.layout];
+        $('plan-summary').textContent =
+          `${view.location} — ${layout}${view.plugins.length ? `: ${view.plugins.join(', ')}` : ''}. Nothing has been published yet.`;
+        $('plan-kpis').replaceChildren(
+          kpi(view.skills.length, 'skills found'),
+          kpi(count('create'), 'new'),
+          kpi(count('new-version'), 'updates'),
+          kpi(count('unchanged'), 'unchanged'),
+          kpi(count('invalid'), 'invalid'),
+        );
+        $('plan-notes').replaceChildren(
+          ...view.notices.map((text) => note('info', text)),
+        );
+        $('plan-rows').replaceChildren(
+          ...view.skills.map((skill) => {
+            const importable =
+              skill.action === 'create' || skill.action === 'new-version';
+            const box = el('input');
+            box.type = 'checkbox';
+            box.value = String(skill.index);
+            box.checked = skill.selected;
+            box.disabled = !importable;
+            box.setAttribute('aria-label', `Import ${skill.name ?? skill.dir}`);
+            box.addEventListener('change', updateImportButton);
+            const [text, pillClass] = ACTIONS[skill.action];
+            const details = [];
+            for (const existing of skill.existing) {
+              details.push(
+                skill.action === 'unchanged'
+                  ? `Matches ${existing.id} (version ${existing.version}, ${existing.owner}). Not uploaded.`
+                  : `Exists as ${existing.id} (version ${existing.version}, owned by ${existing.owner}). If you own it, this adds a version; otherwise you get your own skill with this name.${existing.githubManaged ? ' It was imported from GitHub, so its owner must sync it in Glean instead.' : ''}`,
+              );
+            }
+            if (skill.conflicts.length) {
+              details.push(
+                `Another skill has this name (${skill.conflicts.join(', ')}). Select only one of them.`,
+              );
+            }
+            for (const duplicate of skill.duplicates)
+              details.push(`Identical copy at ${duplicate}; uploaded once.`);
+            if (skill.problem) details.push(skill.problem);
+            for (const warning of skill.warnings)
+              details.push(`Warning: ${warning}`);
+            return el('tr', {}, [
+              el('td', {}, [box]),
+              el('td', {}, [el('b', { text: skill.name ?? '—' })]),
+              el('td', {}, [
+                el('span', { className: `pill ${pillClass}`, text }),
+              ]),
+              el('td', {}, [
+                el('div', { className: 'path', text: skill.dir }),
+                el('div', {
+                  className: 'muted',
+                  text: `${skill.files} file${skill.files === 1 ? '' : 's'}${skill.plugin ? ` · ${skill.plugin}` : ''}`,
+                }),
+              ]),
+              el(
+                'td',
+                { className: 'detail' },
+                details.map((text) => el('div', { text })),
+              ),
+            ]);
+          }),
+        );
+        $('import-log').classList.add('hidden');
+        $('import-status').replaceChildren();
+        $('import').classList.remove('hidden');
+        updateImportButton();
+        $('step-review').classList.remove('hidden');
+        $('step-review').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      $('import').addEventListener('click', async () => {
+        $('import').disabled = true;
+        $('import-status').replaceChildren();
+        try {
+          const result = await streamEvents(
+            await api('/api/import', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                planId: plan.planId,
+                selection: selection(),
+              }),
+            }),
+            $('import-log'),
+          );
+          $('import').classList.add('hidden');
+          $('import-hint').textContent = '';
+          renderResults(result);
+        } catch (error) {
+          $('import-status').replaceChildren(
+            note('danger', error.message, error.hint),
+          );
+          $('import').disabled = false;
+        }
+      });
+
+      function renderResults(result) {
+        $('result-kpis').replaceChildren(
+          kpi(result.created, 'created'),
+          kpi(result.newVersions, 'new versions'),
+          kpi(result.failed, 'failed'),
+        );
+        const OUTCOMES = {
+          created: ['created', 'pill-success'],
+          'new-version': ['new version', 'pill-success'],
+          failed: ['failed', 'pill-danger'],
+          'not-attempted': ['not attempted', 'pill-danger'],
+        };
+        $('result-rows').replaceChildren(
+          ...result.results.map((row) => {
+            const [text, pillClass] = OUTCOMES[row.outcome];
+            return el('tr', {}, [
+              el('td', {}, [
+                el('b', { text: row.name ?? '—' }),
+                el('div', { className: 'path', text: row.dir }),
+              ]),
+              el('td', {}, [
+                el('span', { className: `pill ${pillClass}`, text }),
+              ]),
+              el('td', {
+                className: 'path',
+                text: row.id ? `${row.id} · v${row.version}` : '—',
+              }),
+              el('td', { className: 'detail', text: row.error ?? '' }),
+            ]);
+          }),
+        );
+        $('import-status').replaceChildren(
+          result.failed === 0
+            ? note(
+                'success',
+                `Published ${result.created + result.newVersions} skill(s).`,
+              )
+            : note(
+                'danger',
+                `${result.failed} skill(s) were not published. See the results below.`,
+              ),
+        );
+        $('step-results').classList.remove('hidden');
+        $('step-results').scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }
+
+      refreshSession();
+    </script>
+  </body>
+</html>

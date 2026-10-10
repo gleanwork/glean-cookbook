@@ -2,14 +2,13 @@
   "name": "import-plugin-skills",
   "version": "0.0.0",
   "private": true,
-  "description": "Discover the skills in an agent plugin and publish each one through the Glean Skills API.",
+  "description": "Sign in to Glean in a local web UI, then publish every skill in an agent plugin through the Skills API.",
   "type": "module",
   "scripts": {
     "login": "glean-auth login --scopes SKILLS",
-    "start": "tsx src/main.ts",
-    "verify": "tsx src/main.ts verify --yes",
+    "start": "tsx server.ts",
     "test": "vitest run",
-    "lint": "eslint src",
+    "lint": "eslint src server.ts",
     "typecheck": "tsc --noEmit",
     "test:all": "npm run test && npm run lint && npm run typecheck"
   },
@@ -17,7 +16,7 @@
     "@gleanwork/api-client": "0.20.16",
     "@gleanwork/auth": "1.0.0",
     "fflate": "0.8.3",
-    "meow": "14.1.0",
+    "open": "11.0.4",
     "yauzl": "3.4.0"
   },
   "devDependencies": {

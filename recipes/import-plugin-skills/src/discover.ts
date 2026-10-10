@@ -309,13 +309,9 @@ async function rootPlugin(tree: Tree): Promise<PluginRef | undefined> {
   return undefined;
 }
 
-export async function discoverSkills(
-  source: PluginSource,
-  options: { plugins?: string[] } = {},
-): Promise<Discovery> {
+export async function discoverSkills(source: PluginSource): Promise<Discovery> {
   const tree = new Tree(source);
   const notices: string[] = [];
-  const wanted = new Set(options.plugins ?? []);
 
   let layout: Layout;
   let plugins: PluginRef[] = [];
@@ -335,17 +331,6 @@ export async function discoverSkills(
     const plugin = await rootPlugin(tree);
     layout = plugin ? 'plugin' : 'skills';
     if (plugin) plugins = [plugin];
-  }
-
-  if (wanted.size > 0) {
-    const available = new Set(plugins.map((plugin) => plugin.name));
-    const missing = [...wanted].filter((name) => !available.has(name));
-    if (missing.length > 0) {
-      throw new Error(
-        `No plugin named ${missing.join(', ')}. Available: ${[...available].join(', ') || 'none'}.`,
-      );
-    }
-    plugins = plugins.filter((plugin) => wanted.has(plugin.name));
   }
 
   let skills: DiscoveredSkill[] = [];

@@ -7,25 +7,19 @@ import {
 
 export class CleanupFailedError extends Error {
   readonly remainingIds: string[];
-  readonly cleanupCommand: string;
   readonly workError?: unknown;
 
-  constructor(
-    remainingIds: string[],
-    cleanupCommand: string,
-    workError?: unknown,
-  ) {
+  constructor(remainingIds: string[], workError?: unknown) {
     super(
-      `Cleanup did not delete ${remainingIds.join(', ')}. Those IDs remain in your instance.`,
+      `Cleanup did not delete ${remainingIds.join(', ')}. Those test skills remain in your instance.`,
     );
     this.name = 'CleanupFailedError';
     this.remainingIds = remainingIds;
-    this.cleanupCommand = cleanupCommand;
     this.workError = workError;
   }
 }
 
-export interface CliError {
+export interface FormattedError {
   error: string;
   hint?: string;
 }
@@ -53,7 +47,7 @@ function httpSummary(error: GleanBaseError): string {
 function statusHint(status: number | undefined): string | undefined {
   switch (status) {
     case 401:
-      return 'Sign in again with npm run login -- --email <your-work-email>.';
+      return 'Your sign-in expired or was revoked. Sign in again.';
     case 403:
       return 'This account or token cannot create skills. Ask an admin for the SKILLS scope or permission.';
     case 404:
@@ -63,7 +57,7 @@ function statusHint(status: number | undefined): string | undefined {
     case 413:
       return 'The skill bundle is too large for this instance.';
     case 429:
-      return 'The instance is rate-limiting requests. Wait, then run the import again.';
+      return 'The instance is rate-limiting requests. Wait, then import again.';
     default:
       return undefined;
   }
@@ -76,11 +70,11 @@ function isMissingOAuthSession(message: string) {
   );
 }
 
-export function formatCliError(error: unknown): CliError {
+export function formatError(error: unknown): FormattedError {
   if (error instanceof CleanupFailedError) {
     return {
       error: error.message,
-      hint: `Delete only those captured IDs. Pass the same --email or --server-url you used to sign in:\n  ${error.cleanupCommand}`,
+      hint: 'Retry the cleanup. It deletes only the test skills this run created.',
     };
   }
   if (error instanceof PlatformProblemDetailError) {
@@ -100,21 +94,7 @@ export function formatCliError(error: unknown): CliError {
   }
   const message = error instanceof Error ? error.message : String(error);
   if (isMissingOAuthSession(message)) {
-    return {
-      error: message,
-      hint: 'Run npm run login -- --email <your-work-email>.',
-    };
+    return { error: 'You are not signed in.', hint: 'Click Sign in.' };
   }
   return { error: message };
-}
-
-export function printCliError(error: unknown, write = console.error): void {
-  if (error instanceof CleanupFailedError && error.workError) {
-    const work = formatCliError(error.workError);
-    write(`error: ${work.error}`);
-    if (work.hint) write(`hint: ${work.hint}`);
-  }
-  const formatted = formatCliError(error);
-  write(`error: ${formatted.error}`);
-  if (formatted.hint) write(`hint: ${formatted.hint}`);
 }
