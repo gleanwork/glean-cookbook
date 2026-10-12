@@ -1,0 +1,23 @@
+{
+  "name": "usage-admin-dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A progressively live, white-label usage and limits dashboard.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "demo": "node scripts/demo.mjs",
+    "start:live": "node server.mjs --live",
+    "login": "glean-auth login --scopes users:read,departments:read,admin.usage:read,admin.usage:evaluate,admin.usage.limits:read,admin.usage.limits:write,admin.oauth.clients:read,admin.idp_groups:read",
+    "test": "node --test tests/*.test.mjs",
+    "check": "npm test",
+    "verify:fixture": "npm test",
+    "verify:live": "node scripts/verify-live.mjs"
+  },
+  "dependencies": {
+    "@gleanwork/auth": "0.5.1"
+  }
+}

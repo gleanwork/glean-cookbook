@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Usage & limits · Northstar</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.mjs"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <div class="brand">
+        <span class="brandmark" aria-hidden="true">N</span
+        ><strong id="brand">Northstar</strong>
+      </div>
+      <p class="muted">Workspace administration</p>
+      <nav aria-label="Dashboard">
+        <button data-view="overview" aria-current="page">Overview</button
+        ><button data-view="people">People</button
+        ><button data-view="limits">Limits</button
+        ><button data-view="organization">Organization</button
+        ><button data-view="lab">API test bench</button>
+      </nav>
+      <div class="rail-footer">
+        Built on Glean<br /><span id="workspace">Sample workspace</span>
+      </div>
+    </aside>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">Usage administration</p>
+          <h1>Usage & limits</h1>
+          <p class="muted">
+            Understand consumption. Put the right guardrails in place.
+          </p>
+        </div>
+        <div class="actions">
+          <span id="mode" class="badge">Loading</span
+          ><button id="create" class="primary">New limit</button>
+        </div>
+      </header>
+      <div id="notice" class="notice" role="status"></div>
+      <div id="catalog-status" class="catalog-status" aria-live="polite"></div>
+      <div class="toolbar" id="report-filters">
+        <label>From (UTC)<input type="date" id="start" /></label
+        ><label>Until (exclusive, UTC)<input type="date" id="end" /></label
+        ><label
+          >Spend client<select id="client">
+            <option value="">All observed clients</option>
+            <option value="glean">Glean</option>
+          </select></label
+        ><label
+          >Chart unit<select id="unit">
+            <option>CREDITS</option>
+            <option>USD</option>
+          </select></label
+        ><button id="refresh">Apply</button>
+      </div>
+      <section id="overview" class="view">
+        <div class="kpis">
+          <div>
+            <p>Observed credits</p>
+            <strong id="credits">—</strong
+            ><small>Selected reporting interval</small>
+          </div>
+          <div>
+            <p>Observed USD</p>
+            <strong id="usd">—</strong><small>Never converted to credits</small>
+          </div>
+          <div>
+            <p>Configured policies</p>
+            <strong id="policies">—</strong
+            ><small>Independent of consumption</small>
+          </div>
+        </div>
+        <div class="panels">
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Consumption over time</h2>
+              <span class="muted" id="chart-unit">Credits · daily</span>
+            </div>
+            <div id="trend" class="chart"></div>
+            <p id="freshness" class="muted"></p>
+            <details>
+              <summary>View chart data</summary>
+              <div class="table-wrap" id="trend-data"></div>
+            </details>
+          </article>
+          <article class="panel">
+            <h2>Observed models</h2>
+            <p class="muted">
+              Select a model to filter the trend. This is not a model-limit
+              selector.
+            </p>
+            <div id="model-breakdown"></div>
+            <button id="clear-model" hidden>Clear model filter</button>
+            <p class="muted">
+              Only models present in this query are listed; this is not a
+              workspace model catalog.
+            </p>
+          </article>
+        </div>
+        <article class="panel callout">
+          <h2>From insight to action</h2>
+          <p>
+            Open a person, inspect live configured-budget status, and review a
+            monthly policy before saving. Organization budgets and per-user
+            defaults share the same workflow.
+          </p>
+          <button id="goto-people">Browse people →</button>
+        </article>
+      </section>
+      <section id="people" class="view" hidden>
+        <div class="section-head">
+          <div>
+            <h2>People</h2>
+            <p class="muted">
+              Directory people, including those with no observed usage. Evaluate
+              only the person you open.
+            </p>
+          </div>
+          <div class="actions">
+            <label
+              >Search people<input
+                id="people-search"
+                type="search"
+                placeholder="Name or email" /></label
+            ><label
+              >Department<select id="department">
+                <option value="">All departments</option>
+              </select></label
+            >
+          </div>
+        </div>
+        <div class="table-wrap" id="people-table"></div>
+        <button id="more-users" hidden>Load more people</button>
+        <p id="people-note" class="muted"></p>
+      </section>
+      <section id="limits" class="view" hidden>
+        <h2>Configured limits</h2>
+        <p class="muted">
+          A cap is policy, not remaining headroom. Editing replaces the policy
+          at its natural key.
+        </p>
+        <div class="table-wrap" id="limits-table"></div>
+      </section>
+      <section id="organization" class="view" hidden>
+        <div class="section-head">
+          <div>
+            <h2>Organization explorer</h2>
+            <p class="muted">
+              Directory manager relationships. Not a budget hierarchy or an IdP
+              membership graph.
+            </p>
+          </div>
+        </div>
+        <div class="notice">
+          Open a node to limit that person. A team/subtree limit needs a new
+          policy target and an explicit, maintained membership contract; it
+          cannot be inferred from a manager ID.
+        </div>
+        <div id="org-tree"></div>
+        <h3>Group catalog</h3>
+        <div id="groups"></div>
+        <p class="muted">
+          Catalog IdP IDs cannot be assumed to match the raw group_id returned
+          by limit evaluation. Group creation is not enabled here.
+        </p>
+      </section>
+      <section id="lab" class="view" hidden>
+        <h2>API test bench</h2>
+        <p class="muted">
+          Read-only replay against the same provider as the dashboard.
+          Experimental opt-in is automatic in live mode. Request bodies contain
+          no credentials.
+        </p>
+        <div class="actions">
+          <button data-preset="trend">Daily organization usage</button
+          ><button data-preset="users">User breakdown</button
+          ><button data-preset="models">Model breakdown</button
+          ><button data-preset="evaluate">Organization evaluation</button>
+        </div>
+        <label class="block"
+          >Request JSON<textarea
+            id="lab-request"
+            rows="14"
+            spellcheck="false"
+          ></textarea>
+        </label>
+        <div class="actions">
+          <button id="replay" class="primary">Run read-only request</button
+          ><button id="next-page" hidden>Next snapshot page</button
+          ><span id="lab-endpoint" class="muted"></span>
+        </div>
+        <pre id="lab-response" aria-live="polite">Choose a request preset.</pre>
+        <p class="muted">
+          Continuation resends the original query, including page size, with
+          only the opaque cursor added. If it expires, start a fresh query;
+          never splice snapshots.
+        </p>
+      </section>
+    </main>
+    <dialog id="editor" aria-labelledby="editor-title">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">Monthly policy</p>
+          <h2 id="editor-title">New limit</h2>
+        </div>
+        <button id="close-editor" aria-label="Close limit editor">✕</button>
+      </div>
+      <p id="editor-context" class="muted"></p>
+      <div id="evaluation" class="evaluation"></div>
+      <div class="editor-fields">
+        <label
+          >Applies to<select id="target-type">
+            <option value="ORGANIZATION">Entire workspace · shared pool</option>
+            <option value="DEFAULT_USER">
+              Every user · per-person default
+            </option>
+            <option value="USER">One person</option>
+            <option disabled>Department · API missing</option>
+            <option disabled>IdP group · write API missing</option>
+            <option disabled>
+              Org subtree · mapping and policy API missing
+            </option>
+          </select></label
+        ><label id="user-label" hidden
+          >Person<select id="target-user"></select></label
+        ><label
+          >Spend client<select id="limit-client">
+            <option value="glean">Glean</option>
+          </select></label
+        ><label
+          >Cap mode<select id="cap-mode">
+            <option value="FINITE">Finite budget</option>
+            <option value="UNLIMITED">Unlimited policy</option>
+          </select></label
+        >
+        <div id="finite-fields" class="field-row">
+          <label
+            >Monthly cap<input
+              id="amount"
+              type="text"
+              inputmode="decimal"
+              value="600" /></label
+          ><label
+            >Billing unit<select id="limit-unit">
+              <option>CREDITS</option>
+              <option>USD</option>
+            </select></label
+          ><label
+            >Enforcement<select id="enforcement">
+              <option value="HARD">Hard cap</option>
+              <option value="SOFT">Soft cap</option>
+            </select></label
+          >
+        </div>
+      </div>
+      <p class="muted">
+        Choose the client’s actual billing denomination; the client catalog does
+        not publish it. Calendar month only. No model filter or department
+        write. A new user policy can still be constrained by an organization
+        policy.
+      </p>
+      <div class="actions">
+        <button id="evaluate">Refresh live status</button
+        ><button id="review" class="primary">Review policy</button>
+      </div>
+      <div id="save-review" hidden>
+        <h3>Review before applying</h3>
+        <p>
+          This replaces the matching target + spend client + calendar-month
+          policy. It does not reset usage. Stored finite caps may be rounded to
+          float32 precision.
+        </p>
+        <pre id="policy-json"></pre>
+        <button id="save" class="primary">Apply reviewed policy</button>
+      </div>
+      <p id="editor-message" role="status"></p>
+    </dialog>
+  </body>
+</html>
