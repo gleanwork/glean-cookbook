@@ -4453,6 +4453,139 @@
     }
   },
   {
+    "id": "usage-admin-dashboard",
+    "title": "Build a white-label usage and limits dashboard",
+    "description": "Run a credential-free sample dashboard, then progressively connect experimental usage, limits, people, departments, and spend-client APIs without disguising missing capabilities.",
+    "sidebarLabel": "Usage and limits dashboard",
+    "surfaces": ["platform-api"],
+    "capabilities": ["tools"],
+    "status": "showcase",
+    "visibility": "preview",
+    "category": "portal",
+    "level": "Intermediate",
+    "levels": { "minimal": true, "wow": true },
+    "timeEstimate": "~15 min for the sample; live setup depends on API rollout",
+    "icon": "chart",
+    "requiredScopes": [],
+    "authMethod": ["none"],
+    "buildMethod": "scaffold",
+    "languages": ["javascript"],
+    "prerequisites": [
+      "Node 22.12.0 or newer",
+      "No Glean credentials are needed for the fictional sample",
+      "Live mode additionally needs an authorized experimental-API workspace, a complete HTTPS backend origin, and billing-read permissions; writes require billing-edit permissions"
+    ],
+    "demoQueries": [
+      {
+        "query": "Review usage trends and observed models",
+        "expectedBehavior": "Shows explicitly fictional sample consumption with separate USD and credit totals. Missing observations and unknown source metadata never become verified zero or billing truth."
+      },
+      {
+        "query": "Open a person and review a monthly limit",
+        "expectedBehavior": "Shows configured-budget evaluation, previews the exact natural-key policy, and applies it only to in-memory sample data unless live writes were explicitly enabled."
+      },
+      {
+        "query": "Explore reporting lines and replay an API query",
+        "expectedBehavior": "Shows directory manager relationships without implying IdP-group membership. Read-only replay preserves the original query and page size when following opaque cursors."
+      }
+    ],
+    "codeAssets": [
+      {
+        "repoPath": "recipes/usage-admin-dashboard",
+        "language": "javascript",
+        "description": "Self-contained Node and browser sample with a server-side experimental REST bridge and contract-focused tests"
+      }
+    ],
+    "steps": [
+      {
+        "kind": "scaffold",
+        "title": "Copy the recipe",
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/usage-admin-dashboard usage-admin-dashboard"
+      },
+      {
+        "kind": "install",
+        "title": "Install the pinned auth package",
+        "command": "cd usage-admin-dashboard && npm ci"
+      },
+      {
+        "kind": "verify-fixture",
+        "title": "Verify the sample and transport contracts",
+        "description": "Runs credential-free fixture tests. This does not claim live API verification.",
+        "command": "npm run verify:fixture"
+      },
+      {
+        "kind": "run",
+        "title": "Start the sample dashboard",
+        "description": "Open the Local URL printed by the server (it chooses an available port). All people, models, clients, and consumption are fictional. Follow the README separately to connect a real workspace.",
+        "command": "npm start"
+      }
+    ],
+    "execution": {
+      "type": "local-web",
+      "auth": [{ "kind": "none" }],
+      "verification": {
+        "kind": "automated",
+        "command": "npm run verify:fixture",
+        "expectedDuration": "under a minute"
+      },
+      "run": {
+        "command": "npm start",
+        "url": "the Local URL printed by the server",
+        "userBrowser": true
+      }
+    },
+    "architecture": [
+      {
+        "label": "Your dashboard",
+        "caption": "charts, people, policy review",
+        "icon": "browser"
+      },
+      {
+        "label": "Local Node server",
+        "caption": "credentials never reach the browser",
+        "icon": "code"
+      },
+      {
+        "label": "Sample or live provider",
+        "caption": "explicit modes, no silent fallback",
+        "icon": "code"
+      },
+      {
+        "label": "Platform APIs",
+        "caption": "limits, observed usage, directory",
+        "category": "portal",
+        "emphasized": true
+      }
+    ],
+    "aiPrompt": "Copy and run the usage-admin-dashboard scaffold exactly. Install with npm ci, run npm run verify:fixture, and start npm start. Explain that the default mode uses fictional sample data only. Keep the recipe in preview until real end-to-end workspace verification. For optional live mode, read its README, keep credentials in the local server, use the pinned @gleanwork/auth package for login, and opt in to experimental APIs. Do not send any policy write without explicit user authorization. Never synthesize a department, group, model, or org-subtree limit from the supported organization/user contract.",
+    "llmContext": "This preview is a progressively live API integration test bed. Usage search reports observed stored rows, not certified history, live counters, or verified zero. USD and CREDITS never combine. Evaluation reports configured-budget status, not runtime admission. Current P0 limit writes cover ORGANIZATION, DEFAULT_USER, USER and aggregate agents; this recipe edits only organization/default-user/user policies through the public batch route with a JSON array. Department and group limit management and org-node membership mapping remain missing. Model IDs filter reporting only. The OAuth-client picker must use ai_gateway.usage_client_id verbatim, not OAuth client_id or a constructed prefix. Directory manager links support a read-only forest, not an IdP mapping. Every live panel surfaces unavailable responses without substituting fixtures. Read-only API replay retains query fields, page size, and opaque snapshot cursors. The minimal REST bridge is deliberately temporary because these experimental contracts are not yet covered by the released cookbook SDK.",
+    "goDependency": false,
+    "hidden": false,
+    "tags": ["usage", "limits", "dashboard", "billing", "preview"],
+    "content": {
+      "problem": "Administrators need a customer-branded view of usage and policy that remains useful while experimental APIs roll out independently. This recipe starts with a demonstrable sample and promotes each real API surface without turning unavailable data into empty charts or inventing policy targets.",
+      "takeItFurther": [
+        "Replace the temporary REST bridge with a pinned released SDK once it includes these operations.",
+        "Add deployment-specific session authentication and per-admin authorization before hosting this local-only recipe.",
+        "Enable department or group reporting and policy management only after their contracts are supported and identity mapping is explicit."
+      ],
+      "limitations": [
+        {
+          "title": "Preview, not live-verified",
+          "description": "The shipped fixture tests validate the recipe and observed API contract shapes. No live tenant credentials, production policy writes, or deployed API availability have been verified."
+        },
+        {
+          "title": "Local single-admin test bed",
+          "description": "The server binds to loopback and uses one operator’s credentials. Do not expose it publicly or treat it as a multi-user admin service."
+        },
+        {
+          "title": "Not every north-star policy exists yet",
+          "description": "Department, group, org-subtree, and model policy writes are gated. Model breakdown choices come only from observed results, not a workspace-wide supported-model catalog."
+        }
+      ]
+    }
+  },
+  {
     "id": "validate-and-publish-skill",
     "title": "Validate skill publishing",
     "description": "Validate a local SKILL.md, test publishing and retrieval in Glean, confirm the downloaded file matches, and delete the test skill.",
