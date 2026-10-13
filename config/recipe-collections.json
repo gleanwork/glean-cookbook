@@ -47,7 +47,8 @@
         "no-code-pto-lookup-replit",
         "onboarding-hub",
         "rfp-responder",
-        "customer-360"
+        "customer-360",
+        "usage-admin-dashboard"
       ]
     }
   ]
