@@ -2,12 +2,11 @@
   "name": "batch-retrieve-documents",
   "version": "0.0.0",
   "private": true,
-  "description": "Retrieve up to 100 indexed documents by ID and URL in one experimental Platform Documents batch.",
+  "description": "Retrieve up to 100 indexed documents you can open, by document ID and URL, in one experimental batch.",
   "type": "module",
   "scripts": {
     "login": "glean-auth login --scopes documents:read",
     "start": "tsx src/cli.ts",
-    "verify": "tsx src/cli.ts",
     "test": "vitest run",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",

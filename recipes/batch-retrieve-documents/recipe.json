@@ -1,20 +1,20 @@
 {
   "id": "batch-retrieve-documents",
   "title": "Batch retrieve documents",
-  "description": "Retrieve up to 100 permission-visible indexed documents in one experimental Platform Documents batch, mixing document IDs and URLs, and read partial misses from warnings.",
+  "description": "Retrieve up to 100 indexed documents you can open in Glean, mixing document IDs and URLs. Documents Glean does not return are listed under warnings.",
   "sidebarLabel": "Batch retrieve documents",
   "codeWalkthrough": {
-    "intro": "The example signs in with @gleanwork/auth and calls the experimental Documents HTTP API. The published TypeScript API client does not include these operations. client.documents is a different API.",
+    "intro": "You sign in with @gleanwork/auth and call the experimental document endpoints over HTTP. The published TypeScript API client does not include these endpoints. client.documents is a different API.",
     "examples": [
       {
         "title": "Post a mixed batch",
-        "description": "Resolve the backend, take a documents:read token from the auth package, and send X-Glean-Include-Experimental: true on the request. POST /api/documents/batch with 1 to 100 document_specs. Each spec is exactly one of document_id or url. include CONTENT is a body field, not a query parameter.",
+        "description": "Find your Glean backend, take a documents:read token from the auth package, and send X-Glean-Include-Experimental: true on the request. POST /api/documents/batch with 1 to 100 document IDs or URLs. Each item is a document_id or a url, not both. include CONTENT is a body field, not a query parameter.",
         "source": "src/client.ts",
         "language": "typescript"
       },
       {
         "title": "Read results and warnings",
-        "description": "Found selectors are results. Complete misses are warnings on the same HTTP 200, each with code, message, and context.index. Every spec index appears in exactly one of those arrays. A warning does not fail the command. An HTTP error fails the whole batch.",
+        "description": "Documents Glean returns are results. A document ID or URL Glean does not return is a warning on the same HTTP 200, with a code, a message, and context.index. Every item appears in exactly one of those lists. A warning does not fail the command. You still see Retrieved N of M documents. An HTTP error fails the whole batch.",
         "source": "src/workflow.ts",
         "language": "typescript"
       }
@@ -37,15 +37,15 @@
   "languages": ["typescript"],
   "prerequisites": [
     "Node.js 22.12.0 or newer",
-    "A Glean instance with indexed documents you can open",
+    "A Glean instance where you can open indexed documents",
     "Your work email, or the complete Glean backend HTTPS origin",
-    "The documents:read OAuth scope, or a user-scoped token with permission to read documents",
-    "One document URL and one document ID for documents you can open"
+    "The documents:read OAuth scope, or a user-scoped API token created with documents:read (legacy label DOCUMENTS)",
+    "One document URL you can open, and one document ID copied from the document_id line printed by retrieve-document-by-url"
   ],
   "demoQueries": [
     {
       "query": "Retrieve a document URL and a document ID you can open, plus one URL that is not indexed",
-      "expectedBehavior": "Prints Retrieved N of M documents, the request_id, a results list, and a warnings list. A selector the server cannot resolve is a warning on HTTP 200, and the command exits 0. HTTP errors, including 400 and 413, exit non-zero and do not print the Retrieved line. With --content, each result also includes the content segment count. An empty full_text_list is success and means there is no extracted text."
+      "expectedBehavior": "Prints Retrieved N of M documents, then request_id, results, and warnings. A document ID or URL Glean cannot resolve is listed under warnings on HTTP 200, and the command exits 0. HTTP errors, including 400, 404, and 413, exit non-zero and do not print the Retrieved line. A 404 usually means your Glean instance has not turned these endpoints on. With --content, each result also includes content_segments. An empty full_text_list still prints the document and means there is no extracted text."
     }
   ],
   "codeAssets": [
@@ -70,13 +70,13 @@
     },
     {
       "title": "Run the fixture tests",
-      "description": "Run the tests without credentials or network access. They call the HTTP client through MSW and fail on unhandled requests. Passing tests does not prove access to your Glean instance.",
+      "description": "Run the tests. They do not use your Glean login or the network. Passing tests does not prove you can reach your Glean instance.",
       "command": "npm test",
       "kind": "manual"
     },
     {
       "title": "Choose an authentication path",
-      "description": "OAuth is the default. `@gleanwork/auth` discovers your instance, registers the OAuth client dynamically, and stores credentials outside the project. If OAuth is unavailable, copy `.env.example` to `.env`, set `GLEAN_SERVER_URL` and a user-scoped `GLEAN_API_TOKEN` with permission to read documents, and skip the next step. Omit `--email` from the remaining commands. If email discovery finds the wrong instance, replace `--email` with `--server-url` and your complete backend HTTPS origin.",
+      "description": "OAuth is the default. `@gleanwork/auth` discovers your instance, registers the OAuth client dynamically, and stores credentials outside the project. If OAuth is unavailable, copy `.env.example` to `.env`, set `GLEAN_SERVER_URL`, and create a user-scoped API token with `documents:read` (legacy label `DOCUMENTS`). Put that token in `GLEAN_API_TOKEN` and skip the next step. Omit `--email` from the remaining commands. If email discovery finds the wrong instance, replace `--email` with `--server-url` and your complete backend HTTPS origin.",
       "kind": "configure"
     },
     {
@@ -87,13 +87,13 @@
     },
     {
       "title": "Verify against your instance",
-      "description": "Send one URL and one document ID for documents you can open. The command prints `Retrieved N of M documents`, the `request_id`, and the `results` and `warnings` lists. With a token in `.env`, omit `--email`.",
-      "command": "npm run verify -- --email \"<work-email>\" --url \"<document-url>\" --id \"<document-id>\"",
+      "description": "Pass one URL you can open and one document ID. Get the ID by running retrieve-document-by-url and copying the `document_id:` line it prints. This command prints `Retrieved N of M documents`, then `request_id`, `results`, and `warnings`. With a token in `.env`, omit `--email`.",
+      "command": "npm start -- --email \"<work-email>\" --url \"<document-url>\" --id \"<document-id>\"",
       "kind": "verify-live"
     },
     {
-      "title": "Include a miss and extracted text",
-      "description": "Repeat the two selectors, add a URL that is not an indexed document, and pass `--content`. The client sends `include` as `CONTENT` in the JSON body. A complete miss is a warning on HTTP 200, and the command still exits 0. The warning code and message come from the server. With a token, omit `--email`.",
+      "title": "Include a URL that is not indexed, and extracted text",
+      "description": "Repeat the URL and document ID, add a URL that is not an indexed document, and pass `--content`. The client sends `include` as `CONTENT` in the JSON body. A document ID or URL Glean does not return is listed under warnings on HTTP 200, and the command still exits 0. The warning code and message are what Glean returns. With a token, omit `--email`.",
       "command": "npm start -- --email \"<work-email>\" --url \"<document-url>\" --id \"<document-id>\" --url \"https://example.invalid/not-indexed\" --content",
       "kind": "run"
     }
@@ -111,7 +111,7 @@
       },
       {
         "id": "document-id",
-        "prompt": "What is the document ID of a document you can open in Glean?"
+        "prompt": "What document_id did retrieve-document-by-url print for a document you can open?"
       }
     ],
     "auth": [
@@ -124,7 +124,7 @@
     ],
     "verification": {
       "kind": "automated",
-      "command": "npm run verify -- --email \"<work-email>\" --url \"<document-url>\" --id \"<document-id>\"",
+      "command": "npm start -- --email \"<work-email>\" --url \"<document-url>\" --id \"<document-id>\"",
       "expectedDuration": "about 1 minute after sign-in",
       "startsOwnServer": false
     },
@@ -151,48 +151,48 @@
       "emphasized": true
     }
   ],
-  "aiPrompt": "Scaffold and run the experimental Documents batch quickstart. Ask for the work email, one document URL the caller can open in Glean, and one document_id. Run the fixture tests before authentication. Sign in with the official glean-auth CLI from @gleanwork/auth using the documents:read scope, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN with documents:read. Do not add a scope-fallback wrapper and do not request any other scope. The published @gleanwork/api-client package has no Platform Documents operations. Do not call client.documents; that is a different API. Call the HTTP API with fetch. Send X-Glean-Include-Experimental: true on every request. These operations are experimental, and the server hides them without that header. POST /api/documents/batch with document_specs of 1 to 100 items. Each item is exactly one of document_id or url. Found documents are results. Complete misses are warnings on HTTP 200, with code, message, and context.index. Example codes are resource_not_found and invalid_parameter. A 200 with warnings exits 0, including when every selector misses. HTTP errors fail the command. HTTP 400 rejects a bad request shape. HTTP 413 means the body is too large. More than 100 selectors is rejected before the request. include CONTENT goes in the JSON body only with --content. It adds content.full_text_list on every found document. An empty list means no extracted text. A content failure fails the whole batch. Gmail and Outlook caller-specific citation IDs are not document_id selectors; send a URL instead. That URL can still be a resource_not_found warning. Federated results and go-link shortcuts are not retrievable. Do not teach per-item status enums. Print request_id. Never log tokens.",
-  "llmContext": "Use @gleanwork/auth 1.0.0 and the documents:read scope. @gleanwork/api-client has no Platform Documents operations, and client.documents is a different API. POST /api/documents/batch with fetch and send X-Glean-Include-Experimental: true. Send 1 to 100 document_specs, each exactly one of document_id or url. results are hits. warnings are misses on HTTP 200 and the command still exits 0. HTTP errors fail it. include CONTENT is optional. Gmail and Outlook IDs need a URL. Federated results and go links are not retrievable. Do not log tokens or teach per-item status enums.",
+  "aiPrompt": "Scaffold and run the experimental document batch quickstart. Ask for the work email, one document URL the person can open in Glean, and one document_id copied from the retrieve-by-URL command output. Run the tests before authentication. Sign in with the official glean-auth CLI from @gleanwork/auth using the documents:read scope, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN. When creating that token, choose documents:read (legacy label DOCUMENTS). Do not add a scope-fallback wrapper and do not request any other scope. The published @gleanwork/api-client package has no methods for these document endpoints. Do not call client.documents; that is a different API. Call the HTTP API with fetch. Send X-Glean-Include-Experimental: true on every request. A 404 usually means the Glean instance has not turned these endpoints on. Ask the Glean admin and show the Request ID. POST /api/documents/batch with document_specs of 1 to 100 items. Each item is exactly one of document_id or url. Documents Glean returns are results. A document ID or URL Glean does not return is a warning on HTTP 200, with code, message, and context.index. Example codes are resource_not_found and invalid_parameter. A 200 with warnings exits 0, including when Glean returns no documents. HTTP errors fail the command. HTTP 400 rejects a bad request shape. HTTP 413 means the body is too large. More than 100 items is rejected before the request. include CONTENT goes in the JSON body only with --content. It adds content.full_text_list on every returned document. An empty list means no extracted text. A content failure fails the whole batch. For a Gmail or Outlook message, pass the message URL, not the ID from the search result or chat citation. That URL can still be a resource_not_found warning. Federated results and go links are not retrievable. On HTTP 403, list permission, token scope, and instance setup as possible causes. Do not teach per-item status enums. Print request_id. Never log tokens.",
+  "llmContext": "Use @gleanwork/auth 1.0.0 and the documents:read scope. The legacy token label is DOCUMENTS. @gleanwork/api-client has no methods for these document endpoints, and client.documents is a different API. POST /api/documents/batch with fetch and send X-Glean-Include-Experimental: true. Send 1 to 100 document_specs, each a document_id or a url. results are documents Glean returned. warnings are IDs or URLs it did not return, on HTTP 200, and the command still exits 0. HTTP 404 usually means the endpoints are off. include CONTENT is optional. For Gmail and Outlook, pass the message URL. Do not log tokens or teach per-item status enums.",
   "goDependency": false,
   "hidden": true,
   "tags": ["documents", "experimental", "platform-api"],
   "content": {
-    "problem": "You already have a mix of document IDs and URLs, and you need the indexed records the caller can see without one round trip per document. One experimental Platform Documents batch accepts 1 to 100 selectors and returns found documents in results and complete misses in warnings. The published TypeScript API client does not include these operations, so this example calls the HTTP API and uses the official auth package for sign-in.",
+    "problem": "You already have a mix of document IDs and URLs, and you want the indexed documents you can open without one request per document. One experimental batch accepts 1 to 100 document IDs or URLs. It prints the documents Glean returns under results, and the document IDs or URLs it does not return under warnings. The published TypeScript API client does not include these endpoints, so this example calls the HTTP API and uses the official auth package for sign-in.",
     "takeItFurther": [
-      "Pass --content when you need extracted text. include CONTENT in the JSON body adds content.full_text_list on every found document. An empty list means Glean stored no extracted text. A failure to read requested content fails the whole batch.",
-      "Use the retrieve-by-URL recipe when you have one URL and want to confirm the returned document_id reads back the same document.",
-      "Keep indexed store IDs. Do not send a Gmail or Outlook caller-specific citation ID as document_id. Send that document's URL instead."
+      "Pass --content when you need extracted text. include CONTENT in the JSON body adds content.full_text_list on every document Glean returns. An empty list means Glean stored no extracted text. You still see the document. If Glean cannot read the text you asked for, the command fails.",
+      "Use retrieve-document-by-url when you have one URL and want the document_id line it prints. Copy that line into --id here.",
+      "Keep the document_id from retrieve-document-by-url. For a Gmail or Outlook message, pass the message URL with --url, not the ID from the search result or chat citation."
     ],
     "guardrails": [
       {
-        "title": "Send the experimental header on every request",
-        "rule": "Set X-Glean-Include-Experimental: true. Without it, the server hides these operations. This client sets the header in one place so a new call cannot skip it."
+        "title": "Keep the experimental header on every request",
+        "rule": "This client sets X-Glean-Include-Experimental: true on every request. Keep that header if you add a call. A 404 with the header usually means your Glean instance has not turned these endpoints on. Ask your Glean admin."
       },
       {
         "title": "Request only documents:read",
-        "rule": "OAuth login and the token provider use the documents:read scope. Do not add other scopes. A user-scoped token is the fallback when OAuth is unavailable, and it needs permission to read documents."
+        "rule": "OAuth login and the token provider use the documents:read scope. Do not add other scopes. If you create an API token instead, choose documents:read (legacy label DOCUMENTS)."
       },
       {
         "title": "Treat warnings as a successful batch",
-        "rule": "HTTP 200 with warnings means the batch completed and some selectors missed. Exit 0 and print both results and warnings. Exit non-zero only when the request itself fails, including HTTP 400, 401, 403, 404, 413, and 429."
+        "rule": "HTTP 200 with warnings means Glean finished the batch and did not return some document IDs or URLs. You see Retrieved N of M documents, then results and warnings, and the command exits 0. Exit non-zero only when the request itself fails, including HTTP 400, 401, 403, 404, and 413."
       }
     ],
     "limitations": [
       {
-        "title": "Experimental API",
-        "description": "These operations are experimental and can change. Callers that omit X-Glean-Include-Experimental: true do not see them. The published @gleanwork/api-client package has no Platform Documents methods. client.documents reads documents through a different API; do not substitute it here."
+        "title": "Experimental endpoints",
+        "description": "These endpoints are experimental and can change. This client sends X-Glean-Include-Experimental: true on every request. If your Glean instance has not turned the endpoints on, you still get HTTP 404. Ask your Glean admin. The published @gleanwork/api-client package has no methods for these endpoints. client.documents reads documents through a different API. Do not call it here."
       },
       {
-        "title": "Some documents are not retrievable",
-        "description": "Gmail and Outlook search results and chat citations can carry caller-specific IDs. The batch does not accept those IDs as document_id. Send a URL selector instead. That URL can still come back as a resource_not_found warning. Federated results and go-link shortcuts are not retrievable. You only receive documents visible to the caller."
+        "title": "Some documents cannot be retrieved",
+        "description": "A Gmail or Outlook search result or chat citation can show an ID that only works in that result. Do not pass that ID to --id. Pass the message URL with --url. That URL can still appear under warnings with code resource_not_found. Go links and federated search results cannot be retrieved. You only get documents you can open."
       },
       {
-        "title": "A miss is a warning, not a per-item status",
-        "description": "Each selector lands in results or warnings. Warning code and message are strings from the server. resource_not_found and invalid_parameter are examples, not a closed list, and there is no per-item status field. An empty or malformed URL is a warning after a complete read, not an HTTP 400. The CLI rejects a blank flag before it sends the request. HTTP 413 means the body is too large. Sending more than 100 selectors is rejected locally and is not the 413 case."
+        "title": "A missing document is a warning, not its own status",
+        "description": "Each document ID or URL appears under results or under warnings. The warning shows a code and Glean's message. resource_not_found and invalid_parameter are examples of codes Glean may return. Glean can return other codes. There is no separate status field on each document. An empty or malformed URL is listed under warnings on HTTP 200. It is not HTTP 400. This CLI rejects a blank --url or --id before it sends the request, so you see an error that names the flag. HTTP 413 means the request body is too large. Sending more than 100 document IDs and URLs is rejected in this CLI before the request, and that error is not HTTP 413."
       },
       {
         "title": "Content is extracted text, not the file",
-        "description": "include CONTENT adds content.full_text_list on every found document. The list is empty when Glean has no extracted text after a complete read. If requested content cannot be read, the batch fails instead of returning documents without content. The CLI prints the segment count, not every segment."
+        "description": "include CONTENT adds content.full_text_list on every document Glean returns. An empty list means Glean stored no extracted text. You still see the document, with content_segments: 0. If Glean cannot read the text you asked for, the command fails instead of printing documents without content. The command prints the segment count, not every segment."
       }
     ]
   }

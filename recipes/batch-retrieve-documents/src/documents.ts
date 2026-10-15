@@ -193,7 +193,7 @@ export function assertDocumentSpecs(specs: readonly DocumentSpec[]): void {
     if ('url' in spec) return;
     const unreachable: never = spec;
     throw new Error(
-      `document_specs[${index}] is not a document_id or url selector: ${JSON.stringify(unreachable)}`,
+      `document_specs[${index}] must be a document ID or a URL: ${JSON.stringify(unreachable)}`,
     );
   });
 }

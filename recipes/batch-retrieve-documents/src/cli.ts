@@ -61,23 +61,25 @@ export function parseCliOptions(argv = process.argv.slice(2)): BatchCliOptions {
     `
       Usage
         $ npm start -- (--url <url> | --id <document-id>)... [options]
-        $ npm run verify -- --url <url> --id <document-id> [options]
 
       Options
         --email         Work email used to discover the Glean backend
         --server-url    Complete Glean backend origin; overrides --email
-        --url           Document URL selector; repeatable, order preserved
-        --id            document_id selector; repeatable, order preserved
+        --url           Document URL; repeat it to send more than one
+        --id            document_id; repeat it to send more than one
         --content       Also request extracted text (include CONTENT)
 
       Authentication
-        OAuth scope documents:read, or a user-scoped token with that permission.
+        OAuth uses documents:read. Login already requests that scope.
+        For an API token, choose documents:read (legacy label DOCUMENTS).
 
-      The batch body is document_specs, 1 to 100 items, each exactly one of
-      document_id or url. Found items are results. Misses are warnings.
+      Send 1 to 100 --url and --id values, in the order you want them sent.
+      Each value is a document ID or a URL, not both. Documents Glean returns
+      are printed under results. A document ID or URL Glean does not return
+      is printed under warnings, and the command still exits 0.
 
       Examples
-        $ npm run verify -- --email you@example.com --url "https://docs.example/wiki/plan" --id "doc/1"
+        $ npm start -- --email you@example.com --url "https://docs.example/wiki/plan" --id "doc/1"
         $ npm start -- --email you@example.com --url "https://docs.example/wiki/plan" --id "doc/1" --url "https://example.invalid/not-indexed" --content
     `,
     {

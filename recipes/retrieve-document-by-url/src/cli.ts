@@ -19,7 +19,6 @@ export function parseCliOptions(
     `
       Usage
         $ npm start -- --url <document-url> [options]
-        $ npm run verify -- --url <document-url> [options]
 
       Options
         --email         Work email used to discover the Glean backend
@@ -28,10 +27,11 @@ export function parseCliOptions(
         --content       Also request extracted text (include=CONTENT)
 
       Authentication
-        OAuth scope documents:read, or a user-scoped token with that permission.
+        OAuth uses documents:read. Login already requests that scope.
+        For an API token, choose documents:read (legacy label DOCUMENTS).
 
       Examples
-        $ npm run verify -- --email you@example.com --url "https://docs.example/wiki/plan"
+        $ npm start -- --email you@example.com --url "https://docs.example/wiki/plan"
         $ npm start -- --email you@example.com --url "https://docs.example/wiki/plan" --content
     `,
     {

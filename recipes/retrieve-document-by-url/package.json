@@ -2,12 +2,11 @@
   "name": "retrieve-document-by-url",
   "version": "0.0.0",
   "private": true,
-  "description": "Retrieve one indexed document by URL, then again by its document ID, using the experimental Platform Documents API.",
+  "description": "Retrieve one indexed document you can open by URL, then again by the document ID that response prints.",
   "type": "module",
   "scripts": {
     "login": "glean-auth login --scopes documents:read",
     "start": "tsx src/cli.ts",
-    "verify": "tsx src/cli.ts",
     "test": "vitest run",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",

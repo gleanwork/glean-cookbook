@@ -1,26 +1,32 @@
 # Batch retrieve documents
 
-These Platform Documents operations are experimental. Every request in this
-project sends `X-Glean-Include-Experimental: true`. Without that header, the
-server hides the operations.
+This command reads up to 100 indexed documents you can open in Glean, in one
+call. You pass each document as `--url` or `--id`. Documents Glean returns
+are printed under `results`. A document ID or URL Glean does not return is
+printed under `warnings` on the same HTTP 200. The command still exits 0.
 
-This TypeScript CLI retrieves up to 100 indexed documents in one call. Each
-selector is a `document_id` or a URL. Found documents come back in `results`.
-Complete misses come back in `warnings` on the same HTTP 200.
+These document endpoints are experimental. Your Glean admin has to turn them
+on. This project sends `X-Glean-Include-Experimental: true` on every request.
+If the endpoints are off, you still see HTTP 404 and a Request ID. Ask your
+Glean admin to enable them, and share that Request ID. The command already
+sends the header, so you do not add it yourself.
 
-The published `@gleanwork/api-client` package does not include Platform
-Documents operations. `client.documents` is a different API. This project calls
+The published `@gleanwork/api-client` package does not include these document
+endpoints. `client.documents` is a different API. This project calls
 `POST /api/documents/batch` with `fetch` and uses `@gleanwork/auth` for
 sign-in.
 
 ## Prerequisites
 
 - Node.js 22.12.0 or newer
-- A Glean instance with indexed documents you can open
+- A Glean instance where you can open indexed documents
 - Your work email, or the complete Glean backend HTTPS origin
-- The `documents:read` OAuth scope, or a user-scoped token with permission to
-  read documents
-- One document URL and one document ID for documents you can open
+- The `documents:read` OAuth scope, or a user-scoped API token created with
+  `documents:read` (legacy label `DOCUMENTS`)
+- One document URL you can open
+- One document ID. Run `retrieve-document-by-url` first and copy the
+  `document_id:` line it prints. Pass that value to `--id` here. Do not use
+  an ID copied from a Gmail or Outlook search result or chat citation.
 
 ## Copy and test the project
 
@@ -31,17 +37,16 @@ npm install
 npm test
 ```
 
-The tests pass without credentials or network access. They use the real HTTP
-client with MSW handlers. Unhandled requests fail. Passing tests does not prove
-access to your Glean instance.
+The tests pass without your Glean login or network access. Passing tests does
+not prove you can reach your Glean instance.
 
 ## Choose one authentication path
 
 ### OAuth with dynamic client registration
 
 `@gleanwork/auth` discovers your instance, registers the OAuth client, and
-stores credentials outside this directory. It does not write `.env`. Login also
-requests `openid` and `offline_access`.
+stores credentials outside this directory. It does not write `.env`. Login
+also requests `openid` and `offline_access`.
 
 ```bash
 npm run login -- --email "<work-email>"
@@ -60,19 +65,21 @@ Skip OAuth login. Copy the environment template:
 cp .env.example .env
 ```
 
-Set `GLEAN_SERVER_URL` and a user-scoped `GLEAN_API_TOKEN` with permission to
-read documents. Do not paste the token into a prompt, issue, or committed file.
-The CLI loads `.env` with Node.js. Existing shell variables win. Omit `--email`
-from the commands below.
+Set `GLEAN_SERVER_URL`. Create a user-scoped API token and choose
+`documents:read` (legacy label `DOCUMENTS`). Put that token in
+`GLEAN_API_TOKEN`. Do not paste the token into a prompt, issue, or committed
+file. The CLI loads `.env` with Node.js. Existing shell variables win. Omit
+`--email` from the commands below.
 
-## Retrieve a mixed batch
+## Retrieve documents by URL and ID
 
-Use selectors for documents you can open. Repeat `--url` and `--id` in the
-order you want them sent. The body is `document_specs`, from 1 to 100 items.
-Each item is exactly one of `document_id` or `url`.
+Repeat `--url` and `--id` in the order you want them sent. To get a document
+ID, run the retrieve-by-URL recipe and copy the `document_id:` line. The
+request body is `document_specs`, from 1 to 100 items. Each item is a
+`document_id` or a `url`, not both.
 
 ```bash
-npm run verify -- --email "<work-email>" --url "<document-url>" --id "<document-id>"
+npm start -- --email "<work-email>" --url "<document-url>" --id "<document-id>"
 ```
 
 The request is:
@@ -82,56 +89,83 @@ POST /api/documents/batch
 ```
 
 It sends `X-Glean-Include-Experimental: true` and a bearer token. A successful
-run prints a line like this, then `request_id`, `results`, and `warnings`:
+run prints a line like this, then `request_id:`, `results:`, and `warnings:`:
 
 ```text
 Retrieved 2 of 2 documents.
 ```
 
-`results` entries are `[index] title (document_id) permalink`. The permalink
-can differ from a URL you submitted. `warnings` is `(none)` when every selector
-resolved. HTTP errors exit non-zero and do not print the `Retrieved` line.
+Each results line looks like `[index] title (document_id) permalink`. The
+permalink can differ from a URL you passed. When Glean returns every document,
+you see:
 
-## Include a miss and extracted text
+```text
+warnings:
+  (none)
+```
 
-Add a URL that is not an indexed document, and pass `--content`. `--content`
-adds `"include": ["CONTENT"]` to the JSON body. It is not a query parameter.
-The value is the uppercase enum `CONTENT`. Each found document then includes
-`content.full_text_list`.
+HTTP errors exit non-zero and do not print the `Retrieved` line.
+
+## Include a URL Glean does not have, and extracted text
+
+Repeat the URL and document ID from the previous command, add a URL that is
+not an indexed document, and pass `--content`. `--content` adds
+`"include": ["CONTENT"]` to the JSON body. It is not a query parameter. The
+value is the uppercase enum `CONTENT`. Each document Glean returns then
+includes `content.full_text_list`.
 
 ```bash
 npm start -- --email "<work-email>" --url "<document-url>" --id "<document-id>" --url "https://example.invalid/not-indexed" --content
 ```
 
-A complete miss is a warning on HTTP 200. The command still exits 0 and prints
-both lists. A warning line looks like:
+A document ID or URL Glean does not return is a warning on HTTP 200. The
+command still exits 0 and prints both lists. You might see a warning line
+like:
 
 ```text
 [2] resource_not_found: No visible document for that URL. url=https://example.invalid/not-indexed
 ```
 
-That code and message are the shape the fixtures use. The live warning text is
-whatever the server returns. `resource_not_found` and `invalid_parameter` are
-examples, not a closed list. There is no per-item status field.
+That line shows the position, a code, Glean's message, and the URL or
+document ID you sent. `resource_not_found` and `invalid_parameter` are
+examples of codes Glean may return. Glean can return other codes. There is
+no separate status field on each document. The code and message you see are
+the ones Glean sends back.
 
-An empty `full_text_list` means Glean has no extracted text. The CLI prints the
-segment count. If requested content cannot be read, the batch fails instead of
-returning documents without `content`.
+An empty `full_text_list` means Glean has no extracted text. You still see
+the document under `results`, with `content_segments: 0`. If Glean cannot
+read the text you asked for, the command fails instead of printing documents
+without `content`.
 
-An empty or malformed URL is a warning after a complete read, not HTTP 400. The
-CLI rejects a blank `--url` or `--id` before it sends the request. HTTP 413
-means the body is too large. More than 100 selectors is rejected in the client
-and is not that 413 response. A 404 on this call means the batch route itself
-failed, usually because the experimental header was omitted. It is not how a
-single selector miss is reported.
+If a URL is empty or malformed, Glean still accepts the batch and lists that
+URL under `warnings` on HTTP 200. You do not get HTTP 400 for that URL. This
+CLI rejects a blank `--url` or `--id` before it sends the request, so you
+see `error: --url must not be blank.` or `error: --id must not be blank.`
+HTTP 413 means the request body is too large. Sending more than 100 document
+IDs and URLs is rejected in this CLI before the request, and that error is
+not HTTP 413.
+
+HTTP 404 means these document endpoints are not turned on for your Glean
+instance. The command already sends the experimental header. Ask your Glean
+admin, and share the Request ID on screen. A single document ID or URL that
+Glean cannot resolve is listed under `warnings`, not as HTTP 404.
+
+## Errors you may see
+
+HTTP 403 prints `HTTP 403`, a `Request ID:` line, and a hint. The hint lists
+possible causes: you cannot open the document, the API token was created
+without `documents:read` (legacy label `DOCUMENTS`), or your Glean instance is
+not set up for this access. OAuth login already requests `documents:read`, so
+running login again does not add that scope. Share the Request ID with your
+Glean admin.
 
 ## Limits
 
-Gmail and Outlook search results and chat citations can carry caller-specific
-IDs. Do not send those IDs as `document_id`. Send the document URL instead. A
-URL can still come back as a `resource_not_found` warning. Federated results
-and go-link shortcuts are not retrievable. You only receive documents visible
-to the signed-in user.
+A Gmail or Outlook search result or chat citation can show an ID that only
+works in that result. Do not pass that ID to `--id`. Pass the message URL
+with `--url`. That URL can still show up under `warnings` with code
+`resource_not_found`. Go links and federated search results cannot be
+retrieved. You only get documents you can open.
 
 See the [experimental API overview](https://developers.glean.com/experimental/overview)
 and the [OAuth authentication guide](https://developers.glean.com/api-info/client/authentication/oauth).

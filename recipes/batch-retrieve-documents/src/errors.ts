@@ -84,18 +84,29 @@ export function documentsApiError(
   });
 }
 
-function hintFor(status: number): string | undefined {
+function withRequestId(message: string, requestId?: string): string {
+  if (!requestId) return message;
+  return `${message} Request ID: ${requestId}.`;
+}
+
+function hintFor(status: number, requestId?: string): string | undefined {
   switch (status) {
     case 401:
-      return 'The token is missing or invalid. Run npm run login -- --email <your-work-email>, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN with documents:read.';
+      return 'The token is missing or invalid. Run npm run login -- --email <your-work-email>, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN. When you create that token, choose documents:read (legacy label DOCUMENTS).';
     case 403:
-      return 'The token cannot read documents. Sign in with the documents:read scope, or use a user-scoped token with that permission.';
+      return withRequestId(
+        'Glean refused this request. You might not have permission to open the document, the API token might have been created without documents:read (legacy label DOCUMENTS), or your Glean instance might not be set up for this access. OAuth login already requests documents:read, so running login again does not add that scope.',
+        requestId,
+      );
     case 400:
-      return 'The batch request was rejected. Send 1 to 100 selectors, each exactly one of document_id or url. An empty or malformed URL is a warning on a 200 response, not a 400.';
+      return 'Glean rejected the batch. Send 1 to 100 document IDs or URLs. Each item is a document_id or a url, not both. An empty or malformed URL is listed under warnings on HTTP 200. It is not HTTP 400.';
     case 404:
-      return 'The batch call itself failed. A selector the server cannot resolve is a warning on HTTP 200, not a 404. A 404 means the experimental operation is hidden or the route was not found. Send X-Glean-Include-Experimental: true.';
+      return withRequestId(
+        'You got HTTP 404. This command already sends X-Glean-Include-Experimental: true. A 404 usually means your Glean instance does not have the experimental document endpoints turned on. Ask your Glean admin to enable them. A document ID or URL that Glean cannot resolve is not a 404. You see it under warnings on HTTP 200, and the command exits 0.',
+        requestId,
+      );
     case 413:
-      return 'The request body is too large. A batch holds at most 100 selectors. HTTP 413 means the body exceeded the server size limit.';
+      return 'The request body is too large. You can send at most 100 document IDs and URLs. HTTP 413 means the body exceeded the size limit. That is separate from the 100-item limit, which this command rejects before it sends the request.';
     case 429:
       return 'The request was rate limited. Wait, then try again.';
     default:
@@ -111,7 +122,10 @@ function formatApiError(error: DocumentsApiError): CliError {
   if (error.code) lines.push(`Code: ${error.code}`);
   if (error.requestId) lines.push(`Request ID: ${error.requestId}`);
   if (error.retryAfter) lines.push(`Retry after: ${error.retryAfter}`);
-  return { error: lines.join('\n'), hint: hintFor(error.status) };
+  return {
+    error: lines.join('\n'),
+    hint: hintFor(error.status, error.requestId),
+  };
 }
 
 export function formatCliError(error: unknown): CliError {

@@ -84,14 +84,25 @@ export function documentsApiError(
   });
 }
 
-function hintFor(status: number): string | undefined {
+function withRequestId(message: string, requestId?: string): string {
+  if (!requestId) return message;
+  return `${message} Request ID: ${requestId}.`;
+}
+
+function hintFor(status: number, requestId?: string): string | undefined {
   switch (status) {
     case 401:
-      return 'The token is missing or invalid. Run npm run login -- --email <your-work-email>, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN with documents:read.';
+      return 'The token is missing or invalid. Run npm run login -- --email <your-work-email>, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN. When you create that token, choose documents:read (legacy label DOCUMENTS).';
     case 403:
-      return 'The token cannot read documents. Sign in with the documents:read scope, or use a user-scoped token with that permission.';
+      return withRequestId(
+        'Glean refused this request. You might not have permission to open the document, the API token might have been created without documents:read (legacy label DOCUMENTS), or your Glean instance might not be set up for this access. OAuth login already requests documents:read, so running login again does not add that scope.',
+        requestId,
+      );
     case 404:
-      return 'The document is not indexed or not visible, or the experimental Documents API is hidden. Send X-Glean-Include-Experimental: true. Gmail and Outlook caller-specific IDs do not resolve by ID; retrieve those documents by URL. A Gmail or Outlook URL can still return 404. Federated results and go-link shortcuts are not retrievable.';
+      return withRequestId(
+        'You got HTTP 404. This command already sends X-Glean-Include-Experimental: true. A 404 usually means your Glean instance does not have the experimental document endpoints turned on. Ask your Glean admin to enable them. If those endpoints are on, 404 means Glean has no indexed document at that URL that you can open. For a Gmail or Outlook message, pass the message URL, not the ID from the search result or chat citation. That URL can still return 404. Go links and federated search results cannot be retrieved.',
+        requestId,
+      );
     case 429:
       return 'The request was rate limited. Wait, then try again.';
     default:
@@ -107,7 +118,10 @@ function formatApiError(error: DocumentsApiError): CliError {
   if (error.code) lines.push(`Code: ${error.code}`);
   if (error.requestId) lines.push(`Request ID: ${error.requestId}`);
   if (error.retryAfter) lines.push(`Retry after: ${error.retryAfter}`);
-  return { error: lines.join('\n'), hint: hintFor(error.status) };
+  return {
+    error: lines.join('\n'),
+    hint: hintFor(error.status, error.requestId),
+  };
 }
 
 export function formatCliError(error: unknown): CliError {

@@ -1,20 +1,20 @@
 {
   "id": "retrieve-document-by-url",
   "title": "Retrieve a document by URL",
-  "description": "Retrieve one permission-visible indexed document by URL with the experimental Platform Documents API, then retrieve that same document by the returned document ID.",
+  "description": "Retrieve one indexed document you can open in Glean by its URL, then retrieve that same document by the document ID printed in the first response.",
   "sidebarLabel": "Retrieve a document by URL",
   "codeWalkthrough": {
-    "intro": "The example signs in with @gleanwork/auth and calls the experimental Documents HTTP API. The published TypeScript API client does not include these operations. client.documents is a different API.",
+    "intro": "You sign in with @gleanwork/auth and call the experimental document endpoints over HTTP. The published TypeScript API client does not include these endpoints. client.documents is a different API.",
     "examples": [
       {
         "title": "Call the experimental Documents API",
-        "description": "Resolve the backend, take a documents:read token from the auth package, and send X-Glean-Include-Experimental: true on every request. GET /api/documents reads by URL. GET /api/documents/{document_id} reads by the returned ID, with the path segment encoded.",
+        "description": "Find your Glean backend, take a documents:read token from the auth package, and send X-Glean-Include-Experimental: true on every request. GET /api/documents reads by URL. GET /api/documents/{document_id} reads by the document ID from the first response, with the path segment encoded.",
         "source": "src/client.ts",
         "language": "typescript"
       },
       {
         "title": "Round-trip the document ID",
-        "description": "Read the URL response, then request that document_id again. Require the same document_id. A 404 or any other HTTP error fails the command. The permalink in the response may differ from the URL you submitted.",
+        "description": "Read the URL response, then request that document_id again. Require the same document_id. HTTP 404, which usually means your Glean instance has not turned these endpoints on, fails the command. The permalink in the response may differ from the URL you passed.",
         "source": "src/workflow.ts",
         "language": "typescript"
       }
@@ -37,14 +37,14 @@
   "languages": ["typescript"],
   "prerequisites": [
     "Node.js 22.12.0 or newer",
-    "A Glean instance with indexed documents you can open",
+    "A Glean instance where you can open indexed documents",
     "Your work email, or the complete Glean backend HTTPS origin",
-    "The documents:read OAuth scope, or a user-scoped token with permission to read documents"
+    "The documents:read OAuth scope, or a user-scoped API token created with documents:read (legacy label DOCUMENTS)"
   ],
   "demoQueries": [
     {
       "query": "Retrieve a document URL you can open in Glean",
-      "expectedBehavior": "Prints the title, document_id, permalink, datasource, document type, timestamps, and url_request_id, then a line that the round-trip document_id matches. The permalink may differ from the submitted URL. HTTP errors, including 404, exit non-zero and do not print that success line. With --content, the output also includes the content segment count. An empty full_text_list is success and means there is no extracted text."
+      "expectedBehavior": "Prints the title, a document_id line, the permalink, datasource, document type, timestamps, and url_request_id, then a line that says Round-trip document_id matches. The permalink may differ from the URL you passed. HTTP errors, including 404, exit non-zero and do not print that success line. A 404 usually means your Glean instance has not turned these endpoints on. With --content, the output also includes content_segments. An empty full_text_list still prints the document and means there is no extracted text."
     }
   ],
   "codeAssets": [
@@ -69,13 +69,13 @@
     },
     {
       "title": "Run the fixture tests",
-      "description": "Run the tests without credentials or network access. They call the HTTP client through MSW and fail on unhandled requests. Passing tests does not prove access to your Glean instance.",
+      "description": "Run the tests. They do not use your Glean login or the network. Passing tests does not prove you can reach your Glean instance.",
       "command": "npm test",
       "kind": "manual"
     },
     {
       "title": "Choose an authentication path",
-      "description": "OAuth is the default. `@gleanwork/auth` discovers your instance, registers the OAuth client dynamically, and stores credentials outside the project. If OAuth is unavailable, copy `.env.example` to `.env`, set `GLEAN_SERVER_URL` and a user-scoped `GLEAN_API_TOKEN` with permission to read documents, and skip the next step. Omit `--email` from the remaining commands. If email discovery finds the wrong instance, replace `--email` with `--server-url` and your complete backend HTTPS origin.",
+      "description": "OAuth is the default. `@gleanwork/auth` discovers your instance, registers the OAuth client dynamically, and stores credentials outside the project. If OAuth is unavailable, copy `.env.example` to `.env`, set `GLEAN_SERVER_URL`, and create a user-scoped API token with `documents:read` (legacy label `DOCUMENTS`). Put that token in `GLEAN_API_TOKEN` and skip the next step. Omit `--email` from the remaining commands. If email discovery finds the wrong instance, replace `--email` with `--server-url` and your complete backend HTTPS origin.",
       "kind": "configure"
     },
     {
@@ -87,7 +87,7 @@
     {
       "title": "Verify against your instance",
       "description": "Retrieve one document you can open, then retrieve it again by the returned `document_id`. The command prints the permalink, title, datasource, and both request IDs. With a token in `.env`, omit `--email`.",
-      "command": "npm run verify -- --email \"<work-email>\" --url \"<document-url>\"",
+      "command": "npm start -- --email \"<work-email>\" --url \"<document-url>\"",
       "kind": "verify-live"
     },
     {
@@ -119,7 +119,7 @@
     ],
     "verification": {
       "kind": "automated",
-      "command": "npm run verify -- --email \"<work-email>\" --url \"<document-url>\"",
+      "command": "npm start -- --email \"<work-email>\" --url \"<document-url>\"",
       "expectedDuration": "about 1 minute after sign-in",
       "startsOwnServer": false
     },
@@ -146,44 +146,44 @@
       "emphasized": true
     }
   ],
-  "aiPrompt": "Scaffold and run the experimental Documents retrieve-by-URL quickstart. Ask for the work email and one document URL the caller can open in Glean. Run the fixture tests before authentication. Sign in with the official glean-auth CLI from @gleanwork/auth using the documents:read scope, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN with documents:read. Do not add a scope-fallback wrapper and do not request any other scope. The published @gleanwork/api-client package has no Platform Documents operations. Do not call client.documents; that is a different API. Call the HTTP API with fetch. Send X-Glean-Include-Experimental: true on every request. These operations are experimental, and the server hides them without that header. GET /api/documents?url= and read document plus request_id. Then GET /api/documents/{document_id} with the returned document_id, encoding the path segment, and require the same document_id. The response url is the permalink and may differ from the submitted URL. Pass include=CONTENT only when --content is set. CONTENT adds document.content.full_text_list. An empty list means no extracted text. A content failure fails the whole request. Exit non-zero on HTTP errors, including 404. Gmail and Outlook caller-specific citation IDs do not resolve by ID; use the URL. A Gmail or Outlook URL can still 404. Federated results and go-link shortcuts are not retrievable. Do not teach per-item status enums. Print request IDs. Never log tokens.",
-  "llmContext": "Use @gleanwork/auth 1.0.0 and the documents:read scope. @gleanwork/api-client has no Platform Documents operations, and client.documents is a different API. Call fetch and send X-Glean-Include-Experimental: true on every request. GET /api/documents?url= then GET /api/documents/{document_id} and require the same document_id. Encode the path segment. include=CONTENT is optional and adds content.full_text_list. Empty text is success. HTTP errors, including 404, fail the command. Gmail and Outlook IDs need a URL. Federated results and go links are not retrievable. Do not log tokens or teach per-item status enums.",
+  "aiPrompt": "Scaffold and run the experimental document retrieve-by-URL quickstart. Ask for the work email and one document URL the person can open in Glean. Run the tests before authentication. Sign in with the official glean-auth CLI from @gleanwork/auth using the documents:read scope, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN. When creating that token, choose documents:read (legacy label DOCUMENTS). Do not add a scope-fallback wrapper and do not request any other scope. The published @gleanwork/api-client package has no methods for these document endpoints. Do not call client.documents; that is a different API. Call the HTTP API with fetch. Send X-Glean-Include-Experimental: true on every request. A 404 usually means the Glean instance has not turned these endpoints on. Ask the Glean admin and show the Request ID. GET /api/documents?url= and read document plus request_id. Then GET /api/documents/{document_id} with the returned document_id, encoding the path segment, and require the same document_id. The response url is the permalink and may differ from the submitted URL. Pass include=CONTENT only when --content is set. CONTENT adds document.content.full_text_list. An empty list means no extracted text. A content failure fails the whole request. Exit non-zero on HTTP errors, including 404. For a Gmail or Outlook message, pass the message URL, not the ID from the search result or chat citation. That URL can still 404. Federated results and go links are not retrievable. On HTTP 403, list permission, token scope, and instance setup as possible causes. Do not teach per-item status enums. Print request IDs. Never log tokens.",
+  "llmContext": "Use @gleanwork/auth 1.0.0 and the documents:read scope. The legacy token label is DOCUMENTS. @gleanwork/api-client has no methods for these document endpoints, and client.documents is a different API. Call fetch and send X-Glean-Include-Experimental: true on every request. GET /api/documents?url= then GET /api/documents/{document_id} and require the same document_id. Encode the path segment. include=CONTENT is optional and adds content.full_text_list. Empty text is success. HTTP 404 usually means the instance has not enabled these endpoints. For Gmail and Outlook, pass the message URL. Federated results and go links are not retrievable. On 403, name permission, scope, and instance setup. Do not log tokens or teach per-item status enums.",
   "goDependency": false,
   "hidden": true,
   "tags": ["documents", "experimental", "platform-api"],
   "content": {
-    "problem": "A search result or chat citation gives you a document URL. Loading the title, permalink, and extracted text for that one document means calling the experimental Platform Documents API, then confirming the returned document ID reads back the same document. The published TypeScript API client does not include these operations, so this quickstart calls the HTTP API and uses the official auth package for sign-in.",
+    "problem": "A search result or chat citation gives you a document URL. To see the title, permalink, and extracted text for that one document, you call Glean's experimental document endpoints, then confirm the document ID in the response reads back the same document. The published TypeScript API client does not include these endpoints, so this quickstart calls the HTTP API and uses the official auth package for sign-in.",
     "takeItFurther": [
-      "Pass --content when you need extracted text. include=CONTENT adds content.full_text_list. An empty list means Glean stored no extracted text. A failure to read requested content fails the whole request.",
-      "Use the batch recipe when you have many document IDs and URLs. One batch returns found documents in results and complete misses in warnings.",
-      "Keep the returned document_id. Get by ID accepts that indexed store ID. Do not send a Gmail or Outlook caller-specific citation ID to get by ID."
+      "Pass --content when you need extracted text. include=CONTENT adds content.full_text_list. An empty list means Glean stored no extracted text. You still see the document. If Glean cannot read the text you asked for, the command fails.",
+      "Use the batch recipe when you have many document IDs and URLs. Copy the document_id line this command prints and pass it to --id there. The batch prints documents Glean returns under results, and document IDs or URLs it does not return under warnings.",
+      "Keep the document_id this command prints. The get-by-id call accepts that ID. For a Gmail or Outlook message, pass the message URL, not the ID from the search result or chat citation."
     ],
     "guardrails": [
       {
-        "title": "Send the experimental header on every request",
-        "rule": "Set X-Glean-Include-Experimental: true. Without it, the server hides these operations. This client sets the header in one place so a new call cannot skip it."
+        "title": "Keep the experimental header on every request",
+        "rule": "This client sets X-Glean-Include-Experimental: true on every request. Keep that header if you add a call. A 404 with the header usually means your Glean instance has not turned these endpoints on. Ask your Glean admin."
       },
       {
         "title": "Request only documents:read",
-        "rule": "OAuth login and the token provider use the documents:read scope. Do not add other scopes. A user-scoped token is the fallback when OAuth is unavailable, and it needs permission to read documents."
+        "rule": "OAuth login and the token provider use the documents:read scope. Do not add other scopes. If you create an API token instead, choose documents:read (legacy label DOCUMENTS)."
       },
       {
-        "title": "Treat a single-document miss as a failure",
-        "rule": "HTTP 404 means the document is not indexed, not visible, or the operation is hidden. Do not print a successful retrieval. The batch API is the one that reports individual misses as warnings."
+        "title": "Treat HTTP 404 as a failed command",
+        "rule": "HTTP 404 exits non-zero and does not print Round-trip document_id matches. It usually means your Glean instance has not turned these endpoints on. Ask your Glean admin and share the Request ID. If the endpoints are on, 404 means Glean has no indexed document at that URL that you can open. The batch command lists a missing document ID or URL under warnings and still exits 0."
       }
     ],
     "limitations": [
       {
-        "title": "Experimental API",
-        "description": "These operations are experimental and can change. Callers that omit X-Glean-Include-Experimental: true do not see them. The published @gleanwork/api-client package has no Platform Documents methods. client.documents reads documents through a different API; do not substitute it here."
+        "title": "Experimental endpoints",
+        "description": "These endpoints are experimental and can change. This client sends X-Glean-Include-Experimental: true on every request. If your Glean instance has not turned the endpoints on, you still get HTTP 404. Ask your Glean admin. The published @gleanwork/api-client package has no methods for these endpoints. client.documents reads documents through a different API. Do not call it here."
       },
       {
-        "title": "Some documents are not retrievable",
-        "description": "Gmail and Outlook search results and chat citations can carry caller-specific IDs that get by ID cannot resolve. Retrieve those documents by URL. A Gmail or Outlook URL can still return 404. Federated results and go-link shortcuts are not retrievable. You only receive documents visible to the caller."
+        "title": "Some documents cannot be retrieved",
+        "description": "A Gmail or Outlook search result or chat citation can show an ID that only works in that result. Pass the message URL instead of that ID. The URL can still return 404. Go links and federated search results cannot be retrieved. You only get documents you can open."
       },
       {
         "title": "Content is extracted text, not the file",
-        "description": "include=CONTENT adds content.full_text_list. The list is empty when Glean has no extracted text after a complete read. If requested content cannot be read, the request fails instead of returning the document without content. The CLI prints a short preview, not every segment."
+        "description": "include=CONTENT adds content.full_text_list. An empty list means Glean stored no extracted text. You still see the document. If Glean cannot read the text you asked for, the command fails instead of printing the document without content. The command prints a short preview, not every segment."
       }
     ]
   }

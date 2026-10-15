@@ -13,9 +13,11 @@ import {
   readProblemDetail,
 } from './errors.js';
 
-// Platform Documents is experimental and is not in @gleanwork/api-client.
-// client.documents is the Client API, which is a different surface. Call this
-// HTTP API instead. Authentication stays with @gleanwork/auth.
+// These experimental document endpoints are not in @gleanwork/api-client.
+// client.documents is a different API. Call POST /api/documents/batch with
+// fetch. Sign in with @gleanwork/auth. Every request sends
+// X-Glean-Include-Experimental: true. A 404 with that header usually means
+// your Glean instance has not turned the endpoints on. Ask your Glean admin.
 export const DOCUMENTS_SCOPE = 'documents:read';
 export const EXPERIMENTAL_HEADER = 'X-Glean-Include-Experimental';
 
