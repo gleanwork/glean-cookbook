@@ -12,16 +12,17 @@ test('a batch 404 is the call failing, not a per-item miss', () => {
   );
   expect(formatted.error).toContain('HTTP 404: Not found.');
   expect(formatted.error).toContain('Request ID: req-error');
-  expect(formatted.hint).toContain('Request ID: req-error');
+  expect(formatted.hint).not.toContain('Request ID:');
   expect(formatted.hint).toContain('HTTP 200');
   expect(formatted.hint).toContain(
     'does not have the experimental document endpoints turned on',
   );
-  expect(formatted.hint).toContain('Ask your Glean admin');
+  expect(formatted.hint).toContain('Ask your Glean admin or Glean support');
   expect(formatted.hint).not.toContain('Send X-Glean-Include-Experimental');
+  expect(formatted.hint).not.toContain('to enable them');
 });
 
-test('403 names permission, token scope, and instance setup', () => {
+test('403 names token scope and instance setup', () => {
   const formatted = formatCliError(
     new DocumentsApiError({
       status: 403,
@@ -31,8 +32,8 @@ test('403 names permission, token scope, and instance setup', () => {
     }),
   );
   expect(formatted.error).toContain('Request ID: req-forbidden');
-  expect(formatted.hint).toContain('Request ID: req-forbidden');
-  expect(formatted.hint).toContain('permission to open the document');
+  expect(formatted.hint).not.toContain('Request ID:');
+  expect(formatted.hint).not.toContain('permission to open the document');
   expect(formatted.hint).toContain('documents:read (legacy label DOCUMENTS)');
   expect(formatted.hint).toContain('Glean instance might not be set up');
   expect(formatted.hint).toContain(

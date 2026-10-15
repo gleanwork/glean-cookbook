@@ -15,16 +15,20 @@ test('formats a problem document without hiding the request ID', () => {
   );
   expect(formatted.error).toContain('Code: resource_not_found');
   expect(formatted.error).toContain('Request ID: req-error');
-  expect(formatted.hint).toContain('Request ID: req-error');
+  expect(formatted.hint).not.toContain('Request ID:');
   expect(formatted.hint).toContain(
     'does not have the experimental document endpoints turned on',
   );
-  expect(formatted.hint).toContain('Ask your Glean admin');
+  expect(formatted.hint).toContain('Ask your Glean admin or Glean support');
+  expect(formatted.hint).toContain(
+    'the document does not exist or you cannot access it',
+  );
   expect(formatted.hint).not.toContain('Send X-Glean-Include-Experimental');
+  expect(formatted.hint).not.toContain('to enable them');
   expect(formatted.hint).toContain('Go links');
 });
 
-test('403 names permission, token scope, and instance setup', () => {
+test('403 names token scope and instance setup', () => {
   const formatted = formatCliError(
     new DocumentsApiError({
       status: 403,
@@ -34,8 +38,8 @@ test('403 names permission, token scope, and instance setup', () => {
     }),
   );
   expect(formatted.error).toContain('Request ID: req-forbidden');
-  expect(formatted.hint).toContain('Request ID: req-forbidden');
-  expect(formatted.hint).toContain('permission to open the document');
+  expect(formatted.hint).not.toContain('Request ID:');
+  expect(formatted.hint).not.toContain('permission to open the document');
   expect(formatted.hint).toContain('documents:read (legacy label DOCUMENTS)');
   expect(formatted.hint).toContain('Glean instance might not be set up');
   expect(formatted.hint).toContain(
@@ -62,8 +66,9 @@ test('keeps the HTTP hint when the ID lookup fails after a URL hit', () => {
   expect(formatted.error).toContain(
     'HTTP 404: No visible document for that ID.',
   );
+  expect(formatted.error).toContain('Request ID: req-id');
   expect(formatted.hint).toContain('pass the message URL');
-  expect(formatted.hint).toContain('Request ID: req-id');
+  expect(formatted.hint).not.toContain('Request ID:');
 });
 
 test('includes Retry-After on a 429', () => {

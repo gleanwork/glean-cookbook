@@ -5,11 +5,11 @@ call. You pass each document as `--url` or `--id`. Documents Glean returns
 are printed under `results`. A document ID or URL Glean does not return is
 printed under `warnings` on the same HTTP 200. The command still exits 0.
 
-These document endpoints are experimental. Your Glean admin has to turn them
-on. This project sends `X-Glean-Include-Experimental: true` on every request.
-If the endpoints are off, you still see HTTP 404 and a Request ID. Ask your
-Glean admin to enable them, and share that Request ID. The command already
-sends the header, so you do not add it yourself.
+These document endpoints are experimental. This project sends
+`X-Glean-Include-Experimental: true` on every request. If the endpoints are
+off, you still see HTTP 404 and a Request ID. Ask your Glean admin or Glean
+support, and share that Request ID. The command already sends the header, so
+you do not add it yourself.
 
 The published `@gleanwork/api-client` package does not include these document
 endpoints. `client.documents` is a different API. This project calls
@@ -147,17 +147,18 @@ not HTTP 413.
 
 HTTP 404 means these document endpoints are not turned on for your Glean
 instance. The command already sends the experimental header. Ask your Glean
-admin, and share the Request ID on screen. A single document ID or URL that
-Glean cannot resolve is listed under `warnings`, not as HTTP 404.
+admin or Glean support, and share the Request ID on screen. A single document
+ID or URL that Glean cannot resolve is listed under `warnings`, not as HTTP 404.
 
 ## Errors you may see
 
 HTTP 403 prints `HTTP 403`, a `Request ID:` line, and a hint. The hint lists
-possible causes: you cannot open the document, the API token was created
-without `documents:read` (legacy label `DOCUMENTS`), or your Glean instance is
-not set up for this access. OAuth login already requests `documents:read`, so
-running login again does not add that scope. Share the Request ID with your
-Glean admin.
+possible causes: the API token was created without `documents:read` (legacy
+label `DOCUMENTS`), or your Glean instance is not set up for this access.
+OAuth login already requests `documents:read`, so running login again does
+not add that scope. A document you cannot open is listed under `warnings`
+on HTTP 200, not as HTTP 403. Share the Request ID with your Glean admin or
+Glean support.
 
 ## Limits
 

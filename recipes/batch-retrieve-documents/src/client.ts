@@ -17,7 +17,8 @@ import {
 // client.documents is a different API. Call POST /api/documents/batch with
 // fetch. Sign in with @gleanwork/auth. Every request sends
 // X-Glean-Include-Experimental: true. A 404 with that header usually means
-// your Glean instance has not turned the endpoints on. Ask your Glean admin.
+// your Glean instance has not turned the endpoints on. Ask your Glean admin
+// or Glean support.
 export const DOCUMENTS_SCOPE = 'documents:read';
 export const EXPERIMENTAL_HEADER = 'X-Glean-Include-Experimental';
 

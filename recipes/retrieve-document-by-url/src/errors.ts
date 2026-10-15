@@ -84,25 +84,14 @@ export function documentsApiError(
   });
 }
 
-function withRequestId(message: string, requestId?: string): string {
-  if (!requestId) return message;
-  return `${message} Request ID: ${requestId}.`;
-}
-
-function hintFor(status: number, requestId?: string): string | undefined {
+function hintFor(status: number): string | undefined {
   switch (status) {
     case 401:
       return 'The token is missing or invalid. Run npm run login -- --email <your-work-email>, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN. When you create that token, choose documents:read (legacy label DOCUMENTS).';
     case 403:
-      return withRequestId(
-        'Glean refused this request. You might not have permission to open the document, the API token might have been created without documents:read (legacy label DOCUMENTS), or your Glean instance might not be set up for this access. OAuth login already requests documents:read, so running login again does not add that scope.',
-        requestId,
-      );
+      return 'Glean refused this request. The API token might have been created without documents:read (legacy label DOCUMENTS), or your Glean instance might not be set up for this access. OAuth login already requests documents:read, so running login again does not add that scope.';
     case 404:
-      return withRequestId(
-        'You got HTTP 404. This command already sends X-Glean-Include-Experimental: true. A 404 usually means your Glean instance does not have the experimental document endpoints turned on. Ask your Glean admin to enable them. If those endpoints are on, 404 means Glean has no indexed document at that URL that you can open. For a Gmail or Outlook message, pass the message URL, not the ID from the search result or chat citation. That URL can still return 404. Go links and federated search results cannot be retrieved.',
-        requestId,
-      );
+      return 'You got HTTP 404. This command already sends X-Glean-Include-Experimental: true. A 404 usually means your Glean instance does not have the experimental document endpoints turned on. Ask your Glean admin or Glean support. If those endpoints are on, a 404 usually means the document does not exist or you cannot access it. For a Gmail or Outlook message, pass the message URL, not the ID from the search result or chat citation. That URL can still return 404. Go links and federated search results cannot be retrieved.';
     case 429:
       return 'The request was rate limited. Wait, then try again.';
     default:
@@ -120,7 +109,7 @@ function formatApiError(error: DocumentsApiError): CliError {
   if (error.retryAfter) lines.push(`Retry after: ${error.retryAfter}`);
   return {
     error: lines.join('\n'),
-    hint: hintFor(error.status, error.requestId),
+    hint: hintFor(error.status),
   };
 }
 

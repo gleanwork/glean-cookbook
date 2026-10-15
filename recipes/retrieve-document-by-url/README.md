@@ -4,11 +4,11 @@ This command reads one indexed document you can open in Glean, then reads it
 again by the `document_id` printed in the first response. The second call
 checks that the ID you would store still points at the same document.
 
-These document endpoints are experimental. Your Glean admin has to turn them
-on. This project sends `X-Glean-Include-Experimental: true` on every request.
-If the endpoints are off, you still see HTTP 404 and a Request ID. Ask your
-Glean admin to enable them, and share that Request ID. The command already
-sends the header, so you do not add it yourself.
+These document endpoints are experimental. This project sends
+`X-Glean-Include-Experimental: true` on every request. If the endpoints are
+off, you still see HTTP 404 and a Request ID. Ask your Glean admin or Glean
+support, and share that Request ID. The command already sends the header, so
+you do not add it yourself.
 
 The published `@gleanwork/api-client` package does not include these document
 endpoints. `client.documents` is a different API. This project calls
@@ -114,18 +114,18 @@ the command fails instead of printing the document without `content`.
 ## Errors you may see
 
 HTTP 403 prints `HTTP 403`, a `Request ID:` line, and a hint. The hint lists
-possible causes: you cannot open the document, the API token was created
-without `documents:read` (legacy label `DOCUMENTS`), or your Glean instance is
-not set up for this access. OAuth login already requests `documents:read`, so
-running login again does not add that scope. Share the Request ID with your
-Glean admin.
+possible causes: the API token was created without `documents:read` (legacy
+label `DOCUMENTS`), or your Glean instance is not set up for this access.
+OAuth login already requests `documents:read`, so running login again does
+not add that scope. Share the Request ID with your Glean admin or Glean
+support.
 
 HTTP 404 prints `HTTP 404`, a `Request ID:` line, and a hint. The command
 already sends `X-Glean-Include-Experimental: true`. A 404 usually means your
 Glean instance does not have these experimental document endpoints turned on.
-Ask your Glean admin to enable them, and share the Request ID. If the
-endpoints are on, 404 means Glean has no indexed document at that URL that
-you can open.
+Ask your Glean admin or Glean support, and share the Request ID. If the
+endpoints are on, a 404 usually means the document does not exist or you
+cannot access it.
 
 ## Limits
 
@@ -135,7 +135,8 @@ message URL. That URL can still return 404. Go links and federated search
 results cannot be retrieved. You only get documents you can open. A missing
 document and a document you cannot access both show as HTTP 404 on this
 command, which is the same status you see when the endpoints are turned off.
-Use the Request ID with your Glean admin to tell those cases apart.
+Use the Request ID with your Glean admin or Glean support to tell those
+cases apart.
 
 See the [experimental API overview](https://developers.glean.com/experimental/overview)
 and the [OAuth authentication guide](https://developers.glean.com/api-info/client/authentication/oauth).
