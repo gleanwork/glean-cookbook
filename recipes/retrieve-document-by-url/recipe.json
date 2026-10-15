@@ -1,0 +1,190 @@
+{
+  "id": "retrieve-document-by-url",
+  "title": "Retrieve a document by URL",
+  "description": "Retrieve one permission-visible indexed document by URL with the experimental Platform Documents API, then retrieve that same document by the returned document ID.",
+  "sidebarLabel": "Retrieve a document by URL",
+  "codeWalkthrough": {
+    "intro": "The example signs in with @gleanwork/auth and calls the experimental Documents HTTP API. The published TypeScript API client does not include these operations. client.documents is a different API.",
+    "examples": [
+      {
+        "title": "Call the experimental Documents API",
+        "description": "Resolve the backend, take a documents:read token from the auth package, and send X-Glean-Include-Experimental: true on every request. GET /api/documents reads by URL. GET /api/documents/{document_id} reads by the returned ID, with the path segment encoded.",
+        "source": "src/client.ts",
+        "language": "typescript"
+      },
+      {
+        "title": "Round-trip the document ID",
+        "description": "Read the URL response, then request that document_id again. Require the same document_id. A 404 or any other HTTP error fails the command. The permalink in the response may differ from the URL you submitted.",
+        "source": "src/workflow.ts",
+        "language": "typescript"
+      }
+    ]
+  },
+  "surfaces": ["platform-api"],
+  "capabilities": ["documents"],
+  "status": "quickstart",
+  "category": "search",
+  "level": "Beginner",
+  "levels": {
+    "minimal": true,
+    "wow": false
+  },
+  "timeEstimate": "~15 min",
+  "icon": "file-text",
+  "requiredScopes": ["documents:read"],
+  "authMethod": ["client-api-oauth-or-token"],
+  "buildMethod": "scaffold",
+  "languages": ["typescript"],
+  "prerequisites": [
+    "Node.js 22.12.0 or newer",
+    "A Glean instance with indexed documents you can open",
+    "Your work email, or the complete Glean backend HTTPS origin",
+    "The documents:read OAuth scope, or a user-scoped token with permission to read documents"
+  ],
+  "demoQueries": [
+    {
+      "query": "Retrieve a document URL you can open in Glean",
+      "expectedBehavior": "Prints the title, document_id, permalink, datasource, document type, timestamps, and url_request_id, then a line that the round-trip document_id matches. The permalink may differ from the submitted URL. HTTP errors, including 404, exit non-zero and do not print that success line. With --content, the output also includes the content segment count. An empty full_text_list is success and means there is no extracted text."
+    }
+  ],
+  "codeAssets": [
+    {
+      "repoPath": "recipes/retrieve-document-by-url",
+      "language": "typescript",
+      "description": "TypeScript CLI that retrieves an indexed document by URL and then by the returned document ID"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Copy the project onto your machine",
+      "description": "Copy the runnable TypeScript CLI and its fixture tests into a new directory. Sign-in uses the official `@gleanwork/auth` package.",
+      "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/retrieve-document-by-url retrieve-document-by-url",
+      "kind": "scaffold"
+    },
+    {
+      "title": "Install dependencies",
+      "description": "Enter the project directory and install its dependencies. Run the remaining commands from this directory.",
+      "command": "cd retrieve-document-by-url && npm install",
+      "kind": "install"
+    },
+    {
+      "title": "Run the fixture tests",
+      "description": "Run the tests without credentials or network access. They call the HTTP client through MSW and fail on unhandled requests. Passing tests does not prove access to your Glean instance.",
+      "command": "npm test",
+      "kind": "manual"
+    },
+    {
+      "title": "Choose an authentication path",
+      "description": "OAuth is the default. `@gleanwork/auth` discovers your instance, registers the OAuth client dynamically, and stores credentials outside the project. If OAuth is unavailable, copy `.env.example` to `.env`, set `GLEAN_SERVER_URL` and a user-scoped `GLEAN_API_TOKEN` with permission to read documents, and skip the next step. Omit `--email` from the remaining commands. If email discovery finds the wrong instance, replace `--email` with `--server-url` and your complete backend HTTPS origin.",
+      "kind": "configure"
+    },
+    {
+      "title": "Sign in with OAuth",
+      "description": "Run the login command with the `documents:read` scope and finish authorization in your browser. Wait until the command reports success. Skip this step when you configured a token in `.env`.",
+      "command": "npm run login -- --email \"<work-email>\"",
+      "kind": "authenticate"
+    },
+    {
+      "title": "Verify against your instance",
+      "description": "Retrieve one document you can open, then retrieve it again by the returned `document_id`. The command prints the permalink, title, datasource, and both request IDs. With a token in `.env`, omit `--email`.",
+      "command": "npm run verify -- --email \"<work-email>\" --url \"<document-url>\"",
+      "kind": "verify-live"
+    },
+    {
+      "title": "Request extracted text",
+      "description": "Run the same retrieval with `--content`. The client sends `include=CONTENT`, and the response adds `content.full_text_list`. An empty list means Glean has no extracted text. A failure to read requested content fails the command. With a token, omit `--email`.",
+      "command": "npm start -- --email \"<work-email>\" --url \"<document-url>\" --content",
+      "kind": "run"
+    }
+  ],
+  "execution": {
+    "type": "cli",
+    "questions": [
+      {
+        "id": "work-email",
+        "prompt": "What is your work email address?"
+      },
+      {
+        "id": "document-url",
+        "prompt": "What is the URL of a document you can open in Glean?"
+      }
+    ],
+    "auth": [
+      {
+        "kind": "oauth-with-token-fallback",
+        "scopes": ["documents:read"],
+        "setupCommand": "npm run login -- --email \"<work-email>\"",
+        "credentialVariable": "GLEAN_API_TOKEN"
+      }
+    ],
+    "verification": {
+      "kind": "automated",
+      "command": "npm run verify -- --email \"<work-email>\" --url \"<document-url>\"",
+      "expectedDuration": "about 1 minute after sign-in",
+      "startsOwnServer": false
+    },
+    "run": {
+      "command": "npm start -- --email \"<work-email>\" --url \"<document-url>\" --content",
+      "userBrowser": false
+    }
+  },
+  "architecture": [
+    {
+      "label": "Your CLI",
+      "caption": "document URL",
+      "icon": "terminal"
+    },
+    {
+      "label": "Auth package",
+      "caption": "documents:read token",
+      "icon": "shield-check"
+    },
+    {
+      "label": "Documents API",
+      "caption": "experimental get by URL, then by ID",
+      "category": "search",
+      "emphasized": true
+    }
+  ],
+  "aiPrompt": "Scaffold and run the experimental Documents retrieve-by-URL quickstart. Ask for the work email and one document URL the caller can open in Glean. Run the fixture tests before authentication. Sign in with the official glean-auth CLI from @gleanwork/auth using the documents:read scope, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN with documents:read. Do not add a scope-fallback wrapper and do not request any other scope. The published @gleanwork/api-client package has no Platform Documents operations. Do not call client.documents; that is a different API. Call the HTTP API with fetch. Send X-Glean-Include-Experimental: true on every request. These operations are experimental, and the server hides them without that header. GET /api/documents?url= and read document plus request_id. Then GET /api/documents/{document_id} with the returned document_id, encoding the path segment, and require the same document_id. The response url is the permalink and may differ from the submitted URL. Pass include=CONTENT only when --content is set. CONTENT adds document.content.full_text_list. An empty list means no extracted text. A content failure fails the whole request. Exit non-zero on HTTP errors, including 404. Gmail and Outlook caller-specific citation IDs do not resolve by ID; use the URL. A Gmail or Outlook URL can still 404. Federated results and go-link shortcuts are not retrievable. Do not teach per-item status enums. Print request IDs. Never log tokens.",
+  "llmContext": "Use @gleanwork/auth 1.0.0 and the documents:read scope. @gleanwork/api-client has no Platform Documents operations, and client.documents is a different API. Call fetch and send X-Glean-Include-Experimental: true on every request. GET /api/documents?url= then GET /api/documents/{document_id} and require the same document_id. Encode the path segment. include=CONTENT is optional and adds content.full_text_list. Empty text is success. HTTP errors, including 404, fail the command. Gmail and Outlook IDs need a URL. Federated results and go links are not retrievable. Do not log tokens or teach per-item status enums.",
+  "goDependency": false,
+  "hidden": true,
+  "tags": ["documents", "experimental", "platform-api"],
+  "content": {
+    "problem": "A search result or chat citation gives you a document URL. Loading the title, permalink, and extracted text for that one document means calling the experimental Platform Documents API, then confirming the returned document ID reads back the same document. The published TypeScript API client does not include these operations, so this quickstart calls the HTTP API and uses the official auth package for sign-in.",
+    "takeItFurther": [
+      "Pass --content when you need extracted text. include=CONTENT adds content.full_text_list. An empty list means Glean stored no extracted text. A failure to read requested content fails the whole request.",
+      "Use the batch recipe when you have many document IDs and URLs. One batch returns found documents in results and complete misses in warnings.",
+      "Keep the returned document_id. Get by ID accepts that indexed store ID. Do not send a Gmail or Outlook caller-specific citation ID to get by ID."
+    ],
+    "guardrails": [
+      {
+        "title": "Send the experimental header on every request",
+        "rule": "Set X-Glean-Include-Experimental: true. Without it, the server hides these operations. This client sets the header in one place so a new call cannot skip it."
+      },
+      {
+        "title": "Request only documents:read",
+        "rule": "OAuth login and the token provider use the documents:read scope. Do not add other scopes. A user-scoped token is the fallback when OAuth is unavailable, and it needs permission to read documents."
+      },
+      {
+        "title": "Treat a single-document miss as a failure",
+        "rule": "HTTP 404 means the document is not indexed, not visible, or the operation is hidden. Do not print a successful retrieval. The batch API is the one that reports individual misses as warnings."
+      }
+    ],
+    "limitations": [
+      {
+        "title": "Experimental API",
+        "description": "These operations are experimental and can change. Callers that omit X-Glean-Include-Experimental: true do not see them. The published @gleanwork/api-client package has no Platform Documents methods. client.documents reads documents through a different API; do not substitute it here."
+      },
+      {
+        "title": "Some documents are not retrievable",
+        "description": "Gmail and Outlook search results and chat citations can carry caller-specific IDs that get by ID cannot resolve. Retrieve those documents by URL. A Gmail or Outlook URL can still return 404. Federated results and go-link shortcuts are not retrievable. You only receive documents visible to the caller."
+      },
+      {
+        "title": "Content is extracted text, not the file",
+        "description": "include=CONTENT adds content.full_text_list. The list is empty when Glean has no extracted text after a complete read. If requested content cannot be read, the request fails instead of returning the document without content. The CLI prints a short preview, not every segment."
+      }
+    ]
+  }
+}

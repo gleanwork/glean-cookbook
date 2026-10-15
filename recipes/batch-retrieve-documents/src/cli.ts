@@ -1,0 +1,143 @@
+import { pathToFileURL } from 'node:url';
+import meow from 'meow';
+import { createDocumentsClient } from './client.js';
+import {
+  assertDocumentSpecs,
+  formatBatch,
+  type DocumentSpec,
+} from './documents.js';
+import { printCliError } from './errors.js';
+import { batchRetrieveDocuments } from './workflow.js';
+
+export interface BatchCliOptions {
+  email?: string;
+  serverUrl?: string;
+  specs: DocumentSpec[];
+  content: boolean;
+}
+
+const TAKES_VALUE = new Set(['--email', '--server-url']);
+
+function specFromFlag(flag: '--url' | '--id', value: string): DocumentSpec {
+  if (flag === '--url') {
+    if (value.trim() === '') throw new Error('--url must not be blank.');
+    return { url: value.trim() };
+  }
+  const documentId = value.trim();
+  if (documentId === '') throw new Error('--id must not be blank.');
+  return { document_id: documentId };
+}
+
+export function specsFromArgv(argv: readonly string[]): DocumentSpec[] {
+  const specs: DocumentSpec[] = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+    if (token === undefined || token === '--') continue;
+
+    const inlineUrl = token.startsWith('--url=');
+    const inlineId = token.startsWith('--id=');
+    if (inlineUrl || inlineId || token === '--url' || token === '--id') {
+      const flag = inlineUrl || token === '--url' ? '--url' : '--id';
+      const value = inlineUrl
+        ? token.slice('--url='.length)
+        : inlineId
+          ? token.slice('--id='.length)
+          : argv[index + 1];
+      if (!inlineUrl && !inlineId) index += 1;
+      if (value === undefined || value.startsWith('-')) {
+        throw new Error(`${flag} requires a value.`);
+      }
+      specs.push(specFromFlag(flag, value));
+      continue;
+    }
+
+    if (TAKES_VALUE.has(token)) index += 1;
+  }
+  return specs;
+}
+
+export function parseCliOptions(argv = process.argv.slice(2)): BatchCliOptions {
+  const cli = meow(
+    `
+      Usage
+        $ npm start -- (--url <url> | --id <document-id>)... [options]
+        $ npm run verify -- --url <url> --id <document-id> [options]
+
+      Options
+        --email         Work email used to discover the Glean backend
+        --server-url    Complete Glean backend origin; overrides --email
+        --url           Document URL selector; repeatable, order preserved
+        --id            document_id selector; repeatable, order preserved
+        --content       Also request extracted text (include CONTENT)
+
+      Authentication
+        OAuth scope documents:read, or a user-scoped token with that permission.
+
+      The batch body is document_specs, 1 to 100 items, each exactly one of
+      document_id or url. Found items are results. Misses are warnings.
+
+      Examples
+        $ npm run verify -- --email you@example.com --url "https://docs.example/wiki/plan" --id "doc/1"
+        $ npm start -- --email you@example.com --url "https://docs.example/wiki/plan" --id "doc/1" --url "https://example.invalid/not-indexed" --content
+    `,
+    {
+      importMeta: import.meta,
+      argv,
+      flags: {
+        email: { type: 'string' },
+        serverUrl: { type: 'string' },
+        url: { type: 'string', isMultiple: true },
+        id: { type: 'string', isMultiple: true },
+        content: { type: 'boolean', default: false },
+      },
+    },
+  );
+
+  const unexpected = cli.input[0];
+  if (unexpected !== undefined) {
+    throw new Error(`Unexpected argument: ${unexpected}`);
+  }
+
+  const email = cli.flags.email?.trim();
+  const serverUrl = cli.flags.serverUrl?.trim();
+  if (cli.flags.email !== undefined && !email) {
+    throw new Error('--email must not be blank.');
+  }
+  if (cli.flags.serverUrl !== undefined && !serverUrl) {
+    throw new Error('--server-url must not be blank.');
+  }
+
+  return {
+    email,
+    serverUrl,
+    specs: specsFromArgv(argv),
+    content: cli.flags.content,
+  };
+}
+
+export async function main(argv = process.argv.slice(2)) {
+  const options = parseCliOptions(argv);
+  if (options.specs.length === 0) {
+    throw new Error('Pass at least one --url or --id.');
+  }
+  assertDocumentSpecs(options.specs);
+  const client = await createDocumentsClient(
+    { email: options.email, serverUrl: options.serverUrl },
+    console.log,
+  );
+  const response = await batchRetrieveDocuments(client, {
+    specs: options.specs,
+    includeContent: options.content,
+  });
+  console.log(formatBatch(response, options.specs.length, options.content));
+}
+
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  void main().catch((error: unknown) => {
+    printCliError(error);
+    process.exitCode = 1;
+  });
+}
