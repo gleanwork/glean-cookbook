@@ -16,6 +16,7 @@ vi.mock('node:process', async (importOriginal) => ({
 afterEach(() => {
   vi.clearAllMocks();
   vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
 });
 
 test('OAuth requests documents:read and prefers work email over GLEAN_SERVER_URL', async () => {
@@ -43,6 +44,43 @@ test('a user-scoped token does not request an OAuth provider', async () => {
   await createDocumentsClient({ serverUrl: 'https://example.test' });
   expect(createGleanTokenProvider).not.toHaveBeenCalled();
   expect(discoverGleanTenant).not.toHaveBeenCalled();
+});
+
+test('an auth failure keeps its own message', async () => {
+  vi.stubEnv('GLEAN_API_TOKEN', '');
+  const fetchMock = vi.fn();
+  vi.stubGlobal('fetch', fetchMock);
+  vi.mocked(createGleanTokenProvider).mockReturnValue(async () => {
+    throw new Error('Sign-in is required.');
+  });
+
+  const client = await createDocumentsClient({
+    serverUrl: 'https://example.test',
+  });
+
+  await expect(
+    client.getDocumentByUrl('https://docs.example/plan', false),
+  ).rejects.toThrow(/^Sign-in is required\.$/);
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+test('a network failure says Glean could not be reached', async () => {
+  vi.stubEnv('GLEAN_API_TOKEN', '');
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockRejectedValue(new Error('connect ECONNREFUSED')),
+  );
+  vi.mocked(createGleanTokenProvider).mockReturnValue(
+    async () => 'oauth-token',
+  );
+
+  const client = await createDocumentsClient({
+    serverUrl: 'https://example.test',
+  });
+
+  await expect(
+    client.getDocumentByUrl('https://docs.example/plan', false),
+  ).rejects.toThrow('Could not reach Glean: connect ECONNREFUSED');
 });
 
 test('rejects a backend that is not an HTTPS origin', async () => {

@@ -64,7 +64,7 @@ export function parseCliOptions(argv = process.argv.slice(2)): BatchCliOptions {
 
       Options
         --email         Work email used to discover the Glean backend
-        --server-url    Complete Glean backend origin; overrides --email
+        --server-url    Backend origin, for example https://<instance>-be.glean.com
         --url           Document URL; repeat it to send more than one
         --id            document_id; repeat it to send more than one
         --content       Also request extracted text (include CONTENT)
@@ -75,11 +75,11 @@ export function parseCliOptions(argv = process.argv.slice(2)): BatchCliOptions {
 
       Send 1 to 100 --url and --id values, in the order you want them sent.
       Each value is a document ID or a URL, not both. Documents Glean returns
-      are printed under results. A document ID or URL Glean does not return
+      are printed under results, with the document ID in parentheses. A document ID or URL Glean does not return
       is printed under warnings, and the command still exits 0.
 
       Examples
-        $ npm start -- --email you@example.com --url "https://docs.example/wiki/plan" --id "doc/1"
+        $ npm start -- --email you@example.com --url "https://docs.example/wiki/plan"
         $ npm start -- --email you@example.com --url "https://docs.example/wiki/plan" --id "doc/1" --url "https://example.invalid/not-indexed" --content
     `,
     {

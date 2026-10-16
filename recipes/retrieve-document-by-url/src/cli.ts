@@ -22,7 +22,7 @@ export function parseCliOptions(
 
       Options
         --email         Work email used to discover the Glean backend
-        --server-url    Complete Glean backend origin; overrides --email
+        --server-url    Backend origin, for example https://<instance>-be.glean.com
         --url           Document URL to retrieve
         --content       Also request extracted text (include=CONTENT)
 

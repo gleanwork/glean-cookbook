@@ -127,6 +127,7 @@ export async function createDocumentsClient(
       headers?: Record<string, string>;
     } = {},
   ): Promise<unknown> {
+    const accessToken = await getAccessToken();
     let response: Response;
     try {
       response = await fetch(url, {
@@ -137,7 +138,7 @@ export async function createDocumentsClient(
         headers: {
           accept: 'application/json',
           ...init.headers,
-          authorization: `Bearer ${await getAccessToken()}`,
+          authorization: `Bearer ${accessToken}`,
           [EXPERIMENTAL_HEADER]: 'true',
         },
       });

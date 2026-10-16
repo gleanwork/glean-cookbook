@@ -48,8 +48,8 @@ npm run login -- --email "<work-email>"
 
 Finish authorization in your browser and wait until the command reports
 success. If email discovery finds the wrong instance, pass
-`--server-url "https://<your-backend-origin>"` instead of `--email` on login
-and on the command below. Use the complete backend HTTPS origin.
+`--server-url "https://<instance>-be.glean.com"` instead of `--email` on login
+and on the command below. That value is the complete backend HTTPS origin.
 
 ### User-scoped token
 
@@ -59,7 +59,8 @@ Skip OAuth login. Copy the environment template:
 cp .env.example .env
 ```
 
-Set `GLEAN_SERVER_URL`. Create a user-scoped API token and choose
+Set `GLEAN_SERVER_URL` to your backend origin, for example
+`https://<instance>-be.glean.com`. Create a user-scoped API token and choose
 `documents:read` (legacy label `DOCUMENTS`). Put that token in
 `GLEAN_API_TOKEN`. Do not paste the token into a prompt, issue, or committed
 file. The CLI loads `.env` with Node.js. Existing shell variables win. Omit

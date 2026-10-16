@@ -44,7 +44,7 @@
   "demoQueries": [
     {
       "query": "Retrieve a document URL you can open in Glean",
-      "expectedBehavior": "Prints the title, a document_id line, the permalink, datasource, document type, timestamps, and url_request_id, then a line that says Round-trip document_id matches. The permalink may differ from the URL you passed. HTTP errors, including 404, exit non-zero and do not print that success line. A 404 usually means your Glean instance has not turned these endpoints on. If they are on, a 404 usually means the document does not exist or you cannot access it. Ask your Glean admin or Glean support. With --content, the output also includes content_segments. An empty full_text_list still prints the document and means there is no extracted text."
+      "expectedBehavior": "Prints the title, a document_id line, the permalink, datasource, document type, timestamps, and url_request_id, then a line that says Round-trip document_id matches. The permalink may differ from the URL you passed. HTTP errors, including 404, exit non-zero and do not print that success line. A 404 usually means your Glean instance has not turned these endpoints on. If they are on, a 404 usually means the document does not exist or you cannot access it. Ask your Glean admin or Glean support. With --content, the command prints content_segments and content_preview, or the line content: no extracted text."
     }
   ],
   "codeAssets": [
@@ -75,7 +75,7 @@
     },
     {
       "title": "Choose an authentication path",
-      "description": "OAuth is the default. `@gleanwork/auth` discovers your instance, registers the OAuth client dynamically, and stores credentials outside the project. If OAuth is unavailable, copy `.env.example` to `.env`, set `GLEAN_SERVER_URL`, and create a user-scoped API token with `documents:read` (legacy label `DOCUMENTS`). Put that token in `GLEAN_API_TOKEN` and skip the next step. Omit `--email` from the remaining commands. If email discovery finds the wrong instance, replace `--email` with `--server-url` and your complete backend HTTPS origin.",
+      "description": "OAuth is the default. `@gleanwork/auth` discovers your instance, registers the OAuth client dynamically, and stores credentials outside the project. If OAuth is unavailable, copy `.env.example` to `.env`, set `GLEAN_SERVER_URL` to your backend origin, for example `https://<instance>-be.glean.com`, and create a user-scoped API token with `documents:read` (legacy label `DOCUMENTS`). Put that token in `GLEAN_API_TOKEN` and skip the next step. Omit `--email` from the remaining commands. If email discovery finds the wrong instance, replace `--email` with `--server-url` and that same backend origin.",
       "kind": "configure"
     },
     {
@@ -92,7 +92,7 @@
     },
     {
       "title": "Request extracted text",
-      "description": "Run the same retrieval with `--content`. The client sends `include=CONTENT`, and the response adds `content.full_text_list`. An empty list means Glean has no extracted text. A failure to read requested content fails the command. With a token, omit `--email`.",
+      "description": "Run the same retrieval with `--content`. The command prints `content_segments:` and a short `content_preview:` of the first non-empty segment, or the line `content: no extracted text`. You still see the document when there is no extracted text. If Glean cannot read the text you asked for, the command fails. With a token, omit `--email`.",
       "command": "npm start -- --email \"<work-email>\" --url \"<document-url>\" --content",
       "kind": "run"
     }

@@ -23,10 +23,8 @@ sign-in.
 - Your work email, or the complete Glean backend HTTPS origin
 - The `documents:read` OAuth scope, or a user-scoped API token created with
   `documents:read` (legacy label `DOCUMENTS`)
-- One document URL you can open
-- One document ID. Run `retrieve-document-by-url` first and copy the
-  `document_id:` line it prints. Pass that value to `--id` here. Do not use
-  an ID copied from a Gmail or Outlook search result or chat citation.
+- One document URL you can open. Do not use an ID copied from a Gmail or
+  Outlook search result or chat citation.
 
 ## Copy and test the project
 
@@ -54,8 +52,8 @@ npm run login -- --email "<work-email>"
 
 Finish authorization in your browser and wait until the command reports
 success. If email discovery finds the wrong instance, pass
-`--server-url "https://<your-backend-origin>"` instead of `--email` on login
-and on the commands below. Use the complete backend HTTPS origin.
+`--server-url "https://<instance>-be.glean.com"` instead of `--email` on login
+and on the commands below. That value is the complete backend HTTPS origin.
 
 ### User-scoped token
 
@@ -65,21 +63,20 @@ Skip OAuth login. Copy the environment template:
 cp .env.example .env
 ```
 
-Set `GLEAN_SERVER_URL`. Create a user-scoped API token and choose
+Set `GLEAN_SERVER_URL` to your backend origin, for example
+`https://<instance>-be.glean.com`. Create a user-scoped API token and choose
 `documents:read` (legacy label `DOCUMENTS`). Put that token in
 `GLEAN_API_TOKEN`. Do not paste the token into a prompt, issue, or committed
 file. The CLI loads `.env` with Node.js. Existing shell variables win. Omit
 `--email` from the commands below.
 
-## Retrieve documents by URL and ID
+## Retrieve a document by URL
 
-Repeat `--url` and `--id` in the order you want them sent. To get a document
-ID, run the retrieve-by-URL recipe and copy the `document_id:` line. The
-request body is `document_specs`, from 1 to 100 items. Each item is a
-`document_id` or a `url`, not both.
+Start with one URL. The request body is `document_specs`, from 1 to 100
+items. Each item is a `document_id` or a `url`, not both.
 
 ```bash
-npm start -- --email "<work-email>" --url "<document-url>" --id "<document-id>"
+npm start -- --email "<work-email>" --url "<document-url>"
 ```
 
 The request is:
@@ -92,12 +89,13 @@ It sends `X-Glean-Include-Experimental: true` and a bearer token. A successful
 run prints a line like this, then `request_id:`, `results:`, and `warnings:`:
 
 ```text
-Retrieved 2 of 2 documents.
+Retrieved 1 of 1 documents.
 ```
 
-Each results line looks like `[index] title (document_id) permalink`. The
-permalink can differ from a URL you passed. When Glean returns every document,
-you see:
+Each results line looks like `[index] title (document_id) permalink`. Copy the
+document ID in the parentheses. Pass that value to `--id` in the next command.
+The permalink can differ from the URL you passed. When Glean returns every
+document, you see:
 
 ```text
 warnings:
@@ -108,11 +106,11 @@ HTTP errors exit non-zero and do not print the `Retrieved` line.
 
 ## Include a URL Glean does not have, and extracted text
 
-Repeat the URL and document ID from the previous command, add a URL that is
-not an indexed document, and pass `--content`. `--content` adds
-`"include": ["CONTENT"]` to the JSON body. It is not a query parameter. The
-value is the uppercase enum `CONTENT`. Each document Glean returns then
-includes `content.full_text_list`.
+Repeat the URL from the previous command, pass the document ID from its
+results line to `--id`, add a URL that is not an indexed document, and pass
+`--content`. Each result line includes `content_segments: N`.
+`content_segments: 0` means there is no extracted text, and you still see the
+document.
 
 ```bash
 npm start -- --email "<work-email>" --url "<document-url>" --id "<document-id>" --url "https://example.invalid/not-indexed" --content
@@ -132,10 +130,8 @@ examples of codes Glean may return. Glean can return other codes. There is
 no separate status field on each document. The code and message you see are
 the ones Glean sends back.
 
-An empty `full_text_list` means Glean has no extracted text. You still see
-the document under `results`, with `content_segments: 0`. If Glean cannot
-read the text you asked for, the command fails instead of printing documents
-without `content`.
+If Glean cannot read the text you asked for, the command fails instead of
+printing documents without `content`.
 
 If a URL is empty or malformed, Glean still accepts the batch and lists that
 URL under `warnings` on HTTP 200. You do not get HTTP 400 for that URL. This
