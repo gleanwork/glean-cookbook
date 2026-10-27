@@ -4,7 +4,11 @@ import {
   PlatformProblemDetailError,
 } from '@gleanwork/api-client/models/errors';
 import type { PlatformSkillSourcePreviewResponse } from '@gleanwork/api-client/models/components';
-import { CleanupFailedError, formatCliError } from './errors.js';
+import {
+  CleanupFailedError,
+  formatCliError,
+  skillsSourceStatusHint,
+} from './errors.js';
 import { DEFAULT_SOURCE_URL } from './fixture.js';
 import { readPreviewStream } from './preview.js';
 
@@ -50,23 +54,7 @@ export function importedSuccessLine(result: ImportResult) {
   return `Imported ${result.displayName} (${result.ids.join(', ')}) from ${result.sourceUrl} at ${result.commitSha}; cleanup completed.`;
 }
 
-export function githubFetchStatusHint(status?: number) {
-  if (status === 400) {
-    return ' HTTP 400 means this GitHub URL or ref is not supported. Commit permalinks and 40-character SHA URLs are rejected. Use a branch or tag URL such as .../tree/main/....';
-  }
-  if (status === 503) {
-    return ' HTTP 503 means GitHub import is disabled or unavailable.';
-  }
-  if (status === 403) {
-    return ' HTTP 403 means this credential cannot import from GitHub.';
-  }
-  if (status === 429) {
-    return ' HTTP 429 means GitHub import is rate-limited. Wait and retry.';
-  }
-  return '';
-}
-
-function githubFetchError(error: unknown): Error {
+function sourceRequestError(error: unknown): Error {
   const summary = formatCliError(error).error;
   const status =
     error instanceof PlatformProblemDetailError
@@ -74,8 +62,10 @@ function githubFetchError(error: unknown): Error {
       : error instanceof GleanBaseError
         ? error.statusCode
         : undefined;
+  const label =
+    status === 403 ? 'Skills API permission denied' : 'GitHub import failed';
   return new Error(
-    `GitHub import failed: ${summary}.${githubFetchStatusHint(status)} The import recipe fails rather than skipping.`,
+    `${label}: ${summary}.${skillsSourceStatusHint(status)} The import recipe fails rather than skipping.`,
   );
 }
 
@@ -91,7 +81,7 @@ function reraiseSourceError(error: unknown): never {
     error instanceof PlatformProblemDetailError ||
     error instanceof GleanBaseError
   ) {
-    throw githubFetchError(error);
+    throw sourceRequestError(error);
   }
   throw error instanceof Error ? error : new Error('Verification failed.');
 }

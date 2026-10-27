@@ -8,7 +8,7 @@
     "examples": [
       {
         "title": "Configure the Skills API client",
-        "description": "Resolve the reader's tenant and use the native Skills scopes or the recorded legacy compatibility mode.",
+        "description": "Resolve the reader's tenant and use native Skills scopes or a user-scoped token with Skills access.",
         "source": "src/client.ts",
         "language": "typescript"
       },
@@ -40,13 +40,13 @@
     "Node.js 22.12.0 or newer",
     "A Glean instance with Skills enabled",
     "Your work email, or the complete Glean backend HTTPS origin",
-    "A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback",
+    "A tenant that permits the native skills:read and skills:write OAuth scopes, or a user-scoped token with Skills read and write permission",
     "Tenant-side GitHub source fetching enabled for Skills; the default source is the public skill-creator directory on main, and verification fails rather than skipping if the tenant cannot preview it"
   ],
   "demoQueries": [
     {
       "query": "Preview, import, and sync the public GitHub skill-creator fixture, then delete run-owned IDs",
-      "expectedBehavior": "Stdout ends with Imported skill-creator (<id>) from the branch GitHub URL at <sha>; cleanup completed. If GitHub import fails, the run fails with a GitHub-import error instead of skipping. HTTP 400 means an unsupported URL or ref, including commit permalinks. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means the credential cannot import. HTTP 429 means rate-limiting. If delete fails, the process exits non-zero and does not print that success line."
+      "expectedBehavior": "Stdout ends with Imported skill-creator (<id>) from the branch GitHub URL at <sha>; cleanup completed. If GitHub import fails, the run fails with a GitHub-import error instead of skipping. HTTP 400 means an unsupported URL or ref, including commit permalinks. HTTP 403 means the workspace or credential lacks permission for the Skills operation. HTTP 503 means GitHub import is disabled or unavailable. HTTP 429 means rate-limiting. If delete fails, the process exits non-zero and does not print that success line."
     }
   ],
   "codeAssets": [
@@ -65,7 +65,7 @@
     },
     {
       "title": "Install dependencies",
-      "command": "cd import-skill-from-github && npm install",
+      "command": "cd import-skill-from-github && npm ci",
       "kind": "install"
     },
     {
@@ -76,7 +76,7 @@
     },
     {
       "title": "Sign in with OAuth",
-      "description": "Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.",
+      "description": "Use the official @gleanwork/auth CLI to discover your Glean backend from work email and request skills:read and skills:write. If OAuth is unavailable, skip this command and configure a user-scoped GLEAN_API_TOKEN and GLEAN_SERVER_URL in .env.",
       "command": "npm run login -- --email \"<work-email>\"",
       "kind": "authenticate"
     },
@@ -87,7 +87,7 @@
     },
     {
       "title": "Verify against your instance",
-      "description": "Preview the public GitHub skill-creator directory on main, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. HTTP 400 means an unsupported GitHub URL or ref, including commit permalinks. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means this credential cannot import. HTTP 429 means rate-limiting. Success prints an Imported line that ends with cleanup completed.",
+      "description": "Preview the public GitHub skill-creator directory on main, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. HTTP 400 means an unsupported GitHub URL or ref, including commit permalinks. HTTP 403 means the workspace or credential lacks permission for the Skills operation. HTTP 503 means GitHub import is disabled or unavailable. HTTP 429 means rate-limiting. Success prints an Imported line that ends with cleanup completed.",
       "command": "npm run verify -- --email \"<work-email>\"",
       "kind": "verify-live"
     },
@@ -148,13 +148,13 @@
       "icon": "sync"
     }
   ],
-  "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Skills needs no experimental opt-in. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/main/skills/skill-creator with stream false by default. Do not pass a commit permalink or SHA-pinned GitHub URL; the API rejects those with HTTP 400. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list, paginating list. Delete only IDs this run created. If cleanup cannot delete a captured ID, exit non-zero. If GitHub import fails, fail loudly instead of skipping. HTTP 400 means an unsupported URL or ref. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means the credential cannot import. HTTP 429 means rate-limiting. Do not treat HTTP 400 as a missing Third-party skills enablement flag. A 404 from Skills APIs is not a GitHub-import failure. With --stream, print scan progress events. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
-  "llmContext": "The Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.16. Skills needs no experimental opt-in. This recipe calls previewSource, and previewSourceStream for --stream, then imports selected URLs and syncs one captured skill. Default source is https://github.com/anthropics/skills/tree/main/skills/skill-creator. github_import rejects 40-character commit-SHA permalinks; pass a branch or tag URL. Native scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and delete only those. Failed cleanup must not report success. Fail, do not skip, when import fails. HTTP 400 is an unsupported URL or ref, not a Third-party skills enablement miss; 503 is import disabled or unavailable; 403 is credential; 429 is rate-limiting. Leave PATCH update and POST .../versions as take-it-further.",
+  "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Use the official @gleanwork/auth glean-auth login command with skills:read and skills:write; do not add a legacy-scope fallback. If OAuth is unavailable, use a user-scoped GLEAN_API_TOKEN with Skills access. Skills needs no experimental opt-in. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/main/skills/skill-creator with stream false by default. Do not pass a commit permalink or SHA-pinned GitHub URL; the API rejects those with HTTP 400. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list, paginating list. Delete only IDs this run created. If cleanup cannot delete a captured ID, exit non-zero. If GitHub import fails, fail loudly instead of skipping. HTTP 400 means an unsupported URL or ref. HTTP 403 means the workspace or credential lacks permission for the Skills operation. HTTP 503 means GitHub import is disabled or unavailable. HTTP 429 means rate-limiting. Do not treat HTTP 400 as a missing Third-party skills enablement flag. A 404 from Skills APIs is not a GitHub-import failure. With --stream, print scan progress events. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+  "llmContext": "The Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.16. Skills needs no experimental opt-in. This recipe calls previewSource, and previewSourceStream for --stream, then imports selected URLs and syncs one captured skill. Default source is https://github.com/anthropics/skills/tree/main/skills/skill-creator. github_import rejects 40-character commit-SHA permalinks; pass a branch or tag URL. OAuth uses the official @gleanwork/auth login CLI with skills:read and skills:write; GLEAN_API_TOKEN is the explicit non-interactive fallback. Capture mutation IDs and delete only those. Failed cleanup must not report success. Fail, do not skip, when import fails. HTTP 400 is an unsupported URL or ref, not a Third-party skills enablement miss; 403 means the workspace or credential lacks permission for the Skills operation; 503 is import disabled or unavailable; 429 is rate-limiting. Leave PATCH update and POST .../versions as take-it-further.",
   "goDependency": false,
   "hidden": false,
   "tags": ["skills", "github", "import", "platform-api"],
   "content": {
-    "problem": "Some teams keep Agent Skills in GitHub rather than a local SKILL.md. Previewing that URL, importing only the selected skills, and syncing a captured ID is a different job from the first persist or name-based versioning. This recipe uses a public GitHub skill directory on the main branch so the run is answerable on the reader's tenant without a seeded corpus.",
+    "problem": "Some teams keep Agent Skills in GitHub rather than a local SKILL.md. Previewing that URL, importing only the selected skills, and syncing a captured ID is a different job from the first persist or name-based versioning. This recipe uses a public GitHub skill directory on the main branch so the run is answerable on the reader's tenant without a seeded corpus. GitHub imports follow branch or tag URLs rather than fixed commit permalinks; Glean records the resolved commit SHA, and a later sync can advance to a newer commit.",
     "takeItFurther": [
       "Pass --source-url to preview a different public GitHub skill directory after the default branch source succeeds.",
       "Use the Intermediate publishing recipe when the source of truth is a local bundle and you need version supersession or zip sandboxing.",
@@ -181,11 +181,11 @@
     "limitations": [
       {
         "title": "GitHub must be fetchable",
-        "description": "Preview, import, and sync require GitHub import. The default source is a branch URL because commit permalinks are unsupported. HTTP 400 means an unsupported URL or ref. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means this credential cannot import. HTTP 429 means rate-limiting. Any of those statuses is a failed verify, not a skipped one."
+        "description": "Preview, import, and sync require tenant-side GitHub import. The API accepts branch or tag URLs and rejects commit permalinks so imports can stay in sync. Glean records the resolved commit SHA; later sync follows the stored branch or tag and can advance. HTTP 400 means an unsupported URL or ref. HTTP 403 means the workspace or credential lacks permission for the Skills operation. HTTP 503 means GitHub import is disabled or unavailable. HTTP 429 means rate-limiting. Any of these failures ends verification; it is never skipped."
       },
       {
         "title": "OAuth policy varies by tenant",
-        "description": "Native Skills scopes may not yet be grantable everywhere. The login wrapper uses the legacy compatibility scope only for a recognized scope-grant failure; a user-scoped token remains an explicit fallback."
+        "description": "OAuth requires native skills:read and skills:write scope grants plus the caller's Skills permission. If your tenant does not grant those scopes, use a user-scoped GLEAN_API_TOKEN with equivalent Skills access; the recipe does not retry with the legacy SKILLS scope."
       }
     ]
   }

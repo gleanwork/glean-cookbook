@@ -2,6 +2,7 @@ import type {
   PlatformSkillSourcePreviewResponse,
   PlatformSkillSourcePreviewStreamEventServerSentEvent,
 } from '@gleanwork/api-client/models/components';
+import { skillsSourceStatusHint } from './errors.js';
 
 export async function readPreviewStream(
   events: AsyncIterable<PlatformSkillSourcePreviewStreamEventServerSentEvent>,
@@ -22,9 +23,16 @@ export async function readPreviewStream(
       case 'RESULT':
         result = message.data.response;
         break;
-      case 'ERROR':
-        streamError = message.data.error.detail || message.data.error.title;
+      case 'ERROR': {
+        const { detail, title, status } = message.data.error;
+        const summary = detail || title;
+        const label =
+          status === 403
+            ? 'Skills API permission denied'
+            : 'GitHub import failed';
+        streamError = `${label}: ${summary}.${skillsSourceStatusHint(status)} The import recipe fails rather than skipping.`;
         break;
+      }
       default: {
         const unexpected: never = message;
         throw new Error(
@@ -34,11 +42,7 @@ export async function readPreviewStream(
     }
   }
 
-  if (streamError) {
-    throw new Error(
-      `GitHub import failed: ${streamError}. The import recipe fails rather than skipping.`,
-    );
-  }
+  if (streamError) throw new Error(streamError);
   if (!result) {
     throw new Error('Streaming preview ended without a result event.');
   }

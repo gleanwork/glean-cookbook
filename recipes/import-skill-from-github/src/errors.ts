@@ -51,6 +51,22 @@ function isMissingOAuthSession(message: string) {
   );
 }
 
+export function skillsSourceStatusHint(status?: number): string {
+  if (status === 400) {
+    return ' HTTP 400 means this GitHub URL or ref is not supported. Commit permalinks and 40-character SHA URLs are rejected. Use a branch or tag URL such as .../tree/main/....';
+  }
+  if (status === 403) {
+    return ' HTTP 403 means the workspace or credential lacks permission for the Skills operation.';
+  }
+  if (status === 503) {
+    return ' HTTP 503 means GitHub import is disabled or unavailable.';
+  }
+  if (status === 429) {
+    return ' HTTP 429 means GitHub import is rate-limited. Wait and retry.';
+  }
+  return '';
+}
+
 export function formatCliError(error: unknown): CliError {
   if (error instanceof CleanupFailedError) {
     return {
