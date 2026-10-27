@@ -56,8 +56,6 @@ export const LEGACY_OAUTH_HELPER_TARGETS = Object.freeze({
  * the official CLI instead of `glean-auth login` itself.
  */
 export const LEGACY_LOGIN_WRAPPER_TARGETS = Object.freeze({
-  'recipes/import-skill-from-github':
-    'scripts/login.mjs retries scopes for grant casing that @gleanwork/auth 1.0.0 fixed.',
   'recipes/skill-publishing-pipeline':
     'scripts/login.mjs retries scopes for grant casing that @gleanwork/auth 1.0.0 fixed.',
 });
@@ -100,8 +98,6 @@ export const LEGACY_CODE_PATTERN_TARGETS = Object.freeze({
     'recipes/customer-meeting-prep-trigger': DOTENV,
     'recipes/github-pr-review-monitor':
       'lib/config.mjs parses the legacy .env contract by hand.',
-    'recipes/import-skill-from-github':
-      'src/client.ts parses .env by hand instead of loadEnvFile.',
     'recipes/onboarding-hub/platform-chat': DOTENV,
     'recipes/oncall-copilot': DOTENV,
     'recipes/permissions-aware-retrieval/typescript': DOTENV,

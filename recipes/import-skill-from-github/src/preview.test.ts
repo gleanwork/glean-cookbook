@@ -89,6 +89,31 @@ test('fails loudly on a streamed GitHub error', async () => {
   ).rejects.toThrow(/GitHub import failed: GitHub is temporarily unavailable/);
 });
 
+test('reports permission denial for an SSE source error', async () => {
+  await expect(
+    readPreviewStream(
+      stream([
+        {
+          event: 'ERROR',
+          data: {
+            type: 'ERROR',
+            error: {
+              type: 'about:blank',
+              title: 'Forbidden',
+              status: 403,
+              detail: 'The caller does not have permission to use Skills.',
+              code: 'insufficient_permissions',
+              request_id: 'request-stream-forbidden',
+            },
+          },
+        },
+      ]),
+    ),
+  ).rejects.toThrow(
+    /Skills API permission denied: The caller does not have permission/,
+  );
+});
+
 test('recorded SSE fixtures name SCAN and RESULT events', () => {
   const body = previewStreamFixture(PREVIEW_FIXTURE);
   expect(body).toContain('event: SCAN');

@@ -10,18 +10,18 @@ import {
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { createGleanClient } from './client.js';
-import { CleanupFailedError, formatCliError } from './errors.js';
+import {
+  CleanupFailedError,
+  formatCliError,
+  skillsSourceStatusHint,
+} from './errors.js';
 import {
   githubSkillFixture,
   DEFAULT_SOURCE_URL,
   PREVIEW_FIXTURE,
 } from './fixture.js';
 import { previewStreamFixture } from './preview.js';
-import {
-  importedSuccessLine,
-  importSkillFromGithub,
-  githubFetchStatusHint,
-} from './workflow.js';
+import { importedSuccessLine, importSkillFromGithub } from './workflow.js';
 
 const originalToken = process.env.GLEAN_API_TOKEN;
 const originalExperimental = process.env.X_GLEAN_INCLUDE_EXPERIMENTAL;
@@ -154,6 +154,22 @@ function defaultHandlers(options?: {
   ];
 }
 
+test('fails when the GitHub preview contains no importable source', async () => {
+  process.env.GLEAN_API_TOKEN = 'fixture-token';
+  server.use(
+    http.post(`${baseUrl}/api/skills/sources/preview`, ({ request }) => {
+      expectNoExperimentalHeader(request);
+      return HttpResponse.json({ ...PREVIEW_FIXTURE, skills: [] });
+    }),
+    ...defaultHandlers(),
+  );
+  const client = await createGleanClient({ serverUrl: baseUrl });
+
+  await expect(
+    importSkillFromGithub(client.skills, { cleanup: true }),
+  ).rejects.toThrow(/GitHub preview returned no importable skills/);
+});
+
 test('previews, imports, syncs, and deletes only run-owned IDs', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   const deleted: string[] = [];
@@ -213,7 +229,7 @@ test('paginates list confirmation past the first 100 skills', async () => {
   expect(deleted).toEqual([skill.skill_id]);
 });
 
-test('fails loudly when the tenant cannot fetch GitHub', async () => {
+test('reports a Skills permission denial when the caller lacks access', async () => {
   process.env.GLEAN_API_TOKEN = 'fixture-token';
   server.use(
     http.post(`${baseUrl}/api/skills/sources/preview`, ({ request }) => {
@@ -223,8 +239,8 @@ test('fails loudly when the tenant cannot fetch GitHub', async () => {
           type: 'about:blank',
           title: 'Forbidden',
           status: 403,
-          detail: 'GitHub fetch is not permitted for this tenant.',
-          code: 'github_unavailable',
+          detail: 'The caller does not have permission to use Skills.',
+          code: 'insufficient_permissions',
           request_id: 'request-preview-failed',
         },
         {
@@ -238,7 +254,7 @@ test('fails loudly when the tenant cannot fetch GitHub', async () => {
 
   await assert.rejects(
     () => importSkillFromGithub(client.skills, { cleanup: true }),
-    /cannot import from GitHub/,
+    /Skills API permission denied: HTTP 403/,
   );
 });
 
@@ -272,12 +288,15 @@ test('explains HTTP 400 as a rejected source URL', async () => {
 });
 
 test('distinguishes unsupported URL, disabled import, forbidden, and rate-limit errors', () => {
-  expect(githubFetchStatusHint(400)).toMatch(/not supported/);
-  expect(githubFetchStatusHint(400)).toMatch(/Commit permalinks/);
-  expect(githubFetchStatusHint(400)).not.toMatch(/admin|Third-party|enable/i);
-  expect(githubFetchStatusHint(503)).toMatch(/disabled or unavailable/);
-  expect(githubFetchStatusHint(403)).toMatch(/cannot import from GitHub/);
-  expect(githubFetchStatusHint(429)).toMatch(/rate-limited/);
+  expect(skillsSourceStatusHint(400)).toMatch(/not supported/);
+  expect(skillsSourceStatusHint(400)).toMatch(/Commit permalinks/);
+  expect(skillsSourceStatusHint(400)).not.toMatch(/admin|Third-party|enable/i);
+  expect(skillsSourceStatusHint(503)).toMatch(/disabled or unavailable/);
+  expect(skillsSourceStatusHint(403)).toMatch(
+    /lacks permission for the Skills operation/,
+  );
+  expect(skillsSourceStatusHint(403)).not.toMatch(/cannot import from GitHub/);
+  expect(skillsSourceStatusHint(429)).toMatch(/rate-limited/);
 });
 
 test('Skills API 404s are not labeled as a GitHub fetch failure', async () => {

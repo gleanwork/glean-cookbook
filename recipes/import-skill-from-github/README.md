@@ -19,7 +19,7 @@ This recipe stores and syncs the bundle; it does not run retrieved files.
 ```bash
 npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/import-skill-from-github import-skill-from-github
 cd import-skill-from-github
-npm install
+npm ci
 npm test
 ```
 
@@ -27,8 +27,8 @@ You test with recorded preview responses, so you do not need GitHub or Glean
 credentials yet. A successful run ends with:
 
 ```text
-Test Files  4 passed (4)
-Tests       22 passed (22)
+Test Files  3 passed (3)
+Tests       23 passed (23)
 ```
 
 ## Sign in
@@ -39,9 +39,10 @@ Sign in with OAuth so the API calls use your own permissions:
 npm run login -- --email you@example.com
 ```
 
-Your browser opens for approval, and the auth package stores your refreshable
-credentials outside this project. If your tenant uses the older Skills
-permission, the login command retries with that compatibility permission.
+The official `glean-auth` CLI requests `skills:read` and `skills:write`, and the
+auth package stores refreshable credentials outside this project. If your tenant
+does not grant those OAuth scopes, use a user-scoped token with Skills read and
+write permission instead; the recipe does not retry with a legacy scope.
 
 For a token-first tenant, skip login:
 
@@ -71,11 +72,12 @@ The default source is:
 `https://github.com/anthropics/skills/tree/main/skills/skill-creator`
 
 GitHub commit permalinks and 40-character SHA URLs are not supported. Use a
-branch or tag URL. `HTTP 400` means that source URL or ref is unsupported, not
-that Third-party skills need to be enabled. `HTTP 503` means GitHub import is
-disabled or unavailable. `HTTP 403` means this credential cannot import from
-GitHub. `HTTP 429` means the import is rate-limited. Verification fails instead
-of skipping.
+branch or tag URL. Glean records the resolved commit SHA, and later sync follows
+the stored branch or tag, which can advance. `HTTP 400` means that source URL or
+ref is unsupported, not that Third-party skills need to be enabled. `HTTP 403`
+means the workspace or credential lacks permission for the Skills operation.
+`HTTP 503` means GitHub import is disabled or unavailable. `HTTP 429` means the
+import is rate-limited. Verification fails instead of skipping.
 
 To watch repository scan progress, run:
 
