@@ -3,21 +3,19 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "A white-label usage and limits dashboard on the Glean usage limits APIs, with an opt-in sample mode.",
+  "description": "A white-label usage limits dashboard on the Glean usage limits APIs, with an opt-in sample mode.",
   "engines": {
     "node": ">=22.12.0"
   },
   "scripts": {
     "start": "node server.mjs --live",
     "demo": "node scripts/demo.mjs",
-    "login": "glean-auth login --scopes users:read,departments:read,admin.usage:evaluate,admin.usage.limits:read,admin.usage.limits:write,admin.oauth.clients:read,admin.idp_groups:read",
     "test": "vitest run",
     "verify": "node scripts/verify.mjs",
     "verify:fixture": "npm test"
   },
   "dependencies": {
-    "@gleanwork/api-client": "0.20.18",
-    "@gleanwork/auth": "0.5.1"
+    "@gleanwork/api-client": "0.20.18"
   },
   "devDependencies": {
     "msw": "2.11.3",

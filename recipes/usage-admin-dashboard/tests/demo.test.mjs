@@ -1,76 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'vitest';
-import {
-  limitKey,
-  makeLimit,
-  parseEvaluation,
-  parseSearchResponse,
-} from '../lib/contracts.mjs';
+import { limitKey, makeLimit, parseEvaluation } from '../lib/contracts.mjs';
 import { createDemoProvider } from '../lib/demo.mjs';
-import { demo, draft, evaluation, query, sam } from './fixtures.mjs';
+import { demo, draft, evaluation, sam } from './fixtures.mjs';
 
-test('Demo reporting paginates without doubling totals or combining units', async () => {
-  const provider = demo();
-  const first = await provider.search(query);
-  const second = await provider.search({ ...query, cursor: first.next_cursor });
-  parseSearchResponse(first);
-  assert.ok(first.has_more);
-  assert.deepEqual(first.totals, second.totals);
-  assert.deepEqual(
-    first.totals.map((t) => t.unit),
-    ['USD', 'CREDITS'],
-  );
-  assert.equal(first.data_updated_at, null);
-  assert.equal(first.earliest_available_at, null);
-  assert.notDeepEqual(first.results, second.results);
-});
-test('Demo cursor pins observations and rejects query changes or expiry', async () => {
-  let now = new Date('2026-10-12T12:00:00Z');
-  const p = createDemoProvider({ now: () => now });
-  const first = await p.search(query);
-  await assert.rejects(
-    p.search({ ...query, cursor: first.next_cursor, page_size: 3 }),
-    (e) => e.code === 'invalid_cursor',
-  );
-  await assert.rejects(
-    p.search({
-      ...query,
-      cursor: first.next_cursor,
-      filters: [{ field: 'client_id', values: ['glean'] }],
-    }),
-    (e) => e.code === 'invalid_cursor',
-  );
-  now = new Date('2026-10-13T00:01:00Z');
-  const next = await p.search({ ...query, cursor: first.next_cursor });
-  assert.deepEqual(next.totals, first.totals);
-  now = new Date('2026-10-14T12:01:00Z');
-  await assert.rejects(
-    p.search({ ...query, cursor: first.next_cursor }),
-    (e) => e.code === 'expired_cursor',
-  );
-});
-test('Demo hydration returns only page-local observed labels', async () => {
-  const r = await demo().search({
-    ...query,
-    granularity: 'NONE',
-    group_by: ['USER'],
-    include: ['DISPLAY_NAMES'],
-  });
-  assert.equal(Object.keys(r.labels.user_id).length, 2);
-  for (const id of Object.keys(r.labels.user_id))
-    assert.ok(r.results.some((b) => b.dimensions.user_id === id));
-});
-test('Missing labels and null attribution preserve measured amounts', async () => {
-  const r = await demo().search({
-    ...query,
-    granularity: 'NONE',
-    group_by: ['MODEL'],
-    page_size: 100,
-  });
-  assert.ok(r.results.some((b) => b.dimensions.model_id === null));
-  delete r.labels;
-  assert.equal(parseSearchResponse(r), r);
-});
 test('No policies is explicit, not a fabricated unlimited cap', async () => {
   const r = await demo().evaluate(
     evaluation({
@@ -189,4 +122,24 @@ test('The premium policy restricts models on a user’s own limit only', async (
 });
 test('Sample writes enforce the client billing denomination', async () => {
   await assert.rejects(demo().save(draft({ unit: 'USD' })), /denomination/);
+});
+test('A typed spend-client ID is stored and evaluated exactly', async () => {
+  const p = demo();
+  const limit = makeLimit({
+    type: 'ORGANIZATION',
+    clientId: 'typed-client-ID',
+    amount: '5',
+    unit: 'USD',
+  });
+  assert.deepEqual((await p.save(limit)).usage_limit, limit);
+  const r = parseEvaluation(
+    await p.evaluate(
+      evaluation({ type: 'ORGANIZATION', client_id: 'typed-client-ID' }),
+    ),
+  );
+  assert.equal(r.decision, 'AVAILABLE');
+  assert.deepEqual(
+    r.evaluated_limits.map((l) => l.target.client_id),
+    ['typed-client-ID'],
+  );
 });

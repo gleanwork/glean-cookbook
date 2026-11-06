@@ -7,13 +7,11 @@ import {
   decimal,
   limitKey,
   micros,
-  parseSearchResponse,
   validateEvaluation,
   validateLimit,
-  validateSearch,
 } from '../lib/contracts.mjs';
 import { USERS } from '../lib/demo.mjs';
-import { draft, evaluation, query, sam } from './fixtures.mjs';
+import { draft, evaluation, sam } from './fixtures.mjs';
 
 test('Limit bodies use supported natural keys, allocations, and exact opaque IDs', () => {
   assert.equal(
@@ -84,41 +82,6 @@ test('Reset keys drop response-only fields such as email', () => {
     },
   );
 });
-test('UTC exclusive windows, public filter grammar, and bounds are enforced', () => {
-  validateSearch(query);
-  for (const patch of [
-    {
-      time_range: {
-        start: '2026-02-30T00:00:00Z',
-        end: '2026-03-31T00:00:00Z',
-      },
-    },
-    {
-      time_range: {
-        start: '2026-10-01T12:00:00Z',
-        end: '2026-11-01T00:00:00Z',
-      },
-    },
-    { granularity: 'HOUR' },
-    { group_by: ['DEPARTMENT'] },
-    { group_by: ['MODEL', 'MODEL'] },
-    { page_size: 1001 },
-    { filters: [{ field: 'department_name', values: ['Engineering'] }] },
-    { filters: [{ field: 'client_id', values: ['__deleted_clients__'] }] },
-    { sort: { field: 'PERIOD_START', unit: 'USD' } },
-  ])
-    assert.throws(() => validateSearch({ ...query, ...patch }));
-  assert.throws(() =>
-    validateSearch({
-      ...query,
-      target: { type: 'USER', user_id: 'u' },
-      time_range: {
-        start: '2026-09-01T00:00:00Z',
-        end: '2026-11-01T00:00:00Z',
-      },
-    }),
-  );
-});
 test('Ledger arithmetic uses exact micro-unit decimals', () => {
   assert.equal(decimal(micros('0.1') + micros('0.2')), '0.3');
   assert.equal(decimal(micros('987654321098.123456')), '987654321098.123456');
@@ -131,9 +94,4 @@ test('Org chart retains orphans and terminates on manager cycles', () => {
     { user_id: 'c', manager: { user_id: 'missing' } },
   ]);
   assert.equal(forest.length, 3);
-});
-test('Malformed observed responses do not masquerade as empty success', () => {
-  assert.throws(() =>
-    parseSearchResponse({ results: [], has_more: true, request_id: 'r' }),
-  );
 });

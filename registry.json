@@ -4827,9 +4827,9 @@
   },
   {
     "id": "usage-admin-dashboard",
-    "title": "Build a white-label usage and limits dashboard",
-    "description": "Sign in, verify the usage limits APIs against your workspace, and run a white-label dashboard for organization, default-member, and personal AI spend limits. A labeled sample mode runs without credentials.",
-    "sidebarLabel": "Usage and limits dashboard",
+    "title": "Build a white-label usage limits dashboard",
+    "description": "Verify the usage limits APIs against your workspace with a Client API token, then run a white-label dashboard that sets organization, default per-person, and individual AI spend limits. A labeled sample mode runs without credentials.",
+    "sidebarLabel": "Usage limits dashboard",
     "surfaces": ["platform-api"],
     "capabilities": ["tools"],
     "status": "showcase",
@@ -4839,28 +4839,20 @@
     "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~15 min",
     "icon": "chart",
-    "requiredScopes": [
-      "users:read",
-      "departments:read",
-      "admin.usage:evaluate",
-      "admin.usage.limits:read",
-      "admin.usage.limits:write",
-      "admin.oauth.clients:read",
-      "admin.idp_groups:read"
-    ],
+    "requiredScopes": ["ADMIN_USAGE", "PEOPLE"],
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
     "languages": ["javascript"],
     "prerequisites": [
       "Node 22.12.0 or newer",
-      "Your work email, or the complete Glean backend origin shown under Server instance (QE)",
+      "The complete Glean backend origin shown under Server instance (QE)",
       "Workspace billing permissions: billing read to view and evaluate limits, billing edit to change them. The ADMIN role alone does not grant them",
-      "A tenant that permits these experimental scopes through OAuth; an administrator-provisioned OAuth client or a server-side user-scoped token is the fallback"
+      "A user-scoped Client API token with the ADMIN_USAGE and PEOPLE scopes, created by that user in Token Management"
     ],
     "demoQueries": [
       {
         "query": "Review this month's limits",
-        "expectedBehavior": "Lists organization, default-member, and personal limits per spend client with their threshold actions. The workspace premium-model policy and all thresholds are read-only."
+        "expectedBehavior": "Lists organization, default per-person, and individual limits per spend client with their threshold actions. The workspace premium-model policy and all thresholds are read-only."
       },
       {
         "query": "Open a person and evaluate their budget",
@@ -4875,7 +4867,7 @@
       {
         "repoPath": "recipes/usage-admin-dashboard",
         "language": "javascript",
-        "description": "Node server and browser UI that read the directory through @gleanwork/api-client, call the experimental usage operations through a narrow REST bridge, and test both with Vitest and MSW"
+        "description": "Node server and browser UI that read people and departments through @gleanwork/api-client, call the experimental usage limit operations and the OAuth client list through a narrow REST bridge, and test both with Vitest and MSW"
       }
     ],
     "steps": [
@@ -4887,7 +4879,7 @@
       {
         "kind": "install",
         "title": "Install dependencies",
-        "description": "Installs the pinned Glean SDK and auth package, plus Vitest and MSW for the tests.",
+        "description": "Installs the pinned Glean SDK, plus Vitest and MSW for the tests. Run the remaining commands from this directory.",
         "command": "cd usage-admin-dashboard && npm ci"
       },
       {
@@ -4897,56 +4889,42 @@
         "command": "npm run verify:fixture"
       },
       {
-        "kind": "authenticate",
-        "title": "Sign in with OAuth",
-        "description": "Discovers your Glean backend from your work email, completes Authorization Code with PKCE for the usage limit, directory, OAuth client, and IdP group scopes, and stores refreshable credentials outside the project. Use --server-url for an explicit backend or a server-side GLEAN_API_TOKEN as the fallback.",
-        "command": "npm run login -- --email \"<work-email>\""
+        "kind": "configure",
+        "title": "Add your backend and token",
+        "description": "Copy the example, then open .env yourself. Set GLEAN_SERVER_URL to your backend origin and GLEAN_API_TOKEN to a user-scoped Client API token with the ADMIN_USAGE and PEOPLE scopes from Token Management, created by a user with billing permissions. Never paste the token into chat, a command, or a committed file. Leave GLEAN_ENABLE_WRITES=false.",
+        "command": "cp .env.example .env"
       },
       {
         "kind": "verify-live",
         "title": "Verify against your workspace",
-        "description": "Makes read-only requests: people, departments, gateway OAuth clients, IdP groups, the limit list, and an organization and personal evaluation. It never writes a policy. Usage history is reported separately because its API has not shipped.",
-        "command": "npm run verify -- --email \"<work-email>\""
+        "description": "Makes read-only requests: people, departments, gateway OAuth clients, the limit list, and an organization and personal evaluation. It never writes a policy and exits non-zero when a required API is missing, forbidden, or unavailable.",
+        "command": "npm run verify"
       },
       {
         "kind": "run",
         "title": "Start the dashboard",
-        "description": "Open the Local URL printed by the server in your own browser. Writes are off; to change policies on a workspace you are authorized to modify, restart with GLEAN_ENABLE_WRITES=true. Run npm run demo instead for the fictional sample.",
-        "command": "npm start -- --email \"<work-email>\""
+        "description": "Open the Local URL printed by the server in your own browser. Writes are off; to change limits on a workspace you are authorized to modify, set GLEAN_ENABLE_WRITES=true in .env and restart. Run npm run demo instead for the fictional sample.",
+        "command": "npm start"
       }
     ],
     "execution": {
       "type": "local-web",
-      "questions": [
-        {
-          "id": "work-email",
-          "prompt": "What is your work email address? It is used to discover your Glean tenant."
-        }
-      ],
       "auth": [
         {
-          "kind": "oauth-with-token-fallback",
-          "scopes": [
-            "users:read",
-            "departments:read",
-            "admin.usage:evaluate",
-            "admin.usage.limits:read",
-            "admin.usage.limits:write",
-            "admin.oauth.clients:read",
-            "admin.idp_groups:read"
-          ],
-          "setupCommand": "npm run login -- --email \"<work-email>\"",
+          "kind": "hosted-secret",
+          "scopes": ["ADMIN_USAGE", "PEOPLE"],
+          "configFile": ".env",
           "credentialVariable": "GLEAN_API_TOKEN"
         }
       ],
       "verification": {
         "kind": "automated",
-        "command": "npm run verify -- --email \"<work-email>\"",
-        "expectedDuration": "under a minute after sign-in",
+        "command": "npm run verify",
+        "expectedDuration": "under a minute",
         "startsOwnServer": false
       },
       "run": {
-        "command": "npm start -- --email \"<work-email>\"",
+        "command": "npm start",
         "url": "the Local URL printed by the server",
         "userBrowser": true
       }
@@ -4954,12 +4932,12 @@
     "architecture": [
       {
         "label": "Your dashboard",
-        "caption": "charts, people, policy review",
+        "caption": "limits, people, policy review",
         "icon": "browser"
       },
       {
         "label": "Local Node server",
-        "caption": "credentials never reach the browser",
+        "caption": "the token never reaches the browser",
         "icon": "code"
       },
       {
@@ -4969,22 +4947,22 @@
       },
       {
         "label": "Platform APIs",
-        "caption": "limits, observed usage, directory",
+        "caption": "usage limits, OAuth clients, directory",
         "category": "portal",
         "emphasized": true
       }
     ],
-    "aiPrompt": "Scaffold and run the usage-admin-dashboard recipe exactly as written. Ask for the user's work email. Install with npm ci, run npm run verify:fixture, sign in with npm run login, run the read-only npm run verify, then start npm start and have the user open the printed Local URL in their own browser. Pass --email to each live command. The signed-in user needs workspace billing permissions; the ADMIN role alone is not enough. Keep credentials in the local server: @gleanwork/auth stores refreshable OAuth credentials outside the project, and GLEAN_API_TOKEN is a server-side fallback only. Use @gleanwork/api-client 0.20.18 for people, departments, and IdP groups. Call the usage limit, reset, and evaluation endpoints and the OAuth client list through the shipped REST bridge, which sends X-Glean-Include-Experimental: true. Live writes stay off unless the user explicitly authorizes changes to that workspace and restarts with GLEAN_ENABLE_WRITES=true; never retry a write automatically. Saves omit actions so existing thresholds survive. Never synthesize department, IdP-group, model, or org-subtree limits from per-user writes, and never fall back to sample data when a live call fails. The sample dashboard from npm run demo is fictional and does not count as verification.",
-    "llmContext": "Progressively live preview test bed. Limits are keyed by target, whose client_id is the spend client, and period. Edit ORGANIZATION, DEFAULT_USER, and USER policies with the single public upsert; omit actions so existing thresholds survive, and reset by natural key. DEFAULT_USER with client_id * is the actions-only premium-model policy; show it read-only. Evaluate a concrete ORGANIZATION or USER with client_id and period; read headroom from effective_limits, causes from decision_causes, and model allowlists from restrictions. Department and IdP-group limits are response-only sources. Use ai_gateway.usage_client_id verbatim plus the glean constant. Never combine USD and CREDITS. Usage search is a draft API. Live unavailability never falls back to fixtures. Manager links are not IdP membership.",
+    "aiPrompt": "Scaffold and run the usage-admin-dashboard recipe exactly as written. Install with npm ci and run npm run verify:fixture. Copy .env.example to .env, then have the user enter GLEAN_SERVER_URL and GLEAN_API_TOKEN in .env themselves; never ask for, print, or pass the token. The token is a user-scoped Client API token with the ADMIN_USAGE and PEOPLE scopes, and that user needs workspace billing permissions; the ADMIN role alone is not enough. Run the read-only npm run verify, then start npm start and have the user open the printed Local URL in their own browser. The token stays in the local server. Use @gleanwork/api-client 0.20.18 for people and departments. Call the usage limit, reset, and evaluation endpoints and the OAuth client list through the shipped REST bridge, which sends X-Glean-Include-Experimental: true. Live writes stay off unless the user explicitly authorizes changes to that workspace and sets GLEAN_ENABLE_WRITES=true; never retry a write automatically. Saves omit actions so existing thresholds survive. Never synthesize department, IdP-group, model, or org-subtree limits from per-user writes, and never fall back to sample data when a live call fails. The sample dashboard from npm run demo is fictional and does not count as verification.",
+    "llmContext": "Limits are keyed by target, whose client_id is the spend client, and period. Edit ORGANIZATION, DEFAULT_USER, and USER policies with the single public upsert; omit actions so existing thresholds survive, and reset by natural key. DEFAULT_USER with client_id * is the actions-only premium-model policy; show it read-only. Evaluate a concrete ORGANIZATION or USER with client_id and period; read headroom from effective_limits, causes from decision_causes, and model allowlists from restrictions. Use ai_gateway.usage_client_id verbatim, the glean constant, or an exact typed client ID. Never combine USD and CREDITS. Department and IdP-group limits are not supported. Live unavailability never falls back to fixtures. Manager links are not team membership.",
     "goDependency": false,
     "hidden": false,
     "tags": ["usage", "limits", "dashboard", "billing", "preview"],
     "content": {
-      "problem": "Administrators need a customer-branded view of who can spend how much on which AI clients, and why a person is warned or blocked. This recipe builds that view on the usage limits APIs and shows missing capabilities as unavailable rather than as empty charts or invented policy targets.",
+      "problem": "Administrators need a customer-branded way to decide who can spend how much on which AI clients, and to see why a person is warned or blocked. This recipe builds that on the usage limits APIs and shows missing capabilities as unavailable rather than inventing policy targets.",
       "takeItFurther": [
         "Move the OAuth client list and the usage operations to @gleanwork/api-client once a release covers their current contracts.",
         "Add deployment-specific session authentication and per-admin authorization before hosting this local-only recipe.",
-        "Add department and IdP-group limits once the API accepts them as targets, and usage history once the reporting API ships."
+        "Add department and IdP-group limits once the API accepts them as targets."
       ],
       "limitations": [
         {
@@ -4992,12 +4970,12 @@
           "description": "Fixture tests cover the API contracts. The recipe stays in preview until an authorized run against a real workspace, including a contained write and reset, passes."
         },
         {
-          "title": "Local single-admin test bed",
-          "description": "The server binds to loopback and uses one operator’s credentials. Do not expose it publicly or treat it as a multi-user admin service."
+          "title": "Local single-admin tool",
+          "description": "The server binds to loopback and uses one operator’s token. Do not expose it publicly or treat it as a multi-user admin service."
         },
         {
           "title": "Organization, default, and personal limits only",
-          "description": "Department and IdP-group limits appear only as evaluation sources and cannot be written yet. Threshold actions are shown and preserved, not edited. Usage history needs a reporting API that has not shipped, so live mode shows it as unavailable."
+          "description": "Department and IdP-group limits are not supported yet. Threshold actions are shown and preserved, not edited. Usage history is not part of this recipe."
         }
       ]
     }

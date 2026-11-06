@@ -10,15 +10,6 @@ export const LIMIT_TARGETS = Object.freeze([
   'USER',
 ]);
 export const EVALUATION_TARGETS = Object.freeze(['ORGANIZATION', 'USER']);
-export const SCOPES = [
-  'users:read',
-  'departments:read',
-  'admin.usage:evaluate',
-  'admin.usage.limits:read',
-  'admin.usage.limits:write',
-  'admin.oauth.clients:read',
-  'admin.idp_groups:read',
-];
 export class ApiError extends Error {
   constructor(message, status = 400, code = 'invalid_request', requestId) {
     super(message);
@@ -48,7 +39,7 @@ export function validateTarget(target, types) {
   exactKeys(target, ['type', 'client_id', 'user_id']);
   if (!types.includes(target.type))
     throw new ApiError(
-      `This operation accepts ${types.join(', ')} targets. Department and IdP-group limit writes are not in the API yet.`,
+      `This operation accepts ${types.join(', ')} targets.`,
       422,
       'unsupported_target',
     );
@@ -135,129 +126,6 @@ export function makeLimit({
   if (type === 'DEFAULT_USER') limit.allocation_mode = 'PER_MEMBER';
   return validateLimit(limit);
 }
-export function validateSearch(query) {
-  exactKeys(query, [
-    'target',
-    'time_range',
-    'granularity',
-    'group_by',
-    'filters',
-    'sort',
-    'include',
-    'page_size',
-    'cursor',
-  ]);
-  // The draft reporting contract selects clients with filters, not the target.
-  exactKeys(query.target, ['type', 'user_id']);
-  if (!EVALUATION_TARGETS.includes(query.target.type))
-    throw new ApiError(
-      'Reporting supports organization and user targets only.',
-      422,
-      'unsupported_target',
-    );
-  if (
-    query.target.type === 'USER'
-      ? !nonblank(query.target.user_id)
-      : 'user_id' in query.target
-  )
-    throw new ApiError(
-      'A USER requires a canonical user_id; other targets must omit it.',
-    );
-  exactKeys(query.time_range, ['start', 'end']);
-  const { start, end } = query.time_range;
-  const midnight = /^\d{4}-\d{2}-\d{2}T00:00:00Z$/u;
-  const valid = (v) =>
-    midnight.test(v) &&
-    Number.isFinite(Date.parse(v)) &&
-    new Date(v).toISOString().replace('.000Z', 'Z') === v;
-  if (!valid(start) || !valid(end) || end <= start)
-    throw new ApiError(
-      'Use valid UTC midnight bounds with an exclusive end after start.',
-    );
-  const days = (Date.parse(end) - Date.parse(start)) / 86400000;
-  const granularity = query.granularity ?? 'NONE';
-  if (!['NONE', 'DAY', 'WEEK', 'MONTH'].includes(granularity))
-    throw new ApiError('Invalid granularity.');
-  const maxDays =
-    query.target.type === 'USER' && granularity === 'DAY' ? 31 : 180;
-  const anniversary = new Date(start);
-  anniversary.setUTCFullYear(anniversary.getUTCFullYear() + 1);
-  if (
-    ['DAY', 'WEEK'].includes(granularity)
-      ? days > maxDays
-      : Date.parse(end) > +anniversary
-  )
-    throw new ApiError('Time range exceeds this query’s bound.');
-  const groups = query.group_by ?? [];
-  if (
-    !Array.isArray(groups) ||
-    groups.length > 5 ||
-    new Set(groups).size !== groups.length ||
-    groups.some(
-      (g) =>
-        !['PRODUCT', 'FEATURE', 'MODEL', 'CLIENT', 'AGENT', 'USER'].includes(g),
-    )
-  )
-    throw new ApiError(
-      'Choose supported grouping dimensions; department and IdP-group reporting are deferred.',
-      422,
-      'unsupported_dimension',
-    );
-  if (
-    query.page_size !== undefined &&
-    (!Number.isInteger(query.page_size) ||
-      query.page_size < 1 ||
-      query.page_size > 1000)
-  )
-    throw new ApiError('page_size must be 1–1000.');
-  if (
-    query.cursor !== undefined &&
-    (!nonblank(query.cursor) || query.cursor.length > 512)
-  )
-    throw new ApiError('Invalid opaque cursor.');
-  if (
-    query.include !== undefined &&
-    (!Array.isArray(query.include) ||
-      query.include.some((v) => !['DISPLAY_NAMES', 'TOTAL_COUNT'].includes(v)))
-  )
-    throw new ApiError('Invalid include value.');
-  if (query.filters !== undefined) {
-    if (!Array.isArray(query.filters) || query.filters.length > 20)
-      throw new ApiError('At most 20 filters are allowed.');
-    for (const f of query.filters) {
-      exactKeys(f, ['field', 'values', 'operator']);
-      if (
-        ![
-          'product',
-          'feature',
-          'model_id',
-          'client_id',
-          'agent_id',
-          'user_id',
-        ].includes(f.field) ||
-        !Array.isArray(f.values) ||
-        f.values.length < 1 ||
-        f.values.length > 100 ||
-        f.values.some((v) => !nonblank(v) || v.length > 512) ||
-        !['EQUALS', 'NOT_EQUALS'].includes(f.operator ?? 'EQUALS')
-      )
-        throw new ApiError('Invalid or deferred usage filter.');
-      if (f.field === 'client_id') f.values.forEach(validateClientId);
-    }
-  }
-  if (query.sort !== undefined) {
-    exactKeys(query.sort, ['field', 'direction', 'unit']);
-    if (
-      !['USED', 'PERIOD_START'].includes(query.sort.field) ||
-      !['ASC', 'DESC'].includes(query.sort.direction ?? 'ASC') ||
-      (query.sort.field === 'PERIOD_START' &&
-        (granularity === 'NONE' || 'unit' in query.sort)) ||
-      ('unit' in query.sort && !['USD', 'CREDITS'].includes(query.sort.unit))
-    )
-      throw new ApiError('Invalid sort.');
-  }
-  return query;
-}
 export function validateEvaluation(query) {
   exactKeys(query, ['target', 'period']);
   validateTarget(query.target, EVALUATION_TARGETS);
@@ -303,42 +171,7 @@ export function parsePage(page) {
     );
   return page;
 }
-export function parseSearchResponse(response) {
-  parsePage(response);
-  if (
-    !Array.isArray(response.totals) ||
-    !object(response.time_range) ||
-    !('data_updated_at' in response) ||
-    !('earliest_available_at' in response)
-  )
-    throw new ApiError(
-      'Malformed measured-usage response.',
-      502,
-      'invalid_response',
-    );
-  const amounts = (a) =>
-    Array.isArray(a) &&
-    a.every(
-      (v) =>
-        object(v) &&
-        ['USD', 'CREDITS'].includes(v.unit) &&
-        typeof v.used === 'string' &&
-        /^(0|[1-9][0-9]*)(\.[0-9]{1,6})?$/u.test(v.used),
-    );
-  if (
-    !amounts(response.totals) ||
-    response.results.some(
-      (b) => !object(b.dimensions) || !amounts(b.used_by_unit),
-    )
-  )
-    throw new ApiError(
-      'Malformed measured-usage amounts.',
-      502,
-      'invalid_response',
-    );
-  return response;
-}
-// Integer micro-units keep ledger arithmetic separate from rounded chart geometry.
+// Integer micro-units keep sample ledger arithmetic exact.
 export function micros(decimal) {
   if (
     typeof decimal !== 'string' ||

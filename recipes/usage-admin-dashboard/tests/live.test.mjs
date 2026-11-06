@@ -4,8 +4,8 @@ import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, test } from 'vitest';
 import { limitKey, parseEvaluation } from '../lib/contracts.mjs';
 import {
+  configuredLiveProvider,
   createLiveProvider,
-  resolveServerUrl,
   validateOrigin,
 } from '../lib/live.mjs';
 import { demo, draft, sam } from './fixtures.mjs';
@@ -49,19 +49,38 @@ for (const origin of [
 ])
   test(`Unsafe live origin rejected: ${origin}`, () =>
     assert.throws(() => validateOrigin(origin)));
-test('An explicit server URL wins over the environment, which is the fallback', async () => {
-  const env = { GLEAN_SERVER_URL: 'https://env.example.test' };
-  assert.equal(
-    await resolveServerUrl({ serverUrl: ORIGIN, env }),
-    'https://example.test',
+test('Live configuration reads the backend and token from the environment, with writes off by default', async () => {
+  assert.throws(
+    () => configuredLiveProvider({ GLEAN_API_TOKEN: 'secret-token' }),
+    (e) => /GLEAN_SERVER_URL/.test(e.message) && !e.message.includes('secret'),
   );
-  assert.equal(await resolveServerUrl({ env }), 'https://env.example.test');
-  await assert.rejects(resolveServerUrl({ env: {} }), /--email/);
+  assert.throws(
+    () => configuredLiveProvider({ GLEAN_SERVER_URL: ORIGIN }),
+    (e) =>
+      e.code === 'missing_credentials' && /GLEAN_API_TOKEN/.test(e.message),
+  );
+  const authorization = [];
+  server.use(
+    http.get(api('/api/users'), async ({ request }) => {
+      authorization.push(request.headers.get('authorization'));
+      return HttpResponse.json(await demo().catalog('users'));
+    }),
+  );
+  const provider = configuredLiveProvider({
+    GLEAN_SERVER_URL: ORIGIN,
+    GLEAN_API_TOKEN: ' env-token ',
+  });
+  await provider.catalog('users');
+  assert.deepEqual(authorization, ['Bearer env-token']);
+  await assert.rejects(
+    provider.save(draft()),
+    (e) => e.code === 'writes_disabled',
+  );
 });
 test('Directory catalogs use the SDK with the experimental header and a fresh token', async () => {
   const fixtures = Object.fromEntries(
     await Promise.all(
-      ['users', 'departments', 'groups'].map(async (kind) => [
+      ['users', 'departments'].map(async (kind) => [
         kind,
         await demo().catalog(kind),
       ]),
@@ -77,16 +96,15 @@ test('Directory catalogs use the SDK with the experimental header and a fresh to
   server.use(
     http.get(api('/api/users'), respond('users')),
     http.get(api('/api/departments'), respond('departments')),
-    http.get(api('/api/admin/idp-groups'), respond('groups')),
   );
   let tokens = 0;
   const provider = live({ tokenProvider: async () => `token-${++tokens}` });
-  for (const kind of ['users', 'departments', 'groups'])
+  for (const kind of ['users', 'departments'])
     assert.deepEqual(
       (await provider.catalog(kind)).results,
       fixtures[kind].results,
     );
-  assert.equal(requests.length, 3);
+  assert.equal(requests.length, 2);
   for (const [i, request] of requests.entries()) {
     assert.equal(request.headers.get('x-glean-include-experimental'), 'true');
     assert.equal(request.headers.get('authorization'), `Bearer token-${i + 1}`);
@@ -283,7 +301,7 @@ test('Limit pagination follows cursors, rejects cycles, and bounds reads', async
   );
   await assert.rejects(live().limits(), (e) => e.code === 'invalid_response');
 });
-test('A failed sign-in is reported as missing credentials before any request', async () => {
+test('A failing token provider is reported as missing credentials before any request', async () => {
   const provider = live({
     tokenProvider: async () => {
       throw new Error('refresh failed for secret-token');

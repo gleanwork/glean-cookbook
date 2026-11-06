@@ -6,14 +6,11 @@ import {
 } from '@gleanwork/api-client/models/errors';
 import {
   ApiError,
-  SCOPES,
   parseEvaluation,
   parsePage,
-  parseSearchResponse,
   validateEvaluation,
   validateLimit,
   validateLimitKey,
-  validateSearch,
 } from './contracts.mjs';
 
 const queryString = (params) => {
@@ -37,7 +34,7 @@ export function validateOrigin(value) {
     url = new URL(value);
   } catch {
     throw new ApiError(
-      'Pass --email or --server-url, or set GLEAN_SERVER_URL to a complete HTTPS backend origin.',
+      'Set GLEAN_SERVER_URL in .env to your Glean backend origin, such as https://your-instance-be.glean.com.',
     );
   }
   if (
@@ -97,8 +94,8 @@ export function createLiveProvider({
   maxPages = 25,
 }) {
   const origin = validateOrigin(serverUrl);
-  // A token provider failure is a sign-in problem, not a connection problem,
-  // and its message never leaves this module.
+  // A token provider failure is a credential problem, not a connection
+  // problem, and its message never leaves this module.
   async function token() {
     let value;
     try {
@@ -108,7 +105,7 @@ export function createLiveProvider({
     }
     if (!value)
       throw new ApiError(
-        'No usable Glean credentials. Run npm run login, or set a server-side GLEAN_API_TOKEN.',
+        'No usable Glean credentials. Set GLEAN_API_TOKEN in .env to a Client API token.',
         401,
         'missing_credentials',
       );
@@ -181,7 +178,6 @@ export function createLiveProvider({
   const catalogs = {
     users: (cursor) => glean.users.list(PAGE_SIZE, cursor),
     departments: (cursor) => glean.departments.list(PAGE_SIZE, cursor),
-    groups: (cursor) => glean.admin.idpgroups.list(PAGE_SIZE, cursor),
     // SDK 0.20.18 still models OAuth clients with is_active, which the API
     // replaced with is_enabled, so this catalog stays on the REST bridge.
     clients: async (cursor) => {
@@ -242,12 +238,6 @@ export function createLiveProvider({
         'page_bound',
       );
     },
-    async search(query) {
-      validateSearch(query);
-      return parseSearchResponse(
-        await request('/api/admin/usage/search', query),
-      );
-    },
     async evaluate(body) {
       validateEvaluation(body);
       return parseEvaluation(
@@ -284,28 +274,20 @@ export function createLiveProvider({
     },
   };
 }
-export async function resolveServerUrl({ email, serverUrl, env }) {
-  if (serverUrl?.trim()) return validateOrigin(serverUrl.trim());
-  if (email?.trim()) {
-    const { discoverGleanTenant } = await import('@gleanwork/auth');
-    return validateOrigin((await discoverGleanTenant(email.trim())).serverUrl);
-  }
-  return validateOrigin(env.GLEAN_SERVER_URL?.trim());
-}
-export async function configuredLiveProvider({
-  email,
-  serverUrl,
-  env = process.env,
-} = {}) {
-  const origin = await resolveServerUrl({ email, serverUrl, env });
-  // Lazy import keeps fixture mode network- and credential-free.
-  const { createGleanTokenProvider } = await import('@gleanwork/auth');
-  const staticToken = env.GLEAN_API_TOKEN?.trim();
+// Token-only: the Admin Console Client API token stays in this server
+// process and never reaches the browser.
+export function configuredLiveProvider(env = process.env) {
+  const serverUrl = validateOrigin(env.GLEAN_SERVER_URL?.trim());
+  const token = env.GLEAN_API_TOKEN?.trim();
+  if (!token)
+    throw new ApiError(
+      'Set GLEAN_API_TOKEN in .env to a Client API token with the ADMIN_USAGE and PEOPLE scopes.',
+      401,
+      'missing_credentials',
+    );
   return createLiveProvider({
-    serverUrl: origin,
-    tokenProvider: staticToken
-      ? async () => staticToken
-      : createGleanTokenProvider({ serverUrl: origin, scopes: SCOPES }),
+    serverUrl,
+    tokenProvider: async () => token,
     writes: env.GLEAN_ENABLE_WRITES === 'true',
   });
 }
