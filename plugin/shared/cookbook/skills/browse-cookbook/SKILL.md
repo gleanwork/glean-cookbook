@@ -15,6 +15,7 @@ before running its command. Full write-ups live at
 
 <!-- pluginpack-generated:recipes:start -->
 
+- **Batch retrieve documents** (`/cookbook:batch-retrieve-documents`) — Retrieve up to 100 indexed documents you can open in Glean, mixing document IDs and URLs. Documents Glean does not return are listed under warnings.
 - **Customer 360: an account page built from your own content** (`/cookbook:customer-360`) — One page per account — status, risks, and a drill-in chat — assembled from whatever your instance already knows about that customer. No CRM export, no separate index.
 - **Trigger a customer meeting prep request** (`/cookbook:customer-meeting-prep-trigger`) — Register a calendar Trigger through the Platform Triggers API and deliver one signed event to a small receiver that prints a customer-meeting prep request.
 - **Embed search & chat in an internal app** (`/cookbook:embed-search-chat`) — Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.
@@ -24,6 +25,7 @@ before running its command. Full write-ups live at
 - **Build a PTO lookup page in Replit** (`/cookbook:no-code-pto-lookup-replit`) — Paste a prompt into Replit Agent to get a private page that answers PTO and benefits questions from your Glean docs.
 - **Onboarding Hub: a day-one checklist grounded in your own docs** (`/cookbook:onboarding-hub`) — A guided first-week hub for new hires: a checklist with progress, and every step able to answer itself from your own onboarding content.
 - **On-call Copilot** (`/cookbook:oncall-copilot`) — An on-call dashboard that takes an alarm to a proposed action and puts a person in front of that action. It names a cause only when a past incident backs it, turns away an approver who is neither on call nor the service owner, and escalates instead of approving itself when nobody answers. It runs on recorded incidents, so you can watch it refuse things before connecting it to anything.
+- **Retrieve a document by URL** (`/cookbook:retrieve-document-by-url`) — Retrieve one indexed document you can open in Glean by its URL, then retrieve that same document by the document ID printed in the first response.
 - **Answer an RFP or security questionnaire** (`/cookbook:rfp-responder`) — A review app that drafts cited answers to an RFP or security questionnaire, leaves unsupported questions blank, and requires a person to approve each answer. It starts with recorded Chat responses, so you can inspect its refusal paths before connecting it to Glean.
 - **Search Glean with discovered filters** (`/cookbook:search-with-discovered-filters`) — Use the official TypeScript API client to search across all of your Glean content by default, or discover datasources and common filter fields before applying an explicit selection to permission-aware Platform Search.
 - **Publish a versioned skill bundle** (`/cookbook:skill-publishing-pipeline`) — After a first persist, prove name-based version supersession, retrieve a specific version, stage downloaded bytes in a bounded zip sandbox, and delete only the run-owned skill.

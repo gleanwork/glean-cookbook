@@ -710,7 +710,8 @@
           "tools",
           "mcp",
           "skills",
-          "workflows"
+          "workflows",
+          "documents"
         ]
       }
     },
