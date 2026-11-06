@@ -95,6 +95,39 @@ export const client = new Glean({ apiToken: process.env.GLEAN_API_TOKEN });
   assert.deepEqual(rules(repoRoot), ['static-api-token']);
 });
 
+test('a static GLEAN_API_TOKEN is the contract of a token-only recipe, not of an OAuth one', async (t) => {
+  const recipe = (kind) =>
+    JSON.stringify({
+      id: 'example',
+      execution: {
+        auth: [
+          { kind, scopes: ['SEARCH'], credentialVariable: 'GLEAN_API_TOKEN' },
+        ],
+      },
+    });
+  const files = {
+    ...modernPackage(),
+    'src/client.ts': `import { Glean } from '@gleanwork/api-client';
+export const client = new Glean({ apiToken: process.env.GLEAN_API_TOKEN });
+`,
+  };
+  const tokenOnly = await fixture(t, {
+    ...files,
+    'recipe.json': recipe('hosted-secret'),
+  });
+  assert.deepEqual(rules(tokenOnly), []);
+  const oauth = await fixture(t, {
+    ...files,
+    'recipe.json': recipe('oauth-with-token-fallback'),
+  });
+  assert.deepEqual(rules(oauth), ['static-api-token']);
+  const undeclared = await fixture(t, {
+    ...files,
+    'recipe.json': recipe('none'),
+  });
+  assert.deepEqual(rules(undeclared), ['static-api-token']);
+});
+
 test('rejects dotenv and hand-rolled .env parsing', async (t) => {
   const withDotenv = modernPackage();
   const packageJson = JSON.parse(withDotenv['package.json']);
