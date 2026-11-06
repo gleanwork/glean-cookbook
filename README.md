@@ -40,6 +40,7 @@ the coding agent must not substitute its isolated browser for your Glean SSO ses
 
 | Recipe                                                            | Level        | Time              | Build it                                   |
 | ----------------------------------------------------------------- | ------------ | ----------------- | ------------------------------------------ |
+| **Batch retrieve documents**                                      | Intermediate | ~20 min           | `/cookbook:batch-retrieve-documents`       |
 | **Customer 360: an account page built from your own content**     | Intermediate | ~1 hr             | `/cookbook:customer-360`                   |
 | **Trigger a customer meeting prep request**                       | Beginner     | ~20 min           | `/cookbook:customer-meeting-prep-trigger`  |
 | **Embed search & chat in an internal app**                        | Beginner     | ~15 min (minimal) | `/cookbook:embed-search-chat`              |
@@ -49,6 +50,7 @@ the coding agent must not substitute its isolated browser for your Glean SSO ses
 | **Build a PTO lookup page in Replit**                             | Beginner     | ~45 min           | `/cookbook:no-code-pto-lookup-replit`      |
 | **Onboarding Hub: a day-one checklist grounded in your own docs** | Intermediate | ~45 min           | `/cookbook:onboarding-hub`                 |
 | **On-call Copilot**                                               | Advanced     | ~1.5 hr           | `/cookbook:oncall-copilot`                 |
+| **Retrieve a document by URL**                                    | Beginner     | ~15 min           | `/cookbook:retrieve-document-by-url`       |
 | **Answer an RFP or security questionnaire**                       | Intermediate | ~45 min           | `/cookbook:rfp-responder`                  |
 | **Search Glean with discovered filters**                          | Beginner     | ~15 min           | `/cookbook:search-with-discovered-filters` |
 | **Publish a versioned skill bundle**                              | Intermediate | ~20 min           | `/cookbook:skill-publishing-pipeline`      |

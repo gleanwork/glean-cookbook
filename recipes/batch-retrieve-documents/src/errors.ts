@@ -87,9 +87,9 @@ export function documentsApiError(
 function hintFor(status: number): string | undefined {
   switch (status) {
     case 401:
-      return 'The token is missing or invalid. Run npm run login -- --email <your-work-email>, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN. When you create that token, choose documents:read (legacy label DOCUMENTS).';
+      return 'The token is missing or invalid. Run npm run login -- --email <your-work-email>, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN. When you create that token, choose Read documents (documents:read). On the legacy token screen, choose DOCUMENTS.';
     case 403:
-      return 'Glean refused this request. The API token might have been created without documents:read (legacy label DOCUMENTS), or your Glean instance might not be set up for this access. OAuth login already requests documents:read, so running login again does not add that scope.';
+      return 'Glean refused this request. The API token might have been created without the Read documents scope (documents:read; on the legacy token screen, DOCUMENTS), or your Glean instance might not be set up for this access. OAuth login already requests documents:read, so running login again does not add that scope.';
     case 400:
       return 'Glean rejected the batch. Send 1 to 100 document IDs or URLs. Each item is a document_id or a url, not both. An empty or malformed URL is listed under warnings on HTTP 200. It is not HTTP 400.';
     case 404:

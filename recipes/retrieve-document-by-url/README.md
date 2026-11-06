@@ -20,7 +20,8 @@ endpoints. `client.documents` is a different API. This project calls
 - A Glean instance where you can open indexed documents
 - Your work email, or the complete Glean backend HTTPS origin
 - The `documents:read` OAuth scope, or a user-scoped API token created with
-  `documents:read` (legacy label `DOCUMENTS`)
+  Read documents (`documents:read`). On the legacy token screen, choose
+  `DOCUMENTS`
 
 ## Copy and test the project
 
@@ -61,7 +62,8 @@ cp .env.example .env
 
 Set `GLEAN_SERVER_URL` to your backend origin, for example
 `https://<instance>-be.glean.com`. Create a user-scoped API token and choose
-`documents:read` (legacy label `DOCUMENTS`). Put that token in
+Read documents (`documents:read`). On the legacy token screen, choose
+`DOCUMENTS`. Put that token in
 `GLEAN_API_TOKEN`. Do not paste the token into a prompt, issue, or committed
 file. The CLI loads `.env` with Node.js. Existing shell variables win. Omit
 `--email` from the command below.
@@ -115,8 +117,9 @@ the command fails instead of printing the document without `content`.
 ## Errors you may see
 
 HTTP 403 prints `HTTP 403`, a `Request ID:` line, and a hint. The hint lists
-possible causes: the API token was created without `documents:read` (legacy
-label `DOCUMENTS`), or your Glean instance is not set up for this access.
+possible causes: the API token was created without the Read documents scope
+(`documents:read`; on the legacy token screen, `DOCUMENTS`), or your Glean
+instance is not set up for this access.
 OAuth login already requests `documents:read`, so running login again does
 not add that scope. Share the Request ID with your Glean admin or Glean
 support.

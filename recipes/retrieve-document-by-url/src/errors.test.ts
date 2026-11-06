@@ -40,7 +40,9 @@ test('403 names token scope and instance setup', () => {
   expect(formatted.error).toContain('Request ID: req-forbidden');
   expect(formatted.hint).not.toContain('Request ID:');
   expect(formatted.hint).not.toContain('permission to open the document');
-  expect(formatted.hint).toContain('documents:read (legacy label DOCUMENTS)');
+  expect(formatted.hint).toContain(
+    'Read documents scope (documents:read; on the legacy token screen, DOCUMENTS)',
+  );
   expect(formatted.hint).toContain('Glean instance might not be set up');
   expect(formatted.hint).toContain(
     'OAuth login already requests documents:read',

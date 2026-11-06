@@ -106,7 +106,7 @@ test('login, recipe metadata, and the provider use documents:read', async () => 
   });
   expect(pkg).not.toHaveProperty(['dependencies', '@gleanwork/api-client']);
   expect(recipe).toMatchObject({
-    hidden: true,
+    hidden: false,
     requiredScopes: ['documents:read'],
     execution: { auth: [{ scopes: ['documents:read'] }] },
   });

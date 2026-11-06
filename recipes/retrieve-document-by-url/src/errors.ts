@@ -87,9 +87,9 @@ export function documentsApiError(
 function hintFor(status: number): string | undefined {
   switch (status) {
     case 401:
-      return 'The token is missing or invalid. Run npm run login -- --email <your-work-email>, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN. When you create that token, choose documents:read (legacy label DOCUMENTS).';
+      return 'The token is missing or invalid. Run npm run login -- --email <your-work-email>, or set GLEAN_SERVER_URL and a user-scoped GLEAN_API_TOKEN. When you create that token, choose Read documents (documents:read). On the legacy token screen, choose DOCUMENTS.';
     case 403:
-      return 'Glean refused this request. The API token might have been created without documents:read (legacy label DOCUMENTS), or your Glean instance might not be set up for this access. OAuth login already requests documents:read, so running login again does not add that scope.';
+      return 'Glean refused this request. The API token might have been created without the Read documents scope (documents:read; on the legacy token screen, DOCUMENTS), or your Glean instance might not be set up for this access. OAuth login already requests documents:read, so running login again does not add that scope.';
     case 404:
       return 'You got HTTP 404. This command already sends X-Glean-Include-Experimental: true. A 404 usually means your Glean instance does not have the experimental document endpoints turned on. Ask your Glean admin or Glean support. If those endpoints are on, a 404 usually means the document does not exist or you cannot access it. For a Gmail or Outlook message, pass the message URL, not the ID from the search result or chat citation. That URL can still return 404. Go links and federated search results cannot be retrieved.';
     case 429:

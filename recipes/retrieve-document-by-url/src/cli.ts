@@ -28,7 +28,8 @@ export function parseCliOptions(
 
       Authentication
         OAuth uses documents:read. Login already requests that scope.
-        For an API token, choose documents:read (legacy label DOCUMENTS).
+        For an API token, choose Read documents (documents:read).
+        On the legacy token screen, choose DOCUMENTS.
 
       Examples
         $ npm start -- --email you@example.com --url "https://docs.example/wiki/plan"

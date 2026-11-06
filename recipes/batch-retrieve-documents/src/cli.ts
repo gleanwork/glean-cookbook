@@ -71,7 +71,8 @@ export function parseCliOptions(argv = process.argv.slice(2)): BatchCliOptions {
 
       Authentication
         OAuth uses documents:read. Login already requests that scope.
-        For an API token, choose documents:read (legacy label DOCUMENTS).
+        For an API token, choose Read documents (documents:read).
+        On the legacy token screen, choose DOCUMENTS.
 
       Send 1 to 100 --url and --id values, in the order you want them sent.
       Each value is a document ID or a URL, not both. Documents Glean returns
