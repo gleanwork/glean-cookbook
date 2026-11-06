@@ -59,8 +59,8 @@ export function createServer({
           brand,
           workspace,
           limitations: [
-            'Department and group writes are not in the P0 limit contract.',
-            'Model selectors filter reporting, not limit policies.',
+            'Department and IdP-group limits are response-only sources; the API cannot write them yet.',
+            'Threshold actions (notify, premium model restriction) are shown, not edited; saves preserve them.',
             'Org-chart relationships are directory metadata, not an IdP-group mapping.',
           ],
         });
@@ -80,12 +80,13 @@ export function createServer({
         reply(200, await provider.limits());
         return;
       }
-      if (
-        req.method !== 'POST' ||
-        !['/api/usage/search', '/api/usage/evaluate', '/api/limits'].includes(
-          url.pathname,
-        )
-      )
+      const operation = {
+        '/api/usage/search': 'search',
+        '/api/usage/evaluate': 'evaluate',
+        '/api/limits': 'save',
+        '/api/limits/reset': 'reset',
+      }[url.pathname];
+      if (req.method !== 'POST' || !operation)
         throw new ApiError('Not found.', 404, 'not_found');
       if (
         !req.headers['content-type']?.startsWith('application/json') ||
@@ -113,11 +114,6 @@ export function createServer({
       } catch {
         throw new ApiError('Invalid JSON.');
       }
-      const operation = {
-        '/api/usage/search': 'search',
-        '/api/usage/evaluate': 'evaluate',
-        '/api/limits': 'save',
-      }[url.pathname];
       reply(200, await provider[operation](body));
     } catch (error) {
       const known = error instanceof ApiError;

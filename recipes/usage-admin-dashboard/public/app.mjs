@@ -1,4 +1,10 @@
-import { makeLimit, PERIOD, buildOrgTree } from '/contracts.mjs';
+import {
+  PERIOD,
+  PREMIUM_POLICY_CLIENT,
+  buildOrgTree,
+  limitKey,
+  makeLimit,
+} from '/contracts.mjs';
 const $ = (id) => document.getElementById(id);
 const state = {
   users: [],
@@ -310,10 +316,19 @@ function renderPeople() {
   $('people-note').textContent =
     `${people.length} matching people from ${state.users.length} loaded. ${state.userCursor ? 'Directory is partial; load the next page.' : 'All returned directory pages loaded.'} Department selection filters directory people only, not measured spend.`;
 }
+// Unknown action types must render, not fail: the API may add values.
+function describeAction(a) {
+  if (a.type === 'NOTIFY') return `Notify admins at ${a.at_percent}%`;
+  if (a.type === 'RESTRICT_MODELS')
+    return `Restrict to ${a.allow?.models?.length ?? 0} allowed model(s) at ${a.at_percent}%`;
+  if (a.type === 'BLOCK') return `Block at ${a.at_percent}%`;
+  return `${a.type} at ${a.at_percent}%`;
+}
+const isPremiumPolicy = (l) => l.target.client_id === PREMIUM_POLICY_CLIENT;
 function renderLimits() {
   for (const limit of state.limits) {
-    const clientId = limit.usage_selector.client_id;
-    if (clientId)
+    const clientId = limit.target.client_id;
+    if (clientId && !isPremiumPolicy(limit))
       for (const id of ['client', 'limit-client'])
         if (![...$(id).options].some((o) => o.value === clientId))
           $(id).append(option(clientId, `${clientId} · configured policy`));
@@ -321,25 +336,45 @@ function renderLimits() {
   $('policies').textContent = state.limits.length;
   $('limits-table').replaceChildren(
     table(
-      ['Target', 'Spend client', 'Configured cap', 'Allocation', 'Action'],
+      [
+        'Target',
+        'Spend client',
+        'Configured cap',
+        'Allocation',
+        'Thresholds',
+        'Action',
+      ],
       state.limits.map((l) => {
         const b = el('button', 'Edit');
-        const supported = ['ORGANIZATION', 'DEFAULT_USER', 'USER'].includes(
-          l.target.type,
-        );
+        const supported =
+          ['ORGANIZATION', 'DEFAULT_USER', 'USER'].includes(l.target.type) &&
+          !isPremiumPolicy(l);
         b.disabled = !supported;
+        b.title = isPremiumPolicy(l)
+          ? 'The workspace premium-model policy is managed in the Admin console.'
+          : supported
+            ? ''
+            : 'Agent limits are outside this recipe.';
         b.onclick = () => openEditor(l.target.type, l.target.user_id, l);
         const u = state.users.find((u) => u.user_id === l.target.user_id);
         return [
-          u?.display_name ??
-            l.target.email ??
-            l.target.user_id ??
-            l.target.type,
-          l.usage_selector.client_id ?? 'Aggregate agents',
-          l.value.mode === 'UNLIMITED'
-            ? 'Unlimited policy'
-            : `${l.value.amount} ${l.value.unit} · ${l.value.enforcement}`,
+          isPremiumPolicy(l)
+            ? 'Every user · premium models'
+            : (u?.display_name ??
+              l.target.email ??
+              l.target.user_id ??
+              l.target.agent_id ??
+              l.target.type),
+          isPremiumPolicy(l)
+            ? 'All clients'
+            : (l.target.client_id ?? 'Aggregate agents'),
+          !l.value
+            ? 'No cap (actions only)'
+            : l.value.mode === 'UNLIMITED'
+              ? 'Unlimited policy'
+              : `${l.value.amount} ${l.value.unit} · ${l.value.enforcement}`,
           l.allocation_mode ?? 'Individual',
+          l.actions?.length ? l.actions.map(describeAction).join('; ') : '—',
           b,
         ];
       }),
@@ -473,15 +508,27 @@ function invalidateReview() {
   state.reviewed = null;
   $('save-review').hidden = true;
 }
-function openEditor(type = 'ORGANIZATION', userId, policy) {
-  const selectedClient =
-    policy?.usage_selector.client_id ?? ($('client').value || 'glean');
-  policy ??= state.limits.find(
+function configuredPolicy(type, userId, clientId) {
+  return state.limits.find(
     (limit) =>
       limit.target.type === type &&
       (type !== 'USER' || limit.target.user_id === userId) &&
-      limit.usage_selector.client_id === selectedClient,
+      limit.target.client_id === clientId,
   );
+}
+function syncReset() {
+  const policy = configuredPolicy(
+    $('target-type').value,
+    $('target-user').value,
+    $('limit-client').value,
+  );
+  $('reset').hidden = !policy;
+  $('reset').disabled = !state.caps.writes;
+}
+function openEditor(type = 'ORGANIZATION', userId, policy) {
+  const selectedClient =
+    policy?.target.client_id ?? ($('client').value || 'glean');
+  policy ??= configuredPolicy(type, userId, selectedClient);
   state.evalRun++;
   invalidateReview();
   $('evaluation').replaceChildren();
@@ -491,8 +538,7 @@ function openEditor(type = 'ORGANIZATION', userId, policy) {
     $('target-user').append(option(userId, policy?.target.email ?? userId));
   if (userId) $('target-user').value = userId;
   $('user-label').hidden = type !== 'USER';
-  const client =
-    policy?.usage_selector.client_id ?? ($('client').value || 'glean');
+  const client = policy?.target.client_id ?? selectedClient;
   if (![...$('limit-client').options].some((o) => o.value === client))
     $('limit-client').append(option(client, `${client} · configured policy`));
   $('limit-client').value = client;
@@ -511,6 +557,7 @@ function openEditor(type = 'ORGANIZATION', userId, policy) {
   $('limit-unit').value = policy?.value.unit ?? 'CREDITS';
   $('enforcement').value = policy?.value.enforcement ?? 'HARD';
   $('finite-fields').hidden = $('cap-mode').value === 'UNLIMITED';
+  syncReset();
   if (!$('editor').open) $('editor').showModal();
   if (type !== 'DEFAULT_USER') evaluate();
 }
@@ -526,10 +573,13 @@ async function evaluate() {
     );
     return;
   }
+  const client_id = $('limit-client').value;
   const q = {
     target:
-      type === 'USER' ? { type, user_id: $('target-user').value } : { type },
-    usage_selector: { client_id: $('limit-client').value, period: PERIOD },
+      type === 'USER'
+        ? { type, client_id, user_id: $('target-user').value }
+        : { type, client_id },
+    period: PERIOD,
   };
   $('evaluation').replaceChildren(
     el('p', 'Loading live configured-budget status…'),
@@ -544,21 +594,42 @@ async function evaluate() {
       ),
       el(
         'p',
-        r.used_by_unit
-          ? `Live used: ${r.used_by_unit.map((v) => `${v.used} ${v.unit}`).join(' · ')}`
-          : 'Policy-independent live usage not available in this backend version.',
-      ),
-      el(
-        'p',
         `Effective headroom: ${r.effective_limits.map((v) => (v.mode === 'UNLIMITED' ? (r.applicable_policy_count === 0 ? 'No finite configured policy (not a runtime guarantee)' : 'No finite cap') : `${v.remaining} ${v.unit} · ${v.enforcement}`)).join(' · ')}`,
       ),
     ];
-    for (const rule of r.evaluated_limits)
+    // decision_causes never carry amounts or identities, so a SHARED cause is
+    // the only signal that a pooled budget, not this target's own, is reached.
+    for (const cause of r.decision_causes)
       nodes.push(
         el(
           'p',
-          `${rule.target.type}: ${rule.value.mode === 'UNLIMITED' ? 'Unlimited policy' : `configured ${rule.value.amount} ${rule.value.unit}; used ${rule.used}; ${rule.remaining === undefined ? 'per-rule headroom unavailable' : `remaining ${rule.remaining}`}`}`,
+          `${cause.decision}: ${cause.budget_scope === 'TARGET' ? 'own' : 'shared'} ${cause.source_type} budget reached`,
+          cause.decision === 'BLOCKED' ? 'error' : undefined,
         ),
+      );
+    for (const rule of r.evaluated_limits) {
+      const source =
+        rule.target.type === 'DEPARTMENT'
+          ? `DEPARTMENT ${rule.target.department_name}`
+          : rule.target.type === 'IDP_GROUP'
+            ? `IDP_GROUP ${rule.target.idp_group_id ?? '(restricted)'}`
+            : rule.target.type;
+      const actions = [
+        ...rule.active_actions.map((a) => `active: ${describeAction(a)}`),
+        ...(rule.next_action
+          ? [`next: ${describeAction(rule.next_action)}`]
+          : []),
+      ];
+      nodes.push(
+        el(
+          'p',
+          `${source}: ${rule.value.mode === 'UNLIMITED' ? 'Unlimited policy' : `configured ${rule.value.amount} ${rule.value.unit}`}; used ${rule.used}; ${rule.decision}${actions.length ? ` · ${actions.join(' · ')}` : ''}`,
+        ),
+      );
+    }
+    for (const restriction of r.restrictions)
+      nodes.push(
+        el('p', `Models restricted to ${restriction.allow.models.join(', ')}.`),
       );
     nodes.push(
       el(
@@ -607,14 +678,45 @@ async function save() {
   try {
     const r = await api('/api/limits', state.reviewed);
     $('editor-message').textContent =
-      `Saved returned policy: ${JSON.stringify(r.results[0])}. Request ${r.request_id}.`;
+      `Saved returned policy: ${JSON.stringify(r.usage_limit)}. Request ${r.request_id}.`;
     invalidateReview();
     await refreshLimits();
+    syncReset();
     await evaluate();
   } catch (e) {
     $('editor-message').textContent =
       `${e.message} Read configured policies before retrying an uncertain write.`;
     invalidateReview();
+  }
+}
+async function reset() {
+  const policy = configuredPolicy(
+    $('target-type').value,
+    $('target-user').value,
+    $('limit-client').value,
+  );
+  if (!policy) return;
+  const key = limitKey(policy);
+  if (
+    !confirm(
+      `Remove the configured policy for ${JSON.stringify(key.target)}? Measured usage is not cleared.`,
+    )
+  )
+    return;
+  $('reset').disabled = true;
+  try {
+    const r = await api('/api/limits/reset', key);
+    $('editor-message').textContent = r.is_configuration_removed
+      ? `Removed the policy. Request ${r.request_id}.`
+      : `No matching policy was configured. Request ${r.request_id}.`;
+    invalidateReview();
+    await refreshLimits();
+    syncReset();
+    await evaluate();
+  } catch (e) {
+    $('editor-message').textContent =
+      `${e.message} Read configured policies before retrying an uncertain write.`;
+    $('reset').disabled = !state.caps.writes;
   }
 }
 function preset(name) {
@@ -625,11 +727,11 @@ function preset(name) {
   const q =
     name === 'evaluate'
       ? {
-          target: { type: 'ORGANIZATION' },
-          usage_selector: {
+          target: {
+            type: 'ORGANIZATION',
             client_id: $('client').value || 'glean',
-            period: PERIOD,
           },
+          period: PERIOD,
         }
       : {
           ...query(
@@ -699,6 +801,7 @@ for (const id of [
     $('user-label').hidden = $('target-type').value !== 'USER';
     $('finite-fields').hidden = $('cap-mode').value === 'UNLIMITED';
     if (['target-type', 'target-user', 'limit-client'].includes(id)) {
+      syncReset();
       state.evalRun++;
       $('evaluation').replaceChildren(
         el('p', 'Selection changed. Refresh live status.'),
@@ -708,6 +811,7 @@ for (const id of [
 $('evaluate').onclick = evaluate;
 $('review').onclick = review;
 $('save').onclick = save;
+$('reset').onclick = reset;
 document
   .querySelectorAll('[data-preset]')
   .forEach((b) => (b.onclick = () => preset(b.dataset.preset)));

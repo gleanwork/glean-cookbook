@@ -2,19 +2,20 @@ import { randomUUID } from 'node:crypto';
 import {
   ApiError,
   PERIOD,
+  PREMIUM_POLICY_CLIENT,
   makeLimit,
   micros,
   decimal,
-  validateLimit,
-  validateSearch,
   validateEvaluation,
+  validateLimit,
+  validateLimitKey,
+  validateSearch,
 } from './contracts.mjs';
 export const USERS = [
   {
     user_id: 'demo-alex',
     display_name: 'Alex Morgan',
     email: 'alex@example.test',
-    is_active: true,
     title: 'CEO',
     department: { department_id: 'dep-exec', display_name: 'Leadership' },
   },
@@ -22,7 +23,6 @@ export const USERS = [
     user_id: 'demo-jordan',
     display_name: 'Jordan Lee',
     email: 'jordan@example.test',
-    is_active: true,
     title: 'VP Engineering',
     department: { department_id: 'dep-eng', display_name: 'Engineering' },
     manager: { user_id: 'demo-alex', display_name: 'Alex Morgan' },
@@ -31,7 +31,6 @@ export const USERS = [
     user_id: 'demo-sam',
     display_name: 'Sam Rivera',
     email: 'sam@example.test',
-    is_active: true,
     title: 'Platform Engineer',
     department: { department_id: 'dep-eng', display_name: 'Engineering' },
     manager: { user_id: 'demo-jordan', display_name: 'Jordan Lee' },
@@ -40,7 +39,6 @@ export const USERS = [
     user_id: 'demo-casey',
     display_name: 'Casey Patel',
     email: 'casey@example.test',
-    is_active: true,
     title: 'Staff Engineer',
     department: { department_id: 'dep-eng', display_name: 'Engineering' },
     manager: { user_id: 'demo-jordan', display_name: 'Jordan Lee' },
@@ -49,7 +47,6 @@ export const USERS = [
     user_id: 'demo-taylor',
     display_name: 'Taylor Chen',
     email: 'taylor@example.test',
-    is_active: true,
     title: 'Head of Sales',
     department: { department_id: 'dep-sales', display_name: 'Sales' },
     manager: { user_id: 'demo-alex', display_name: 'Alex Morgan' },
@@ -58,7 +55,6 @@ export const USERS = [
     user_id: 'demo-riley',
     display_name: 'Riley Brooks',
     email: 'riley@example.test',
-    is_active: true,
     title: 'Account Executive',
     department: { department_id: 'dep-sales', display_name: 'Sales' },
     manager: { user_id: 'demo-taylor', display_name: 'Taylor Chen' },
@@ -81,30 +77,33 @@ const MODEL_LABELS = {
   'demo-premium-model': 'Premium model · sample',
 };
 const copy = (v) => structuredClone(v);
-const key = (limit) =>
-  JSON.stringify([
-    limit.target.type,
-    limit.target.user_id ?? null,
-    limit.usage_selector.client_id,
-  ]);
+const key = ({ target }) =>
+  JSON.stringify([target.type, target.user_id ?? null, target.client_id]);
+const withActions = (limit, actions) => ({ ...limit, actions });
 export function createDemoProvider({
   now = () => new Date(),
   pageSize = 3,
 } = {}) {
   const limits = [
-    makeLimit({
-      type: 'ORGANIZATION',
-      clientId: 'glean',
-      amount: '12000',
-      unit: 'CREDITS',
-    }),
-    makeLimit({
-      type: 'DEFAULT_USER',
-      clientId: 'glean',
-      amount: '400',
-      unit: 'CREDITS',
-      enforcement: 'SOFT',
-    }),
+    withActions(
+      makeLimit({
+        type: 'ORGANIZATION',
+        clientId: 'glean',
+        amount: '12000',
+        unit: 'CREDITS',
+      }),
+      [{ type: 'NOTIFY', at_percent: 80 }],
+    ),
+    withActions(
+      makeLimit({
+        type: 'DEFAULT_USER',
+        clientId: 'glean',
+        amount: '400',
+        unit: 'CREDITS',
+        enforcement: 'SOFT',
+      }),
+      [{ type: 'NOTIFY', at_percent: 90 }],
+    ),
     makeLimit({
       type: 'USER',
       userId: 'demo-sam',
@@ -112,7 +111,21 @@ export function createDemoProvider({
       amount: '600',
       unit: 'CREDITS',
     }),
+    {
+      target: { type: 'DEFAULT_USER', client_id: PREMIUM_POLICY_CLIENT },
+      period: { ...PERIOD },
+      actions: [
+        {
+          type: 'RESTRICT_MODELS',
+          at_percent: 50,
+          allow: { models: ['demo-standard-model'] },
+        },
+      ],
+    },
   ];
+  const premium = () =>
+    limits.find((l) => l.target.client_id === PREMIUM_POLICY_CLIENT)
+      ?.actions[0];
   const cursors = new Map();
   const fingerprint = (query) =>
     JSON.stringify({ ...query, cursor: undefined });
@@ -207,10 +220,7 @@ export function createDemoProvider({
         users: USERS,
         departments: [
           ...new Map(
-            USERS.map((u) => [
-              u.department.department_id,
-              { ...u.department, is_active: true },
-            ]),
+            USERS.map((u) => [u.department.department_id, { ...u.department }]),
           ).values(),
         ],
         clients: CLIENTS,
@@ -218,7 +228,6 @@ export function createDemoProvider({
           {
             idp_group_id: 'demo-group-eng',
             display_name: 'Engineering (sample IdP group)',
-            is_active: true,
           },
         ],
       };
@@ -241,15 +250,28 @@ export function createDemoProvider({
     async save(limit) {
       validateLimit(limit);
       const denomination =
-        limit.usage_selector.client_id === 'glean' ? 'CREDITS' : 'USD';
+        limit.target.client_id === 'glean' ? 'CREDITS' : 'USD';
       if (limit.value.mode === 'FINITE' && limit.value.unit !== denomination)
         throw new ApiError(
           'Sample client billing denomination does not match the selected unit.',
         );
       const index = limits.findIndex((l) => key(l) === key(limit));
-      if (index === -1) limits.push(copy(limit));
-      else limits[index] = copy(limit);
-      return { results: [copy(limit)], request_id: 'demo-save' };
+      const stored = copy(limit);
+      if (index === -1) limits.push(stored);
+      else {
+        if (limits[index].actions) stored.actions = limits[index].actions;
+        limits[index] = stored;
+      }
+      return { usage_limit: copy(stored), request_id: 'demo-save' };
+    },
+    async reset(limitKey) {
+      validateLimitKey(limitKey);
+      const index = limits.findIndex((l) => key(l) === key(limitKey));
+      if (index !== -1) limits.splice(index, 1);
+      return {
+        is_configuration_removed: index !== -1,
+        request_id: 'demo-reset',
+      };
     },
     async search(query) {
       validateSearch(query);
@@ -397,10 +419,10 @@ export function createDemoProvider({
       };
       return pageSnapshot(snapshot, query, 0);
     },
-    async evaluate(query) {
-      validateEvaluation(query);
-      const client = query.usage_selector.client_id;
-      const unit = client === 'glean' ? 'CREDITS' : 'USD';
+    async evaluate(body) {
+      validateEvaluation(body);
+      const target = body.target;
+      const client = target.client_id;
       const timestamp = now();
       const start = new Date(
         Date.UTC(timestamp.getUTCFullYear(), timestamp.getUTCMonth(), 1),
@@ -412,86 +434,127 @@ export function createDemoProvider({
       )
         .toISOString()
         .replace('.000Z', 'Z');
-      const source = rows({
-        ...query,
-        time_range: { start, end },
-        filters: [{ field: 'client_id', values: [client] }],
-      });
-      const sum = (rs) => decimal(rs.reduce((total, r) => total + r.used, 0n));
-      const used = sum(source);
-      const clientLimits = limits.filter(
-        (l) => l.usage_selector.client_id === client,
-      );
+      const counter = (type) =>
+        rows({
+          target:
+            type === 'USER'
+              ? { type, user_id: target.user_id }
+              : { type: 'ORGANIZATION' },
+          time_range: { start, end },
+          filters: [{ field: 'client_id', values: [client] }],
+        }).reduce((total, r) => total + r.used, 0n);
+      const clientLimits = limits.filter((l) => l.target.client_id === client);
       const personal =
-        query.target.type === 'USER'
+        target.type === 'USER'
           ? (clientLimits.find(
               (l) =>
-                l.target.type === 'USER' &&
-                l.target.user_id === query.target.user_id,
+                l.target.type === 'USER' && l.target.user_id === target.user_id,
             ) ?? clientLimits.find((l) => l.target.type === 'DEFAULT_USER'))
           : undefined;
       const matching = [
         ...clientLimits.filter((l) => l.target.type === 'ORGANIZATION'),
         ...(personal ? [personal] : []),
       ];
+      const restrictions = [];
+      const causes = new Map();
       const evaluated = matching.map((l) => {
-        const counter =
-          l.target.type === 'ORGANIZATION'
-            ? sum(
-                rows({
-                  target: { type: 'ORGANIZATION' },
-                  time_range: { start, end },
-                  filters: [{ field: 'client_id', values: [client] }],
-                }),
-              )
-            : used;
-        const remaining =
-          l.value.mode === 'FINITE'
-            ? decimal(
-                micros(l.value.amount) > micros(counter)
-                  ? micros(l.value.amount) - micros(counter)
-                  : 0n,
-              )
-            : undefined;
+        const used = counter(
+          l.target.type === 'ORGANIZATION' ? 'ORGANIZATION' : 'USER',
+        );
+        const finite = l.value.mode === 'FINITE';
+        const cap = finite ? micros(l.value.amount) : 0n;
+        const percent =
+          finite && cap > 0n ? Number((used * 10000n) / cap) / 100 : 0;
+        const actions = copy(l.actions ?? []);
+        if (l === personal && premium())
+          actions.push({
+            ...copy(premium()),
+            inherited_from: {
+              type: 'DEFAULT_USER',
+              client_id: PREMIUM_POLICY_CLIENT,
+            },
+          });
+        if (finite && l.value.enforcement === 'HARD')
+          actions.push({ type: 'BLOCK', at_percent: 100 });
+        const reached = finite && used >= cap;
+        const decision = reached
+          ? l.value.enforcement === 'HARD'
+            ? 'BLOCKED'
+            : 'WARNING'
+          : 'AVAILABLE';
+        const active = finite
+          ? actions.filter((a) => a.at_percent <= percent)
+          : [];
+        const next = finite
+          ? actions
+              .filter((a) => a.at_percent > percent)
+              .sort((a, b) => a.at_percent - b.at_percent)[0]
+          : undefined;
+        for (const a of active)
+          if (a.type === 'RESTRICT_MODELS')
+            restrictions.push({
+              type: a.type,
+              allow: copy(a.allow),
+              source: copy(a.inherited_from),
+            });
+        if (decision !== 'AVAILABLE') {
+          const cause = {
+            decision,
+            budget_scope:
+              l.target.type === 'ORGANIZATION' && target.type !== 'ORGANIZATION'
+                ? 'SHARED'
+                : 'TARGET',
+            source_type: l.target.type,
+          };
+          causes.set(JSON.stringify(cause), cause);
+        }
+        const { type, client_id, user_id } = l.target;
+        const email = USERS.find((u) => u.user_id === user_id)?.email;
         return {
-          target: copy(l.target),
-          usage_selector: copy(l.usage_selector),
+          target: {
+            type,
+            client_id,
+            ...(user_id ? { user_id, ...(email ? { email } : {}) } : {}),
+          },
+          period: { ...PERIOD },
           value: copy(l.value),
-          used: counter,
-          ...(remaining === undefined ? {} : { remaining }),
-          decision:
-            remaining === '0'
-              ? l.value.enforcement === 'HARD'
-                ? 'BLOCKED'
-                : 'WARNING'
-              : 'AVAILABLE',
+          used: decimal(used),
+          decision,
+          active_actions: active.filter((a) => a.type !== 'BLOCK'),
+          ...(next ? { next_action: next } : {}),
+          headroom: finite ? (cap > used ? cap - used : 0n) : undefined,
         };
       });
-      const finite = evaluated.filter((l) => l.value.mode === 'FINITE');
-      const tightest = finite.sort((a, b) =>
-        Number(micros(a.remaining) - micros(b.remaining)),
-      )[0];
+      const tightest = evaluated
+        .filter((l) => l.headroom !== undefined)
+        .sort((a, b) =>
+          a.headroom < b.headroom ? -1 : a.headroom > b.headroom ? 1 : 0,
+        )[0];
+      const decision = evaluated.some((l) => l.decision === 'BLOCKED')
+        ? 'BLOCKED'
+        : evaluated.some((l) => l.decision === 'WARNING')
+          ? 'WARNING'
+          : 'AVAILABLE';
       return {
-        target: copy(query.target),
-        usage_selector: copy(query.usage_selector),
+        target: copy(target),
+        period: { ...PERIOD },
+        restrictions,
         applicable_policy_count: evaluated.length,
-        used_by_unit: [{ unit, used }],
-        decision: evaluated.some((l) => l.decision === 'BLOCKED')
-          ? 'BLOCKED'
-          : evaluated.some((l) => l.decision === 'WARNING')
-            ? 'WARNING'
-            : 'AVAILABLE',
+        decision,
+        decision_causes: [...causes.values()].sort((a, b) =>
+          a.decision === b.decision ? 0 : a.decision === 'BLOCKED' ? -1 : 1,
+        ),
         effective_limits: tightest
           ? [
               {
                 mode: 'FINITE',
-                remaining: tightest.remaining,
+                remaining: decimal(tightest.headroom),
                 unit: tightest.value.unit,
                 enforcement: tightest.value.enforcement,
               },
             ]
           : [{ mode: 'UNLIMITED' }],
-        evaluated_limits: evaluated,
+        evaluated_limits: evaluated.map(({ headroom, ...l }) => l),
         evaluated_at: timestamp.toISOString(),
         request_id: 'demo-evaluation',
       };

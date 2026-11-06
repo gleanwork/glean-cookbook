@@ -16,25 +16,45 @@ if (!process.env.GLEAN_SERVER_URL) {
   const end = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
   );
+  const period = { type: 'RECURRING_CALENDAR_MONTH' };
+  let firstUser;
   const checks = [
-    ['users', true, () => provider.catalog('users')],
+    [
+      'users',
+      true,
+      async () => {
+        const page = await provider.catalog('users');
+        firstUser = page.results[0]?.user_id;
+        return page;
+      },
+    ],
     ['departments', true, () => provider.catalog('departments')],
+    ['gateway OAuth clients', true, () => provider.catalog('clients')],
+    ['IdP groups', true, () => provider.catalog('groups')],
     ['limits', true, () => provider.limits()],
     [
       'organization evaluation',
       true,
       () =>
         provider.evaluate({
-          target: { type: 'ORGANIZATION' },
-          usage_selector: {
-            client_id: 'glean',
-            period: { type: 'RECURRING_CALENDAR_MONTH' },
-          },
+          target: { type: 'ORGANIZATION', client_id: 'glean' },
+          period,
         }),
     ],
     [
-      'measured search',
+      'user evaluation',
       true,
+      () => {
+        if (!firstUser) throw new Error('No directory user to evaluate.');
+        return provider.evaluate({
+          target: { type: 'USER', client_id: 'glean', user_id: firstUser },
+          period,
+        });
+      },
+    ],
+    [
+      'measured search (draft reporting API, not yet released)',
+      false,
       () =>
         provider.search({
           target: { type: 'ORGANIZATION' },
@@ -46,16 +66,6 @@ if (!process.env.GLEAN_SERVER_URL) {
           group_by: ['PRODUCT'],
           page_size: 1000,
         }),
-    ],
-    [
-      'OAuth clients (progressive capability)',
-      false,
-      () => provider.catalog('clients'),
-    ],
-    [
-      'IdP groups (progressive capability)',
-      false,
-      () => provider.catalog('groups'),
     ],
   ];
   for (const [name, required, check] of checks) {

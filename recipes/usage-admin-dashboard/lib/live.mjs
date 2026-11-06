@@ -2,12 +2,28 @@ import {
   ApiError,
   CATALOG_PATHS,
   SCOPES,
+  parseEvaluation,
   parsePage,
   parseSearchResponse,
-  validateLimit,
-  validateSearch,
   validateEvaluation,
+  validateLimit,
+  validateLimitKey,
+  validateSearch,
 } from './contracts.mjs';
+
+const queryString = (params) => {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params))
+    if (value !== undefined)
+      search.set(
+        key,
+        typeof value === 'string' ? value : JSON.stringify(value),
+      );
+  return `?${search}`;
+};
+// The list returns enabled static clients only; Glean's own spend client is the
+// documented `glean` constant, and api-token-* clients are not listed.
+const GATEWAY_CLIENTS = [{ field: 'has_ai_gateway', values: ['true'] }];
 
 export function validateOrigin(value) {
   let url;
@@ -91,27 +107,36 @@ export function createLiveProvider({
       );
     return data;
   }
+  function requireWrites() {
+    if (!writes)
+      throw new ApiError(
+        'Live writes are disabled. Restart with GLEAN_ENABLE_WRITES=true after verifying the workspace.',
+        403,
+        'writes_disabled',
+      );
+  }
   return {
     mode: 'live',
     writes,
     async catalog(kind, cursor) {
       const path = CATALOG_PATHS[kind];
       if (!path) throw new ApiError('Unknown catalog.');
-      // Never infer spend-client IDs from OAuth IDs. Only gateway-capable clients
-      // become choices; Glean is a separate, documented spend client.
       const page = parsePage(
         await request(
-          `${path}?page_size=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`,
+          `${path}${queryString({
+            page_size: '100',
+            cursor,
+            filters: kind === 'clients' ? GATEWAY_CLIENTS : undefined,
+          })}`,
         ),
       );
+      // Usage limits take ai_gateway.usage_client_id, never the OAuth client_id.
       if (kind === 'clients')
-        page.results = page.results
-          .filter((c) => c.is_active && c.ai_gateway?.usage_client_id)
-          .map((c) => ({
-            display_name: c.display_name,
-            usage_client_id: c.ai_gateway.usage_client_id,
-            oauth_client_id: c.client_id,
-          }));
+        page.results = page.results.map((c) => ({
+          display_name: c.display_name,
+          usage_client_id: c.ai_gateway.usage_client_id,
+          oauth_client_id: c.client_id,
+        }));
       return page;
     },
     async limits() {
@@ -121,7 +146,7 @@ export function createLiveProvider({
       for (let i = 0; i < maxPages; i++) {
         const page = parsePage(
           await request(
-            `/api/admin/usage/limits?page_size=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`,
+            `/api/admin/usage/limits${queryString({ page_size: '100', cursor })}`,
           ),
         );
         results.push(...page.results);
@@ -147,35 +172,31 @@ export function createLiveProvider({
         await request('/api/admin/usage/search', query),
       );
     },
-    async evaluate(query) {
-      validateEvaluation(query);
-      const r = await request('/api/admin/usage/limits/evaluate', query);
-      if (
-        !Array.isArray(r.effective_limits) ||
-        !Array.isArray(r.evaluated_limits) ||
-        typeof r.applicable_policy_count !== 'number' ||
-        !r.evaluated_at
-      )
-        throw new ApiError(
-          'Malformed limit evaluation.',
-          502,
-          'invalid_response',
-        );
-      return r;
+    async evaluate(body) {
+      validateEvaluation(body);
+      return parseEvaluation(
+        await request('/api/admin/usage/limits/evaluate', body),
+      );
     },
     async save(limit) {
       validateLimit(limit);
-      if (!writes)
-        throw new ApiError(
-          'Live writes are disabled. Restart with GLEAN_ENABLE_WRITES=true after verifying the workspace.',
-          403,
-          'writes_disabled',
-        );
-      // Single upsert is internal. The bounded public batch route accepts one item.
-      const result = await request('/api/admin/usage/limits/batch', [limit]);
-      if (!Array.isArray(result.results) || result.results.length !== 1)
+      requireWrites();
+      const result = await request('/api/admin/usage/limits', limit);
+      if (!result.usage_limit?.target)
         throw new ApiError(
           'Unexpected write response. Read the limit list before any retry.',
+          502,
+          'invalid_response',
+        );
+      return result;
+    },
+    async reset(key) {
+      validateLimitKey(key);
+      requireWrites();
+      const result = await request('/api/admin/usage/limits/reset', key);
+      if (typeof result.is_configuration_removed !== 'boolean')
+        throw new ApiError(
+          'Unexpected reset response. Read the limit list before any retry.',
           502,
           'invalid_response',
         );
