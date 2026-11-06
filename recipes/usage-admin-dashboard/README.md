@@ -16,7 +16,7 @@ Open the **Local URL printed by the server**. It prefers port 3217 and chooses a
 
 1. **Overview:** daily observed-consumption chart, separate USD/credit totals, and a model breakdown that filters the chart.
 2. **People:** search name/email, filter the directory by department, load additional pages, open a person, and inspect configured-budget evaluation.
-3. **Limits:** review organization budgets, default per-person policies, and individual overrides. Preview the exact policy before applying it. A save replaces its natural key; it does not reset usage.
+3. **Limits:** review organization budgets, default per-person policies, individual overrides, and their threshold actions. Preview the exact policy before applying it. A save replaces its natural key (target, spend client, and period) and keeps the policy's existing threshold actions; it does not reset usage. **Remove this policy** resets that key so the target falls back to inherited policy.
 4. **Organization:** browse a manager-based forest and open individual people. A manager relationship does **not** establish an IdP group, budget pool, or authoritative team membership.
 5. **API test bench:** replay read-only usage/evaluation requests and follow opaque snapshot pages with the original query intact.
 
@@ -37,16 +37,18 @@ OAuth login is interactive and must be completed by the operator. The pinned `@g
 
 ### Required capabilities
 
-| Operation              | Native scope               | Permission / behavior                              |
-| ---------------------- | -------------------------- | -------------------------------------------------- |
-| People                 | `users:read`               | Visible directory people; active users by default  |
-| Departments            | `departments:read`         | Directory catalog, not a spend aggregation         |
-| Historical usage       | `admin.usage:read`         | Billing read; experimental search rollout required |
-| Live budget evaluation | `admin.usage:evaluate`     | Billing read                                       |
-| Read policies          | `admin.usage.limits:read`  | Billing read                                       |
-| Apply policies         | `admin.usage.limits:write` | Billing edit plus explicit local write opt-in      |
-| OAuth-client picker    | `admin.oauth.clients:read` | Admin read or billing read; pending supporting API |
-| IdP-group catalog      | `admin.idp_groups:read`    | Admin read or billing read; pending supporting API |
+| Operation                | Native scope               | Permission / behavior                                           |
+| ------------------------ | -------------------------- | --------------------------------------------------------------- |
+| People                   | `users:read`               | Visible directory people                                        |
+| Departments              | `departments:read`         | Directory catalog, not a spend aggregation                      |
+| Live budget evaluation   | `admin.usage:evaluate`     | Billing read                                                    |
+| Read policies            | `admin.usage.limits:read`  | Billing read                                                    |
+| Apply or remove policies | `admin.usage.limits:write` | Billing edit plus explicit local write opt-in                   |
+| Spend-client picker      | `admin.oauth.clients:read` | Admin read or billing read                                      |
+| IdP-group catalog        | `admin.idp_groups:read`    | Admin read or billing read                                      |
+| Historical usage         | none yet                   | Draft reporting API; the panel shows unavailable until it ships |
+
+The `ADMIN` role alone does not grant usage administration; the signed-in user needs workspace billing permissions.
 
 Every upstream request sends `X-Glean-Include-Experimental: true`. Merged code does not imply your tenant supports a scope or has deployed an operation.
 
@@ -63,8 +65,9 @@ The browser still requires **Review policy → Apply to connected workspace**. N
 - Historical search measures **observed stored rows**. It is not an invoice, certified completeness, or a live counter. `data_updated_at: null` and `earliest_available_at: null` mean unknown, not fresh or empty.
 - Empty results, missing units, and missing days do not prove zero. Charts show observed buckets, with exact decimal values in an accessible table. Chart geometry is approximate; policy amounts and ledger arithmetic retain decimal strings/integer micro-units.
 - USD and CREDITS remain separate. Select the actual billing denomination for the spend domain when creating a finite limit; the client catalog does not currently provide it. The live backend remains authoritative.
-- `effective_limits[].remaining` is the tightest current headroom. It is not the person’s configured cap and may come from an organization rule. Per-rule cap, used, and remaining values are shown separately. No matching policy is not runtime admission.
-- The client picker uses `ai_gateway.usage_client_id` **verbatim**, never OAuth `client_id` or a constructed `oauth-` prefix. It includes the documented Glean spend client separately. Only returned active gateway-capable static OAuth clients are additional choices; this is not every DCR/MCP client.
+- `effective_limits[].remaining` is the tightest current headroom. It is not the person’s configured cap and may come from an organization rule. Each evaluated rule shows its configured cap, accrued `used`, decision, and active or next threshold action. `decision_causes` says whether the person's own budget or a shared pool caused WARNING or BLOCKED, without revealing the pool's amount. `restrictions` lists active premium-model allowlists. No matching policy is not runtime admission.
+- Limits are keyed by `target` (whose `client_id` is the spend client) and `period`. Saves omit `actions`, which preserves thresholds configured in the Admin console; sending `[]` would clear them. The workspace premium-model policy (`DEFAULT_USER` with `client_id: "*"`) has actions but no cap, and the recipe shows it read-only.
+- The client picker uses `ai_gateway.usage_client_id` **verbatim**, never OAuth `client_id` or a constructed `oauth-` prefix. It includes the documented `glean` spend client separately. Only enabled static OAuth clients with LLM Gateway access are listed; DCR clients and `api-token-*` spend clients are not, so client IDs found only on configured policies are added from the policy list.
 - Department filters currently apply to the directory only. Department/group spend aggregation is deferred by the reporting contract. Model selection filters observed usage, **not** policy writes.
 - Department, IdP-group, org-subtree, and model-limit actions are visibly gated. The recipe does not manufacture per-user writes to imitate dynamic group policy.
 
@@ -74,12 +77,12 @@ See [API coverage](docs/API-COVERAGE.md) for the bridge contract and promotion g
 
 `public/` is the browser UI. `server.mjs` exposes only explicit local routes. `lib/demo.mjs` supplies fictional records; `lib/live.mjs` supplies the same provider operations from real REST APIs. `lib/contracts.mjs` handles request bounds, supported targets, exact IDs, and decimal policy values.
 
-The temporary REST bridge is deliberate: the reporting and supporting identity operations are ahead of the released cookbook SDK. Replace it with a pinned official SDK once those exact contracts ship. It does not replace the supported auth implementation.
+The temporary REST bridge is deliberate: the usage operations are ahead of the released cookbook SDK. Replace it with a pinned official SDK once those exact contracts ship. It does not replace the supported auth implementation.
 
 This is a **local, single-operator test bed**, not a hosted multi-admin service. The server binds to `127.0.0.1`, rejects foreign Host/Origin and cross-site requests, requires same-origin JSON mutation headers, serves a restrictive CSP, bounds bodies and upstream requests, and keeps credentials server-side. There are no analytics, external resources, proxy-to-arbitrary-URL routes, or credential inputs in the browser. Before hosting, add real session authentication, per-admin authorization, CSRF protection, audit logging, and isolated credential storage. Never expose this server through a public tunnel.
 
 ## Verification and completion
 
-`npm test` tests policy shapes, decimals, unavailable states, public batch-array transport, exact client mapping, cursor continuity, directory cycles, write gating, and server origin protection. `npm run verify:live` fails without real configuration and only makes read-only requests. Optional supporting-catalog failures are reported independently; required usage/directory failures fail the probe.
+`npm test` tests policy shapes, evaluation and reset keys, decimals, unavailable states, the public upsert and reset transport, exact client mapping, cursor continuity, directory cycles, write gating, and server origin protection. `npm run verify:live` fails without real configuration and only makes read-only requests. Optional supporting-catalog failures are reported independently; required usage/directory failures fail the probe.
 
 Fixture tests **do not** qualify as live verification. `lastVerified` is deliberately unset. Promote the recipe from preview only after an authorized sandbox browser run proves real people/client enumeration, complete chart pagination, save/read-back/evaluate agreement, unavailable states, and an isolated policy cleanup plan. Do not test writes on a production workspace merely to make the recipe green.

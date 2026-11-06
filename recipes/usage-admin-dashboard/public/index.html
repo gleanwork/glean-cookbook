@@ -218,7 +218,7 @@
               Every user · per-person default
             </option>
             <option value="USER">One person</option>
-            <option disabled>Department · API missing</option>
+            <option disabled>Department · write API missing</option>
             <option disabled>IdP group · write API missing</option>
             <option disabled>
               Org subtree · mapping and policy API missing
@@ -258,12 +258,13 @@
       </div>
       <p class="muted">
         Choose the client’s actual billing denomination; the client catalog does
-        not publish it. Calendar month only. No model filter or department
-        write. A new user policy can still be constrained by an organization
-        policy.
+        not publish it. Calendar month only. Saving keeps any threshold actions
+        already on the policy. A user policy can still be constrained by an
+        organization policy.
       </p>
       <div class="actions">
         <button id="evaluate">Refresh live status</button
+        ><button id="reset" hidden>Remove this policy</button
         ><button id="review" class="primary">Review policy</button>
       </div>
       <div id="save-review" hidden>

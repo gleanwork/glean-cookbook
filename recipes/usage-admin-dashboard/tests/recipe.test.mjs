@@ -4,7 +4,10 @@ import assert from 'node:assert/strict';
 import {
   ApiError,
   PERIOD,
+  limitKey,
   makeLimit,
+  parseEvaluation,
+  validateEvaluation,
   validateLimit,
   validateSearch,
   parseSearchResponse,
@@ -31,6 +34,11 @@ const draft = (options) =>
     unit: 'CREDITS',
     ...options,
   });
+const evaluation = (target) => ({
+  target: { client_id: 'glean', ...target },
+  period: PERIOD,
+});
+const sam = evaluation({ type: 'USER', user_id: 'demo-sam' });
 const demo = () =>
   createDemoProvider({ now: () => new Date('2026-10-12T12:00:00Z') });
 const response = (body, status = 200) =>
@@ -41,13 +49,15 @@ const response = (body, status = 200) =>
 
 test('Limit bodies use supported natural keys, allocations, and exact opaque IDs', () => {
   assert.equal(
-    draft({ clientId: ' padded-ID ' }).usage_selector.client_id,
+    draft({ clientId: ' padded-ID ' }).target.client_id,
     ' padded-ID ',
   );
   assert.equal(draft({ type: 'ORGANIZATION' }).allocation_mode, 'SHARED_POOL');
   assert.equal(draft({ type: 'DEFAULT_USER' }).allocation_mode, 'PER_MEMBER');
   assert.ok(!('allocation_mode' in draft()));
   assert.deepEqual(draft({ unlimited: true }).value, { mode: 'UNLIMITED' });
+  assert.deepEqual(draft().period, PERIOD);
+  assert.ok(!('actions' in draft()));
 });
 for (const options of [
   { type: 'DEPARTMENT' },
@@ -62,6 +72,7 @@ for (const options of [
   { clientId: '  ' },
   { clientId: '\u00a0' },
   { clientId: '__deleted_clients__' },
+  { clientId: '*' },
   { clientId: 'a\nb' },
 ]) {
   test(`Unsupported limit input is rejected: ${JSON.stringify(options)}`, () =>
@@ -74,6 +85,35 @@ test('Limit payload rejects extra fields and unlimited values', () => {
   );
   assert.throws(() =>
     validateLimit({ ...draft(), allocation_mode: 'PER_MEMBER' }),
+  );
+  assert.throws(() =>
+    validateLimit({
+      ...draft(),
+      usage_selector: { client_id: 'glean', period: PERIOD },
+    }),
+  );
+  // Sending [] would clear thresholds configured elsewhere.
+  assert.throws(() => validateLimit({ ...draft(), actions: [] }));
+});
+test('Evaluation takes a concrete target with its spend client and period', () => {
+  validateEvaluation(sam);
+  validateEvaluation(evaluation({ type: 'ORGANIZATION' }));
+  for (const body of [
+    evaluation({ type: 'DEFAULT_USER' }),
+    evaluation({ type: 'ORGANIZATION', client_id: '*' }),
+    { target: { type: 'ORGANIZATION' }, period: PERIOD },
+    { target: sam.target },
+    { ...sam, usage_selector: { client_id: 'glean', period: PERIOD } },
+  ])
+    assert.throws(() => validateEvaluation(body), ApiError);
+});
+test('Reset keys drop response-only fields such as email', () => {
+  assert.deepEqual(
+    limitKey({ ...draft(), target: { ...draft().target, email: 'a@b.test' } }),
+    {
+      target: { type: 'USER', client_id: 'glean', user_id: 'demo-sam' },
+      period: PERIOD,
+    },
   );
 });
 test('UTC exclusive windows, public filter grammar, and bounds are enforced', () => {
@@ -178,11 +218,17 @@ test('Missing labels and null attribution preserve measured amounts', async () =
   assert.equal(parseSearchResponse(r), r);
 });
 test('No policies is explicit, not a fabricated unlimited cap', async () => {
-  const r = await demo().evaluate({
-    target: { type: 'USER', user_id: 'demo-sam' },
-    usage_selector: { client_id: 'unknown-client', period: PERIOD },
-  });
+  const r = await demo().evaluate(
+    evaluation({
+      type: 'USER',
+      user_id: 'demo-sam',
+      client_id: 'unknown-client',
+    }),
+  );
+  parseEvaluation(r);
   assert.equal(r.applicable_policy_count, 0);
+  assert.equal(r.decision, 'AVAILABLE');
+  assert.deepEqual(r.decision_causes, []);
   assert.deepEqual(r.effective_limits, [{ mode: 'UNLIMITED' }]);
 });
 test('Demo saves upsert one policy and are isolated to one provider', async () => {
@@ -190,30 +236,45 @@ test('Demo saves upsert one policy and are isolated to one provider', async () =
     b = demo();
   const limit = draft({ amount: '750' });
   await a.save(limit);
-  await a.save(limit);
-  assert.equal((await a.limits()).results.length, 3);
+  const saved = await a.save(limit);
+  assert.deepEqual(saved.usage_limit, limit);
+  assert.equal((await a.limits()).results.length, 4);
   assert.equal(
     (await b.limits()).results.find((l) => l.target.user_id === 'demo-sam')
       .value.amount,
     '600',
   );
-  const r = await a.evaluate({
-    target: { type: 'USER', user_id: 'demo-sam' },
-    usage_selector: limit.usage_selector,
-  });
-  assert.ok(r.used_by_unit);
-  assert.ok(
-    r.evaluated_limits.every(
-      (l) => l.value.mode !== 'FINITE' || typeof l.remaining === 'string',
-    ),
+  const r = parseEvaluation(await a.evaluate(sam));
+  for (const field of ['used_by_unit', 'usage_selector'])
+    assert.ok(!(field in r));
+  assert.ok(r.evaluated_limits.every((l) => !('remaining' in l)));
+});
+test('Saving without actions preserves configured thresholds', async () => {
+  const p = demo();
+  const { usage_limit } = await p.save(
+    makeLimit({
+      type: 'DEFAULT_USER',
+      clientId: 'glean',
+      amount: '450',
+      unit: 'CREDITS',
+    }),
+  );
+  assert.deepEqual(usage_limit.actions, [{ type: 'NOTIFY', at_percent: 90 }]);
+});
+test('Reset removes one natural key and reports whether it existed', async () => {
+  const p = demo();
+  const key = limitKey(draft());
+  assert.equal((await p.reset(key)).is_configuration_removed, true);
+  assert.equal((await p.reset(key)).is_configuration_removed, false);
+  const r = await p.evaluate(sam);
+  assert.deepEqual(
+    r.evaluated_limits.map((l) => l.target.type),
+    ['ORGANIZATION', 'DEFAULT_USER'],
   );
 });
 test('User override replaces the default source while retaining organization policy', async () => {
   const p = demo();
-  const q = {
-    target: { type: 'USER', user_id: 'demo-sam' },
-    usage_selector: draft().usage_selector,
-  };
+  const q = sam;
   await p.save(draft({ amount: '750' }));
   const r = await p.evaluate(q);
   assert.equal(r.applicable_policy_count, 2);
@@ -226,7 +287,51 @@ test('User override replaces the default source while retaining organization pol
   await p.save(draft({ amount: '0', enforcement: 'SOFT' }));
   assert.equal((await p.evaluate(q)).decision, 'WARNING');
   await p.save(draft({ amount: '0', enforcement: 'HARD' }));
-  assert.equal((await p.evaluate(q)).decision, 'BLOCKED');
+  const blocked = await p.evaluate(q);
+  assert.equal(blocked.decision, 'BLOCKED');
+  assert.deepEqual(blocked.decision_causes, [
+    { decision: 'BLOCKED', budget_scope: 'TARGET', source_type: 'USER' },
+  ]);
+});
+test('An exhausted organization pool is a shared cause for a user', async () => {
+  const p = demo();
+  await p.save(draft({ amount: '100000' }));
+  await p.save(
+    makeLimit({
+      type: 'ORGANIZATION',
+      clientId: 'glean',
+      amount: '0',
+      unit: 'CREDITS',
+    }),
+  );
+  const r = await p.evaluate(sam);
+  assert.equal(r.decision, 'BLOCKED');
+  assert.deepEqual(r.decision_causes, [
+    {
+      decision: 'BLOCKED',
+      budget_scope: 'SHARED',
+      source_type: 'ORGANIZATION',
+    },
+  ]);
+});
+test('The premium policy restricts models on a user’s own limit only', async () => {
+  const p = demo();
+  await p.save(draft({ amount: '1' }));
+  const r = await p.evaluate(sam);
+  assert.deepEqual(r.restrictions, [
+    {
+      type: 'RESTRICT_MODELS',
+      allow: { models: ['demo-standard-model'] },
+      source: { type: 'DEFAULT_USER', client_id: '*' },
+    },
+  ]);
+  const own = r.evaluated_limits.find((l) => l.target.type === 'USER');
+  assert.deepEqual(
+    own.active_actions.map((a) => a.type),
+    ['RESTRICT_MODELS'],
+  );
+  const org = await p.evaluate(evaluation({ type: 'ORGANIZATION' }));
+  assert.deepEqual(org.restrictions, []);
 });
 test('Sample writes enforce the client billing denomination', async () => {
   await assert.rejects(demo().save(draft({ unit: 'USD' })), /denomination/);
@@ -251,29 +356,38 @@ for (const origin of [
   test(`Unsafe live origin rejected: ${origin}`, () =>
     assert.throws(() => validateOrigin(origin)));
 test('Client picker carries gateway IDs, never constructs them from OAuth IDs', async () => {
+  const calls = [];
   const provider = createLiveProvider({
     serverUrl: 'https://example.test',
     tokenProvider: async () => 'test-token',
-    fetchImpl: async () =>
-      response({
+    fetchImpl: async (url) => {
+      calls.push(new URL(url));
+      return response({
         results: [
           {
             display_name: 'A',
             client_id: 'oauth-id',
-            is_active: true,
-            ai_gateway: { usage_client_id: 'verbatim-opaque-spend' },
+            is_enabled: true,
+            ai_gateway: {
+              usage_client_id: 'verbatim-opaque-spend',
+              supported_apps: [],
+            },
           },
-          { display_name: 'Not gateway', client_id: 'b', is_active: true },
         ],
         has_more: false,
         request_id: 'r',
-      }),
+      });
+    },
   });
   const r = await provider.catalog('clients');
+  assert.deepEqual(JSON.parse(calls[0].searchParams.get('filters')), [
+    { field: 'has_ai_gateway', values: ['true'] },
+  ]);
   assert.equal(r.results.length, 1);
   assert.equal(r.results[0].usage_client_id, 'verbatim-opaque-spend');
+  assert.equal(r.results[0].oauth_client_id, 'oauth-id');
 });
-test('Live bridge uses experimental header, refreshable tokens, and public array batch', async () => {
+test('Live bridge uses experimental header, refreshable tokens, and the public upsert', async () => {
   const calls = [];
   let tokens = 0;
   const provider = createLiveProvider({
@@ -282,19 +396,55 @@ test('Live bridge uses experimental header, refreshable tokens, and public array
     writes: true,
     fetchImpl: async (url, init) => {
       calls.push({ url, init });
-      return response({ results: [draft()], request_id: 'r' });
+      return response({ usage_limit: draft(), request_id: 'r' });
     },
   });
   await provider.save(draft());
   await provider.save(draft());
-  assert.equal(
-    calls[0].url,
-    'https://example.test/api/admin/usage/limits/batch',
-  );
-  assert.deepEqual(JSON.parse(calls[0].init.body), [draft()]);
+  assert.equal(calls[0].url, 'https://example.test/api/admin/usage/limits');
+  assert.deepEqual(JSON.parse(calls[0].init.body), draft());
   assert.equal(calls[0].init.headers['X-Glean-Include-Experimental'], 'true');
   assert.equal(calls[1].init.headers.Authorization, 'Bearer token-2');
   assert.equal(calls[0].init.redirect, 'error');
+});
+test('Live reset sends the natural key and requires writes', async () => {
+  const calls = [];
+  const options = {
+    serverUrl: 'https://example.test',
+    tokenProvider: async () => 'token',
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return response({ is_configuration_removed: true, request_id: 'r' });
+    },
+  };
+  await assert.rejects(
+    createLiveProvider(options).reset(limitKey(draft())),
+    (e) => e.code === 'writes_disabled',
+  );
+  const r = await createLiveProvider({ ...options, writes: true }).reset(
+    limitKey(draft()),
+  );
+  assert.equal(r.is_configuration_removed, true);
+  assert.equal(
+    calls[0].url,
+    'https://example.test/api/admin/usage/limits/reset',
+  );
+  assert.deepEqual(JSON.parse(calls[0].init.body), limitKey(draft()));
+});
+test('Live evaluation rejects responses missing required fields', async () => {
+  const body = parseEvaluation(await demo().evaluate(sam));
+  const provider = (r) =>
+    createLiveProvider({
+      serverUrl: 'https://example.test',
+      tokenProvider: async () => 'token',
+      fetchImpl: async () => response(r),
+    });
+  assert.deepEqual(await provider(body).evaluate(sam), body);
+  const { decision_causes, ...withoutCauses } = body;
+  await assert.rejects(
+    provider(withoutCauses).evaluate(sam),
+    (e) => e.code === 'invalid_response',
+  );
 });
 test('Live writes require explicit opt-in and never retry ambiguous failures', async () => {
   let calls = 0;
@@ -354,7 +504,10 @@ test('List pagination follows cursors, rejects cycles, and bounds reads', async 
     },
   });
   await p.limits();
-  assert.ok(calls[1].endsWith('cursor=exact%20padded%20cursor'));
+  assert.equal(
+    new URL(calls[1]).searchParams.get('cursor'),
+    'exact padded cursor',
+  );
   const loop = createLiveProvider({
     serverUrl: 'https://example.test',
     tokenProvider: async () => 'token',
@@ -411,6 +564,12 @@ test('Loopback server blocks cross-origin writes and DNS rebinding, serves CSP, 
   assert.equal(rebound, 403);
   assert.equal((await send({ 'X-Recipe-Request': '' })).status, 403);
   assert.equal((await send()).status, 200);
+  const reset = await fetch(`${origin}/api/limits/reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Recipe-Request': '1' },
+    body: JSON.stringify(limitKey(draft())),
+  });
+  assert.equal((await reset.json()).is_configuration_removed, true);
   const caps = await (await fetch(`${origin}/api/capabilities`)).json();
   assert.equal(caps.mode, 'demo');
   assert.ok(!JSON.stringify(caps).includes('token'));
