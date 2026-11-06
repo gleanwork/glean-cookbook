@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import fg from 'fast-glob';
 
+import { readJsonc } from './jsonc.mjs';
 import {
   LEGACY_CODE_PATTERN_TARGETS,
   LEGACY_OAUTH_HELPER_TARGETS,
@@ -60,6 +61,32 @@ const HAND_ROLLED_ENV = /['"`][^'"`]*\.env(?:\.local)?['"`]/u;
 const READS_FILE = /\breadFile(?:Sync)?\s*\(/u;
 const SPLITS_ASSIGNMENT =
   /\.split\(\s*['"`]=['"`]|\.indexOf\(\s*['"`]=['"`]|\/\^\s*\(?\[?[^/]*\]?\*?\)?\s*=|\(\[\^=/u;
+
+// The static-token rule enforces the OAuth sign-in contract. A package whose
+// owning execution declares only a Glean-issued Client API token has no
+// sign-in to provide tokens, so the static token is its documented contract.
+function declaresTokenOnly(repoRoot, directory) {
+  const recipeFile = path.join(
+    repoRoot,
+    'recipes',
+    directory.split('/')[1],
+    'recipe.json',
+  );
+  if (!fs.existsSync(recipeFile)) return false;
+  const recipe = readJsonc(recipeFile);
+  const asset = (recipe.codeAssets ?? []).find(
+    (candidate) =>
+      candidate.execution &&
+      (directory === candidate.repoPath ||
+        directory.startsWith(`${candidate.repoPath}/`)),
+  );
+  const kinds = new Set(
+    ((asset?.execution ?? recipe.execution)?.auth ?? []).map(
+      (entry) => entry.kind,
+    ),
+  );
+  return kinds.has('hosted-secret') && !kinds.has('oauth-with-token-fallback');
+}
 
 function packageDirectories(repoRoot) {
   return fg
@@ -122,7 +149,11 @@ export function recipeCodePatternViolations({
         /@gleanwork\/api-client|new\s+Glean\s*\(/u.test(text)
       );
     });
-    if (staticTokenFile && !providesTokens) {
+    if (
+      staticTokenFile &&
+      !providesTokens &&
+      !declaresTokenOnly(repoRoot, directory)
+    ) {
       record('static-api-token', directory, staticTokenFile);
     }
 
