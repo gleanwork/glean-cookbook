@@ -4826,6 +4826,205 @@
     }
   },
   {
+    "id": "usage-limit-requests",
+    "title": "Review AI usage limit increase requests",
+    "description": "Work the billing queue of members' requests for more AI usage from a CLI: review each request with the requester's current limit, approve a one-month increase, or deny it with a note. Members can file and track their own requests with the same tool.",
+    "sidebarLabel": "Review limit increase requests",
+    "surfaces": ["platform-api"],
+    "capabilities": ["tools"],
+    "status": "showcase",
+    "visibility": "preview",
+    "category": "workflow",
+    "level": "Intermediate",
+    "levels": { "minimal": true, "wow": false },
+    "timeEstimate": "~15 min",
+    "icon": "shield-check",
+    "requiredScopes": [
+      "ADMIN_USAGE_LIMIT_INCREASE_REQUESTS",
+      "USAGE_LIMIT_INCREASE_REQUESTS",
+      "ADMIN_USAGE",
+      "PEOPLE"
+    ],
+    "authMethod": ["client-api-oauth-or-token"],
+    "buildMethod": "scaffold",
+    "languages": ["typescript"],
+    "prerequisites": [
+      "Node.js 22.12.0 or newer",
+      "The complete Glean backend origin shown under Server instance (QE)",
+      "A workspace with the request-more setting (spend_limit.requestMore.enabled) turned on",
+      "Workspace billing permissions: billing read to review the queue, billing edit to approve or deny. The ADMIN role alone does not grant them",
+      "A user-scoped Client API token from Token Management, created by that user, with the ADMIN_USAGE_LIMIT_INCREASE_REQUESTS, USAGE_LIMIT_INCREASE_REQUESTS, ADMIN_USAGE, and PEOPLE scopes"
+    ],
+    "codeAssets": [
+      {
+        "repoPath": "recipes/usage-limit-requests",
+        "language": "typescript",
+        "description": "TypeScript CLI for the experimental usage limit-increase request APIs, with MSW fixture tests"
+      }
+    ],
+    "steps": [
+      {
+        "title": "Copy the recipe",
+        "description": "Copy the TypeScript CLI and its credential-free fixture tests into a new directory.",
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/usage-limit-requests usage-limit-requests",
+        "kind": "scaffold"
+      },
+      {
+        "title": "Install dependencies",
+        "description": "Enter the project directory and install the pinned Glean SDK, plus Vitest and MSW for the tests. Run the remaining commands from this directory.",
+        "command": "cd usage-limit-requests && npm ci",
+        "kind": "install"
+      },
+      {
+        "title": "Run the fixture tests",
+        "description": "Run the tests without credentials or network access. MSW HTTP handlers check the exact approve and deny bodies, confirmation, pagination, and the refusals for agent and past-month requests. Passing them does not verify access to your workspace.",
+        "command": "npm test",
+        "kind": "manual"
+      },
+      {
+        "title": "Add your backend and token",
+        "description": "Copy the example, then open .env yourself. Set GLEAN_SERVER_URL to your backend origin and GLEAN_API_TOKEN to a user-scoped Client API token from Token Management with the ADMIN_USAGE_LIMIT_INCREASE_REQUESTS, USAGE_LIMIT_INCREASE_REQUESTS, ADMIN_USAGE, and PEOPLE scopes, created by a user with billing permissions. Never paste the token into chat, a command, or a committed file.",
+        "command": "cp .env.example .env",
+        "kind": "configure"
+      },
+      {
+        "title": "Verify against your workspace",
+        "description": "Read one page of your own requests and one page of the billing queue without changing anything. It exits non-zero on the first failure: a 404 means the request-more setting is off or the backend does not serve the experimental request APIs yet, and a 403 names the missing scope or billing permission.",
+        "command": "npm run verify",
+        "kind": "verify-live"
+      },
+      {
+        "title": "Review the queue",
+        "description": "List pending requests with the requester, spend client, month, and justification. Then run show, approve with --amount, or deny with --note on a request ID. Approve shows the requester's current limit first, and both approve and deny ask for confirmation.",
+        "command": "npm start -- queue",
+        "kind": "run"
+      }
+    ],
+    "execution": {
+      "type": "cli",
+      "auth": [
+        {
+          "kind": "hosted-secret",
+          "scopes": [
+            "ADMIN_USAGE_LIMIT_INCREASE_REQUESTS",
+            "USAGE_LIMIT_INCREASE_REQUESTS",
+            "ADMIN_USAGE",
+            "PEOPLE"
+          ],
+          "configFile": ".env",
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "automated",
+        "command": "npm run verify",
+        "expectedDuration": "under a minute",
+        "startsOwnServer": false
+      },
+      "run": { "command": "npm start -- queue", "userBrowser": false }
+    },
+    "llmContext": "Use @gleanwork/api-client 0.20.18 for users.get with includeExperimental, and a REST bridge for /api/admin/usage/limit-increase-requests, /api/usage/limit-increase-requests, and POST /api/admin/usage/limits/evaluate, all with X-Glean-Include-Experimental: true. Parse PersonalLimitIncreaseRequest for member routes and AdministrativeLimitIncreaseRequest for billing routes. Approve with PATCH {status: APPROVED, approved_increase_amount, scope: PERIOD} only for PENDING USER requests in the current UTC month; deny with an optional resolution_note. Never retry writes. Confirm writes unless --yes. Auth is a user-scoped Client API token in an ignored .env, loaded with process.loadEnvFile.",
+    "aiPrompt": "Scaffold and run the usage limit-increase request queue CLI. Run the credential-free fixture tests first. Have the user copy .env.example to .env and set GLEAN_SERVER_URL and a user-scoped Client API token in GLEAN_API_TOKEN with ADMIN_USAGE_LIMIT_INCREASE_REQUESTS, USAGE_LIMIT_INCREASE_REQUESTS, ADMIN_USAGE, and PEOPLE, created by a user with billing permissions. Never ask the user to paste a token into chat or a command. Run npm run verify before any other live command; it only reads. If it returns 404, explain that spend_limit.requestMore.enabled is off or the backend does not serve the experimental request APIs, and stop. List the queue with npm start -- queue. Before approving or denying, run show on the request and present the requester, spend client, month, justification, remaining headroom, and limit unit to the user. Approve or deny only after the user names the request and, for approval, the amount; pass --yes only after the user confirms that exact change. Do not approve agent requests or requests from a past month; the CLI refuses them. Do not retry an approve or deny that failed with a connection error; run show first. Members file requests with npm start -- request --client <client-id> and track them with npm start -- mine.",
+    "codeWalkthrough": {
+      "intro": "The SDK looks up requesters, and a small REST bridge sends the request and evaluation operations that the released SDK does not include yet. Both use the same token and the experimental opt-in.",
+      "examples": [
+        {
+          "title": "Connect with a Client API token",
+          "description": "Load .env with Node.js, validate the backend origin, and give the SDK and the bridge the same token.",
+          "source": "src/client.ts",
+          "language": "typescript",
+          "code": "import { loadEnvFile } from 'node:process';\nimport { Glean, type SDKOptions } from '@gleanwork/api-client';\nimport type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';\nimport { PlatformProblemDetailError } from '@gleanwork/api-client/models/errors';\nimport { createUsageRequestsApi, GleanApiError } from './api.js';\nimport type { Person } from './commands.js';\n\nconst LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);\n\nfunction loadDotEnv() {\n  try {\n    loadEnvFile();\n  } catch (error) {\n    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;\n  }\n}\n\nfunction backendOrigin(serverUrl: string | undefined) {\n  if (!serverUrl) {\n    throw new Error(\n      'Set GLEAN_SERVER_URL in .env to your Glean backend origin.',\n    );\n  }\n  const server = new URL(serverUrl);\n  const loopback = LOOPBACK_HOSTS.has(server.hostname);\n  if (\n    (server.protocol !== 'https:' && !loopback) ||\n    server.username ||\n    server.password ||\n    server.search ||\n    server.hash ||\n    (server.pathname && server.pathname !== '/') ||\n    (!loopback && server.port)\n  ) {\n    throw new Error('Use a complete Glean backend HTTPS origin.');\n  }\n  return server.origin;\n}\n\n/**\n * Creates the SDK client for directory reads and the REST bridge for the\n * request operations. Both send the user-scoped Client API token from .env.\n */\nexport function connect() {\n  loadDotEnv();\n  const origin = backendOrigin(process.env.GLEAN_SERVER_URL?.trim());\n  const token = process.env.GLEAN_API_TOKEN?.trim();\n  if (!token) {\n    throw new GleanApiError(\n      'Set GLEAN_API_TOKEN in .env to a user-scoped Client API token.',\n      401,\n      'missing_credentials',\n    );\n  }\n\n  const options = {\n    serverURL: origin,\n    apiToken: token,\n    includeExperimental: true,\n  } satisfies SDKOptions & XGleanOptions;\n\n  return {\n    origin,\n    glean: new Glean(options),\n    requests: createUsageRequestsApi({ origin, token }),\n  };\n}\n\n/** Looks up a requester. Requests outlive people; a deleted user returns 404. */\nexport function directoryLookup(glean: Glean) {\n  return async (userId: string): Promise<Person | undefined> => {\n    try {\n      return (await glean.users.get(userId)).user;\n    } catch (error) {\n      if (error instanceof PlatformProblemDetailError && error.status === 404) {\n        return undefined;\n      }\n      throw error;\n    }\n  };\n}\n"
+        },
+        {
+          "title": "Call the request APIs",
+          "description": "Send the experimental header, parse Problem Details, and never retry a write. A dropped connection during a write says the change may or may not have applied.",
+          "source": "src/api.ts",
+          "language": "typescript",
+          "code": "import {\n  parseAdministrativeRequest,\n  parseEvaluation,\n  parsePage,\n  parsePersonalRequest,\n  parseResource,\n  type PersonalRequestCreate,\n  type RequestStatus,\n  type ResolveRequest,\n} from './requests.js';\n\nconst TIMEOUT_MS = 30_000;\n\n/** A Platform Problem Details response, or a transport failure. */\nexport class GleanApiError extends Error {\n  constructor(\n    message: string,\n    readonly status: number,\n    readonly code: string,\n    readonly requestId?: string,\n    readonly retryAfter?: string,\n  ) {\n    super(message);\n  }\n}\n\nexport interface ListOptions {\n  statuses?: RequestStatus[];\n  cursor?: string;\n  pageSize?: number;\n}\n\nfunction listQuery({ statuses, cursor, pageSize }: ListOptions) {\n  const query = new URLSearchParams();\n  if (pageSize) query.set('page_size', String(pageSize));\n  if (cursor) query.set('cursor', cursor);\n  if (statuses?.length) {\n    query.set(\n      'filters',\n      JSON.stringify([{ field: 'status', values: statuses }]),\n    );\n  }\n  const text = query.toString();\n  return text ? `?${text}` : '';\n}\n\n/**\n * The limit-increase request and admin evaluation operations are not in the\n * released SDK yet. This bridge sends them with the same origin and token as\n * the SDK client and never retries a write.\n */\nexport function createUsageRequestsApi({\n  origin,\n  token,\n}: {\n  origin: string;\n  token: string;\n}) {\n  async function send(\n    method: 'GET' | 'POST' | 'PATCH',\n    path: string,\n    { body, write = false }: { body?: unknown; write?: boolean } = {},\n  ): Promise<unknown> {\n    let response: Response;\n    try {\n      response = await fetch(`${origin}${path}`, {\n        method,\n        redirect: 'error',\n        headers: {\n          Authorization: `Bearer ${token}`,\n          'X-Glean-Include-Experimental': 'true',\n          ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),\n        },\n        body: body === undefined ? undefined : JSON.stringify(body),\n        signal: AbortSignal.timeout(TIMEOUT_MS),\n      });\n    } catch (error) {\n      const reason = error instanceof Error ? error.message : String(error);\n      throw new GleanApiError(\n        !write\n          ? `Could not reach Glean: ${reason}`\n          : `Could not confirm the change, so it may or may not have applied: ${reason}. Check the request before you try again.`,\n        0,\n        'connection_error',\n      );\n    }\n\n    let data: unknown;\n    try {\n      data = await response.json();\n    } catch {\n      data = undefined;\n    }\n    if (!response.ok) {\n      const problem = (data ?? {}) as Record<string, unknown>;\n      throw new GleanApiError(\n        typeof problem.detail === 'string'\n          ? problem.detail\n          : `Glean returned HTTP ${response.status}.`,\n        response.status,\n        typeof problem.code === 'string' ? problem.code : 'unknown',\n        typeof problem.request_id === 'string' ? problem.request_id : undefined,\n        response.headers.get('retry-after') ?? undefined,\n      );\n    }\n    if (data === undefined) {\n      throw new GleanApiError(\n        `Glean returned a non-JSON response to ${method} ${path}.`,\n        response.status,\n        'invalid_response',\n      );\n    }\n    return data;\n  }\n\n  const admin = '/api/admin/usage/limit-increase-requests';\n  const personal = '/api/usage/limit-increase-requests';\n  const id = (requestId: string) => `/${encodeURIComponent(requestId)}`;\n\n  return {\n    async listQueue(options: ListOptions = {}) {\n      return parsePage(\n        await send('GET', `${admin}${listQuery(options)}`),\n        parseAdministrativeRequest,\n      );\n    },\n    async getForReview(requestId: string) {\n      return parseResource(\n        await send('GET', `${admin}${id(requestId)}`),\n        parseAdministrativeRequest,\n      );\n    },\n    async resolve(requestId: string, update: ResolveRequest) {\n      return parseResource(\n        await send('PATCH', `${admin}${id(requestId)}`, {\n          body: update,\n          write: true,\n        }),\n        parseAdministrativeRequest,\n      );\n    },\n    async listMine(options: ListOptions = {}) {\n      return parsePage(\n        await send('GET', `${personal}${listQuery(options)}`),\n        parsePersonalRequest,\n      );\n    },\n    async create(body: PersonalRequestCreate) {\n      return parseResource(\n        await send('POST', personal, { body, write: true }),\n        parsePersonalRequest,\n      );\n    },\n    async evaluateUser(userId: string, clientId: string) {\n      return parseEvaluation(\n        await send('POST', '/api/admin/usage/limits/evaluate', {\n          body: {\n            target: { type: 'USER', user_id: userId, client_id: clientId },\n            period: { type: 'RECURRING_CALENDAR_MONTH' },\n          },\n        }),\n      );\n    },\n  };\n}\n\nexport type UsageRequestsApi = ReturnType<typeof createUsageRequestsApi>;\n"
+        },
+        {
+          "title": "Check a decision before sending it",
+          "description": "Parse the personal and billing views of a request, and refuse approvals the API would reject or not honor.",
+          "source": "src/requests.ts",
+          "language": "typescript",
+          "code": "export const REQUEST_STATUSES = ['PENDING', 'APPROVED', 'DENIED'] as const;\nexport type RequestStatus = (typeof REQUEST_STATUSES)[number];\n\n/** The view a requester gets from /api/usage/limit-increase-requests. */\nexport interface PersonalLimitIncreaseRequest {\n  request_id: string;\n  entity_type: 'USER' | 'AGENT';\n  entity_id: string;\n  client_id: string;\n  requester_user_id: string;\n  period: string;\n  status: RequestStatus;\n  business_justification?: string;\n  approved_increase_amount?: string;\n  resolution_note?: string;\n  created_at: string;\n  updated_at?: string;\n}\n\n/** The billing view adds who resolved a request and how broadly. */\nexport interface AdministrativeLimitIncreaseRequest extends PersonalLimitIncreaseRequest {\n  resolved_by_user_id?: string;\n  scope?: 'PERIOD' | 'ONGOING';\n  resolution_target?: 'USER' | 'ALL' | 'DEPARTMENT' | 'GROUP';\n  resolution_target_id?: string;\n}\n\nexport interface RequestPage<T> {\n  results: T[];\n  has_more: boolean;\n  next_cursor?: string | null;\n  request_id: string;\n}\n\nexport type ResolveRequest =\n  | { status: 'APPROVED'; approved_increase_amount: string; scope: 'PERIOD' }\n  | { status: 'DENIED'; resolution_note?: string };\n\nexport interface PersonalRequestCreate {\n  client_id: string;\n  business_justification?: string;\n}\n\nexport interface HeadroomValue {\n  mode: 'FINITE' | 'UNLIMITED';\n  remaining?: string;\n  unit?: string;\n  enforcement?: string;\n}\n\nexport interface EvaluatedLimit {\n  target: { type: string };\n  value: { mode: 'FINITE' | 'UNLIMITED'; amount?: string; unit?: string };\n  used: string;\n  decision: string;\n}\n\n/** The fields of an admin limit evaluation that a reviewer needs. */\nexport interface LimitEvaluation {\n  decision: string;\n  applicable_policy_count: number;\n  effective_limits: HeadroomValue[];\n  evaluated_limits: EvaluatedLimit[];\n}\n\nexport class ContractError extends Error {}\n\nconst POSITIVE_AMOUNT = /^([1-9][0-9]*(\\.[0-9]+)?|0\\.[0-9]*[1-9][0-9]*)$/u;\nconst RECORDED_AMOUNT = /^-?([1-9][0-9]*(\\.[0-9]+)?|0\\.[0-9]*[1-9][0-9]*)$/u;\nconst PERIOD = /^[0-9]{4}-(0[1-9]|1[0-2])$/u;\nconst CONTROL_CHARACTERS = /[\\x00-\\x1f\\x7f]/u;\n\ntype Json = Record<string, unknown>;\n\nfunction isObject(value: unknown): value is Json {\n  return typeof value === 'object' && value !== null && !Array.isArray(value);\n}\n\nfunction nonblank(value: unknown): value is string {\n  return typeof value === 'string' && value.trim() !== '';\n}\n\nfunction optionalString(record: Json, key: string) {\n  const value = record[key];\n  if (value !== undefined && typeof value !== 'string') {\n    throw new ContractError(`Request field ${key} must be a string.`);\n  }\n}\n\nexport function parsePersonalRequest(\n  value: unknown,\n): PersonalLimitIncreaseRequest {\n  if (!isObject(value)) throw new ContractError('Request must be an object.');\n  for (const key of [\n    'request_id',\n    'entity_id',\n    'client_id',\n    'requester_user_id',\n    'created_at',\n  ]) {\n    if (!nonblank(value[key])) {\n      throw new ContractError(`Request is missing ${key}.`);\n    }\n  }\n  if (value.entity_type !== 'USER' && value.entity_type !== 'AGENT') {\n    throw new ContractError('Request entity_type must be USER or AGENT.');\n  }\n  if (typeof value.period !== 'string' || !PERIOD.test(value.period)) {\n    throw new ContractError('Request period must be YYYY-MM.');\n  }\n  if (!REQUEST_STATUSES.includes(value.status as RequestStatus)) {\n    throw new ContractError('Request status is not recognized.');\n  }\n  for (const key of [\n    'business_justification',\n    'resolution_note',\n    'updated_at',\n  ]) {\n    optionalString(value, key);\n  }\n  const amount = value.approved_increase_amount;\n  if (\n    (value.status === 'APPROVED') !==\n    (typeof amount === 'string' && RECORDED_AMOUNT.test(amount))\n  ) {\n    throw new ContractError(\n      'Request approved_increase_amount must be present exactly when it is APPROVED.',\n    );\n  }\n  return value as unknown as PersonalLimitIncreaseRequest;\n}\n\nexport function parseAdministrativeRequest(\n  value: unknown,\n): AdministrativeLimitIncreaseRequest {\n  const request = parsePersonalRequest(value) as Json &\n    PersonalLimitIncreaseRequest;\n  for (const key of ['resolved_by_user_id', 'resolution_target_id']) {\n    optionalString(request, key);\n  }\n  if (\n    (request.status === 'APPROVED') !==\n    (request.scope === 'PERIOD' || request.scope === 'ONGOING')\n  ) {\n    throw new ContractError(\n      'Request scope must be present exactly when it is APPROVED.',\n    );\n  }\n  return request;\n}\n\nexport function parsePage<T>(\n  value: unknown,\n  parseItem: (item: unknown) => T,\n): RequestPage<T> {\n  if (\n    !isObject(value) ||\n    !Array.isArray(value.results) ||\n    typeof value.has_more !== 'boolean' ||\n    !nonblank(value.request_id) ||\n    (value.has_more && !nonblank(value.next_cursor))\n  ) {\n    throw new ContractError('Malformed request page.');\n  }\n  return {\n    results: value.results.map(parseItem),\n    has_more: value.has_more,\n    next_cursor: value.has_more ? (value.next_cursor as string) : null,\n    request_id: value.request_id,\n  };\n}\n\nexport function parseResource<T>(\n  value: unknown,\n  parseItem: (item: unknown) => T,\n): T {\n  if (!isObject(value) || !nonblank(value.request_id)) {\n    throw new ContractError('Malformed request response.');\n  }\n  return parseItem(value.request);\n}\n\nexport function parseEvaluation(value: unknown): LimitEvaluation {\n  if (\n    !isObject(value) ||\n    !nonblank(value.decision) ||\n    !Number.isInteger(value.applicable_policy_count) ||\n    !Array.isArray(value.effective_limits) ||\n    !Array.isArray(value.evaluated_limits) ||\n    value.effective_limits.some((limit) => !isObject(limit)) ||\n    value.evaluated_limits.some(\n      (limit) =>\n        !isObject(limit) ||\n        !isObject(limit.target) ||\n        !isObject(limit.value) ||\n        typeof limit.used !== 'string',\n    )\n  ) {\n    throw new ContractError('Malformed limit evaluation.');\n  }\n  return value as unknown as LimitEvaluation;\n}\n\n/** The UTC month the server stamps on new requests and requires for approval. */\nexport function currentPeriod(now = new Date()) {\n  return now.toISOString().slice(0, 7);\n}\n\nexport function parseAmount(text: string) {\n  const amount = text.trim();\n  if (!POSITIVE_AMOUNT.test(amount)) {\n    throw new Error(\n      '--amount must be a positive plain decimal, such as 25 or 12.50.',\n    );\n  }\n  return amount;\n}\n\nexport function parseClientId(text: string) {\n  const clientId = text.trim();\n  if (\n    !clientId ||\n    clientId.length > 256 ||\n    CONTROL_CHARACTERS.test(clientId) ||\n    clientId === '__deleted_clients__'\n  ) {\n    throw new Error('--client must be a spend client ID, such as glean.');\n  }\n  return clientId;\n}\n\n/**\n * Explains why the API would reject or not honor an approval, before the\n * reviewer is asked to confirm it.\n */\nexport function approvalBlocker(\n  request: PersonalLimitIncreaseRequest,\n  now = new Date(),\n) {\n  if (request.status !== 'PENDING') {\n    return `Request ${request.request_id} is already ${request.status}.`;\n  }\n  if (request.entity_type === 'AGENT') {\n    return 'Approving an agent request records the decision but adds no capacity for the agent. Raise the agent limit with the usage limits API, or deny the request.';\n  }\n  const period = currentPeriod(now);\n  if (request.period !== period) {\n    return `Request ${request.request_id} is for ${request.period}. Approval applies only to the request's own month, and only while it is the current UTC month (${period}). Deny it and ask the requester to file a new one.`;\n  }\n  return undefined;\n}\n\nexport function denialBlocker(request: PersonalLimitIncreaseRequest) {\n  return request.status === 'PENDING'\n    ? undefined\n    : `Request ${request.request_id} is already ${request.status}.`;\n}\n"
+        }
+      ]
+    },
+    "architecture": [
+      { "label": "Members", "caption": "request, mine", "icon": "terminal" },
+      {
+        "label": "Request APIs",
+        "caption": "experimental, gated by request-more",
+        "category": "workflow",
+        "emphasized": true
+      },
+      {
+        "label": "Billing reviewer",
+        "caption": "queue, show, approve, deny",
+        "icon": "shield-check"
+      },
+      {
+        "label": "Usage limits",
+        "caption": "current headroom for the requester",
+        "category": "workflow"
+      }
+    ],
+    "content": {
+      "problem": "Members who reach their AI usage limit can ask for more, and someone with billing access has to decide. This CLI lists the pending requests, shows each one next to the requester's current limit and headroom, and records a one-month approval or a denial. Members can use it to file a request and follow it.",
+      "takeItFurther": [
+        "Post new pending requests to the billing team's channel on a schedule, with a link to run show on each one.",
+        "When the same people keep asking for more, raise their standing limit with the usage limits API instead of approving each month.",
+        "Run the member commands from an internal tool so people can ask for more usage where they hit the limit."
+      ],
+      "guardrails": [
+        {
+          "title": "Confirm every decision",
+          "rule": "Approve shows the request and the requester's current limit, deny shows the request, and both ask for confirmation. Without a terminal they require --yes. Neither is retried; after a dropped connection, run show before trying again."
+        },
+        {
+          "title": "Approve only what the API honors",
+          "rule": "Approval adds headroom only for a pending user request in its own month, which must be the current UTC month. The CLI refuses agent requests and past-month requests before sending anything."
+        },
+        {
+          "title": "Keep the token out of chat and git",
+          "rule": "Edit .env yourself. It is ignored by git, and the CLI never prints the token."
+        }
+      ],
+      "limitations": [
+        {
+          "title": "Preview until a workspace run",
+          "description": "Fixture tests cover the API contracts. The recipe stays in preview until an authorized run against a real workspace, including a contained approval and denial, passes."
+        },
+        {
+          "title": "Experimental and gated",
+          "description": "Every request API needs the experimental opt-in and the request-more setting. They return 404 until both are in place, and their contract can change."
+        },
+        {
+          "title": "One-month increases for people",
+          "description": "Ongoing approvals that change standing rules are not available on this API, and approvals add no capacity for agents. Department and IdP-group approvals are not supported."
+        }
+      ]
+    },
+    "demoQueries": [
+      {
+        "query": "Show me the pending usage limit increase requests",
+        "expectedBehavior": "Runs npm start -- queue and lists each pending request with the requester's name, spend client, month, and justification, or says there are none."
+      },
+      {
+        "query": "Approve request <request-id> for 25",
+        "expectedBehavior": "Runs show first, presents the requester's remaining headroom and limit unit, and asks the user to confirm before running approve with --amount 25 --yes. Refuses agent and past-month requests."
+      },
+      {
+        "query": "Ask for more Glean usage this month",
+        "expectedBehavior": "Runs npm start -- request --client glean with the user's justification and reports the new request ID and month."
+      }
+    ],
+    "goDependency": false,
+    "hidden": false,
+    "tags": ["usage", "limits", "requests", "billing", "preview"]
+  },
+  {
     "id": "validate-and-publish-skill",
     "title": "Validate skill publishing",
     "description": "Validate a local SKILL.md, test publishing and retrieval in Glean, confirm the downloaded file matches, and delete the test skill.",

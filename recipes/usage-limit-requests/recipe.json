@@ -1,0 +1,206 @@
+{
+  "id": "usage-limit-requests",
+  "title": "Review AI usage limit increase requests",
+  "description": "Work the billing queue of members' requests for more AI usage from a CLI: review each request with the requester's current limit, approve a one-month increase, or deny it with a note. Members can file and track their own requests with the same tool.",
+  "sidebarLabel": "Review limit increase requests",
+  "surfaces": ["platform-api"],
+  "capabilities": ["tools"],
+  "status": "showcase",
+  "visibility": "preview",
+  "category": "workflow",
+  "level": "Intermediate",
+  "levels": {
+    "minimal": true,
+    "wow": false
+  },
+  "timeEstimate": "~15 min",
+  "icon": "shield-check",
+  "requiredScopes": [
+    "ADMIN_USAGE_LIMIT_INCREASE_REQUESTS",
+    "USAGE_LIMIT_INCREASE_REQUESTS",
+    "ADMIN_USAGE",
+    "PEOPLE"
+  ],
+  "authMethod": ["client-api-oauth-or-token"],
+  "buildMethod": "scaffold",
+  "languages": ["typescript"],
+  "prerequisites": [
+    "Node.js 22.12.0 or newer",
+    "The complete Glean backend origin shown under Server instance (QE)",
+    "A workspace with the request-more setting (spend_limit.requestMore.enabled) turned on",
+    "Workspace billing permissions: billing read to review the queue, billing edit to approve or deny. The ADMIN role alone does not grant them",
+    "A user-scoped Client API token from Token Management, created by that user, with the ADMIN_USAGE_LIMIT_INCREASE_REQUESTS, USAGE_LIMIT_INCREASE_REQUESTS, ADMIN_USAGE, and PEOPLE scopes"
+  ],
+  "codeAssets": [
+    {
+      "repoPath": "recipes/usage-limit-requests",
+      "language": "typescript",
+      "description": "TypeScript CLI for the experimental usage limit-increase request APIs, with MSW fixture tests"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Copy the recipe",
+      "description": "Copy the TypeScript CLI and its credential-free fixture tests into a new directory.",
+      "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/usage-limit-requests usage-limit-requests",
+      "kind": "scaffold"
+    },
+    {
+      "title": "Install dependencies",
+      "description": "Enter the project directory and install the pinned Glean SDK, plus Vitest and MSW for the tests. Run the remaining commands from this directory.",
+      "command": "cd usage-limit-requests && npm ci",
+      "kind": "install"
+    },
+    {
+      "title": "Run the fixture tests",
+      "description": "Run the tests without credentials or network access. MSW HTTP handlers check the exact approve and deny bodies, confirmation, pagination, and the refusals for agent and past-month requests. Passing them does not verify access to your workspace.",
+      "command": "npm test",
+      "kind": "manual"
+    },
+    {
+      "title": "Add your backend and token",
+      "description": "Copy the example, then open .env yourself. Set GLEAN_SERVER_URL to your backend origin and GLEAN_API_TOKEN to a user-scoped Client API token from Token Management with the ADMIN_USAGE_LIMIT_INCREASE_REQUESTS, USAGE_LIMIT_INCREASE_REQUESTS, ADMIN_USAGE, and PEOPLE scopes, created by a user with billing permissions. Never paste the token into chat, a command, or a committed file.",
+      "command": "cp .env.example .env",
+      "kind": "configure"
+    },
+    {
+      "title": "Verify against your workspace",
+      "description": "Read one page of your own requests and one page of the billing queue without changing anything. It exits non-zero on the first failure: a 404 means the request-more setting is off or the backend does not serve the experimental request APIs yet, and a 403 names the missing scope or billing permission.",
+      "command": "npm run verify",
+      "kind": "verify-live"
+    },
+    {
+      "title": "Review the queue",
+      "description": "List pending requests with the requester, spend client, month, and justification. Then run show, approve with --amount, or deny with --note on a request ID. Approve shows the requester's current limit first, and both approve and deny ask for confirmation.",
+      "command": "npm start -- queue",
+      "kind": "run"
+    }
+  ],
+  "execution": {
+    "type": "cli",
+    "auth": [
+      {
+        "kind": "hosted-secret",
+        "scopes": [
+          "ADMIN_USAGE_LIMIT_INCREASE_REQUESTS",
+          "USAGE_LIMIT_INCREASE_REQUESTS",
+          "ADMIN_USAGE",
+          "PEOPLE"
+        ],
+        "configFile": ".env",
+        "credentialVariable": "GLEAN_API_TOKEN"
+      }
+    ],
+    "verification": {
+      "kind": "automated",
+      "command": "npm run verify",
+      "expectedDuration": "under a minute",
+      "startsOwnServer": false
+    },
+    "run": {
+      "command": "npm start -- queue",
+      "userBrowser": false
+    }
+  },
+  "llmContext": "Use @gleanwork/api-client 0.20.18 for users.get with includeExperimental, and a REST bridge for /api/admin/usage/limit-increase-requests, /api/usage/limit-increase-requests, and POST /api/admin/usage/limits/evaluate, all with X-Glean-Include-Experimental: true. Parse PersonalLimitIncreaseRequest for member routes and AdministrativeLimitIncreaseRequest for billing routes. Approve with PATCH {status: APPROVED, approved_increase_amount, scope: PERIOD} only for PENDING USER requests in the current UTC month; deny with an optional resolution_note. Never retry writes. Confirm writes unless --yes. Auth is a user-scoped Client API token in an ignored .env, loaded with process.loadEnvFile.",
+  "aiPrompt": "Scaffold and run the usage limit-increase request queue CLI. Run the credential-free fixture tests first. Have the user copy .env.example to .env and set GLEAN_SERVER_URL and a user-scoped Client API token in GLEAN_API_TOKEN with ADMIN_USAGE_LIMIT_INCREASE_REQUESTS, USAGE_LIMIT_INCREASE_REQUESTS, ADMIN_USAGE, and PEOPLE, created by a user with billing permissions. Never ask the user to paste a token into chat or a command. Run npm run verify before any other live command; it only reads. If it returns 404, explain that spend_limit.requestMore.enabled is off or the backend does not serve the experimental request APIs, and stop. List the queue with npm start -- queue. Before approving or denying, run show on the request and present the requester, spend client, month, justification, remaining headroom, and limit unit to the user. Approve or deny only after the user names the request and, for approval, the amount; pass --yes only after the user confirms that exact change. Do not approve agent requests or requests from a past month; the CLI refuses them. Do not retry an approve or deny that failed with a connection error; run show first. Members file requests with npm start -- request --client <client-id> and track them with npm start -- mine.",
+  "codeWalkthrough": {
+    "intro": "The SDK looks up requesters, and a small REST bridge sends the request and evaluation operations that the released SDK does not include yet. Both use the same token and the experimental opt-in.",
+    "examples": [
+      {
+        "title": "Connect with a Client API token",
+        "description": "Load .env with Node.js, validate the backend origin, and give the SDK and the bridge the same token.",
+        "source": "src/client.ts",
+        "language": "typescript"
+      },
+      {
+        "title": "Call the request APIs",
+        "description": "Send the experimental header, parse Problem Details, and never retry a write. A dropped connection during a write says the change may or may not have applied.",
+        "source": "src/api.ts",
+        "language": "typescript"
+      },
+      {
+        "title": "Check a decision before sending it",
+        "description": "Parse the personal and billing views of a request, and refuse approvals the API would reject or not honor.",
+        "source": "src/requests.ts",
+        "language": "typescript"
+      }
+    ]
+  },
+  "architecture": [
+    {
+      "label": "Members",
+      "caption": "request, mine",
+      "icon": "terminal"
+    },
+    {
+      "label": "Request APIs",
+      "caption": "experimental, gated by request-more",
+      "category": "workflow",
+      "emphasized": true
+    },
+    {
+      "label": "Billing reviewer",
+      "caption": "queue, show, approve, deny",
+      "icon": "shield-check"
+    },
+    {
+      "label": "Usage limits",
+      "caption": "current headroom for the requester",
+      "category": "workflow"
+    }
+  ],
+  "content": {
+    "problem": "Members who reach their AI usage limit can ask for more, and someone with billing access has to decide. This CLI lists the pending requests, shows each one next to the requester's current limit and headroom, and records a one-month approval or a denial. Members can use it to file a request and follow it.",
+    "takeItFurther": [
+      "Post new pending requests to the billing team's channel on a schedule, with a link to run show on each one.",
+      "When the same people keep asking for more, raise their standing limit with the usage limits API instead of approving each month.",
+      "Run the member commands from an internal tool so people can ask for more usage where they hit the limit."
+    ],
+    "guardrails": [
+      {
+        "title": "Confirm every decision",
+        "rule": "Approve shows the request and the requester's current limit, deny shows the request, and both ask for confirmation. Without a terminal they require --yes. Neither is retried; after a dropped connection, run show before trying again."
+      },
+      {
+        "title": "Approve only what the API honors",
+        "rule": "Approval adds headroom only for a pending user request in its own month, which must be the current UTC month. The CLI refuses agent requests and past-month requests before sending anything."
+      },
+      {
+        "title": "Keep the token out of chat and git",
+        "rule": "Edit .env yourself. It is ignored by git, and the CLI never prints the token."
+      }
+    ],
+    "limitations": [
+      {
+        "title": "Preview until a workspace run",
+        "description": "Fixture tests cover the API contracts. The recipe stays in preview until an authorized run against a real workspace, including a contained approval and denial, passes."
+      },
+      {
+        "title": "Experimental and gated",
+        "description": "Every request API needs the experimental opt-in and the request-more setting. They return 404 until both are in place, and their contract can change."
+      },
+      {
+        "title": "One-month increases for people",
+        "description": "Ongoing approvals that change standing rules are not available on this API, and approvals add no capacity for agents. Department and IdP-group approvals are not supported."
+      }
+    ]
+  },
+  "demoQueries": [
+    {
+      "query": "Show me the pending usage limit increase requests",
+      "expectedBehavior": "Runs npm start -- queue and lists each pending request with the requester's name, spend client, month, and justification, or says there are none."
+    },
+    {
+      "query": "Approve request <request-id> for 25",
+      "expectedBehavior": "Runs show first, presents the requester's remaining headroom and limit unit, and asks the user to confirm before running approve with --amount 25 --yes. Refuses agent and past-month requests."
+    },
+    {
+      "query": "Ask for more Glean usage this month",
+      "expectedBehavior": "Runs npm start -- request --client glean with the user's justification and reports the new request ID and month."
+    }
+  ],
+  "goDependency": false,
+  "hidden": false,
+  "tags": ["usage", "limits", "requests", "billing", "preview"]
+}
