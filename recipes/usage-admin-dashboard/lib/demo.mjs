@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import {
   ApiError,
   PERIOD,
@@ -9,7 +8,6 @@ import {
   validateEvaluation,
   validateLimit,
   validateLimitKey,
-  validateSearch,
 } from './contracts.mjs';
 export const USERS = [
   {
@@ -72,10 +70,6 @@ export const CLIENTS = [
     oauth_client_id: 'demo-oauth-support',
   },
 ];
-const MODEL_LABELS = {
-  'demo-standard-model': 'Standard model · sample',
-  'demo-premium-model': 'Premium model · sample',
-};
 const copy = (v) => structuredClone(v);
 const key = ({ target }) =>
   JSON.stringify([target.type, target.user_id ?? null, target.client_id]);
@@ -126,85 +120,25 @@ export function createDemoProvider({
   const premium = () =>
     limits.find((l) => l.target.client_id === PREMIUM_POLICY_CLIENT)
       ?.actions[0];
-  const cursors = new Map();
-  const fingerprint = (query) =>
-    JSON.stringify({ ...query, cursor: undefined });
-  function pageSnapshot(snapshot, query, offset) {
-    const size = query.page_size ?? 100;
-    const results = copy(snapshot.results.slice(offset, offset + size));
-    const has_more = offset + size < snapshot.results.length;
-    let next_cursor = null;
-    if (has_more) {
-      next_cursor = randomUUID();
-      if (cursors.size >= 100) cursors.delete(cursors.keys().next().value);
-      cursors.set(next_cursor, {
-        snapshot,
-        fingerprint: fingerprint(query),
-        offset: offset + size,
-        expires: +now() + 86400000,
-      });
-    }
-    const labels = {};
-    if (query.include?.includes('DISPLAY_NAMES'))
-      for (const bucket of results)
-        for (const [field, id] of Object.entries(bucket.dimensions)) {
-          const label = snapshot.labels?.[field]?.[id];
-          if (id !== null && label) {
-            labels[field] ??= {};
-            labels[field][id] = copy(label);
-          }
-        }
-    return { ...copy(snapshot), results, labels, has_more, next_cursor };
-  }
-  function rows(query) {
-    const start = Date.parse(query.time_range.start),
-      end = Date.parse(query.time_range.end);
-    const rows = [];
-    // Omit unobserved days; the UI must not turn gaps into verified zero.
+  const SAMPLE_CLIENTS = new Set([
+    'glean',
+    ...CLIENTS.map((c) => c.usage_client_id),
+  ]);
+  // Fictional consumption in integer micro-units of the client's billing unit.
+  // Some days have no observations, like a real ledger.
+  function sampleUsed({ userId, clientId, start, end }) {
+    if (!SAMPLE_CLIENTS.has(clientId)) return 0n;
+    const scale = clientId === 'glean' ? 1000000 : 10000;
+    let total = 0n;
     const observedEnd = Math.min(end, +now());
     for (let t = start, day = 0; t < observedEnd; t += 86400000, day++) {
       if (day % 9 === 7) continue;
       USERS.forEach((user, i) => {
-        for (const client of [
-          'glean',
-          'demo-gateway-eng',
-          'demo-gateway-support',
-        ]) {
-          const unit = client === 'glean' ? 'CREDITS' : 'USD';
-          rows.push({
-            at: t,
-            user_id: user.user_id,
-            client_id: client,
-            model_id:
-              i === 5
-                ? null
-                : (day + i) % 3
-                  ? 'demo-standard-model'
-                  : 'demo-premium-model',
-            product:
-              client === 'glean'
-                ? ['ASSISTANT', 'AGENT', 'MCP'][i % 3]
-                : 'AI_GATEWAY',
-            feature: 'ASSISTANT',
-            agent_id: null,
-            unit,
-            used: BigInt(
-              (19 + i * 13 + (day % 5) * 7) *
-                (unit === 'USD' ? 10000 : 1000000),
-            ),
-          });
-        }
+        if (!userId || user.user_id === userId)
+          total += BigInt((19 + i * 13 + (day % 5) * 7) * scale);
       });
     }
-    return rows.filter(
-      (r) =>
-        (query.target.type === 'ORGANIZATION' ||
-          r.user_id === query.target.user_id) &&
-        (query.filters ?? []).every(
-          (f) =>
-            (f.operator === 'NOT_EQUALS') !== f.values.includes(r[f.field]),
-        ),
-    );
+    return total;
   }
   const envelope = (results) => ({
     results: copy(results),
@@ -224,14 +158,6 @@ export function createDemoProvider({
           ).values(),
         ],
         clients: CLIENTS,
-        groups: [
-          {
-            idp_group_id: 'demo-group-eng',
-            display_name: 'Engineering (sample IdP group)',
-            provider: 'okta',
-            provider_instance: 'okta',
-          },
-        ],
       };
       if (!catalogs[kind]) throw new ApiError('Unknown catalog.');
       const n = cursor ? Number(cursor.replace('demo-page-', '')) : 0;
@@ -253,7 +179,11 @@ export function createDemoProvider({
       validateLimit(limit);
       const denomination =
         limit.target.client_id === 'glean' ? 'CREDITS' : 'USD';
-      if (limit.value.mode === 'FINITE' && limit.value.unit !== denomination)
+      if (
+        SAMPLE_CLIENTS.has(limit.target.client_id) &&
+        limit.value.mode === 'FINITE' &&
+        limit.value.unit !== denomination
+      )
         throw new ApiError(
           'Sample client billing denomination does not match the selected unit.',
         );
@@ -275,152 +205,6 @@ export function createDemoProvider({
         request_id: 'demo-reset',
       };
     },
-    async search(query) {
-      validateSearch(query);
-      if (query.cursor) {
-        const retained = cursors.get(query.cursor);
-        if (!retained || retained.expires < +now())
-          throw new ApiError(
-            'Sample snapshot cursor expired; start a fresh query.',
-            400,
-            'expired_cursor',
-          );
-        if (retained.fingerprint !== fingerprint(query))
-          throw new ApiError(
-            'Cursor is bound to the original query and page size.',
-            400,
-            'invalid_cursor',
-          );
-        return pageSnapshot(retained.snapshot, query, retained.offset);
-      }
-      const source = rows(query);
-      const groups = query.group_by ?? [];
-      const granularity = query.granularity ?? 'NONE';
-      const totals = new Map();
-      const buckets = new Map();
-      for (const r of source) {
-        totals.set(r.unit, (totals.get(r.unit) ?? 0n) + r.used);
-        const dimensions = Object.fromEntries(
-          groups.map((g) => {
-            const f = {
-              MODEL: 'model_id',
-              CLIENT: 'client_id',
-              USER: 'user_id',
-              AGENT: 'agent_id',
-              PRODUCT: 'product',
-              FEATURE: 'feature',
-            }[g];
-            return [f, r[f]];
-          }),
-        );
-        let period;
-        if (granularity !== 'NONE') {
-          const date = new Date(r.at);
-          if (granularity === 'MONTH') date.setUTCDate(1);
-          if (granularity === 'WEEK')
-            date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
-          const finish = new Date(date);
-          if (granularity === 'MONTH')
-            finish.setUTCMonth(finish.getUTCMonth() + 1);
-          else
-            finish.setUTCDate(
-              finish.getUTCDate() + (granularity === 'DAY' ? 1 : 7),
-            );
-          period = {
-            start: new Date(Math.max(+date, Date.parse(query.time_range.start)))
-              .toISOString()
-              .replace('.000Z', 'Z'),
-            end: new Date(Math.min(+finish, Date.parse(query.time_range.end)))
-              .toISOString()
-              .replace('.000Z', 'Z'),
-          };
-        }
-        const k = JSON.stringify([dimensions, period]);
-        if (!buckets.has(k))
-          buckets.set(k, {
-            dimensions,
-            ...(period ? { period } : {}),
-            amounts: new Map(),
-          });
-        const b = buckets.get(k);
-        b.amounts.set(r.unit, (b.amounts.get(r.unit) ?? 0n) + r.used);
-      }
-      const amounts = (m) =>
-        ['USD', 'CREDITS']
-          .filter((u) => m.has(u))
-          .map((unit) => ({ unit, used: decimal(m.get(unit)) }));
-      const results = [...buckets.values()].map(({ amounts: a, ...b }) => ({
-        ...b,
-        used_by_unit: amounts(a),
-      }));
-      const field =
-        query.sort?.field ?? (granularity === 'NONE' ? 'USED' : 'PERIOD_START');
-      const direction =
-        query.sort?.direction ?? (granularity === 'NONE' ? 'DESC' : 'ASC');
-      results.sort((a, b) => {
-        let comparison = 0;
-        if (field === 'PERIOD_START')
-          comparison = a.period.start.localeCompare(b.period.start);
-        else
-          for (const unit of query.sort?.unit
-            ? [query.sort.unit]
-            : ['USD', 'CREDITS']) {
-            const aa = a.used_by_unit.find((x) => x.unit === unit),
-              bb = b.used_by_unit.find((x) => x.unit === unit);
-            if (!!aa !== !!bb) return aa ? -1 : 1; // Missing units are last in either direction.
-            if (aa && bb) {
-              const diff = micros(aa.used) - micros(bb.used);
-              comparison = diff < 0n ? -1 : diff > 0n ? 1 : 0;
-              if (comparison) break;
-            }
-          }
-        if (comparison) return comparison * (direction === 'DESC' ? -1 : 1);
-        for (const dimension of Object.keys(a.dimensions).sort()) {
-          const aa = a.dimensions[dimension],
-            bb = b.dimensions[dimension];
-          if (aa === null && bb !== null) return -1;
-          if (bb === null && aa !== null) return 1;
-          const tie = (aa ?? '').localeCompare(bb ?? '');
-          if (tie) return tie;
-        }
-        return (a.period?.start ?? '').localeCompare(b.period?.start ?? '');
-      });
-      const snapshot = {
-        target: copy(query.target),
-        results,
-        totals: amounts(totals),
-        time_range: copy(query.time_range),
-        data_updated_at: null,
-        earliest_available_at: null,
-        has_more: false,
-        next_cursor: null,
-        request_id: 'demo-search',
-        labels: {
-          user_id: Object.fromEntries(
-            USERS.map((u) => [
-              u.user_id,
-              { display_name: u.display_name, email: u.email },
-            ]),
-          ),
-          client_id: {
-            glean: { display_name: 'Glean' },
-            ...Object.fromEntries(
-              CLIENTS.map((c) => [
-                c.usage_client_id,
-                { display_name: c.display_name },
-              ]),
-            ),
-          },
-          model_id: Object.fromEntries(
-            Object.entries(MODEL_LABELS).map(([id, display_name]) => [
-              id,
-              { display_name },
-            ]),
-          ),
-        },
-      };
-      return pageSnapshot(snapshot, query, 0);
-    },
     async evaluate(body) {
       validateEvaluation(body);
       const target = body.target;
@@ -437,14 +221,12 @@ export function createDemoProvider({
         .toISOString()
         .replace('.000Z', 'Z');
       const counter = (type) =>
-        rows({
-          target:
-            type === 'USER'
-              ? { type, user_id: target.user_id }
-              : { type: 'ORGANIZATION' },
-          time_range: { start, end },
-          filters: [{ field: 'client_id', values: [client] }],
-        }).reduce((total, r) => total + r.used, 0n);
+        sampleUsed({
+          userId: type === 'USER' ? target.user_id : undefined,
+          clientId: client,
+          start: Date.parse(start),
+          end: Date.parse(end),
+        });
       const clientLimits = limits.filter((l) => l.target.client_id === client);
       const personal =
         target.type === 'USER'

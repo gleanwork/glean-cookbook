@@ -59,16 +59,9 @@ test('Loopback server blocks cross-origin writes and DNS rebinding, serves CSP, 
   });
   assert.equal(tooBig.status, 413);
 });
-test('CLI flags select live mode and the tenant without reading secrets', () => {
-  assert.deepEqual(parseCliArgs([]), {
-    live: false,
-    email: undefined,
-    serverUrl: undefined,
-  });
-  assert.deepEqual(parseCliArgs(['--live', '--email', 'admin@example.test']), {
-    live: true,
-    email: 'admin@example.test',
-    serverUrl: undefined,
-  });
+test('The CLI selects live mode only; credentials never come from flags', () => {
+  assert.deepEqual(parseCliArgs([]), { live: false });
+  assert.deepEqual(parseCliArgs(['--live']), { live: true });
   assert.throws(() => parseCliArgs(['--token', 'secret']));
+  assert.throws(() => parseCliArgs(['--server-url', 'https://example.test']));
 });

@@ -60,9 +60,9 @@ export function createServer({
           brand,
           workspace,
           limitations: [
-            'Department and IdP-group limits are response-only sources; the API cannot write them yet.',
+            'Organization, default per-person, and individual limits only; department and IdP-group limits are not supported yet.',
             'Threshold actions (notify, premium model restriction) are shown, not edited; saves preserve them.',
-            'Org-chart relationships are directory metadata, not an IdP-group mapping.',
+            'Usage history is not part of this recipe.',
           ],
         });
         return;
@@ -82,7 +82,6 @@ export function createServer({
         return;
       }
       const operation = {
-        '/api/usage/search': 'search',
         '/api/usage/evaluate': 'evaluate',
         '/api/limits': 'save',
         '/api/limits/reset': 'reset',
@@ -132,27 +131,21 @@ export function createServer({
 export function parseCliArgs(args = process.argv.slice(2)) {
   const { values } = parseArgs({
     args,
-    options: {
-      live: { type: 'boolean', default: false },
-      email: { type: 'string' },
-      'server-url': { type: 'string' },
-    },
+    options: { live: { type: 'boolean', default: false } },
   });
-  return {
-    live: values.live,
-    email: values.email,
-    serverUrl: values['server-url'],
-  };
+  return { live: values.live };
 }
-export async function startDashboard({
-  live = false,
-  email,
-  serverUrl,
-  env = process.env,
-} = {}) {
-  const provider = live
-    ? await configuredLiveProvider({ email, serverUrl, env })
-    : createDemoProvider();
+// GLEAN_SERVER_URL and GLEAN_API_TOKEN live in the ignored .env file; values
+// already in the environment take precedence.
+export function loadDotEnv() {
+  try {
+    process.loadEnvFile('.env');
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
+export async function startDashboard({ live = false, env = process.env } = {}) {
+  const provider = live ? configuredLiveProvider(env) : createDemoProvider();
   const port = Number(env.PORT ?? '3217');
   if (!Number.isInteger(port) || port < 0 || port > 65535)
     throw new Error('PORT must be 0–65535 (0 selects an available port).');
@@ -182,5 +175,8 @@ export async function startDashboard({
   );
   return server;
 }
-if (process.argv[1] === fileURLToPath(import.meta.url))
-  await startDashboard(parseCliArgs());
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const { live } = parseCliArgs();
+  if (live) loadDotEnv();
+  await startDashboard({ live });
+}

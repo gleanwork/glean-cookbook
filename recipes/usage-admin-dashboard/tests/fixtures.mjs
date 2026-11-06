@@ -1,12 +1,6 @@
 import { PERIOD, makeLimit } from '../lib/contracts.mjs';
 import { createDemoProvider } from '../lib/demo.mjs';
 
-export const query = {
-  target: { type: 'ORGANIZATION' },
-  time_range: { start: '2026-10-01T00:00:00Z', end: '2026-11-01T00:00:00Z' },
-  granularity: 'DAY',
-  page_size: 2,
-};
 export const draft = (options) =>
   makeLimit({
     type: 'USER',

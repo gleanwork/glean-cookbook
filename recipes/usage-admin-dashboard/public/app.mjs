@@ -10,15 +10,9 @@ const state = {
   users: [],
   departments: [],
   clients: [],
-  groups: [],
   limits: [],
   caps: {},
-  model: null,
-  labKind: 'search',
-  labQuery: null,
-  labCursor: null,
   reviewed: null,
-  usageRun: 0,
   evalRun: 0,
 };
 const fmt = (v) =>
@@ -61,57 +55,6 @@ function show(view) {
     if (e.dataset.view === view) e.setAttribute('aria-current', 'page');
     else e.removeAttribute('aria-current');
   });
-  $('report-filters').hidden = view !== 'overview' && view !== 'lab';
-}
-function query(groupBy = [], granularity = 'DAY', withModel = true) {
-  const filters = [];
-  if ($('client').value)
-    filters.push({ field: 'client_id', values: [$('client').value] });
-  if (state.model && withModel)
-    filters.push({ field: 'model_id', values: [state.model] });
-  return {
-    target: { type: 'ORGANIZATION' },
-    time_range: {
-      start: `${$('start').value}T00:00:00Z`,
-      end: `${$('end').value}T00:00:00Z`,
-    },
-    granularity,
-    group_by: groupBy,
-    filters,
-    include: ['DISPLAY_NAMES'],
-    page_size: 1000,
-  };
-}
-async function allUsage(q) {
-  const pages = [];
-  const seen = new Set();
-  let cursor;
-  for (let i = 0; i < 25; i++) {
-    const p = await api('/api/usage/search', {
-      ...q,
-      ...(cursor ? { cursor } : {}),
-    });
-    pages.push(p);
-    if (!p.has_more)
-      return {
-        ...pages[0],
-        results: pages.flatMap((p) => p.results),
-        labels: pages.reduce((out, p) => {
-          for (const [field, labels] of Object.entries(p.labels ?? {}))
-            out[field] = { ...out[field], ...labels };
-          return out;
-        }, {}),
-      };
-    if (!p.next_cursor || seen.has(p.next_cursor))
-      throw new Error(
-        'Invalid repeated/missing cursor; no partial chart is shown.',
-      );
-    seen.add(p.next_cursor);
-    cursor = p.next_cursor;
-  }
-  throw new Error(
-    'More than 25 pages; narrow the interval or filters. No partial chart is shown.',
-  );
 }
 function table(headers, rows) {
   const t = el('table'),
@@ -136,157 +79,6 @@ function table(headers, rows) {
   });
   t.append(body);
   return t;
-}
-function svg(tag, attrs, text) {
-  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
-  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
-  if (text !== undefined) e.textContent = text;
-  return e;
-}
-function drawTrend(result) {
-  const unit = $('unit').value;
-  $('chart-unit').textContent = `${unit} · daily`;
-  const observed = result.results.filter((b) =>
-    b.used_by_unit.some((a) => a.unit === unit),
-  );
-  if (!observed.length) {
-    $('trend').replaceChildren(
-      el(
-        'p',
-        'No observed amounts for this unit in the selected interval. This does not verify zero usage.',
-        'muted',
-      ),
-    );
-    $('trend-data').replaceChildren();
-    return;
-  }
-  const amounts = observed.map((b) =>
-    Number(b.used_by_unit.find((a) => a.unit === unit).used),
-  );
-  const max = Math.max(...amounts, 1);
-  const w = 660,
-    h = 210,
-    top = 16,
-    bottom = 175;
-  const firstDay = Date.parse(observed[0].period.start);
-  const lastDay = Date.parse(observed.at(-1).period.start);
-  const gap = (w - 60) / ((lastDay - firstDay) / 86400000 + 1);
-  const chart = svg('svg', {
-    viewBox: `0 0 ${w} ${h}`,
-    role: 'img',
-    'aria-label': `Observed daily usage in ${unit}. Missing days are not verified zero; exact values follow in the data table.`,
-  });
-  chart.append(
-    svg('line', { x1: 40, x2: w, y1: bottom, y2: bottom }),
-    svg('text', { x: 0, y: top + 8 }, fmt(max)),
-    svg('text', { x: 16, y: bottom + 4 }, '0'),
-  );
-  observed.forEach((b, i) => {
-    const x = 48 + ((Date.parse(b.period.start) - firstDay) / 86400000) * gap;
-    const height = (amounts[i] / max) * (bottom - top);
-    const bar = svg('rect', {
-      x,
-      y: bottom - height,
-      width: Math.max(1, gap - 3),
-      height: Math.max(height, 1),
-      rx: 2,
-    });
-    bar.append(
-      svg(
-        'title',
-        {},
-        `${b.period.start.slice(0, 10)}: ${b.used_by_unit.find((a) => a.unit === unit).used} ${unit}`,
-      ),
-    );
-    chart.append(bar);
-    if (i % Math.max(1, Math.ceil(observed.length / 4)) === 0)
-      chart.append(svg('text', { x, y: 203 }, b.period.start.slice(5, 10)));
-  });
-  $('trend').replaceChildren(chart);
-  $('trend-data').replaceChildren(
-    table(
-      ['UTC day', `Observed ${unit}`],
-      observed.map((b) => [
-        b.period.start.slice(0, 10),
-        b.used_by_unit.find((a) => a.unit === unit).used,
-      ]),
-    ),
-  );
-}
-async function refreshUsage() {
-  const run = ++state.usageRun;
-  $('refresh').disabled = true;
-  $('trend').replaceChildren(el('p', 'Loading observed usage…'));
-  $('model-breakdown').replaceChildren();
-  $('credits').textContent = '—';
-  $('usd').textContent = '—';
-  $('trend-data').replaceChildren();
-  $('freshness').textContent = '';
-  try {
-    const [trend, models] = await Promise.all([
-      allUsage(query()),
-      allUsage(query(['MODEL'], 'NONE', false)),
-    ]);
-    if (run !== state.usageRun) return;
-    $('credits').textContent = trend.totals.some((a) => a.unit === 'CREDITS')
-      ? fmt(trend.totals.find((a) => a.unit === 'CREDITS').used)
-      : 'Not observed';
-    $('usd').textContent = trend.totals.some((a) => a.unit === 'USD')
-      ? `$${fmt(trend.totals.find((a) => a.unit === 'USD').used)}`
-      : 'Not observed';
-    drawTrend(trend);
-    $('freshness').textContent =
-      `Stored observations · ${trend.data_updated_at ? `source updated ${trend.data_updated_at}` : 'source freshness unknown'} · ${trend.earliest_available_at ? `coverage starts ${trend.earliest_available_at}` : 'historical coverage unknown'}. Missing buckets do not prove zero. ${state.model ? 'Model filter active.' : ''}`;
-    $('clear-model').hidden = !state.model;
-    for (const row of models.results) {
-      const id = row.dimensions.model_id;
-      const b = el('button', undefined, 'model-row');
-      const name =
-        id === null
-          ? 'Unattributed model'
-          : (models.labels?.model_id?.[id]?.display_name ?? id);
-      b.append(
-        el('span', name),
-        el(
-          'span',
-          row.used_by_unit.map((v) => `${fmt(v.used)} ${v.unit}`).join(' · '),
-        ),
-      );
-      b.disabled = id === null;
-      b.title =
-        id === null
-          ? 'Null attribution cannot be selected by the API filter.'
-          : 'Filter the trend by this recorded model ID';
-      b.onclick = () => {
-        state.model = id;
-        refreshUsage();
-      };
-      $('model-breakdown').append(b);
-    }
-    if (!models.results.length)
-      $('model-breakdown').append(
-        el(
-          'p',
-          'No observed models. This is not a complete model catalog.',
-          'muted',
-        ),
-      );
-  } catch (e) {
-    if (run === state.usageRun) {
-      $('trend').replaceChildren(
-        el('p', `Reporting unavailable: ${e.message}`, 'error'),
-      );
-      $('model-breakdown').replaceChildren(
-        el(
-          'p',
-          'Reporting unavailable; directory and limits remain usable.',
-          'muted',
-        ),
-      );
-    }
-  } finally {
-    if (run === state.usageRun) $('refresh').disabled = false;
-  }
 }
 function renderPeople() {
   const text = $('people-search').value.toLowerCase(),
@@ -325,15 +117,26 @@ function describeAction(a) {
   return `${a.type} at ${a.at_percent}%`;
 }
 const isPremiumPolicy = (l) => l.target.client_id === PREMIUM_POLICY_CLIENT;
+// Spend clients that the OAuth client list does not return are typed as exact
+// IDs. The empty option value selects the typed field.
+function addClientOption(clientId) {
+  if (![...$('limit-client').options].some((o) => o.value === clientId))
+    $('limit-client').insertBefore(
+      option(clientId, `${clientId} · configured policy`),
+      $('limit-client').lastElementChild,
+    );
+}
+function selectedClient() {
+  return $('limit-client').value || $('custom-client').value;
+}
+function syncClientField() {
+  $('custom-client-label').hidden = $('limit-client').value !== '';
+}
 function renderLimits() {
   for (const limit of state.limits) {
     const clientId = limit.target.client_id;
-    if (clientId && !isPremiumPolicy(limit))
-      for (const id of ['client', 'limit-client'])
-        if (![...$(id).options].some((o) => o.value === clientId))
-          $(id).append(option(clientId, `${clientId} · configured policy`));
+    if (clientId && !isPremiumPolicy(limit)) addClientOption(clientId);
   }
-  $('policies').textContent = state.limits.length;
   $('limits-table').replaceChildren(
     table(
       [
@@ -414,11 +217,6 @@ function renderOrg() {
       'muted',
     ),
   );
-  $('groups').replaceChildren(
-    ...state.groups.map((g) =>
-      el('p', `${g.display_name} · ${g.idp_group_id}`),
-    ),
-  );
 }
 async function loadCatalog(kind, more = false) {
   const status = $(`status-${kind}`);
@@ -462,15 +260,13 @@ async function loadCatalog(kind, more = false) {
       );
     }
     if (kind === 'clients') {
-      for (const id of ['client', 'limit-client']) {
-        $(id).replaceChildren(
-          ...(id === 'client' ? [option('', 'All observed clients')] : []),
-          option('glean', 'Glean'),
-          ...state.clients.map((c) =>
-            option(c.usage_client_id, c.display_name),
-          ),
-        );
-      }
+      $('limit-client').replaceChildren(
+        option('glean', 'Glean'),
+        ...state.clients.map((c) => option(c.usage_client_id, c.display_name)),
+        option('', 'Other client ID…'),
+      );
+      for (const limit of state.limits)
+        if (!isPremiumPolicy(limit)) addClientOption(limit.target.client_id);
     }
     if (kind === 'users') {
       $('more-users').hidden = !state.userCursor;
@@ -484,14 +280,6 @@ async function loadCatalog(kind, more = false) {
     status.textContent = `${kind}: unavailable · ${e.message}`;
     status.classList.add('failed');
     if (kind !== 'users' || !more) state[kind] = [];
-    if (kind === 'groups')
-      $('groups').replaceChildren(
-        el(
-          'p',
-          'Group catalog unavailable. No sample data substituted.',
-          'muted',
-        ),
-      );
   }
 }
 async function refreshLimits() {
@@ -500,7 +288,6 @@ async function refreshLimits() {
     state.limits = r.results;
     renderLimits();
   } catch (e) {
-    $('policies').textContent = 'Unavailable';
     $('limits-table').replaceChildren(el('p', e.message, 'error'));
   }
 }
@@ -520,15 +307,13 @@ function syncReset() {
   const policy = configuredPolicy(
     $('target-type').value,
     $('target-user').value,
-    $('limit-client').value,
+    selectedClient(),
   );
   $('reset').hidden = !policy;
   $('reset').disabled = !state.caps.writes;
 }
 function openEditor(type = 'ORGANIZATION', userId, policy) {
-  const selectedClient =
-    policy?.target.client_id ?? ($('client').value || 'glean');
-  policy ??= configuredPolicy(type, userId, selectedClient);
+  policy ??= configuredPolicy(type, userId, 'glean');
   state.evalRun++;
   invalidateReview();
   $('evaluation').replaceChildren();
@@ -538,10 +323,11 @@ function openEditor(type = 'ORGANIZATION', userId, policy) {
     $('target-user').append(option(userId, policy?.target.email ?? userId));
   if (userId) $('target-user').value = userId;
   $('user-label').hidden = type !== 'USER';
-  const client = policy?.target.client_id ?? selectedClient;
-  if (![...$('limit-client').options].some((o) => o.value === client))
-    $('limit-client').append(option(client, `${client} · configured policy`));
+  const client = policy?.target.client_id ?? 'glean';
+  addClientOption(client);
   $('limit-client').value = client;
+  $('custom-client').value = '';
+  syncClientField();
   $('editor-title').textContent =
     type === 'USER'
       ? 'Person’s monthly limit'
@@ -573,7 +359,13 @@ async function evaluate() {
     );
     return;
   }
-  const client_id = $('limit-client').value;
+  const client_id = selectedClient();
+  if (!client_id) {
+    $('evaluation').replaceChildren(
+      el('p', 'Enter the exact spend-client ID to evaluate.'),
+    );
+    return;
+  }
   const q = {
     target:
       type === 'USER'
@@ -649,7 +441,7 @@ function review() {
     state.reviewed = makeLimit({
       type: $('target-type').value,
       userId: $('target-user').value,
-      clientId: $('limit-client').value,
+      clientId: selectedClient(),
       amount: $('amount').value,
       unit: $('limit-unit').value,
       enforcement: $('enforcement').value,
@@ -693,7 +485,7 @@ async function reset() {
   const policy = configuredPolicy(
     $('target-type').value,
     $('target-user').value,
-    $('limit-client').value,
+    selectedClient(),
   );
   if (!policy) return;
   const key = limitKey(policy);
@@ -719,71 +511,15 @@ async function reset() {
     $('reset').disabled = !state.caps.writes;
   }
 }
-function preset(name) {
-  state.labKind = name === 'evaluate' ? 'evaluate' : 'search';
-  state.labQuery = null;
-  state.labCursor = null;
-  $('next-page').hidden = true;
-  const q =
-    name === 'evaluate'
-      ? {
-          target: {
-            type: 'ORGANIZATION',
-            client_id: $('client').value || 'glean',
-          },
-          period: PERIOD,
-        }
-      : {
-          ...query(
-            name === 'models' ? ['MODEL'] : name === 'users' ? ['USER'] : [],
-            name === 'trend' ? 'DAY' : 'NONE',
-            false,
-          ),
-          page_size: 2,
-        };
-  $('lab-request').value = JSON.stringify(q, null, 2);
-  $('lab-endpoint').textContent =
-    `/api/admin/usage/${name === 'evaluate' ? 'limits/evaluate' : 'search'}`;
-}
-async function replay(next = false) {
-  $('replay').disabled = true;
-  $('next-page').disabled = true;
-  try {
-    const q = next
-      ? { ...state.labQuery, cursor: state.labCursor }
-      : JSON.parse($('lab-request').value);
-    if (!next) {
-      state.labQuery = structuredClone(q);
-      state.labCursor = null;
-    }
-    const r = await api(`/api/usage/${state.labKind}`, q);
-    $('lab-response').textContent = JSON.stringify(r, null, 2);
-    state.labCursor = r.has_more ? r.next_cursor : null;
-    $('next-page').hidden = !state.labCursor;
-  } catch (e) {
-    $('lab-response').textContent = e.message;
-    state.labCursor = null;
-    $('next-page').hidden = true;
-  } finally {
-    $('replay').disabled = false;
-    $('next-page').disabled = false;
-  }
-}
 document
   .querySelectorAll('[data-view]')
   .forEach((b) => (b.onclick = () => show(b.dataset.view)));
-$('goto-people').onclick = () => show('people');
 $('create').onclick = () => openEditor();
 $('close-editor').onclick = () => {
   $('editor').close();
   state.evalRun++;
 };
 $('editor').addEventListener('close', () => state.evalRun++);
-$('refresh').onclick = refreshUsage;
-$('clear-model').onclick = () => {
-  state.model = null;
-  refreshUsage();
-};
 $('people-search').oninput = renderPeople;
 $('department').onchange = renderPeople;
 $('more-users').onclick = () => loadCatalog('users', true);
@@ -791,6 +527,7 @@ for (const id of [
   'target-type',
   'target-user',
   'limit-client',
+  'custom-client',
   'cap-mode',
   'amount',
   'limit-unit',
@@ -800,7 +537,12 @@ for (const id of [
     invalidateReview();
     $('user-label').hidden = $('target-type').value !== 'USER';
     $('finite-fields').hidden = $('cap-mode').value === 'UNLIMITED';
-    if (['target-type', 'target-user', 'limit-client'].includes(id)) {
+    syncClientField();
+    if (
+      ['target-type', 'target-user', 'limit-client', 'custom-client'].includes(
+        id,
+      )
+    ) {
       syncReset();
       state.evalRun++;
       $('evaluation').replaceChildren(
@@ -812,20 +554,6 @@ $('evaluate').onclick = evaluate;
 $('review').onclick = review;
 $('save').onclick = save;
 $('reset').onclick = reset;
-document
-  .querySelectorAll('[data-preset]')
-  .forEach((b) => (b.onclick = () => preset(b.dataset.preset)));
-$('replay').onclick = () => replay();
-$('next-page').onclick = () => replay(true);
-$('lab-request').oninput = () => {
-  state.labCursor = null;
-  $('next-page').hidden = true;
-};
-const now = new Date(),
-  start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
-  end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-$('start').value = start.toISOString().slice(0, 10);
-$('end').value = end.toISOString().slice(0, 10);
 try {
   state.caps = await api('/api/capabilities');
   $('brand').textContent = state.caps.brand;
@@ -839,18 +567,17 @@ try {
         : 'Live · read-only';
   $('notice').textContent =
     state.caps.mode === 'demo'
-      ? 'Demo mode · fictional people, clients, models, and consumption. Limit changes affect only in-memory sample policies. No Glean credentials or requests.'
-      : 'Live mode · every panel uses real API responses or an explicit unavailable state. Historical observations and current-period headroom have different freshness; empty data does not prove zero.';
-  for (const kind of ['users', 'departments', 'clients', 'groups']) {
+      ? 'Demo mode · fictional people, clients, and consumption. Limit changes affect only in-memory sample policies. No Glean credentials or requests.'
+      : 'Live mode · every panel uses real API responses or an explicit unavailable state.';
+  for (const kind of ['users', 'departments', 'clients']) {
     const s = el('span', `${kind}: loading`);
     s.id = `status-${kind}`;
     $('catalog-status').append(s);
   }
+  await refreshLimits();
   await Promise.all(
-    ['users', 'departments', 'clients', 'groups'].map((k) => loadCatalog(k)),
+    ['users', 'departments', 'clients'].map((k) => loadCatalog(k)),
   );
-  await Promise.all([refreshLimits(), refreshUsage()]);
-  preset('trend');
 } catch (e) {
   $('notice').textContent = e.message;
 }

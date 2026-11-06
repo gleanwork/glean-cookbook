@@ -1,28 +1,36 @@
-# White-label usage and limits dashboard
+# White-label usage limits dashboard
 
-A runnable, **preview** cookbook recipe for rebuilding a usage-and-limits admin experience on the Glean usage limits APIs. It connects to your workspace by default; `npm run demo` runs an explicitly fictional sample without credentials.
+A runnable, **preview** cookbook recipe for rebuilding a usage limits admin experience on the Glean usage limits APIs. It sets organization, default per-person, and individual monthly limits, and explains why a person is warned or blocked. It connects to your workspace by default; `npm run demo` runs an explicitly fictional sample without credentials.
 
 ## Run it against your workspace
 
-Requires Node 22.12.0 or newer and workspace billing permissions. From this directory:
+Requires Node 22.12.0 or newer, workspace billing permissions, and a user-scoped Client API token. From this directory:
 
 ```sh
 npm ci
 npm run verify:fixture
-npm run login -- --email "<work-email>"
-npm run verify -- --email "<work-email>"
-npm start -- --email "<work-email>"
+cp .env.example .env
 ```
 
-Your email is used to discover your Glean backend. Pass `--server-url https://your-instance-be.glean.com` instead to name the backend origin directly, or set `GLEAN_SERVER_URL`. `npm run verify` makes read-only requests and exits non-zero when a required API is missing, forbidden, or unavailable.
+Open `.env` in your editor and set:
+
+- `GLEAN_SERVER_URL`: your Glean backend origin, such as `https://your-instance-be.glean.com`, with no path. See [finding your server URL](https://developers.glean.com/get-started/authentication#finding-your-server-url).
+- `GLEAN_API_TOKEN`: a Client API token with the `ADMIN_USAGE` and `PEOPLE` scopes, created in [Token Management](https://app.glean.com/admin/platform/tokenManagement?tab=client) by a user with workspace billing permissions. Choose a user-scoped token; the limits APIs act as that user. Never commit, paste, or print it.
+
+Then verify and start:
+
+```sh
+npm run verify
+npm start
+```
+
+`npm run verify` makes read-only requests and exits non-zero when a required API is missing, forbidden, or unavailable. Values already set in the environment take precedence over `.env`.
 
 Open the **Local URL printed by the server**. It prefers port 3217 and chooses an available port if that port is busy; `PORT=0` also selects an available port. Customize the labels with `DASHBOARD_BRAND` and `DASHBOARD_WORKSPACE`; edit the CSS variables for your palette.
 
-1. **Overview:** daily observed-consumption chart, separate USD/credit totals, and a model breakdown that filters the chart. Live mode shows it as unavailable until the reporting API ships.
-2. **People:** search name/email, filter the directory by department, load additional pages, open a person, and inspect configured-budget evaluation.
-3. **Limits:** review organization budgets, default per-person policies, individual overrides, and their threshold actions. Preview the exact policy before applying it. A save replaces its natural key (target, spend client, and period) and keeps the policy's existing threshold actions; it does not reset usage. **Remove this policy** resets that key so the target falls back to inherited policy.
-4. **Organization:** browse a manager-based forest and open individual people. A manager relationship does **not** establish an IdP group, budget pool, or authoritative team membership.
-5. **API test bench:** replay read-only usage/evaluation requests and follow opaque snapshot pages with the original query intact.
+1. **Limits:** review organization budgets, default per-person policies, individual overrides, and their threshold actions. Preview the exact policy before applying it. A save replaces its natural key (target, spend client, and period) and keeps the policy's existing threshold actions; it does not reset usage. **Remove this policy** resets that key so the target falls back to inherited policy.
+2. **People:** search name or email, filter the directory by department, load additional pages, open a person, and see their live budget status.
+3. **Organization:** browse a manager-based forest and open individual people. A manager relationship does **not** establish a budget pool or authoritative team membership.
 
 ## Run the sample
 
@@ -30,49 +38,40 @@ Open the **Local URL printed by the server**. It prefers port 3217 and chooses a
 npm run demo
 ```
 
-Every person, client, model, and amount is fictional, and policies live in memory until the server restarts. The sample exercises the UI; it is not verification of any workspace.
+Every person, client, and amount is fictional, and policies live in memory until the server restarts. The sample exercises the UI; it is not verification of any workspace.
 
 ## Live behavior
 
-Live mode never substitutes sample data when an API is missing, forbidden, or unavailable. Directory, clients, groups, limits, evaluation, and reporting display independent availability states.
+Live mode never substitutes sample data when an API is missing, forbidden, or unavailable. People, departments, spend clients, and limits display independent availability states.
 
-OAuth login is interactive and must be completed by the operator. The pinned `@gleanwork/auth` package owns PKCE and refreshable credential storage outside the project. If a tenant cannot issue these native experimental scopes, use an administrator-provisioned authorized client or a **server-side** `GLEAN_API_TOKEN` fallback; do not put tokens in browser storage, URLs, committed files, or screenshots. Existing pre-issuance tokens may need the `ADMIN_USAGE` and `PEOPLE` legacy scope families rather than native scopes. Verify actual permissions with the read-only probe.
+The token stays in the local Node server. It is never sent to the browser, written to URLs, or logged; upstream error bodies are not forwarded.
 
 ### Required capabilities
 
-| Operation                | Native scope               | Permission / behavior                                           |
-| ------------------------ | -------------------------- | --------------------------------------------------------------- |
-| People                   | `users:read`               | Visible directory people                                        |
-| Departments              | `departments:read`         | Directory catalog, not a spend aggregation                      |
-| Live budget evaluation   | `admin.usage:evaluate`     | Billing read                                                    |
-| Read policies            | `admin.usage.limits:read`  | Billing read                                                    |
-| Apply or remove policies | `admin.usage.limits:write` | Billing edit plus explicit local write opt-in                   |
-| Spend-client picker      | `admin.oauth.clients:read` | Admin read or billing read                                      |
-| IdP-group catalog        | `admin.idp_groups:read`    | Admin read or billing read                                      |
-| Historical usage         | none yet                   | Draft reporting API; the panel shows unavailable until it ships |
+| Operation                | Token scope   | Permission / behavior                         |
+| ------------------------ | ------------- | --------------------------------------------- |
+| People                   | `PEOPLE`      | Visible directory people                      |
+| Departments              | `PEOPLE`      | Directory catalog, not a spend aggregation    |
+| Spend-client picker      | `ADMIN_USAGE` | Admin read or billing read                    |
+| Read policies            | `ADMIN_USAGE` | Billing read                                  |
+| Live budget evaluation   | `ADMIN_USAGE` | Billing read                                  |
+| Apply or remove policies | `ADMIN_USAGE` | Billing edit plus explicit local write opt-in |
 
-The `ADMIN` role alone does not grant usage administration; the signed-in user needs workspace billing permissions.
+The `ADMIN` role alone does not grant usage administration; the token's user needs workspace billing permissions.
 
-Every upstream request sends `X-Glean-Include-Experimental: true`. Merged code does not imply your tenant supports a scope or has deployed an operation.
+Every upstream request sends `X-Glean-Include-Experimental: true`. Merged code does not imply your tenant has deployed an operation; the read-only probe checks what your workspace actually allows.
 
-**Live writes are off by default.** After checking the workspace and obtaining explicit authorization to mutate its policies, restart with:
-
-```sh
-GLEAN_ENABLE_WRITES=true npm start -- --email "<work-email>"
-```
+**Live writes are off by default.** After checking the workspace and obtaining explicit authorization to change its limits, set `GLEAN_ENABLE_WRITES=true` in `.env` and restart `npm start`.
 
 The browser still requires **Review policy → Apply to connected workspace**. No startup test or verification command writes a policy. A timed-out write has an uncertain outcome: read policies before deciding whether to retry. The transport never automatically retries mutations.
 
 ## Important semantics
 
-- Historical search measures **observed stored rows**. It is not an invoice, certified completeness, or a live counter. `data_updated_at: null` and `earliest_available_at: null` mean unknown, not fresh or empty.
-- Empty results, missing units, and missing days do not prove zero. Charts show observed buckets, with exact decimal values in an accessible table. Chart geometry is approximate; policy amounts and ledger arithmetic retain decimal strings/integer micro-units.
-- USD and CREDITS remain separate. Select the actual billing denomination for the spend domain when creating a finite limit; the client catalog does not currently provide it. The live backend remains authoritative.
-- `effective_limits[].remaining` is the tightest current headroom. It is not the person’s configured cap and may come from an organization rule. Each evaluated rule shows its configured cap, accrued `used`, decision, and active or next threshold action. `decision_causes` says whether the person's own budget or a shared pool caused WARNING or BLOCKED, without revealing the pool's amount. `restrictions` lists active premium-model allowlists. No matching policy is not runtime admission.
+- `effective_limits[].remaining` is the tightest current headroom. It is not the person's configured cap and may come from an organization rule. Each evaluated rule shows its configured cap, accrued `used`, decision, and active or next threshold action. `decision_causes` says whether the person's own budget or a shared pool caused WARNING or BLOCKED, without revealing the pool's amount. `restrictions` lists active premium-model allowlists. No matching policy is not runtime admission.
 - Limits are keyed by `target` (whose `client_id` is the spend client) and `period`. Saves omit `actions`, which preserves thresholds configured in the Admin console; sending `[]` would clear them. The workspace premium-model policy (`DEFAULT_USER` with `client_id: "*"`) has actions but no cap, and the recipe shows it read-only.
-- The client picker uses `ai_gateway.usage_client_id` **verbatim**, never OAuth `client_id` or a constructed `oauth-` prefix. It includes the documented `glean` spend client separately. Only enabled static OAuth clients with LLM Gateway access are listed; DCR clients and `api-token-*` spend clients are not, so client IDs found only on configured policies are added from the policy list.
-- Department filters currently apply to the directory only. Department/group spend aggregation is deferred by the reporting contract. Model selection filters observed usage, **not** policy writes.
-- Department, IdP-group, org-subtree, and model-limit actions are visibly gated. The recipe does not manufacture per-user writes to imitate dynamic group policy.
+- USD and CREDITS remain separate. Select the actual billing denomination for the spend client when creating a finite limit; the client catalog does not currently provide it. The live backend remains authoritative.
+- The client picker uses `ai_gateway.usage_client_id` **verbatim**, never OAuth `client_id` or a constructed `oauth-` prefix, and includes the documented `glean` spend client separately. Only enabled static OAuth clients with LLM Gateway access are listed; DCR clients and `api-token-*` spend clients are not. Client IDs found on configured policies are added from the policy list, and **Other client ID…** accepts any other exact spend-client ID.
+- Department filters apply to the directory only. Department, IdP-group, org-subtree, and model limits are not supported, and the recipe does not manufacture per-user writes to imitate them.
 
 See [API coverage](docs/API-COVERAGE.md) for the bridge contract and promotion gates.
 
@@ -80,12 +79,12 @@ See [API coverage](docs/API-COVERAGE.md) for the bridge contract and promotion g
 
 `public/` is the browser UI. `server.mjs` exposes only explicit local routes. `lib/demo.mjs` supplies fictional records; `lib/live.mjs` supplies the same provider operations from the real APIs. `lib/contracts.mjs` handles request bounds, supported targets, exact IDs, and decimal policy values.
 
-People, departments, and IdP groups come from the pinned `@gleanwork/api-client` SDK, which retries transient reads. The usage operations and the OAuth client list go through a narrow REST bridge: the released SDK has no usage operations, and its OAuth client model predates `is_enabled`. Move each call to the SDK once a release covers its current contract. The bridge never retries a write and does not replace the supported auth implementation.
+People and departments come from the pinned `@gleanwork/api-client` SDK, which retries transient reads. The usage operations and the OAuth client list go through a narrow REST bridge: the released SDK has no usage operations, and its OAuth client model predates `is_enabled`. Move each call to the SDK once a release covers its current contract. The bridge never retries a write.
 
-This is a **local, single-operator test bed**, not a hosted multi-admin service. The server binds to `127.0.0.1`, rejects foreign Host/Origin and cross-site requests, requires same-origin JSON mutation headers, serves a restrictive CSP, bounds bodies and upstream requests, and keeps credentials server-side. There are no analytics, external resources, proxy-to-arbitrary-URL routes, or credential inputs in the browser. Before hosting, add real session authentication, per-admin authorization, CSRF protection, audit logging, and isolated credential storage. Never expose this server through a public tunnel.
+This is a **local, single-operator tool**, not a hosted multi-admin service. The server binds to `127.0.0.1`, rejects foreign Host/Origin and cross-site requests, requires same-origin JSON mutation headers, serves a restrictive CSP, bounds bodies and upstream requests, and keeps the token server-side. There are no analytics, external resources, proxy-to-arbitrary-URL routes, or credential inputs in the browser. Before hosting, add real session authentication, per-admin authorization, CSRF protection, audit logging, and isolated credential storage. Never expose this server through a public tunnel.
 
 ## Verification and completion
 
-`npm test` runs Vitest. Live-provider tests drive the real SDK and bridge against [MSW](https://mswjs.io/) handlers. The suite covers policy shapes, evaluation and reset keys, decimals, unavailable states, the public upsert and reset transport, exact client mapping, cursor continuity, directory cycles, write gating, and server origin protection. `npm run verify` fails without real configuration and only makes read-only requests. Optional supporting-catalog failures are reported independently; required usage/directory failures fail the probe.
+`npm test` runs Vitest. Live-provider tests drive the real SDK and bridge against [MSW](https://mswjs.io/) handlers. The suite covers policy shapes, evaluation and reset keys, decimals, unavailable states, the public upsert and reset transport, exact client mapping, cursor continuity, directory cycles, write gating, environment configuration, and server origin protection. `npm run verify` fails without real configuration and only makes read-only requests.
 
-Fixture tests **do not** qualify as live verification. `lastVerified` is deliberately unset. Promote the recipe from preview only after an authorized sandbox browser run proves real people/client enumeration, complete chart pagination, save/read-back/evaluate agreement, unavailable states, and an isolated policy cleanup plan. Do not test writes on a production workspace merely to make the recipe green.
+Fixture tests **do not** qualify as live verification. `lastVerified` is deliberately unset. Promote the recipe from preview only after an authorized workspace browser run proves real people and client enumeration, save/read-back/evaluate agreement, unavailable states, and an isolated policy cleanup plan. Do not test writes on a production workspace merely to make the recipe green.
