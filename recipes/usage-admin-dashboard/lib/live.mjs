@@ -97,11 +97,18 @@ export function createLiveProvider({
   maxPages = 25,
 }) {
   const origin = validateOrigin(serverUrl);
+  // A token provider failure is a sign-in problem, not a connection problem,
+  // and its message never leaves this module.
   async function token() {
-    const value = await tokenProvider();
+    let value;
+    try {
+      value = await tokenProvider();
+    } catch {
+      value = undefined;
+    }
     if (!value)
       throw new ApiError(
-        'Sign in first or configure a scoped token on the server.',
+        'No usable Glean credentials. Run npm run login, or set a server-side GLEAN_API_TOKEN.',
         401,
         'missing_credentials',
       );
@@ -121,21 +128,17 @@ export function createLiveProvider({
         initialInterval: 500,
         maxInterval: 5_000,
         exponent: 2,
-        maxElapsedTime: 30_000,
+        maxElapsedTime: 10_000,
       },
       retryConnectionErrors: true,
     },
   });
-  async function request(
-    path,
-    body,
-    method = body === undefined ? 'GET' : 'POST',
-  ) {
+  async function request(path, body, { write = false } = {}) {
     const authorization = `Bearer ${await token()}`;
     let res;
     try {
       res = await fetch(`${origin}${path}`, {
-        method,
+        method: body === undefined ? 'GET' : 'POST',
         redirect: 'error',
         headers: {
           Authorization: authorization,
@@ -147,7 +150,9 @@ export function createLiveProvider({
       });
     } catch {
       throw new ApiError(
-        'Upstream request timed out or could not connect. Writes are never automatically retried; reconcile the policy before retrying.',
+        write
+          ? 'Upstream request timed out or could not connect, so the write may or may not have applied. Read the limit list before retrying.'
+          : 'Upstream request timed out or could not connect.',
         503,
         'upstream_unavailable',
       );
@@ -252,7 +257,9 @@ export function createLiveProvider({
     async save(limit) {
       validateLimit(limit);
       requireWrites();
-      const result = await request('/api/admin/usage/limits', limit);
+      const result = await request('/api/admin/usage/limits', limit, {
+        write: true,
+      });
       if (!result.usage_limit?.target)
         throw new ApiError(
           'Unexpected write response. Read the limit list before any retry.',
@@ -264,7 +271,9 @@ export function createLiveProvider({
     async reset(key) {
       validateLimitKey(key);
       requireWrites();
-      const result = await request('/api/admin/usage/limits/reset', key);
+      const result = await request('/api/admin/usage/limits/reset', key, {
+        write: true,
+      });
       if (typeof result.is_configuration_removed !== 'boolean')
         throw new ApiError(
           'Unexpected reset response. Read the limit list before any retry.',
