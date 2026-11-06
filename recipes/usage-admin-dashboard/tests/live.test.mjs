@@ -225,7 +225,9 @@ test('Writes require explicit opt-in and never retry ambiguous failures', async 
   assert.equal(calls, 0);
   await assert.rejects(
     live({ writes: true }).save(draft()),
-    (e) => e.code === 'upstream_unavailable',
+    (e) =>
+      e.code === 'upstream_unavailable' &&
+      e.message.includes('Read the limit list'),
   );
   assert.equal(calls, 1);
   fail = () => problem(503, { 'Retry-After-Ms': '1' });
@@ -280,4 +282,28 @@ test('Limit pagination follows cursors, rejects cycles, and bounds reads', async
     ),
   );
   await assert.rejects(live().limits(), (e) => e.code === 'invalid_response');
+});
+test('A failed sign-in is reported as missing credentials before any request', async () => {
+  const provider = live({
+    tokenProvider: async () => {
+      throw new Error('refresh failed for secret-token');
+    },
+  });
+  for (const call of [() => provider.catalog('users'), () => provider.limits()])
+    await assert.rejects(
+      call(),
+      (e) =>
+        e.code === 'missing_credentials' &&
+        e.status === 401 &&
+        !e.message.includes('secret'),
+    );
+});
+test('Read connection failures do not warn about writes', async () => {
+  server.use(
+    http.get(api('/api/admin/usage/limits'), () => HttpResponse.error()),
+  );
+  await assert.rejects(
+    live().limits(),
+    (e) => e.code === 'upstream_unavailable' && !e.message.includes('write'),
+  );
 });
