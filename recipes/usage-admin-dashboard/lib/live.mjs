@@ -1,6 +1,11 @@
+import { Glean } from '@gleanwork/api-client';
+import {
+  GleanBaseError,
+  ResponseValidationError,
+  SDKValidationError,
+} from '@gleanwork/api-client/models/errors';
 import {
   ApiError,
-  CATALOG_PATHS,
   SCOPES,
   parseEvaluation,
   parsePage,
@@ -24,6 +29,7 @@ const queryString = (params) => {
 // The list returns enabled static clients only; Glean's own spend client is the
 // documented `glean` constant, and api-token-* clients are not listed.
 const GATEWAY_CLIENTS = [{ field: 'has_ai_gateway', values: ['true'] }];
+const PAGE_SIZE = 100;
 
 export function validateOrigin(value) {
   let url;
@@ -31,7 +37,7 @@ export function validateOrigin(value) {
     url = new URL(value);
   } catch {
     throw new ApiError(
-      'Set GLEAN_SERVER_URL to a complete HTTPS backend origin.',
+      'Pass --email or --server-url, or set GLEAN_SERVER_URL to a complete HTTPS backend origin.',
     );
   }
   if (
@@ -44,37 +50,95 @@ export function validateOrigin(value) {
     url.hash
   )
     throw new ApiError(
-      'GLEAN_SERVER_URL must be a credential-free HTTPS origin, not an API path.',
+      'The Glean backend must be a credential-free HTTPS origin, not an API path.',
     );
   return url.origin;
+}
+function upstreamError(status, data) {
+  return new ApiError(
+    `Glean returned ${status}. Check endpoint rollout, scopes, billing permissions, and the request ID.`,
+    status,
+    typeof data?.code === 'string' ? data.code : 'upstream_error',
+    typeof data?.request_id === 'string' ? data.request_id : undefined,
+  );
+}
+// SDK errors carry the raw upstream body; only its code and request ID leave
+// this module, never the body itself.
+function fromSdkError(error) {
+  if (error instanceof ApiError) return error;
+  if (
+    error instanceof ResponseValidationError ||
+    error instanceof SDKValidationError
+  )
+    return new ApiError(
+      'Glean returned a response this SDK version does not recognize.',
+      502,
+      'invalid_response',
+    );
+  if (error instanceof GleanBaseError) {
+    let data;
+    try {
+      data = JSON.parse(error.body);
+    } catch {
+      data = undefined;
+    }
+    return upstreamError(error.statusCode, data);
+  }
+  return new ApiError(
+    'Upstream request timed out or could not connect.',
+    503,
+    'upstream_unavailable',
+  );
 }
 export function createLiveProvider({
   serverUrl,
   tokenProvider,
-  fetchImpl = fetch,
   writes = false,
   maxPages = 25,
 }) {
   const origin = validateOrigin(serverUrl);
-  async function request(
-    path,
-    body,
-    method = body === undefined ? 'GET' : 'POST',
-  ) {
-    const token = await tokenProvider();
-    if (!token)
+  async function token() {
+    const value = await tokenProvider();
+    if (!value)
       throw new ApiError(
         'Sign in first or configure a scoped token on the server.',
         401,
         'missing_credentials',
       );
+    return value;
+  }
+  // Directory reads go through the official SDK, which may retry them. The
+  // usage operations are not in the released SDK yet, so a narrow REST bridge
+  // sends them and never retries a write.
+  const glean = new Glean({
+    serverURL: origin,
+    apiToken: token,
+    includeExperimental: true,
+    timeoutMs: 30_000,
+    retryConfig: {
+      strategy: 'backoff',
+      backoff: {
+        initialInterval: 500,
+        maxInterval: 5_000,
+        exponent: 2,
+        maxElapsedTime: 30_000,
+      },
+      retryConnectionErrors: true,
+    },
+  });
+  async function request(
+    path,
+    body,
+    method = body === undefined ? 'GET' : 'POST',
+  ) {
+    const authorization = `Bearer ${await token()}`;
     let res;
     try {
-      res = await fetchImpl(`${origin}${path}`, {
+      res = await fetch(`${origin}${path}`, {
         method,
         redirect: 'error',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: authorization,
           'Content-Type': 'application/json',
           'X-Glean-Include-Experimental': 'true',
         },
@@ -98,13 +162,7 @@ export function createLiveProvider({
         'invalid_response',
       );
     }
-    if (!res.ok)
-      throw new ApiError(
-        `Glean returned ${res.status}. Check endpoint rollout, scopes, billing permissions, and the request ID.`,
-        res.status,
-        typeof data.code === 'string' ? data.code : 'upstream_error',
-        data.request_id,
-      );
+    if (!res.ok) throw upstreamError(res.status, data);
     return data;
   }
   function requireWrites() {
@@ -115,29 +173,42 @@ export function createLiveProvider({
         'writes_disabled',
       );
   }
-  return {
-    mode: 'live',
-    writes,
-    async catalog(kind, cursor) {
-      const path = CATALOG_PATHS[kind];
-      if (!path) throw new ApiError('Unknown catalog.');
+  const catalogs = {
+    users: (cursor) => glean.users.list(PAGE_SIZE, cursor),
+    departments: (cursor) => glean.departments.list(PAGE_SIZE, cursor),
+    groups: (cursor) => glean.admin.idpgroups.list(PAGE_SIZE, cursor),
+    // SDK 0.20.18 still models OAuth clients with is_active, which the API
+    // replaced with is_enabled, so this catalog stays on the REST bridge.
+    clients: async (cursor) => {
       const page = parsePage(
         await request(
-          `${path}${queryString({
-            page_size: '100',
+          `/api/admin/oauth/clients${queryString({
+            page_size: String(PAGE_SIZE),
             cursor,
-            filters: kind === 'clients' ? GATEWAY_CLIENTS : undefined,
+            filters: GATEWAY_CLIENTS,
           })}`,
         ),
       );
       // Usage limits take ai_gateway.usage_client_id, never the OAuth client_id.
-      if (kind === 'clients')
-        page.results = page.results.map((c) => ({
-          display_name: c.display_name,
-          usage_client_id: c.ai_gateway.usage_client_id,
-          oauth_client_id: c.client_id,
-        }));
+      page.results = page.results.map((c) => ({
+        display_name: c.display_name,
+        usage_client_id: c.ai_gateway.usage_client_id,
+        oauth_client_id: c.client_id,
+      }));
       return page;
+    },
+  };
+  return {
+    mode: 'live',
+    writes,
+    async catalog(kind, cursor) {
+      if (!Object.hasOwn(catalogs, kind))
+        throw new ApiError('Unknown catalog.');
+      try {
+        return parsePage(await catalogs[kind](cursor));
+      } catch (error) {
+        throw fromSdkError(error);
+      }
     },
     async limits() {
       const results = [];
@@ -146,7 +217,7 @@ export function createLiveProvider({
       for (let i = 0; i < maxPages; i++) {
         const page = parsePage(
           await request(
-            `/api/admin/usage/limits${queryString({ page_size: '100', cursor })}`,
+            `/api/admin/usage/limits${queryString({ page_size: String(PAGE_SIZE), cursor })}`,
           ),
         );
         results.push(...page.results);
@@ -204,16 +275,28 @@ export function createLiveProvider({
     },
   };
 }
-export async function configuredLiveProvider(env = process.env) {
-  const serverUrl = validateOrigin(env.GLEAN_SERVER_URL);
+export async function resolveServerUrl({ email, serverUrl, env }) {
+  if (serverUrl?.trim()) return validateOrigin(serverUrl.trim());
+  if (email?.trim()) {
+    const { discoverGleanTenant } = await import('@gleanwork/auth');
+    return validateOrigin((await discoverGleanTenant(email.trim())).serverUrl);
+  }
+  return validateOrigin(env.GLEAN_SERVER_URL?.trim());
+}
+export async function configuredLiveProvider({
+  email,
+  serverUrl,
+  env = process.env,
+} = {}) {
+  const origin = await resolveServerUrl({ email, serverUrl, env });
   // Lazy import keeps fixture mode network- and credential-free.
   const { createGleanTokenProvider } = await import('@gleanwork/auth');
-  const tokenProvider = env.GLEAN_API_TOKEN
-    ? async () => env.GLEAN_API_TOKEN
-    : createGleanTokenProvider({ serverUrl, scopes: SCOPES });
+  const staticToken = env.GLEAN_API_TOKEN?.trim();
   return createLiveProvider({
-    serverUrl,
-    tokenProvider,
+    serverUrl: origin,
+    tokenProvider: staticToken
+      ? async () => staticToken
+      : createGleanTokenProvider({ serverUrl: origin, scopes: SCOPES }),
     writes: env.GLEAN_ENABLE_WRITES === 'true',
   });
 }

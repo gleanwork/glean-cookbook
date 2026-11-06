@@ -75,14 +75,14 @@ See [API coverage](docs/API-COVERAGE.md) for the bridge contract and promotion g
 
 ## Architecture and safety
 
-`public/` is the browser UI. `server.mjs` exposes only explicit local routes. `lib/demo.mjs` supplies fictional records; `lib/live.mjs` supplies the same provider operations from real REST APIs. `lib/contracts.mjs` handles request bounds, supported targets, exact IDs, and decimal policy values.
+`public/` is the browser UI. `server.mjs` exposes only explicit local routes. `lib/demo.mjs` supplies fictional records; `lib/live.mjs` supplies the same provider operations from the real APIs. `lib/contracts.mjs` handles request bounds, supported targets, exact IDs, and decimal policy values.
 
-The temporary REST bridge is deliberate: the usage operations are ahead of the released cookbook SDK. Replace it with a pinned official SDK once those exact contracts ship. It does not replace the supported auth implementation.
+People, departments, and IdP groups come from the pinned `@gleanwork/api-client` SDK, which retries transient reads. The usage operations and the OAuth client list go through a narrow REST bridge: the released SDK has no usage operations, and its OAuth client model predates `is_enabled`. Move each call to the SDK once a release covers its current contract. The bridge never retries a write and does not replace the supported auth implementation.
 
 This is a **local, single-operator test bed**, not a hosted multi-admin service. The server binds to `127.0.0.1`, rejects foreign Host/Origin and cross-site requests, requires same-origin JSON mutation headers, serves a restrictive CSP, bounds bodies and upstream requests, and keeps credentials server-side. There are no analytics, external resources, proxy-to-arbitrary-URL routes, or credential inputs in the browser. Before hosting, add real session authentication, per-admin authorization, CSRF protection, audit logging, and isolated credential storage. Never expose this server through a public tunnel.
 
 ## Verification and completion
 
-`npm test` tests policy shapes, evaluation and reset keys, decimals, unavailable states, the public upsert and reset transport, exact client mapping, cursor continuity, directory cycles, write gating, and server origin protection. `npm run verify:live` fails without real configuration and only makes read-only requests. Optional supporting-catalog failures are reported independently; required usage/directory failures fail the probe.
+`npm test` runs Vitest. Live-provider tests drive the real SDK and bridge against [MSW](https://mswjs.io/) handlers. The suite covers policy shapes, evaluation and reset keys, decimals, unavailable states, the public upsert and reset transport, exact client mapping, cursor continuity, directory cycles, write gating, and server origin protection. `npm run verify:live` fails without real configuration and only makes read-only requests. Optional supporting-catalog failures are reported independently; required usage/directory failures fail the probe.
 
 Fixture tests **do not** qualify as live verification. `lastVerified` is deliberately unset. Promote the recipe from preview only after an authorized sandbox browser run proves real people/client enumeration, complete chart pagination, save/read-back/evaluate agreement, unavailable states, and an isolated policy cleanup plan. Do not test writes on a production workspace merely to make the recipe green.

@@ -12,12 +12,22 @@
     "demo": "node scripts/demo.mjs",
     "start:live": "node server.mjs --live",
     "login": "glean-auth login --scopes users:read,departments:read,admin.usage:evaluate,admin.usage.limits:read,admin.usage.limits:write,admin.oauth.clients:read,admin.idp_groups:read",
-    "test": "node --test tests/*.test.mjs",
+    "test": "vitest run",
     "check": "npm test",
     "verify:fixture": "npm test",
     "verify:live": "node scripts/verify-live.mjs"
   },
   "dependencies": {
+    "@gleanwork/api-client": "0.20.18",
     "@gleanwork/auth": "0.5.1"
+  },
+  "devDependencies": {
+    "msw": "2.11.3",
+    "vitest": "4.1.10"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "fsevents": false,
+    "msw@2.11.3": true
   }
 }
