@@ -1,6 +1,5 @@
-// REST bridge for experimental operations not yet in the released cookbook SDK.
-// Paths and fields are traced in docs/API-COVERAGE.md. Remove this bridge once
-// a released SDK covers them; OAuth remains owned by @gleanwork/auth.
+// Request and response contracts for the usage operations that the released
+// SDK does not cover yet. Fields are traced in docs/API-COVERAGE.md.
 export const PERIOD = { type: 'RECURRING_CALENDAR_MONTH' };
 // Reserved key of the workspace premium-model policy (DEFAULT_USER only). It is
 // not a cross-client budget, so it is never a writable or evaluable client.
@@ -20,12 +19,6 @@ export const SCOPES = [
   'admin.oauth.clients:read',
   'admin.idp_groups:read',
 ];
-export const CATALOG_PATHS = Object.freeze({
-  users: '/api/users',
-  departments: '/api/departments',
-  clients: '/api/admin/oauth/clients',
-  groups: '/api/admin/idp-groups',
-});
 export class ApiError extends Error {
   constructor(message, status = 400, code = 'invalid_request', requestId) {
     super(message);

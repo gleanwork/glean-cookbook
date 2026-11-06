@@ -228,6 +228,8 @@ export function createDemoProvider({
           {
             idp_group_id: 'demo-group-eng',
             display_name: 'Engineering (sample IdP group)',
+            provider: 'okta',
+            provider_instance: 'okta',
           },
         ],
       };

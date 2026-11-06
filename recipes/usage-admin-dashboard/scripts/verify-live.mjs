@@ -1,15 +1,18 @@
 import { configuredLiveProvider } from '../lib/live.mjs';
+import { parseCliArgs } from '../server.mjs';
 
 // Strict, read-only verification: never creates, resets, or updates a policy.
-if (!process.env.GLEAN_SERVER_URL) {
+const { email, serverUrl } = parseCliArgs();
+if (!email && !serverUrl && !process.env.GLEAN_SERVER_URL) {
   console.error(
-    'Live verification requires GLEAN_SERVER_URL and an authorized OAuth session or server-side GLEAN_API_TOKEN. Fixture tests are not live verification.',
+    'Live verification needs --email, --server-url, or GLEAN_SERVER_URL, plus an OAuth session from npm run login or a server-side GLEAN_API_TOKEN. Fixture tests are not live verification.',
   );
   process.exitCode = 1;
 } else {
   const provider = await configuredLiveProvider({
-    ...process.env,
-    GLEAN_ENABLE_WRITES: 'false',
+    email,
+    serverUrl,
+    env: { ...process.env, GLEAN_ENABLE_WRITES: 'false' },
   });
   const now = new Date();
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));

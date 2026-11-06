@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
 import { createDemoProvider } from './lib/demo.mjs';
 import { configuredLiveProvider } from './lib/live.mjs';
 import { ApiError } from './lib/contracts.mjs';
@@ -128,12 +129,29 @@ export function createServer({
   });
   return server;
 }
+export function parseCliArgs(args = process.argv.slice(2)) {
+  const { values } = parseArgs({
+    args,
+    options: {
+      live: { type: 'boolean', default: false },
+      email: { type: 'string' },
+      'server-url': { type: 'string' },
+    },
+  });
+  return {
+    live: values.live,
+    email: values.email,
+    serverUrl: values['server-url'],
+  };
+}
 export async function startDashboard({
-  live = process.argv.includes('--live'),
+  live = false,
+  email,
+  serverUrl,
   env = process.env,
 } = {}) {
   const provider = live
-    ? await configuredLiveProvider(env)
+    ? await configuredLiveProvider({ email, serverUrl, env })
     : createDemoProvider();
   const port = Number(env.PORT ?? '3217');
   if (!Number.isInteger(port) || port < 0 || port > 65535)
@@ -164,4 +182,5 @@ export async function startDashboard({
   );
   return server;
 }
-if (process.argv[1] === fileURLToPath(import.meta.url)) await startDashboard();
+if (process.argv[1] === fileURLToPath(import.meta.url))
+  await startDashboard(parseCliArgs());
