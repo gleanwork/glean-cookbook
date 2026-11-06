@@ -1,37 +1,40 @@
 # White-label usage and limits dashboard
 
-A runnable, **preview** cookbook recipe for rebuilding a usage-and-limits admin experience on Platform APIs. The default is an explicitly fictional, credential-free sample—not a claim that an endpoint is deployed.
+A runnable, **preview** cookbook recipe for rebuilding a usage-and-limits admin experience on the Glean usage limits APIs. It connects to your workspace by default; `npm run demo` runs an explicitly fictional sample without credentials.
 
-## Run the sample
+## Run it against your workspace
 
-Requires Node 22.12.0 or newer. From this directory:
+Requires Node 22.12.0 or newer and workspace billing permissions. From this directory:
 
 ```sh
 npm ci
 npm run verify:fixture
-npm start
+npm run login -- --email "<work-email>"
+npm run verify -- --email "<work-email>"
+npm start -- --email "<work-email>"
 ```
 
-Open the **Local URL printed by the server**. It prefers port 3217 and chooses an available port if that port is busy; `PORT=0` also selects an available port. Sample policies live in memory and reset when the server restarts. Customize the labels with `DASHBOARD_BRAND` and `DASHBOARD_WORKSPACE`; edit the CSS variables for your palette.
+Your email is used to discover your Glean backend. Pass `--server-url https://your-instance-be.glean.com` instead to name the backend origin directly, or set `GLEAN_SERVER_URL`. `npm run verify` makes read-only requests and exits non-zero when a required API is missing, forbidden, or unavailable.
 
-1. **Overview:** daily observed-consumption chart, separate USD/credit totals, and a model breakdown that filters the chart.
+Open the **Local URL printed by the server**. It prefers port 3217 and chooses an available port if that port is busy; `PORT=0` also selects an available port. Customize the labels with `DASHBOARD_BRAND` and `DASHBOARD_WORKSPACE`; edit the CSS variables for your palette.
+
+1. **Overview:** daily observed-consumption chart, separate USD/credit totals, and a model breakdown that filters the chart. Live mode shows it as unavailable until the reporting API ships.
 2. **People:** search name/email, filter the directory by department, load additional pages, open a person, and inspect configured-budget evaluation.
 3. **Limits:** review organization budgets, default per-person policies, individual overrides, and their threshold actions. Preview the exact policy before applying it. A save replaces its natural key (target, spend client, and period) and keeps the policy's existing threshold actions; it does not reset usage. **Remove this policy** resets that key so the target falls back to inherited policy.
 4. **Organization:** browse a manager-based forest and open individual people. A manager relationship does **not** establish an IdP group, budget pool, or authoritative team membership.
 5. **API test bench:** replay read-only usage/evaluation requests and follow opaque snapshot pages with the original query intact.
 
-## Connect real APIs progressively
-
-Live mode never substitutes sample data when an API is missing, forbidden, or unavailable. Directory, clients, groups, limits, evaluation, and reporting display independent availability states. This lets the same UI demonstrate landed limits APIs before reporting and supporting catalogs are deployed.
-
-Set only the backend origin, not a full API path:
+## Run the sample
 
 ```sh
-export GLEAN_SERVER_URL='https://your-instance-be.glean.com'
-npm run login -- --server-url "$GLEAN_SERVER_URL"
-npm run verify:live
-npm run start:live
+npm run demo
 ```
+
+Every person, client, model, and amount is fictional, and policies live in memory until the server restarts. The sample exercises the UI; it is not verification of any workspace.
+
+## Live behavior
+
+Live mode never substitutes sample data when an API is missing, forbidden, or unavailable. Directory, clients, groups, limits, evaluation, and reporting display independent availability states.
 
 OAuth login is interactive and must be completed by the operator. The pinned `@gleanwork/auth` package owns PKCE and refreshable credential storage outside the project. If a tenant cannot issue these native experimental scopes, use an administrator-provisioned authorized client or a **server-side** `GLEAN_API_TOKEN` fallback; do not put tokens in browser storage, URLs, committed files, or screenshots. Existing pre-issuance tokens may need the `ADMIN_USAGE` and `PEOPLE` legacy scope families rather than native scopes. Verify actual permissions with the read-only probe.
 
@@ -55,7 +58,7 @@ Every upstream request sends `X-Glean-Include-Experimental: true`. Merged code d
 **Live writes are off by default.** After checking the workspace and obtaining explicit authorization to mutate its policies, restart with:
 
 ```sh
-GLEAN_ENABLE_WRITES=true npm run start:live
+GLEAN_ENABLE_WRITES=true npm start -- --email "<work-email>"
 ```
 
 The browser still requires **Review policy → Apply to connected workspace**. No startup test or verification command writes a policy. A timed-out write has an uncertain outcome: read policies before deciding whether to retry. The transport never automatically retries mutations.
@@ -83,6 +86,6 @@ This is a **local, single-operator test bed**, not a hosted multi-admin service.
 
 ## Verification and completion
 
-`npm test` runs Vitest. Live-provider tests drive the real SDK and bridge against [MSW](https://mswjs.io/) handlers. The suite covers policy shapes, evaluation and reset keys, decimals, unavailable states, the public upsert and reset transport, exact client mapping, cursor continuity, directory cycles, write gating, and server origin protection. `npm run verify:live` fails without real configuration and only makes read-only requests. Optional supporting-catalog failures are reported independently; required usage/directory failures fail the probe.
+`npm test` runs Vitest. Live-provider tests drive the real SDK and bridge against [MSW](https://mswjs.io/) handlers. The suite covers policy shapes, evaluation and reset keys, decimals, unavailable states, the public upsert and reset transport, exact client mapping, cursor continuity, directory cycles, write gating, and server origin protection. `npm run verify` fails without real configuration and only makes read-only requests. Optional supporting-catalog failures are reported independently; required usage/directory failures fail the probe.
 
 Fixture tests **do not** qualify as live verification. `lastVerified` is deliberately unset. Promote the recipe from preview only after an authorized sandbox browser run proves real people/client enumeration, complete chart pagination, save/read-back/evaluate agreement, unavailable states, and an isolated policy cleanup plan. Do not test writes on a production workspace merely to make the recipe green.
