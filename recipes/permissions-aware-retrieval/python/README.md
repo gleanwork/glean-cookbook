@@ -24,7 +24,7 @@ markdown` to force raw Markdown. It keeps source headings and source metadata as
 output, sanitizes terminal controls, keeps link destinations visible, honors `NO_COLOR`, and adds a
 final newline when the answer document completes.
 
-Prefer pip? The direct pins are in that same block: `pip install glean-api-client==0.15.4
+Prefer pip? The direct pins are in that same block: `pip install glean-api-client==0.17.20
 anthropic==0.120.0 rich==15.0.0` inside a virtualenv you manage yourself — though you lose the
 transitive pinning the lock gives you.
 
@@ -56,4 +56,4 @@ the boundary.
 2. **Extract**: `results[].title`, `results[].url`, and `results[].snippets` — a plain `string[]` on this API, with no `.text` unwrap — become numbered sources.
 3. **Answer**: the sources — and only the sources — go to Claude (`claude-sonnet-5` here; swap the `Anthropic` client for any provider) with a prompt requiring inline `[n]` citations.
 
-The example pins `glean-api-client==0.15.4` and `anthropic==0.120.0`.
+The example pins `glean-api-client==0.17.20` and `anthropic==0.120.0`.

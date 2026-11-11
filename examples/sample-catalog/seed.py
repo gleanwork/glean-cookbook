@@ -1,6 +1,7 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
+#     "glean-api-client==0.17.20",
 #     "glean-indexing-sdk==1.0.0b2",
 # ]
 # ///

@@ -9,7 +9,7 @@ There's no API to create an agent from scratch. In the Glean Agent Builder:
 1. New agent, instructions: "You help employees triage payments-service incidents. Use the incident-ticket tool to file a tracking ticket when asked. If the tool returns a 403/not-authorized error, don't fail — instead give the user a read-only summary of the incident and tell them who can file it."
 2. Turn retrieval on (grounds the summary in whatever incident docs your instance already has).
 3. Attach the [`file_incident_ticket` tool](../tool-server/) built for this recipe.
-4. Copy the agent's ID from the builder URL (or `glean.client.agents.list()`).
+4. Copy the agent's ID from the builder URL (or `glean.agents.search()`).
 
 ## Run it
 
@@ -33,7 +33,7 @@ document completes.
 
 ## What this does
 
-`glean.client.agents.run(agent_id=..., messages=[...])` — the agent runs as
+`glean.agents.create_run(agent_id=..., messages=[...], stream=False)` — the agent runs as
 whoever your credential belongs to. No impersonation, and no admin token: Glean
 forwards your identity to the custom tool as the `Glean-User-Email` header, and
 [the tool server](../tool-server/) decides from there.
@@ -55,7 +55,7 @@ uv run main.py
 That second run is the one worth watching. A governed tool refusing is easy; an
 agent degrading gracefully instead of erroring is the part you have to build.
 
-The pinned `glean-api-client==0.15.4` has two relevant contracts:
+The pinned `glean-api-client==0.17.20` has two relevant contracts:
 
-1. Agents use a distinct `Message`/`MessageTextBlock` model (`role`, `content: [{text, type}]`) — **not** the `ChatMessage`/`ChatMessageFragment` shape from `chat.create`.
-2. `run_stream()` returns the raw SSE response as a plain `str`, not a parsed event iterator. This recipe uses `run()` (wait-for-completion) since it only needs the final messages, not live tokens.
+1. Agents use a distinct `PlatformMessageInput`/`PlatformMessageTextBlockInput` model (`role`, `content: [{text, type}]`) — **not** the `ChatMessage`/`ChatMessageFragment` shape from `chat.create`.
+2. `create_run(stream=True)` returns the raw SSE response as a plain `str`, not a parsed event iterator. This recipe passes `stream=False` (wait-for-completion, `execution_mode` `REQUEST_BOUND`) since it only needs the final messages, not live tokens.

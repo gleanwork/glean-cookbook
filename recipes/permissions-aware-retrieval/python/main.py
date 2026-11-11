@@ -2,7 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = [
 #     "anthropic==0.120.0",
-#     "glean-api-client==0.15.4",
+#     "glean-api-client==0.17.20",
 #     "python-dotenv==1.1.1",
 #     "rich==15.0.0",
 # ]
@@ -11,7 +11,7 @@
 layer for your own LLM app.
 
 Current API contract:
-- glean-api-client==0.15.4 uses the top-level glean.search.query() (not
+- glean-api-client==0.17.20 uses the top-level glean.search.query() (not
   glean.client.search.query() -- that's the older Client/REST API, a
   different surface entirely). This is Glean's newer, data-first retrieval
   API (POST /api/search): launched publicly 2026-07 but still Experimental,
