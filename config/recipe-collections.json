@@ -45,6 +45,12 @@
       "recipes": ["customer-meeting-prep-trigger"]
     },
     {
+      "id": "usage-limits",
+      "label": "Usage limits",
+      "description": "Review members' requests for more AI usage, then approve a one-month increase or deny the request.",
+      "recipes": ["usage-limit-requests"]
+    },
+    {
       "id": "complete-apps",
       "label": "Complete apps",
       "description": "End-to-end builds that combine features, from no-code builders to full apps you can run.",
