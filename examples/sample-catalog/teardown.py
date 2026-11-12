@@ -1,12 +1,13 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
+#     "glean-api-client==0.17.20",
 #     "glean-indexing-sdk==1.0.0b2",
 # ]
 # ///
 """Tear down everything seed.py created, for a clean re-run.
 
-IMPORTANT — verified against the pinned glean-api-client==0.15.4 (every
+IMPORTANT — verified against the pinned glean-api-client==0.17.20 (every
 `def delete*` in the package: the only delete_all is on chat, not datasources):
 this SDK version has no datasources.delete() call, only per-item deletes for
 documents, permission users/groups/memberships, and employees. This script deletes every document,

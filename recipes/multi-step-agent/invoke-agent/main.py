@@ -1,22 +1,22 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#     "glean-api-client==0.15.4",
+#     "glean-api-client==0.17.20",
 #     "python-dotenv==1.1.1",
 #     "rich==15.0.0",
 # ]
 # ///
 """Invoke the incident-triage agent and demo the governed-tool branch.
 
-Current glean-api-client==0.15.4 contract:
-- Agents use glean.client.agents.run() (or .run_stream()), not the
-  chat/search Message models -- agents.run() takes models.Message /
-  models.MessageTextBlock, a distinct shape from chat.create's
+Current glean-api-client==0.17.20 contract:
+- Run an agent with glean.agents.create_run(), not the chat models.
+  messages take PlatformMessageInput / PlatformMessageTextBlockInput
+  (role plus content blocks), a distinct shape from chat.create's
   ChatMessage / ChatMessageFragment.
-- run_stream() returns the raw SSE response body as a plain str, not a
-  parsed event iterator -- if you want real per-event streaming you parse
-  that text yourself. run() (wait-for-completion) is simpler and used
-  here since this recipe cares about the final messages, not live tokens.
+- stream=False, with the default execution_mode REQUEST_BOUND, waits and
+  returns PlatformAgentRunWaitResponse. stream=True returns the raw SSE
+  body as a plain str, not a parsed event iterator. This recipe waits,
+  because it only needs the final messages.
 - The agent runs as whoever the credential belongs to. Glean forwards that
   identity to a custom tool as the Glean-User-Email header, which is where
   the tool server enforces its own authorization -- see ../tool-server/.
@@ -24,7 +24,7 @@ Current glean-api-client==0.15.4 contract:
 The agent itself (instructions, retrieval, the incident-ticket tool
 attached) is built in the Glean Agent Builder UI -- there's no API to
 create one from scratch. Find its ID from the builder URL or
-glean.client.agents.list(), and pass it as GLEAN_AGENT_ID.
+glean.agents.search(), and pass it as GLEAN_AGENT_ID.
 """
 
 from __future__ import annotations
@@ -34,7 +34,13 @@ import os
 
 from dotenv import load_dotenv
 from glean.api_client import Glean
-from glean.api_client.models import ContentType, Message, MessageTextBlock
+from glean.api_client.models import (
+    PlatformAgentRunWaitResponse,
+    PlatformContentType,
+    PlatformMessageInput,
+    PlatformMessageRole,
+    PlatformMessageTextBlockInput,
+)
 from markdown_output import OUTPUT_FORMATS, MarkdownOutput, OutputFormat
 
 # Load the local configuration created from .env.example.
@@ -54,20 +60,31 @@ def ask(
     question: str,
     output_format: OutputFormat,
 ) -> None:
-    response = glean.client.agents.run(
+    response = glean.agents.create_run(
         agent_id=agent_id,
         messages=[
-            Message(role="USER", content=[MessageTextBlock(text=question, type=ContentType.TEXT)])
+            PlatformMessageInput(
+                role=PlatformMessageRole.USER,
+                content=[
+                    PlatformMessageTextBlockInput(
+                        text=question,
+                        type=PlatformContentType.TEXT,
+                    )
+                ],
+            )
         ],
+        stream=False,
     )
+    if not isinstance(response, PlatformAgentRunWaitResponse):
+        raise SystemExit("Agent run did not return the completed response.")
 
     output = MarkdownOutput(output_format)
     status = response.run.status if response.run else None
-    output.plain(f"status: {status}\n")
+    output.plain(f"status: {getattr(status, 'value', status)}\n")
 
     for message in response.messages or []:
         text = "".join(block.text for block in message.content or [])
-        output.plain(f"[{message.role}]\n")
+        output.plain(f"[{getattr(message.role, 'value', message.role)}]\n")
         output.document(text)
 
 
